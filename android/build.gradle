@@ -1,0 +1,45 @@
+buildscript {
+    ext.kotlin_version = '1.8.10'
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:7.2.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        // Removed coreLibraryDesugaring dependency from the root build.gradle.
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    tasks.withType(JavaCompile) {
+        // Setting the Java version for all projects.
+        // Note: Use strings here for compatibility.
+        sourceCompatibility = '1.8'
+        targetCompatibility = '1.8'
+
+        // You can still add any compiler arguments you need:
+        options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+    }
+}
+
+rootProject.buildDir = '../build'
+
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+
+subprojects {
+    project.evaluationDependsOn(':app')
+}
+
+// Replace the tasks.register block with the classic Groovy DSL "task" definition.
+tasks.register("clean", Delete) {
+    delete rootProject.layout.buildDirectory
+}

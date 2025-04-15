@@ -1,0 +1,31 @@
+name: alongside
+description: A simple, offline-friendly support app for two friends to stay connected through honest, low-friction check-ins.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.17.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.5
+  provider: ^6.0.5
+  shared_preferences: ^2.2.0
+  url_launcher: ^6.1.12
+  image_picker: ^1.0.2
+  path_provider: ^2.1.0
+  flutter_local_notifications: ^19.1.0
+  timezone: ^0.10.0
+
+  # Removed notification packages for now
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.2
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/
