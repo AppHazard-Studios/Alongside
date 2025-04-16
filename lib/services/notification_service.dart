@@ -54,41 +54,38 @@ class NotificationService {
   // Handle notification actions from both default tap and action buttons.
   // Expected persistent payload format: "friendId;friendPhone"
   void _handleNotificationAction(NotificationResponse response) {
-    // Log the entire response for debugging.
-
+    // Get the action ID and payload
     final String actionId = response.actionId ?? "";
     final String payload = response.payload ?? "";
 
     String friendId = "";
     String friendPhone = "";
-    if (payload.contains(";")) {
-      final parts = payload.split(";");
-      if (parts.length >= 2) {
-        friendId = parts[0];
-        friendPhone = parts[1];
-      }
-    } else {
-      friendId = payload;
-    }
 
-    // Check if an action button was pressed.
-    if (actionId.isNotEmpty) {
-      if (actionId == "message_action") {
-        // For message action, simply trigger the callback to let the main app navigate home
-        // and simulate the message button click.
-        _actionCallback?.call(friendId, "message");
-      } else if (actionId == "call_action") {
-        _callFriend(friendPhone);
-        _actionCallback?.call(friendId, "call");
+    try {
+      if (payload.contains(";")) {
+        final parts = payload.split(";");
+        if (parts.length >= 2) {
+          friendId = parts[0];
+          friendPhone = parts[1];
+        }
       } else {
+        friendId = payload;
+      }
+
+      // Handle the action by calling the appropriate callback
+      if (actionId.isEmpty) {
+        // No specific action ID means it was just tapped
+        _actionCallback?.call("", "home");
+      } else {
+        // Call the callback with the action and friend ID
         _actionCallback?.call(friendId, actionId);
       }
-    } else {
-      // No actionId indicates a default tap.
+    } catch (e) {
+      print("Error handling notification action: $e");
+      // Default to home if there's an error
       _actionCallback?.call("", "home");
     }
   }
-
   // Create notification channels for Android
   Future<void> _createNotificationChannel() async {
     const AndroidNotificationChannel reminderChannel = AndroidNotificationChannel(
@@ -180,8 +177,8 @@ class NotificationService {
     final int notificationId = _getNotificationId(friend.id, isPersistent: true);
 
     final List<AndroidNotificationAction> actions = [
-      const AndroidNotificationAction('message_action', 'Message'),
-      const AndroidNotificationAction('call_action', 'Call'),
+      const AndroidNotificationAction('message', 'Message'),
+      const AndroidNotificationAction('call', 'Call'),
     ];
 
     final BigTextStyleInformation styleInformation = BigTextStyleInformation(
@@ -189,6 +186,31 @@ class NotificationService {
       contentTitle: 'You\'re Alongside, ${friend.name}.',
       summaryText: friend.name,
     );
+
+    void _handleNotificationAction(NotificationResponse response) {
+      final String actionId = response.actionId ?? "";
+      final String payload = response.payload ?? "";
+
+      String friendId = "";
+      String friendPhone = "";
+      if (payload.contains(";")) {
+        final parts = payload.split(";");
+        if (parts.length >= 2) {
+          friendId = parts[0];
+          friendPhone = parts[1];
+        }
+      } else {
+        friendId = payload;
+      }
+
+      // Call the callback with the appropriate action
+      if (actionId.isNotEmpty) {
+        _actionCallback?.call(friendId, actionId);
+      } else {
+        // Default tap - navigate to home
+        _actionCallback?.call("", "home");
+      }
+    }
 
     final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       'alongside_persistent',

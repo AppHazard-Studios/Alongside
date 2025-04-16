@@ -22,24 +22,29 @@ class FriendCard extends StatelessWidget {
     final TextStyle labelStyle = TextStyle(
       fontWeight: FontWeight.bold,
       color: AppConstants.primaryTextColor,
-      fontSize: 14,
+      fontSize: 13,
     );
 
     final TextStyle valueStyle = TextStyle(
       color: AppConstants.secondaryTextColor,
-      fontSize: 14,
+      fontSize: 13,
+      height: 1.4,
     );
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 20),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Row(
+      margin: const EdgeInsets.only(bottom: 16),
+      elevation: 2,
+      shadowColor: Colors.black.withOpacity(0.08),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with profile image and name
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
               children: [
                 _buildProfileImage(),
-                const SizedBox(width: 20),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,7 +55,7 @@ class FriendCard extends StatelessWidget {
                       ),
                       // Show helping information if available
                       if (friend.helpingWith != null && friend.helpingWith!.isNotEmpty) ...[
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6),
                         RichText(
                           text: TextSpan(
                             children: [
@@ -67,7 +72,7 @@ class FriendCard extends StatelessWidget {
                         ),
                       ],
                       if (friend.theyHelpingWith != null && friend.theyHelpingWith!.isNotEmpty) ...[
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6),
                         RichText(
                           text: TextSpan(
                             children: [
@@ -84,7 +89,7 @@ class FriendCard extends StatelessWidget {
                         ),
                       ],
                       if (friend.reminderDays > 0) ...[
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6),
                         RichText(
                           text: TextSpan(
                             children: [
@@ -104,9 +109,10 @@ class FriendCard extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.edit, color: AppConstants.primaryColor),
+                  icon: Icon(Icons.edit, color: AppConstants.primaryColor, size: 22),
                   tooltip: 'Edit friend details',
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(8),
+                  visualDensity: VisualDensity.compact,
                   onPressed: () {
                     Navigator.push(
                       context,
@@ -118,158 +124,107 @@ class FriendCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12.0),
-              child: Column(
-                children: [
-                  // Layout for larger screens
-                  Visibility(
-                    visible: MediaQuery.of(context).size.width > 360,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            child: _buildActionButton(
-                              context,
-                              Icons.message,
-                              'Message',
-                                  () => _showMessageOptions(context),
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            child: _buildActionButton(
-                              context,
-                              Icons.phone,
-                              'Call',
-                                  () => _callFriend(context),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+          ),
+          // Divider to separate content from actions
+          Divider(
+            height: 1,
+            thickness: 1,
+            color: AppConstants.borderColor.withOpacity(0.5),
+          ),
+          // Action buttons
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildActionButton(
+                    context,
+                    Icons.message,
+                    'Message',
+                        () => _showMessageOptions(context),
                   ),
-
-                  // Layout for smaller screens
-                  Visibility(
-                    visible: MediaQuery.of(context).size.width <= 360,
-                    child: Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 12.0),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                                  child: _buildActionButton(
-                                    context,
-                                    Icons.message,
-                                    'Message',
-                                        () => _showMessageOptions(context),
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                                  child: _buildActionButton(
-                                    context,
-                                    Icons.phone,
-                                    'Call',
-                                        () => _callFriend(context),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildActionButton(
+                    context,
+                    Icons.phone,
+                    'Call',
+                        () => _callFriend(context),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
+
   Widget _buildProfileImage() {
     if (friend.isEmoji) {
       return Container(
-        width: 64,
-        height: 64,
+        width: 60,
+        height: 60,
         decoration: BoxDecoration(
           color: AppConstants.profileCircleColor,
           shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Center(
           child: Text(
             friend.profileImage,
-            style: const TextStyle(fontSize: 32),
+            style: const TextStyle(fontSize: 30),
           ),
         ),
       );
     } else {
-      // For a real image file
       return Container(
-        width: 64,
-        height: 64,
+        width: 60,
+        height: 60,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           image: DecorationImage(
             image: FileImage(File(friend.profileImage)),
             fit: BoxFit.cover,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
       );
     }
   }
 
+// And update _buildActionButton method
   Widget _buildActionButton(
       BuildContext context,
       IconData icon,
       String label,
-      VoidCallback onPressed, {
-        bool isFullWidth = false,
-      }) {
-    // For very small screens, just show icon without text
-    final isVerySmallScreen = MediaQuery.of(context).size.width < 320;
-
-    return SizedBox(
-      width: isFullWidth ? double.infinity : null,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          foregroundColor: Colors.white,
-          backgroundColor: AppConstants.primaryColor,
-          padding: EdgeInsets.symmetric(
-            horizontal: isVerySmallScreen ? 12 : 16,
-            vertical: 12,
-          ),
-          textStyle: TextStyle(fontSize: isVerySmallScreen ? 11 : 14),
-        ),
-        child: isVerySmallScreen
-            ? Icon(icon, size: 18)
-            : Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 18),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              overflow: TextOverflow.visible,
-              softWrap: false,
-            ),
-          ],
+      VoidCallback onPressed) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 18),
+      label: Text(label),
+      style: ElevatedButton.styleFrom(
+        foregroundColor: Colors.white,
+        backgroundColor: AppConstants.primaryColor,
+        elevation: 1,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        textStyle: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
         ),
       ),
     );
