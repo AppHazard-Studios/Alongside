@@ -228,13 +228,13 @@ class FriendCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppConstants.profileCircleColor,
           shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08), // Increased shadow opacity
-              blurRadius: 6, // Increased blur
-              offset: const Offset(0, 3), // Slightly larger offset
-            ),
-          ],
+          //boxShadow: [
+          //  BoxShadow(
+          //    color: Colors.black.withOpacity(0.08), // Increased shadow opacity
+          //    blurRadius: 6, // Increased blur
+          //    offset: const Offset(0, 3), // Slightly larger offset
+          //  ),
+          //],
         ),
         child: Center(
           child: Text(
@@ -305,6 +305,8 @@ class FriendCard extends StatelessWidget {
       ),
     );
   }
+// Replace the entire _showMessageOptions method with this corrected version:
+
   void _showMessageOptions(BuildContext context) async {
     final provider = Provider.of<FriendsProvider>(context, listen: false);
     final customMessages = await provider.storageService.getCustomMessages();
@@ -315,6 +317,8 @@ class FriendCard extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
+      // Use the app's main background color instead of a tinted primary color
+      backgroundColor: const Color(AppConstants.backgroundColorValue),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -327,6 +331,7 @@ class FriendCard extends StatelessWidget {
           builder: (context, scrollController) {
             return Column(
               children: [
+                // Handle at the top
                 Container(
                   margin: const EdgeInsets.only(top: 16, bottom: 0),
                   width: 100,
@@ -336,8 +341,10 @@ class FriendCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
+
+                // Header with title and manage button
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), // Match home screen padding
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -347,6 +354,7 @@ class FriendCard extends StatelessWidget {
                           fontSize: 22,
                           fontWeight: FontWeight.w700,
                           letterSpacing: -0.2,
+                          color: AppConstants.primaryTextColor,
                         ),
                       ),
                       TextButton.icon(
@@ -355,15 +363,12 @@ class FriendCard extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) =>
-                              const ManageMessagesScreen(),
+                              builder: (context) => const ManageMessagesScreen(),
                             ),
                           );
                         },
-                        icon: Icon(Icons.settings,
-                            color: AppConstants.primaryColor, size: 26), // Increased icon size to match home
-                        label: Text('Manage',
-                            style: TextStyle(color: AppConstants.primaryColor, fontSize: 18)),
+                        icon: Icon(Icons.settings, color: AppConstants.primaryColor, size: 26),
+                        label: Text('Manage', style: TextStyle(color: AppConstants.primaryColor, fontSize: 18)),
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         ),
@@ -371,57 +376,89 @@ class FriendCard extends StatelessWidget {
                     ],
                   ),
                 ),
+
+                // Message list
                 Expanded(
                   child: ListView.builder(
                     controller: scrollController,
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    itemCount: allMessages.length + 1, // +1 for "Custom Message" option
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                    itemCount: allMessages.length + 1,
                     itemBuilder: (context, index) {
                       if (index == allMessages.length) {
+                        // Create custom message option
                         return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 0), // Reduced spacing between items
-                          child: ListTile(
-                            leading: Icon(Icons.add,
-                                color: AppConstants.primaryColor, size: 26), // Increased to match home
-                            title: Text(
-                              'Create custom message',
-                              style: TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w500,
-                                color: AppConstants.primaryTextColor,
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          child: Card(
+                            elevation: 2,
+                            color: Colors.white, // Explicit white background
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: BorderSide(color: Colors.grey.withOpacity(0.1), width: 1),
+                            ),
+                            child: InkWell(
+                              onTap: () => _showCustomMessageDialog(context),
+                              borderRadius: BorderRadius.circular(12),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.add_circle_outline,
+                                      size: 24,
+                                      color: AppConstants.primaryColor,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      'Create custom message',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w500,
+                                        color: AppConstants.primaryColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 4), // Reduced vertical padding, match home horizontal
-                            onTap: () => _showCustomMessageDialog(context),
                           ),
                         );
                       }
 
+                      // Regular message option
                       return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 0), // Reduced spacing between items
-                        child: ListTile(
-                          title: Text(
-                            allMessages[index],
-                            style: TextStyle(
-                              fontSize: 17,
-                              color: AppConstants.primaryTextColor,
-                              height: 1.4,
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Card(
+                          elevation: 2,
+                          color: Colors.white, // Explicit white background
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(color: Colors.grey.withOpacity(0.1), width: 1),
+                          ),
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.pop(context);
+                              _sendMessage(context, allMessages[index]);
+                            },
+                            borderRadius: BorderRadius.circular(12),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                              child: Text(
+                                allMessages[index],
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  color: AppConstants.primaryTextColor,
+                                  height: 1.4,
+                                ),
+                              ),
                             ),
                           ),
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 4), // Reduced vertical padding, match home horizontal
-                          onTap: () {
-                            Navigator.pop(context);
-                            _sendMessage(context, allMessages[index]);
-                          },
                         ),
                       );
                     },
                   ),
                 ),
-                // Add bottom padding for safe area
-                const SizedBox(height: 8), // Reduced bottom padding
+
+                const SizedBox(height: 8),
               ],
             );
           },
@@ -429,7 +466,6 @@ class FriendCard extends StatelessWidget {
       },
     );
   }
-
   void _showCustomMessageDialog(BuildContext context) {
     final textController = TextEditingController();
 
@@ -453,35 +489,29 @@ class FriendCard extends StatelessWidget {
           contentPadding: const EdgeInsets.all(28),
           content: Container(
             width: dialogWidth, // Fixed width container
-            child: TextField(
+            child: TextFormField(
               controller: textController,
+              // Use the same style as the AddFriend form fields
               decoration: InputDecoration(
-                hintText: 'Type your message...',
-                hintStyle: TextStyle(
-                  color: AppConstants.secondaryTextColor,
+                labelText: 'Type your message...',
+                border: const OutlineInputBorder(),
+                contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                floatingLabelBehavior: FloatingLabelBehavior.auto,
+                labelStyle: TextStyle(
                   fontSize: 17,
+                  color: AppConstants.secondaryTextColor,
                 ),
-                contentPadding: const EdgeInsets.only(bottom: 12),
-                enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(
-                      color: AppConstants.primaryColor
-                          .withOpacity(AppConstants.mediumOpacity),
-                      width: 1.5),
-                ),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide:
-                  BorderSide(color: AppConstants.primaryColor, width: 2),
-                ),
-                // No counter text
-                counterText: '',
+                filled: true,
+                fillColor: Colors.white,
               ),
               style: TextStyle(
                 fontSize: 17.0,
                 color: AppConstants.primaryTextColor,
                 height: 1.5,
               ),
-              minLines: 1, // Start with 1 line
-              maxLines: 3, // Grow up to 3 lines
+              minLines: 2, // Start with 2 lines
+              maxLines: 5, // Grow up to 5 lines
+              textCapitalization: TextCapitalization.sentences,
               textInputAction: TextInputAction.newline, // Allow new lines
             ),
           ),
@@ -502,9 +532,6 @@ class FriendCard extends StatelessWidget {
             TextButton(
               onPressed: () async {
                 if (textController.text.isNotEmpty) {
-                  Navigator.pop(context); // Close dialog
-                  Navigator.pop(context); // Close bottom sheet
-
                   // Save the custom message
                   final storageService = Provider.of<FriendsProvider>(
                     context,
@@ -512,9 +539,28 @@ class FriendCard extends StatelessWidget {
                   ).storageService;
 
                   await storageService.addCustomMessage(textController.text);
+                  Navigator.pop(context); // Just close the dialog, don't send message
 
-                  // Send the message
-                  _sendMessage(context, textController.text);
+                  // Show a brief feedback that message was saved with updated styling
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Message saved',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                        ),
+                      ),
+                      duration: const Duration(seconds: 2),
+                      backgroundColor: AppConstants.primaryColor,
+                      behavior: SnackBarBehavior.floating,
+                      elevation: 6,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    ),
+                  );
                 }
               },
               style: TextButton.styleFrom(
@@ -525,7 +571,7 @@ class FriendCard extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              child: const Text('Save & Send'),
+              child: const Text('Save'), // Changed from "Save & Send" to just "Save"
             ),
           ],
           actionsPadding:
@@ -552,11 +598,24 @@ class FriendCard extends StatelessWidget {
         );
       }
     } catch (e) {
+      // For error snackbars, use a warning color to differentiate them
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Unable to open messaging app. Try again later.'),
+        SnackBar(
+          content: Text(
+            'Unable to open messaging app. Try again later.',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+            ),
+          ),
+          duration: const Duration(seconds: 2),
+          backgroundColor: Colors.redAccent,
           behavior: SnackBarBehavior.floating,
-          margin: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          elevation: 6,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         ),
       );
     }
@@ -574,11 +633,24 @@ class FriendCard extends StatelessWidget {
         throw Exception('Could not launch dialer');
       }
     } catch (e) {
+      // For error snackbars, use a warning color to differentiate them
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Unable to open phone app. Try again later.'),
+        SnackBar(
+          content: Text(
+            'Unable to open phone app. Try again later.',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+            ),
+          ),
+          duration: const Duration(seconds: 2),
+          backgroundColor: Colors.redAccent,
           behavior: SnackBarBehavior.floating,
-          margin: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          elevation: 6,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         ),
       );
     }
@@ -631,7 +703,7 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
           icon: Icon(
             Icons.arrow_back,
             color: AppConstants.primaryColor,
-            size: 28, // Match home screen icons
+            size: 26, // Match home screen icons
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -679,32 +751,11 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
           ),
         ),
       )
-          : Theme(
-        data: Theme.of(context).copyWith(
-          canvasColor: Colors.transparent,
-        ),
+          : Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         child: ReorderableListView.builder(
-          padding: const EdgeInsets.all(20), // Match home screen padding
+          padding: const EdgeInsets.symmetric(vertical: 12),
           itemCount: _customMessages.length,
-          proxyDecorator: (child, index, animation) {
-            return AnimatedBuilder(
-              animation: animation,
-              builder: (BuildContext context, Widget? child) {
-                final double animValue =
-                Curves.easeInOut.transform(animation.value);
-                final double elevation = lerpDouble(0, 6, animValue)!;
-
-                return Material(
-                  elevation: elevation,
-                  color: Colors.transparent,
-                  shadowColor: Colors.black45,
-                  borderRadius: BorderRadius.circular(12),
-                  child: child,
-                );
-              },
-              child: child,
-            );
-          },
           onReorder: (oldIndex, newIndex) {
             setState(() {
               if (oldIndex < newIndex) {
@@ -720,34 +771,55 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
             });
           },
           itemBuilder: (context, index) {
-            return Card(
-              key: Key(_customMessages[index]),
-              margin: const EdgeInsets.only(bottom: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: ListTile(
-                leading: IconButton(
-                  icon: Icon(Icons.delete,
-                      color: AppConstants.deleteColor,
-                      size: 26), // Increased to match home
-                  onPressed: () => _deleteMessage(index),
+            return Dismissible(
+              key: Key('dismissible-${_customMessages[index]}'),
+              background: Container(
+                color: AppConstants.deleteColor.withOpacity(0.1),
+                alignment: Alignment.centerRight,
+                padding: const EdgeInsets.only(right: 20),
+                child: Icon(
+                  Icons.delete,
+                  color: AppConstants.deleteColor,
+                  size: 26,
                 ),
-                title: Text(
-                  _customMessages[index],
-                  style: TextStyle(
-                    fontSize: 17,
-                    color: AppConstants.primaryTextColor,
-                    height: 1.4,
+              ),
+              direction: DismissDirection.endToStart,
+              onDismissed: (direction) {
+                _deleteMessage(index);
+              },
+              confirmDismiss: (direction) {
+                return _confirmDelete(index);
+              },
+              child: Card(
+                key: ValueKey(_customMessages[index]), // Required for ReorderableListView
+                margin: const EdgeInsets.symmetric(vertical: 6),
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: Colors.grey.withOpacity(0.1), width: 1),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 16),
+                  child: ListTile(
+                    title: Text(
+                      _customMessages[index],
+                      style: TextStyle(
+                        fontSize: 18, // Increased font size
+                        color: AppConstants.primaryTextColor,
+                        height: 1.4,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                    ),
+                    trailing: ReorderableDragStartListener(
+                      index: index,
+                      child: Icon(Icons.drag_handle,
+                          color: AppConstants.secondaryTextColor,
+                          size: 26), // Increased to match home
+                    ),
                   ),
                 ),
-                trailing: ReorderableDragStartListener(
-                  index: index,
-                  child: Icon(Icons.drag_handle,
-                      color: AppConstants.secondaryTextColor,
-                      size: 26), // Increased to match home
-                ),
-                contentPadding: const EdgeInsets.fromLTRB(8, 12, 16, 12),
               ),
             );
           },
@@ -761,11 +833,8 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
     );
   }
 
-  void _deleteMessage(int index) {
-    final deletedMessage = _customMessages[index];
-
-    // Show confirmation dialog
-    showDialog(
+  Future<bool> _confirmDelete(int index) async {
+    return await showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
@@ -789,7 +858,7 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
         contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(context, false),
             style: TextButton.styleFrom(
               foregroundColor: AppConstants.primaryColor,
               padding: const EdgeInsets.all(18),
@@ -801,41 +870,7 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
-              // Remove the message
-              setState(() {
-                _customMessages.removeAt(index);
-              });
-
-              // Remove from storage
-              Provider.of<FriendsProvider>(context, listen: false)
-                  .storageService
-                  .deleteCustomMessage(deletedMessage);
-
-              // Close dialog
-              Navigator.pop(context);
-
-              // Show snackbar
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Message deleted'),
-                  action: SnackBarAction(
-                    label: 'Undo',
-                    onPressed: () {
-                      setState(() {
-                        _customMessages.insert(index, deletedMessage);
-                        Provider.of<FriendsProvider>(context, listen: false)
-                            .storageService
-                            .saveCustomMessages(_customMessages);
-                      });
-                    },
-                  ),
-                  behavior: SnackBarBehavior.floating,
-                  margin:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                ),
-              );
-            },
+            onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(
               foregroundColor: AppConstants.deleteColor,
               padding: const EdgeInsets.all(18),
@@ -848,6 +883,53 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
           ),
         ],
         actionsPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      ),
+    ) ?? false; // In case the dialog is dismissed
+  }
+
+  void _deleteMessage(int index) {
+    final deletedMessage = _customMessages[index];
+
+    // Remove the message
+    setState(() {
+      _customMessages.removeAt(index);
+    });
+
+    // Remove from storage
+    Provider.of<FriendsProvider>(context, listen: false)
+        .storageService
+        .deleteCustomMessage(deletedMessage);
+
+    // Show snackbar with updated styling
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Message deleted',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+          ),
+        ),
+        action: SnackBarAction(
+          label: 'Undo',
+          textColor: Colors.white, // White text for better visibility
+          onPressed: () {
+            setState(() {
+              _customMessages.insert(index, deletedMessage);
+              Provider.of<FriendsProvider>(context, listen: false)
+                  .storageService
+                  .saveCustomMessages(_customMessages);
+            });
+          },
+        ),
+        duration: const Duration(seconds: 2),
+        backgroundColor: AppConstants.primaryColor,
+        behavior: SnackBarBehavior.floating,
+        elevation: 6,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       ),
     );
   }
@@ -875,35 +957,29 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
           contentPadding: const EdgeInsets.all(28),
           content: Container(
             width: dialogWidth, // Fixed width container
-            child: TextField(
+            child: TextFormField(
               controller: textController,
+              // Use the same style as the AddFriend form fields
               decoration: InputDecoration(
-                hintText: 'Type your message...',
-                hintStyle: TextStyle(
-                  color: AppConstants.secondaryTextColor,
+                labelText: 'Type your message...',
+                border: const OutlineInputBorder(),
+                contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                floatingLabelBehavior: FloatingLabelBehavior.auto,
+                labelStyle: TextStyle(
                   fontSize: 17,
+                  color: AppConstants.secondaryTextColor,
                 ),
-                contentPadding: const EdgeInsets.only(bottom: 12),
-                enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(
-                      color: AppConstants.primaryColor
-                          .withOpacity(AppConstants.mediumOpacity),
-                      width: 1.5),
-                ),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide:
-                  BorderSide(color: AppConstants.primaryColor, width: 2),
-                ),
-                // No counter text
-                counterText: '',
+                filled: true,
+                fillColor: Colors.white,
               ),
               style: TextStyle(
                 fontSize: 17.0,
                 color: AppConstants.primaryTextColor,
                 height: 1.5,
               ),
-              minLines: 1, // Start with 1 line
-              maxLines: 3, // Grow up to 3 lines
+              minLines: 2, // Start with 2 lines
+              maxLines: 5, // Grow up to 5 lines
+              textCapitalization: TextCapitalization.sentences,
               textInputAction: TextInputAction.newline, // Allow new lines
             ),
           ),
@@ -935,6 +1011,27 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
                   await Provider.of<FriendsProvider>(context, listen: false)
                       .storageService
                       .saveCustomMessages(_customMessages);
+
+                  // Show a brief feedback that message was saved with updated styling
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Message saved',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                        ),
+                      ),
+                      duration: const Duration(seconds: 2),
+                      backgroundColor: AppConstants.primaryColor,
+                      behavior: SnackBarBehavior.floating,
+                      elevation: 6,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    ),
+                  );
                 }
               },
               style: TextButton.styleFrom(
@@ -945,7 +1042,7 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              child: const Text('Add'),
+              child: const Text('Save'), // Changed from "Save & Send" to just "Save"
             ),
           ],
           actionsPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),

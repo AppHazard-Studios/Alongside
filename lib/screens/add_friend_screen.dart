@@ -73,7 +73,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
           icon: Icon(
             Icons.arrow_back,
             color: AppConstants.primaryColor,
-            size: 28, // Matching home screen icon size
+            size: 26, // Match home screen icons
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -497,6 +497,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     showModalBottomSheet(
       context: context,
       useSafeArea: true,
+      backgroundColor: const Color(AppConstants.backgroundColorValue), // Match message/call button background
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -678,9 +679,18 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
           SnackBar(
             content: Text(
               '$name added as a friend',
-              style: TextStyle(fontSize: 16),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+              ),
             ),
+            duration: const Duration(seconds: 2),
+            backgroundColor: AppConstants.primaryColor,
             behavior: SnackBarBehavior.floating,
+            elevation: 6,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
             margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           ),
         );
@@ -691,9 +701,18 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
           SnackBar(
             content: Text(
               'Changes saved for $name',
-              style: TextStyle(fontSize: 16),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+              ),
             ),
+            duration: const Duration(seconds: 2),
+            backgroundColor: AppConstants.primaryColor,
             behavior: SnackBarBehavior.floating,
+            elevation: 6,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
             margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           ),
         );
@@ -753,9 +772,18 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                   SnackBar(
                     content: Text(
                       '${widget.friend?.name} removed',
-                      style: TextStyle(fontSize: 16),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
                     ),
+                    duration: const Duration(seconds: 2),
+                    backgroundColor: AppConstants.primaryColor,
                     behavior: SnackBarBehavior.floating,
+                    elevation: 6,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                   ),
                 );
