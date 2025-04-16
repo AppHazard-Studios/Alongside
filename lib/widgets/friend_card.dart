@@ -22,94 +22,48 @@ class FriendCard extends StatelessWidget {
     final TextStyle labelStyle = TextStyle(
       fontWeight: FontWeight.bold,
       color: AppConstants.primaryTextColor,
-      fontSize: 13,
+      fontSize: 16,
+      letterSpacing: 0.2,
     );
 
     final TextStyle valueStyle = TextStyle(
       color: AppConstants.secondaryTextColor,
-      fontSize: 13,
-      height: 1.4,
+      fontSize: 16,
+      height: 1.5,
+      letterSpacing: 0.1,
     );
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 2,
-      shadowColor: Colors.black.withOpacity(0.08),
+      margin: const EdgeInsets.only(bottom: 20),
+      elevation: 4,
+      shadowColor: Colors.black.withOpacity(0.12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.grey.withOpacity(0.1), width: 1),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header with profile image and name
+          // Header with profile image, name, and edit button consistently at top
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(20, 22, 12, 16),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 _buildProfileImage(),
-                const SizedBox(width: 16),
+                const SizedBox(width: 18),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        friend.name,
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      // Show helping information if available
-                      if (friend.helpingWith != null && friend.helpingWith!.isNotEmpty) ...[
-                        const SizedBox(height: 6),
-                        RichText(
-                          text: TextSpan(
-                            children: [
-                              TextSpan(
-                                text: 'You\'re alongside them in: ',
-                                style: labelStyle,
-                              ),
-                              TextSpan(
-                                text: friend.helpingWith,
-                                style: valueStyle,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                      if (friend.theyHelpingWith != null && friend.theyHelpingWith!.isNotEmpty) ...[
-                        const SizedBox(height: 6),
-                        RichText(
-                          text: TextSpan(
-                            children: [
-                              TextSpan(
-                                text: 'They\'re alongside you in: ',
-                                style: labelStyle,
-                              ),
-                              TextSpan(
-                                text: friend.theyHelpingWith,
-                                style: valueStyle,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                      if (friend.reminderDays > 0) ...[
-                        const SizedBox(height: 6),
-                        RichText(
-                          text: TextSpan(
-                            children: [
-                              TextSpan(
-                                text: 'Reminder: ',
-                                style: labelStyle,
-                              ),
-                              TextSpan(
-                                text: 'Every ${friend.reminderDays} ${friend.reminderDays == 1 ? 'day' : 'days'}',
-                                style: valueStyle,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ],
+                  child: Text(
+                    friend.name,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 24, // Increased to 24
+                      letterSpacing: -0.2,
+                    ),
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.edit, color: AppConstants.primaryColor, size: 22),
+                  icon: Icon(Icons.edit, color: AppConstants.primaryColor, size: 26), // Increased to match home screen
                   tooltip: 'Edit friend details',
                   padding: const EdgeInsets.all(8),
                   visualDensity: VisualDensity.compact,
@@ -125,15 +79,119 @@ class FriendCard extends StatelessWidget {
               ],
             ),
           ),
+
+          // "Alongside" information section - add icons for visual balance
+          if (friend.helpingWith != null && friend.helpingWith!.isNotEmpty ||
+              friend.theyHelpingWith != null && friend.theyHelpingWith!.isNotEmpty ||
+              friend.reminderDays > 0)
+            Padding(
+              padding: const EdgeInsets.only(left: 20, right: 20, bottom: 18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (friend.helpingWith != null && friend.helpingWith!.isNotEmpty) ...[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.favorite_outline,
+                          size: 22, // Slightly increased
+                          color: AppConstants.primaryColor,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: RichText(
+                            text: TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'You\'re alongside them in: ',
+                                  style: labelStyle,
+                                ),
+                                TextSpan(
+                                  text: friend.helpingWith,
+                                  style: valueStyle,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  if (friend.theyHelpingWith != null && friend.theyHelpingWith!.isNotEmpty) ...[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.person_outline,
+                          size: 22, // Slightly increased
+                          color: AppConstants.secondaryColor,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: RichText(
+                            text: TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'They\'re alongside you in: ',
+                                  style: labelStyle,
+                                ),
+                                TextSpan(
+                                  text: friend.theyHelpingWith,
+                                  style: valueStyle,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  if (friend.reminderDays > 0) ...[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.calendar_today_outlined,
+                          size: 22, // Slightly increased
+                          color: AppConstants.primaryColor,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: RichText(
+                            text: TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'Reminder: ',
+                                  style: labelStyle,
+                                ),
+                                TextSpan(
+                                  text: 'Every ${friend.reminderDays} ${friend.reminderDays == 1 ? 'day' : 'days'}',
+                                  style: valueStyle,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
           // Divider to separate content from actions
           Divider(
             height: 1,
             thickness: 1,
-            color: AppConstants.borderColor.withOpacity(0.5),
+            color: AppConstants.borderColor.withOpacity(0.6),
           ),
+
           // Action buttons
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(14),
             child: Row(
               children: [
                 Expanded(
@@ -144,7 +202,7 @@ class FriendCard extends StatelessWidget {
                         () => _showMessageOptions(context),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 14),
                 Expanded(
                   child: _buildActionButton(
                     context,
@@ -161,34 +219,34 @@ class FriendCard extends StatelessWidget {
     );
   }
 
-
+// Update the profile image to be slightly larger
   Widget _buildProfileImage() {
     if (friend.isEmoji) {
       return Container(
-        width: 60,
-        height: 60,
+        width: 65, // Increased from 60
+        height: 65, // Increased from 60
         decoration: BoxDecoration(
           color: AppConstants.profileCircleColor,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
+              color: Colors.black.withOpacity(0.08), // Increased shadow opacity
+              blurRadius: 6, // Increased blur
+              offset: const Offset(0, 3), // Slightly larger offset
             ),
           ],
         ),
         child: Center(
           child: Text(
             friend.profileImage,
-            style: const TextStyle(fontSize: 30),
+            style: const TextStyle(fontSize: 32), // Increased from 30
           ),
         ),
       );
     } else {
       return Container(
-        width: 60,
-        height: 60,
+        width: 65, // Increased from 60
+        height: 65, // Increased from 60
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           image: DecorationImage(
@@ -197,9 +255,9 @@ class FriendCard extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
+              color: Colors.black.withOpacity(0.15), // Increased shadow opacity
+              blurRadius: 8, // Increased blur
+              offset: const Offset(0, 3), // Slightly larger offset
             ),
           ],
         ),
@@ -207,29 +265,46 @@ class FriendCard extends StatelessWidget {
     }
   }
 
-// And update _buildActionButton method
+// Update the action buttons to be more prominent with larger icons
   Widget _buildActionButton(
       BuildContext context,
       IconData icon,
       String label,
       VoidCallback onPressed) {
-    return ElevatedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon, size: 18),
-      label: Text(label),
-      style: ElevatedButton.styleFrom(
-        foregroundColor: Colors.white,
-        backgroundColor: AppConstants.primaryColor,
-        elevation: 1,
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        textStyle: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
+    return Material(
+      color: AppConstants.primaryColor.withOpacity(0.12),
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(8),
+        splashColor: AppConstants.primaryColor.withOpacity(0.2),
+        highlightColor: AppConstants.primaryColor.withOpacity(0.1),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 22, // Increased from 20 to match home screen icons
+                color: AppConstants.primaryColor,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  color: AppConstants.primaryColor,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
-
   void _showMessageOptions(BuildContext context) async {
     final provider = Provider.of<FriendsProvider>(context, listen: false);
     final customMessages = await provider.storageService.getCustomMessages();
@@ -239,7 +314,7 @@ class FriendCard extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      useSafeArea: true, // Add this to respect safe areas
+      useSafeArea: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -253,8 +328,8 @@ class FriendCard extends StatelessWidget {
             return Column(
               children: [
                 Container(
-                  margin: const EdgeInsets.only(top: 16, bottom: 8),
-                  width: 50,
+                  margin: const EdgeInsets.only(top: 16, bottom: 0),
+                  width: 100,
                   height: 5,
                   decoration: BoxDecoration(
                     color: AppConstants.bottomSheetHandleColor,
@@ -262,13 +337,17 @@ class FriendCard extends StatelessWidget {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), // Match home screen padding
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         'Message ${friend.name}',
-                        style: Theme.of(context).textTheme.titleLarge,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.2,
+                        ),
                       ),
                       TextButton.icon(
                         onPressed: () {
@@ -276,12 +355,18 @@ class FriendCard extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const ManageMessagesScreen(),
+                              builder: (context) =>
+                              const ManageMessagesScreen(),
                             ),
                           );
                         },
-                        icon: Icon(Icons.settings, color: AppConstants.primaryColor),
-                        label: Text('Manage', style: TextStyle(color: AppConstants.primaryColor)),
+                        icon: Icon(Icons.settings,
+                            color: AppConstants.primaryColor, size: 26), // Increased icon size to match home
+                        label: Text('Manage',
+                            style: TextStyle(color: AppConstants.primaryColor, fontSize: 18)),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        ),
                       ),
                     ],
                   ),
@@ -294,21 +379,38 @@ class FriendCard extends StatelessWidget {
                     itemBuilder: (context, index) {
                       if (index == allMessages.length) {
                         return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          padding: const EdgeInsets.symmetric(vertical: 0), // Reduced spacing between items
                           child: ListTile(
-                            leading: Icon(Icons.add, color: AppConstants.primaryColor),
-                            title: const Text('Create custom message'),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                            leading: Icon(Icons.add,
+                                color: AppConstants.primaryColor, size: 26), // Increased to match home
+                            title: Text(
+                              'Create custom message',
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w500,
+                                color: AppConstants.primaryTextColor,
+                              ),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 4), // Reduced vertical padding, match home horizontal
                             onTap: () => _showCustomMessageDialog(context),
                           ),
                         );
                       }
 
                       return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        padding: const EdgeInsets.symmetric(vertical: 0), // Reduced spacing between items
                         child: ListTile(
-                          title: Text(allMessages[index]),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                          title: Text(
+                            allMessages[index],
+                            style: TextStyle(
+                              fontSize: 17,
+                              color: AppConstants.primaryTextColor,
+                              height: 1.4,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 4), // Reduced vertical padding, match home horizontal
                           onTap: () {
                             Navigator.pop(context);
                             _sendMessage(context, allMessages[index]);
@@ -319,7 +421,7 @@ class FriendCard extends StatelessWidget {
                   ),
                 ),
                 // Add bottom padding for safe area
-                const SizedBox(height: 16),
+                const SizedBox(height: 8), // Reduced bottom padding
               ],
             );
           },
@@ -339,8 +441,16 @@ class FriendCard extends StatelessWidget {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Create Message'),
-          contentPadding: const EdgeInsets.all(24),
+          title: Text(
+            'Create Message',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: AppConstants.primaryTextColor,
+              letterSpacing: -0.2,
+            ),
+          ),
+          contentPadding: const EdgeInsets.all(28),
           content: Container(
             width: dialogWidth, // Fixed width container
             child: TextField(
@@ -349,19 +459,24 @@ class FriendCard extends StatelessWidget {
                 hintText: 'Type your message...',
                 hintStyle: TextStyle(
                   color: AppConstants.secondaryTextColor,
+                  fontSize: 17,
                 ),
-                contentPadding: const EdgeInsets.only(bottom: 8),
+                contentPadding: const EdgeInsets.only(bottom: 12),
                 enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: AppConstants.primaryColor.withOpacity(AppConstants.mediumOpacity), width: 1.5),
+                  borderSide: BorderSide(
+                      color: AppConstants.primaryColor
+                          .withOpacity(AppConstants.mediumOpacity),
+                      width: 1.5),
                 ),
                 focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
+                  borderSide:
+                  BorderSide(color: AppConstants.primaryColor, width: 2),
                 ),
                 // No counter text
                 counterText: '',
               ),
               style: TextStyle(
-                fontSize: 16.0,
+                fontSize: 17.0,
                 color: AppConstants.primaryTextColor,
                 height: 1.5,
               ),
@@ -375,8 +490,12 @@ class FriendCard extends StatelessWidget {
             TextButton(
               onPressed: () => Navigator.pop(context),
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(18),
                 foregroundColor: AppConstants.primaryColor,
+                textStyle: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               child: const Text('Cancel'),
             ),
@@ -399,24 +518,28 @@ class FriendCard extends StatelessWidget {
                 }
               },
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(18),
                 foregroundColor: AppConstants.primaryColor,
+                textStyle: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               child: const Text('Save & Send'),
             ),
           ],
-          actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          actionsPadding:
+          const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         );
       },
     );
   }
 
   void _sendMessage(BuildContext context, String message) async {
-    final phoneNumber =
-    friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+    final phoneNumber = friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
     try {
-      final smsUri = Uri.parse(
-          'sms:$phoneNumber?body=${Uri.encodeComponent(message)}');
+      final smsUri =
+      Uri.parse('sms:$phoneNumber?body=${Uri.encodeComponent(message)}');
       bool launched = await launchUrl(
         smsUri,
         mode: LaunchMode.externalApplication,
@@ -440,8 +563,7 @@ class FriendCard extends StatelessWidget {
   }
 
   void _callFriend(BuildContext context) async {
-    final phoneNumber =
-    friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+    final phoneNumber = friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
     try {
       final telUri = Uri.parse('tel:$phoneNumber');
       bool launched = await launchUrl(
@@ -495,10 +617,29 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Manage Custom Messages'),
+        title: Text(
+          'Manage Custom Messages',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            letterSpacing: -0.3,
+          ),
+        ),
+        backgroundColor: AppConstants.primaryColor.withOpacity(0.12),
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back,
+            color: AppConstants.primaryColor,
+            size: 28, // Match home screen icons
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: AppConstants.primaryColor))
+          ? Center(
+          child:
+          CircularProgressIndicator(color: AppConstants.primaryColor))
           : _customMessages.isEmpty
           ? Center(
         child: Padding(
@@ -514,16 +655,23 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
               const SizedBox(height: 24),
               Text(
                 'No custom messages yet',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                style: Theme.of(context)
+                    .textTheme
+                    .headlineMedium
+                    ?.copyWith(
                   color: AppConstants.primaryTextColor,
+                  fontSize: 28,
                 ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
               Text(
                 'Add custom messages when sending texts to friends',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                style:
+                Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: AppConstants.secondaryTextColor,
+                  fontSize: 17,
+                  height: 1.5,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -532,19 +680,18 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
         ),
       )
           : Theme(
-        // Apply a custom theme to fix the drag decoration
         data: Theme.of(context).copyWith(
           canvasColor: Colors.transparent,
         ),
         child: ReorderableListView.builder(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20), // Match home screen padding
           itemCount: _customMessages.length,
           proxyDecorator: (child, index, animation) {
-            // Custom proxy decorator for proper shape when dragging
             return AnimatedBuilder(
               animation: animation,
               builder: (BuildContext context, Widget? child) {
-                final double animValue = Curves.easeInOut.transform(animation.value);
+                final double animValue =
+                Curves.easeInOut.transform(animation.value);
                 final double elevation = lerpDouble(0, 6, animValue)!;
 
                 return Material(
@@ -575,21 +722,32 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
           itemBuilder: (context, index) {
             return Card(
               key: Key(_customMessages[index]),
-              margin: const EdgeInsets.only(bottom: 12),
+              margin: const EdgeInsets.only(bottom: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
               child: ListTile(
                 leading: IconButton(
-                  icon: Icon(Icons.delete, color: AppConstants.deleteColor),
+                  icon: Icon(Icons.delete,
+                      color: AppConstants.deleteColor,
+                      size: 26), // Increased to match home
                   onPressed: () => _deleteMessage(index),
                 ),
-                title: Text(_customMessages[index]),
+                title: Text(
+                  _customMessages[index],
+                  style: TextStyle(
+                    fontSize: 17,
+                    color: AppConstants.primaryTextColor,
+                    height: 1.4,
+                  ),
+                ),
                 trailing: ReorderableDragStartListener(
                   index: index,
-                  child: Icon(Icons.drag_handle, color: AppConstants.secondaryTextColor),
+                  child: Icon(Icons.drag_handle,
+                      color: AppConstants.secondaryTextColor,
+                      size: 26), // Increased to match home
                 ),
-                contentPadding: const EdgeInsets.only(left: 8, right: 16, top: 8, bottom: 8),
+                contentPadding: const EdgeInsets.fromLTRB(8, 12, 16, 12),
               ),
             );
           },
@@ -598,7 +756,7 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddMessageDialog,
         backgroundColor: AppConstants.primaryColor,
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.add, size: 30), // Increased size to match home
       ),
     );
   }
@@ -610,15 +768,35 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Message'),
-        content: const Text('Are you sure you want to delete this custom message?'),
+        title: Text(
+          'Delete Message',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            color: AppConstants.primaryTextColor,
+            letterSpacing: -0.2,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to delete this custom message?',
+          style: TextStyle(
+            fontSize: 17,
+            color: AppConstants.primaryTextColor,
+            height: 1.5,
+          ),
+        ),
         backgroundColor: AppConstants.dialogBackgroundColor,
+        contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             style: TextButton.styleFrom(
               foregroundColor: AppConstants.primaryColor,
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(18),
+              textStyle: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             child: const Text('Cancel'),
           ),
@@ -653,17 +831,23 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
                     },
                   ),
                   behavior: SnackBarBehavior.floating,
-                  margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  margin:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 ),
               );
             },
             style: TextButton.styleFrom(
               foregroundColor: AppConstants.deleteColor,
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(18),
+              textStyle: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             child: const Text('Delete'),
           ),
         ],
+        actionsPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       ),
     );
   }
@@ -679,8 +863,16 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Add Custom Message'),
-          contentPadding: const EdgeInsets.all(24),
+          title: Text(
+            'Add Custom Message',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: AppConstants.primaryTextColor,
+              letterSpacing: -0.2,
+            ),
+          ),
+          contentPadding: const EdgeInsets.all(28),
           content: Container(
             width: dialogWidth, // Fixed width container
             child: TextField(
@@ -689,19 +881,24 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
                 hintText: 'Type your message...',
                 hintStyle: TextStyle(
                   color: AppConstants.secondaryTextColor,
+                  fontSize: 17,
                 ),
-                contentPadding: const EdgeInsets.only(bottom: 8),
+                contentPadding: const EdgeInsets.only(bottom: 12),
                 enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: AppConstants.primaryColor.withOpacity(AppConstants.mediumOpacity), width: 1.5),
+                  borderSide: BorderSide(
+                      color: AppConstants.primaryColor
+                          .withOpacity(AppConstants.mediumOpacity),
+                      width: 1.5),
                 ),
                 focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
+                  borderSide:
+                  BorderSide(color: AppConstants.primaryColor, width: 2),
                 ),
                 // No counter text
                 counterText: '',
               ),
               style: TextStyle(
-                fontSize: 16.0,
+                fontSize: 17.0,
                 color: AppConstants.primaryTextColor,
                 height: 1.5,
               ),
@@ -715,8 +912,12 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
             TextButton(
               onPressed: () => Navigator.pop(context),
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(18),
                 foregroundColor: AppConstants.primaryColor,
+                textStyle: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               child: const Text('Cancel'),
             ),
@@ -737,13 +938,17 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
                 }
               },
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(18),
                 foregroundColor: AppConstants.primaryColor,
+                textStyle: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               child: const Text('Add'),
             ),
           ],
-          actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          actionsPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         );
       },
     );

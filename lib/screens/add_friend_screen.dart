@@ -59,19 +59,42 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.friend == null ? 'Add Friend' : 'Edit Friend'),
-        actions: widget.friend != null
-            ? [
-          IconButton(
-            icon: Icon(Icons.delete, color: AppConstants.deleteColor),
-            padding: const EdgeInsets.all(12),
-            onPressed: _confirmDelete,
+        title: Text(
+          widget.friend == null ? 'Add Friend' : 'Edit Friend',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            letterSpacing: -0.3,
           ),
-        ]
-            : null,
+        ),
+        backgroundColor: AppConstants.primaryColor.withOpacity(0.12),
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back,
+            color: AppConstants.primaryColor,
+            size: 28, // Matching home screen icon size
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        actions: [
+          // Add Save button to app bar for both add and edit modes
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: IconButton(
+              icon: Icon(
+                Icons.check,
+                color: AppConstants.primaryColor,
+                size: 30, // Matching home screen plus icon size
+              ),
+              tooltip: 'Save',
+              onPressed: _saveFriend,
+            ),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 20), // Consistent with home screen
         child: SafeArea(
           child: Form(
             key: _formKey,
@@ -79,7 +102,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Add top padding for breathing room
-                const SizedBox(height: 8),
+                const SizedBox(height: 16),
 
                 Center(
                   child: Column(
@@ -112,8 +135,15 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                       const SizedBox(height: 16),
                       TextButton.icon(
                         onPressed: _showProfileOptions,
-                        icon: Icon(Icons.edit, color: AppConstants.primaryColor),
-                        label: Text('Change Profile', style: TextStyle(color: AppConstants.primaryColor)),
+                        icon: Icon(Icons.edit, color: AppConstants.primaryColor, size: 24),
+                        label: Text(
+                            'Change Profile',
+                            style: TextStyle(
+                              color: AppConstants.primaryColor,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w600,
+                            )
+                        ),
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         ),
@@ -131,9 +161,13 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                   decoration: InputDecoration(
                     labelText: 'Name',
                     border: const OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.person, color: AppConstants.primaryColor),
+                    prefixIcon: Icon(Icons.person, color: AppConstants.primaryColor, size: 24),
                     // Add more padding inside the text field
                     contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                    labelStyle: TextStyle(
+                      fontSize: 17,
+                      color: AppConstants.secondaryTextColor,
+                    ),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -141,6 +175,10 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                     }
                     return null;
                   },
+                  style: TextStyle(
+                    fontSize: 17,
+                    color: AppConstants.primaryTextColor,
+                  ),
                   textCapitalization: TextCapitalization.words,
                 ),
 
@@ -152,9 +190,17 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                   decoration: InputDecoration(
                     labelText: 'Phone Number',
                     border: const OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.phone, color: AppConstants.primaryColor),
+                    prefixIcon: Icon(Icons.phone, color: AppConstants.primaryColor, size: 24),
                     hintText: 'Enter phone number to text/call',
                     contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                    labelStyle: TextStyle(
+                      fontSize: 17,
+                      color: AppConstants.secondaryTextColor,
+                    ),
+                    hintStyle: TextStyle(
+                      fontSize: 16,
+                      color: AppConstants.secondaryTextColor.withOpacity(0.7),
+                    ),
                   ),
                   keyboardType: TextInputType.phone,
                   validator: (value) {
@@ -166,6 +212,10 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                     }
                     return null;
                   },
+                  style: TextStyle(
+                    fontSize: 17,
+                    color: AppConstants.primaryTextColor,
+                  ),
                 ),
 
                 const SizedBox(height: 20),
@@ -175,9 +225,21 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                   decoration: InputDecoration(
                     labelText: 'What are you alongside them in?',
                     border: const OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.support, color: AppConstants.primaryColor),
+                    prefixIcon: Icon(Icons.support, color: AppConstants.primaryColor, size: 24),
                     hintText: 'e.g., "Accountability for exercise"',
                     contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                    labelStyle: TextStyle(
+                      fontSize: 17,
+                      color: AppConstants.secondaryTextColor,
+                    ),
+                    hintStyle: TextStyle(
+                      fontSize: 16,
+                      color: AppConstants.secondaryTextColor.withOpacity(0.7),
+                    ),
+                  ),
+                  style: TextStyle(
+                    fontSize: 17,
+                    color: AppConstants.primaryTextColor,
                   ),
                   textCapitalization: TextCapitalization.sentences,
                 ),
@@ -189,9 +251,21 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                   decoration: InputDecoration(
                     labelText: 'What are they alongside you in?',
                     border: const OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.support_agent, color: AppConstants.primaryColor),
+                    prefixIcon: Icon(Icons.support_agent, color: AppConstants.primaryColor, size: 24),
                     hintText: 'e.g., "Prayer for family issues"',
                     contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                    labelStyle: TextStyle(
+                      fontSize: 17,
+                      color: AppConstants.secondaryTextColor,
+                    ),
+                    hintStyle: TextStyle(
+                      fontSize: 16,
+                      color: AppConstants.secondaryTextColor.withOpacity(0.7),
+                    ),
+                  ),
+                  style: TextStyle(
+                    fontSize: 17,
+                    color: AppConstants.primaryTextColor,
                   ),
                   textCapitalization: TextCapitalization.sentences,
                 ),
@@ -215,7 +289,11 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                       children: [
                         Text(
                           'Notification Settings',
-                          style: Theme.of(context).textTheme.titleMedium,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: -0.2,
+                          ),
                         ),
                         const SizedBox(height: 20),
                         DropdownButtonFormField<int>(
@@ -223,8 +301,12 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                           decoration: InputDecoration(
                             labelText: 'Check-in Reminder',
                             border: const OutlineInputBorder(),
-                            prefixIcon: Icon(Icons.notifications, color: AppConstants.primaryColor),
+                            prefixIcon: Icon(Icons.notifications, color: AppConstants.primaryColor, size: 24),
                             contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                            labelStyle: TextStyle(
+                              fontSize: 17,
+                              color: AppConstants.secondaryTextColor,
+                            ),
                           ),
                           items: AppConstants.reminderOptions.map((days) {
                             final label = days == 0
@@ -235,7 +317,13 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
 
                             return DropdownMenuItem(
                               value: days,
-                              child: Text(label),
+                              child: Text(
+                                label,
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  color: AppConstants.primaryTextColor,
+                                ),
+                              ),
                             );
                           }).toList(),
                           onChanged: (value) {
@@ -243,6 +331,12 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                               _reminderDays = value ?? 0;
                             });
                           },
+                          style: TextStyle(
+                            fontSize: 17,
+                            color: AppConstants.primaryTextColor,
+                          ),
+                          dropdownColor: Colors.white,
+                          isExpanded: true,
                         ),
 
                         // Only show time picker if reminders are enabled
@@ -254,13 +348,20 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                             child: InputDecorator(
                               decoration: InputDecoration(
                                 labelText: 'Reminder Time',
-                                prefixIcon: Icon(Icons.access_time, color: AppConstants.primaryColor),
+                                prefixIcon: Icon(Icons.access_time, color: AppConstants.primaryColor, size: 24),
                                 border: const OutlineInputBorder(),
                                 contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                                labelStyle: TextStyle(
+                                  fontSize: 17,
+                                  color: AppConstants.secondaryTextColor,
+                                ),
                               ),
                               child: Text(
                                 _formatTimeOfDay(_reminderTime),
-                                style: Theme.of(context).textTheme.bodyLarge,
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  color: AppConstants.primaryTextColor,
+                                ),
                               ),
                             ),
                           ),
@@ -268,9 +369,21 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
 
                         const SizedBox(height: 20),
                         SwitchListTile(
-                          title: const Text('Show in notification area'),
-                          subtitle: const Text(
-                              'Keep a quick access notification for this friend'
+                          title: Text(
+                            'Show in notification area',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w600,
+                              color: AppConstants.primaryTextColor,
+                            ),
+                          ),
+                          subtitle: Text(
+                            'Keep a quick access notification for this friend',
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: AppConstants.secondaryTextColor,
+                              height: 1.4,
+                            ),
                           ),
                           value: _hasPersistentNotification,
                           onChanged: (value) {
@@ -279,36 +392,52 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                             });
                           },
                           activeColor: AppConstants.primaryColor,
-                          // Add padding around the switch
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                         ),
                       ],
                     ),
                   ),
                 ),
 
-                // Increase bottom spacing and add padding for bottom button
-                const SizedBox(height: 40),
+                // Add delete button for edit mode only
+                if (widget.friend != null) ...[
+                  const SizedBox(height: 40),
 
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _saveFriend,
-                    style: ElevatedButton.styleFrom(
-                      // Increase button height for better touch target
-                      padding: const EdgeInsets.symmetric(vertical: 18),
-                      backgroundColor: AppConstants.primaryColor,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: Text(
-                      widget.friend == null ? 'Add Friend' : 'Save Changes',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                  // Delete button styled similar to Message/Call buttons
+                  Material(
+                    color: AppConstants.deleteColor.withOpacity(0.12), // Use delete color with opacity
+                    borderRadius: BorderRadius.circular(8),
+                    child: InkWell(
+                      onTap: _confirmDelete,
+                      borderRadius: BorderRadius.circular(8),
+                      splashColor: AppConstants.deleteColor.withOpacity(0.2),
+                      highlightColor: AppConstants.deleteColor.withOpacity(0.1),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.delete,
+                              size: 22, // Slightly larger to match home screen
+                              color: AppConstants.deleteColor,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Remove Friend',
+                              style: TextStyle(
+                                color: AppConstants.deleteColor,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
+                ],
 
                 // Add bottom padding for when scrolling all the way down
                 const SizedBox(height: 24),
@@ -390,9 +519,15 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: ListTile(
-                    leading: Icon(Icons.emoji_emotions, color: AppConstants.primaryColor),
-                    title: const Text('Choose Emoji'),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    leading: Icon(Icons.emoji_emotions, color: AppConstants.primaryColor, size: 24),
+                    title: Text(
+                      'Choose Emoji',
+                      style: TextStyle(
+                        fontSize: 17,
+                        color: AppConstants.primaryTextColor,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     onTap: () {
                       Navigator.pop(context);
                       _showEmojiPicker();
@@ -402,9 +537,15 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: ListTile(
-                    leading: Icon(Icons.photo_library, color: AppConstants.primaryColor),
-                    title: const Text('Choose from Gallery'),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    leading: Icon(Icons.photo_library, color: AppConstants.primaryColor, size: 24),
+                    title: Text(
+                      'Choose from Gallery',
+                      style: TextStyle(
+                        fontSize: 17,
+                        color: AppConstants.primaryTextColor,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     onTap: () {
                       Navigator.pop(context);
                       _pickImage();
@@ -427,7 +568,15 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Choose an Emoji'),
+          title: Text(
+            'Choose an Emoji',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: AppConstants.primaryTextColor,
+              letterSpacing: -0.2,
+            ),
+          ),
           contentPadding: const EdgeInsets.all(24),
           backgroundColor: AppConstants.dialogBackgroundColor,
           content: SizedBox(
@@ -469,13 +618,17 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             TextButton(
               onPressed: () => Navigator.pop(context),
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(18),
                 foregroundColor: AppConstants.primaryColor,
+                textStyle: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               child: const Text('Cancel'),
             ),
           ],
-          actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          actionsPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         );
       },
     );
@@ -523,7 +676,10 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('$name added as a friend'),
+            content: Text(
+              '$name added as a friend',
+              style: TextStyle(fontSize: 16),
+            ),
             behavior: SnackBarBehavior.floating,
             margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           ),
@@ -533,7 +689,10 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Changes saved for $name'),
+            content: Text(
+              'Changes saved for $name',
+              style: TextStyle(fontSize: 16),
+            ),
             behavior: SnackBarBehavior.floating,
             margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           ),
@@ -549,18 +708,35 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Remove Friend'),
-          contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+          title: Text(
+            'Remove Friend',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: AppConstants.primaryTextColor,
+              letterSpacing: -0.2,
+            ),
+          ),
+          contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
           backgroundColor: AppConstants.dialogBackgroundColor,
           content: Text(
-              'Are you sure you want to remove ${widget.friend?.name} from your Alongside friends?'
+            'Are you sure you want to remove ${widget.friend?.name} from your Alongside friends?',
+            style: TextStyle(
+              fontSize: 17,
+              color: AppConstants.primaryTextColor,
+              height: 1.5,
+            ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(18),
                 foregroundColor: AppConstants.primaryColor,
+                textStyle: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               child: const Text('Cancel'),
             ),
@@ -575,7 +751,10 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
 
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('${widget.friend?.name} removed'),
+                    content: Text(
+                      '${widget.friend?.name} removed',
+                      style: TextStyle(fontSize: 16),
+                    ),
                     behavior: SnackBarBehavior.floating,
                     margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                   ),
@@ -583,12 +762,16 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               },
               style: TextButton.styleFrom(
                 foregroundColor: AppConstants.deleteColor,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(18),
+                textStyle: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               child: const Text('Remove'),
             ),
           ],
-          actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          actionsPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         );
       },
     );

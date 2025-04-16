@@ -13,16 +13,50 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        // Use primaryColor with opacity for background - matching button style in friend_card
+        backgroundColor: AppConstants.primaryColor.withOpacity(0.12),
+        elevation: 0,
         title: const Text(
           'Alongside',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 30, // Larger title font
+            color: Color(AppConstants.primaryTextColorValue), // Use primary text color
+            letterSpacing: -0.3,
+          ),
         ),
+        // Info button on the left
+        leading: IconButton(
+          icon: Icon(
+            Icons.info_outline,
+            color: AppConstants.primaryColor, // Use primary color
+            size: 26, // Larger icon
+          ),
+          padding: const EdgeInsets.only(left: 16.0),
+          onPressed: () => _showAboutDialog(context),
+        ),
+        // Add button on the right - larger plus icon
         actions: [
-          IconButton(
-            icon: Icon(Icons.info_outline, color: AppConstants.primaryColor),
-            onPressed: () => _showAboutDialog(context),
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: IconButton(
+              icon: Icon(
+                Icons.add, // Simple plus icon
+                color: AppConstants.primaryColor, // Use primary color
+                size: 36, // Larger plus icon
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AddFriendScreen(),
+                  ),
+                );
+              },
+            ),
           ),
         ],
+        centerTitle: true,
       ),
       body: Consumer<FriendsProvider>(
         builder: (context, friendsProvider, child) {
@@ -83,6 +117,7 @@ class HomeScreen extends StatelessWidget {
                           .bodyLarge
                           ?.copyWith(
                         color: AppConstants.secondaryTextColor,
+                        fontSize: 17, // Increased font size
                         height: 1.6,
                       ),
                       textAlign: TextAlign.center,
@@ -97,15 +132,21 @@ class HomeScreen extends StatelessWidget {
                           ),
                         );
                       },
-                      icon: const Icon(Icons.add),
-                      label: const Text('Add Friend'),
+                      icon: const Icon(Icons.add, size: 24), // Increased icon size
+                      label: const Text(
+                        'Add Friend',
+                        style: TextStyle(
+                          fontSize: 17, // Increased font size
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 32,
                           vertical: 16,
                         ),
                         textStyle: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 17, // Increased font size
                           fontWeight: FontWeight.w600,
                           letterSpacing: 0.5,
                         ),
@@ -117,14 +158,12 @@ class HomeScreen extends StatelessWidget {
             );
           }
 
-          // Add padding to the bottom of the ListView to prevent FAB from covering items
           return ListView.builder(
             padding: const EdgeInsets.only(
-              left: 16,
-              right: 16,
-              top: 20,
-              // Added extra bottom padding to ensure last item is above FAB
-              bottom: 100, // Increased from default to accommodate FAB
+              left: 20,
+              right: 20,
+              top: 16,
+              bottom: 30,
             ),
             itemCount: friends.length,
             itemBuilder: (context, index) {
@@ -133,34 +172,9 @@ class HomeScreen extends StatelessWidget {
           );
         },
       ),
-      floatingActionButton: Consumer<FriendsProvider>(
-        builder: (context, friendsProvider, child) {
-          if (friendsProvider.friends.isEmpty) {
-            return const SizedBox.shrink();
-          }
-
-          return FloatingActionButton.extended(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const AddFriendScreen(),
-                ),
-              );
-            },
-            backgroundColor: AppConstants.primaryColor,
-            foregroundColor: Colors.white,
-            icon: const Icon(Icons.person_add),
-            label: const Text('Add Friend'),
-            elevation: 4,
-          );
-        },
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
-// Also update the about dialog
   void _showAboutDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -174,7 +188,15 @@ class HomeScreen extends StatelessWidget {
                 size: 24,
               ),
               const SizedBox(width: 12),
-              const Text('About Alongside'),
+              Text(
+                'About Alongside',
+                style: TextStyle(
+                  fontSize: 22, // Increased font size
+                  fontWeight: FontWeight.w700,
+                  color: AppConstants.primaryTextColor,
+                  letterSpacing: -0.2,
+                ),
+              ),
             ],
           ),
           backgroundColor: AppConstants.dialogBackgroundColor,
@@ -186,7 +208,7 @@ class HomeScreen extends StatelessWidget {
               Text(
                 'Alongside helps you walk with your friends through the highs and lows of life.',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 17, // Increased font size
                   color: AppConstants.primaryTextColor,
                   height: 1.5,
                 ),
@@ -195,14 +217,14 @@ class HomeScreen extends StatelessWidget {
               Text(
                 'As Christians, we\'re called to carry one another\'s burdens—and this app helps you do that with just a few taps.',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 17, // Increased font size
                   color: AppConstants.primaryTextColor,
                   height: 1.5,
                 ),
               ),
               const SizedBox(height: 16),
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(16), // Increased padding
                 decoration: BoxDecoration(
                   color: AppConstants.primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
@@ -211,7 +233,7 @@ class HomeScreen extends StatelessWidget {
                   children: [
                     Icon(
                       Icons.security,
-                      size: 20,
+                      size: 24,
                       color: AppConstants.primaryColor,
                     ),
                     const SizedBox(width: 12),
@@ -219,7 +241,7 @@ class HomeScreen extends StatelessWidget {
                       child: Text(
                         'Everything stays on your device. It\'s private, secure, and fully in your control.',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 16, // Increased font size
                           color: AppConstants.primaryTextColor,
                           height: 1.4,
                         ),
@@ -235,9 +257,10 @@ class HomeScreen extends StatelessWidget {
               onPressed: () => Navigator.pop(context),
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 12),
+                    horizontal: 20, vertical: 12), // Increased padding
                 foregroundColor: AppConstants.primaryColor,
                 textStyle: const TextStyle(
+                  fontSize: 17, // Increased font size
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -245,7 +268,7 @@ class HomeScreen extends StatelessWidget {
             ),
           ],
           actionsPadding: const EdgeInsets.symmetric(
-              horizontal: 16, vertical: 8),
+              horizontal: 20, vertical: 12), // Increased padding
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),

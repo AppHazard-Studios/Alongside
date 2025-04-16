@@ -102,16 +102,30 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
           child: Wrap(
             children: [
               ListTile(
-                leading: const Icon(Icons.message),
-                title: const Text('Send Default Message'),
+                leading: Icon(Icons.message, size: 24, color: AppConstants.primaryColor), // Increased icon size
+                title: Text(
+                  'Send Default Message',
+                  style: TextStyle(
+                    fontSize: 17, // Increased font size
+                    color: AppConstants.primaryTextColor,
+                  ),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), // Increased padding
                 onTap: () {
                   Navigator.pop(context);
                   _messageFriend(friend);
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.edit),
-                title: const Text('Customize Message'),
+                leading: Icon(Icons.edit, size: 24, color: AppConstants.primaryColor), // Increased icon size
+                title: Text(
+                  'Customize Message',
+                  style: TextStyle(
+                    fontSize: 17, // Increased font size
+                    color: AppConstants.primaryTextColor,
+                  ),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), // Increased padding
                 onTap: () {
                   Navigator.pop(context);
                   _messageFriend(friend);
@@ -184,18 +198,18 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
               letterSpacing: -0.5,
             ),
             titleLarge: TextStyle(
-              fontSize: 20,
+              fontSize: 22, // Increased font size from 20 to 22
               fontWeight: FontWeight.w600,
               color: Color(AppConstants.primaryTextColorValue),
               letterSpacing: -0.25,
             ),
             bodyLarge: TextStyle(
-              fontSize: 16,
+              fontSize: 17, // Increased font size from 16 to 17
               color: Color(AppConstants.primaryTextColorValue),
               height: 1.5,
             ),
             labelLarge: TextStyle(
-              fontSize: 14,
+              fontSize: 17, // Increased font size from 14 to 17
               fontWeight: FontWeight.w500,
               letterSpacing: 0.1,
             ),
@@ -209,6 +223,10 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
                 borderRadius: BorderRadius.circular(12),
               ),
               elevation: 2,
+              textStyle: const TextStyle(
+                fontSize: 17, // Increased font size
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           appBarTheme: const AppBarTheme(
@@ -218,9 +236,10 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
             elevation: 0,
             iconTheme: IconThemeData(
               color: Color(AppConstants.primaryTextColorValue),
+              size: 24, // Standardize icon size
             ),
             titleTextStyle: TextStyle(
-              fontSize: 20,
+              fontSize: 20, // Standardize title font size
               fontWeight: FontWeight.bold,
               color: Color(AppConstants.primaryTextColorValue),
               letterSpacing: -0.25,
@@ -243,6 +262,17 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
             backgroundColor: const Color(AppConstants.cardColorValue),
             elevation: 24,
             shadowColor: Colors.black.withOpacity(0.15),
+            titleTextStyle: const TextStyle(
+              fontSize: 22, // Increased font size
+              fontWeight: FontWeight.w700,
+              color: Color(AppConstants.primaryTextColorValue),
+              letterSpacing: -0.2,
+            ),
+            contentTextStyle: const TextStyle(
+              fontSize: 17, // Increased font size
+              color: Color(AppConstants.primaryTextColorValue),
+              height: 1.5,
+            ),
           ),
           bottomSheetTheme: const BottomSheetThemeData(
             shape: RoundedRectangleBorder(
@@ -253,9 +283,18 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
             clipBehavior: Clip.antiAlias,
           ),
           listTileTheme: const ListTileThemeData(
-            contentPadding: EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+            contentPadding: EdgeInsets.symmetric(horizontal: 28, vertical: 4), // CHANGE FROM 12 TO 4
             minLeadingWidth: 24,
-            minVerticalPadding: 16,
+            minVerticalPadding: 8, // CHANGE FROM 16 TO 8
+            iconColor: Color(AppConstants.primaryColorValue),
+            titleTextStyle: TextStyle(
+              fontSize: 17,
+              color: Color(AppConstants.primaryTextColorValue),
+            ),
+            subtitleTextStyle: TextStyle(
+              fontSize: 15,
+              color: Color(AppConstants.secondaryTextColorValue),
+            ),
           ),
           inputDecorationTheme: InputDecorationTheme(
             fillColor: Colors.white,
@@ -282,8 +321,14 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
                 width: 2.0,
               ),
             ),
-            labelStyle: TextStyle(color: const Color(AppConstants.secondaryTextColorValue)),
-            hintStyle: TextStyle(color: const Color(AppConstants.secondaryTextColorValue).withOpacity(0.7)),
+            labelStyle: TextStyle(
+                fontSize: 17, // Increased font size
+                color: const Color(AppConstants.secondaryTextColorValue)
+            ),
+            hintStyle: TextStyle(
+                fontSize: 16, // Increased font size
+                color: const Color(AppConstants.secondaryTextColorValue).withOpacity(0.7)
+            ),
           ),
         ),
         home: const HomeScreen(),
