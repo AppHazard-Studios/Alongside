@@ -6,7 +6,7 @@ import android.content.Intent
 import android.util.Log
 import com.apphazardstudios.alongside.MainActivity
 
-class bootreceiver : BroadcastReceiver() {
+class BootReceiver : BroadcastReceiver() {  // Changed from 'bootreceiver' to 'BootReceiver'
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
             Log.d("BootReceiver", "Device boot completed, starting app services")

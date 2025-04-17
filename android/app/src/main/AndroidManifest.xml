@@ -6,6 +6,8 @@
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
+    <!-- Add this permission for Android 13+ -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
     <application
         android:label="Alongside"
@@ -34,7 +36,7 @@
             </intent-filter>
         </activity>
 
-        <!-- Add the boot receiver to restart notifications on device boot -->
+        <!-- Fixed: Make sure the class name matches exactly -->
         <receiver
             android:name=".BootReceiver"
             android:exported="true">

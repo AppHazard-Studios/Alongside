@@ -8,6 +8,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/friend.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+// Add these imports for notification permission
+import 'package:permission_handler/permission_handler.dart';
+
 // Callback type for handling notification actions
 typedef NotificationActionCallback = void Function(String friendId, String action);
 
@@ -43,7 +46,20 @@ class NotificationService {
       onDidReceiveNotificationResponse: _handleNotificationAction,
     );
 
+    // Request notification permission for Android 13+
+    await _requestNotificationPermission();
+
     await _createNotificationChannel();
+  }
+
+  // Request notification permission for Android 13+
+  Future<void> _requestNotificationPermission() async {
+    // For Android 13+ (API level 33+), request POST_NOTIFICATIONS permission
+    if (Platform.isAndroid) {
+      if (await Permission.notification.isDenied) {
+        await Permission.notification.request();
+      }
+    }
   }
 
   // Handle notification actions
@@ -68,68 +84,175 @@ class NotificationService {
 
   // Create Android notification channels
   Future<void> _createNotificationChannel() async {
-    const AndroidNotificationChannel reminderChannel = AndroidNotificationChannel(
-      'alongside_reminders',
-      'Friend Reminders',
-      description: 'Notifications for friend check-in reminders',
-      importance: Importance.high,
-    );
-    await flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(reminderChannel);
+    try {
+      const AndroidNotificationChannel reminderChannel = AndroidNotificationChannel(
+        'alongside_reminders',
+        'Friend Reminders',
+        description: 'Notifications for friend check-in reminders',
+        importance: Importance.high,
+      );
 
-    const AndroidNotificationChannel persistentChannel = AndroidNotificationChannel(
-      'alongside_persistent',
-      'Quick Access Notifications',
-      description: 'Persistent notifications for quick access to friends',
-      importance: Importance.high,
-    );
-    await flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(persistentChannel);
+      await flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(reminderChannel);
+
+      const AndroidNotificationChannel persistentChannel = AndroidNotificationChannel(
+        'alongside_persistent',
+        'Quick Access Notifications',
+        description: 'Persistent notifications for quick access to friends',
+        importance: Importance.high,
+      );
+
+      await flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(persistentChannel);
+
+      print("Notification channels created successfully");
+    } catch (e) {
+      print("Error creating notification channels: $e");
+    }
   }
 
   // Show an immediate reminder notification
   Future<void> showReminderNotification(Friend friend) async {
-    final int id = _getNotificationId(friend.id);
+    try {
+      final int id = _getNotificationId(friend.id);
 
-    final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'alongside_reminders',
-      'Friend Reminders',
-      importance: Importance.high,
-      priority: Priority.high,
-      styleInformation: BigTextStyleInformation(
+      final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+        'alongside_reminders',
+        'Friend Reminders',
+        importance: Importance.high,
+        priority: Priority.high,
+        styleInformation: BigTextStyleInformation(
+          'It\'s been ${friend.reminderDays} ${friend.reminderDays == 1 ? 'day' : 'days'} since your last check-in',
+        ),
+        actions: [
+          const AndroidNotificationAction(
+            'message',
+            'Message',
+            showsUserInterface: true,
+          ),
+          const AndroidNotificationAction(
+            'call',
+            'Call',
+            showsUserInterface: true,
+          ),
+        ],
+      );
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(
+        'last_notification_${friend.id}',
+        DateTime.now().millisecondsSinceEpoch,
+      );
+
+      await flutterLocalNotificationsPlugin.show(
+        id,
+        'Check in with ${friend.name}',
         'It\'s been ${friend.reminderDays} ${friend.reminderDays == 1 ? 'day' : 'days'} since your last check-in',
-      ),
-      actions: [
-        const AndroidNotificationAction(
-          'message',
-          'Message',
-          showsUserInterface: true,
+        NotificationDetails(android: androidDetails),
+        payload: '${friend.id};${friend.phoneNumber}',
+      );
+
+      print("Reminder notification shown for ${friend.name}");
+    } catch (e) {
+      print("Error showing reminder notification: $e");
+    }
+  }
+
+  // Show a persistent notification - Fixed implementation
+  Future<void> showPersistentNotification(Friend friend) async {
+    try {
+      if (!friend.hasPersistentNotification) {
+        await removePersistentNotification(friend.id);
+        return;
+      }
+
+      final int id = _getNotificationId(friend.id, isPersistent: true);
+
+      // Make sure our notification flags are set properly
+      final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+        'alongside_persistent',
+        'Quick Access Notifications',
+        channelDescription: 'Persistent notifications for quick access to friends',
+        importance: Importance.high,
+        priority: Priority.high,
+        ongoing: true,  // This is crucial for persistent notifications
+        autoCancel: false,
+        category: AndroidNotificationCategory.service, // Improves persistence
+        styleInformation: BigTextStyleInformation(
+          'Check in with them, or reach out for support.',
+          contentTitle: 'You\'re Alongside, ${friend.name}.',
+          summaryText: friend.name,
         ),
-        const AndroidNotificationAction(
-          'call',
-          'Call',
-          showsUserInterface: true,
-        ),
-      ],
-    );
+        actions: [
+          const AndroidNotificationAction(
+            'message',
+            'Message',
+            showsUserInterface: true,
+          ),
+          const AndroidNotificationAction(
+            'call',
+            'Call',
+            showsUserInterface: true,
+          ),
+        ],
+      );
+
+      await flutterLocalNotificationsPlugin.show(
+        id,
+        'Alongside',
+        'Check in with ${friend.name}, or reach out for support.',
+        NotificationDetails(android: androidDetails),
+        payload: '${friend.id};${friend.phoneNumber}',
+      );
+
+      print("Persistent notification shown for ${friend.name}");
+    } catch (e) {
+      print("Error showing persistent notification: $e");
+    }
+  }
+
+  // The rest of your NotificationService methods remain unchanged...
+  // ... (Schedule reminders, remove notifications, etc.)
+
+  // Remove a persistent notification
+  Future<void> removePersistentNotification(String friendId) async {
+    try {
+      await flutterLocalNotificationsPlugin
+          .cancel(_getNotificationId(friendId, isPersistent: true));
+      print("Persistent notification removed for friend ID: $friendId");
+    } catch (e) {
+      print("Error removing persistent notification: $e");
+    }
+  }
+
+  // Cancel a scheduled reminder
+  Future<void> cancelReminder(String friendId) async {
+    final int id = _getNotificationId(friendId);
+    await flutterLocalNotificationsPlugin.cancel(id);
+    _friendNotificationIds.remove(friendId);
 
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(
-      'last_notification_${friend.id}',
-      DateTime.now().millisecondsSinceEpoch,
-    );
+    await prefs.remove('last_notification_$friendId');
+    await prefs.remove('next_notification_$friendId');
+  }
 
-    await flutterLocalNotificationsPlugin.show(
-      id,
-      'Check in with ${friend.name}',
-      'It\'s been ${friend.reminderDays} ${friend.reminderDays == 1 ? 'day' : 'days'} since your last check-in',
-      NotificationDetails(android: androidDetails),
-      payload: '${friend.id};${friend.phoneNumber}',
-    );
+  // Generate unique IDs
+  int _getNotificationId(String friendId, {bool isPersistent = false}) {
+    if (isPersistent) return (friendId.hashCode.abs() % 100000) + 200000;
+    return _friendNotificationIds[friendId] ?? (friendId.hashCode.abs() % 100000);
+  }
+
+  // Format a TimeOfDay into 12h
+  String _formatTimeOfDay(TimeOfDay time) {
+    final int hour =
+    time.hour == 0 ? 12 : (time.hour > 12 ? time.hour - 12 : time.hour);
+    final String minuteStr = time.minute.toString().padLeft(2, '0');
+    final String period = time.hour < 12 ? 'AM' : 'PM';
+    return '$hour:$minuteStr $period';
   }
 
   // Schedule a future reminder
@@ -216,84 +339,6 @@ class NotificationService {
       TimeOfDay(hour: next.hour, minute: next.minute),
     )}';
     await prefs.setString('next_notification_${friend.id}', nextString);
-  }
-
-  // Format a TimeOfDay into 12h
-  String _formatTimeOfDay(TimeOfDay time) {
-    final int hour =
-    time.hour == 0 ? 12 : (time.hour > 12 ? time.hour - 12 : time.hour);
-    final String minuteStr = time.minute.toString().padLeft(2, '0');
-    final String period = time.hour < 12 ? 'AM' : 'PM';
-    return '$hour:$minuteStr $period';
-  }
-
-  // Show a persistent notification
-  Future<void> showPersistentNotification(Friend friend) async {
-    if (!friend.hasPersistentNotification) {
-      await removePersistentNotification(friend.id);
-      return;
-    }
-
-    final int id = _getNotificationId(friend.id, isPersistent: true);
-
-    final BigTextStyleInformation styleInformation = BigTextStyleInformation(
-      'Check in with them, or reach out for support.',
-      contentTitle: 'You\'re Alongside, ${friend.name}.',
-      summaryText: friend.name,
-    );
-
-    final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'alongside_persistent',
-      'Quick Access Notifications',
-      importance: Importance.high,
-      priority: Priority.high,
-      ongoing: true,
-      autoCancel: false,
-      styleInformation: styleInformation,
-      actions: [
-        const AndroidNotificationAction(
-          'message',
-          'Message',
-          showsUserInterface: true,
-        ),
-        const AndroidNotificationAction(
-          'call',
-          'Call',
-          showsUserInterface: true,
-        ),
-      ],
-    );
-
-    await flutterLocalNotificationsPlugin.show(
-      id,
-      'Alongside',
-      'Check in with ${friend.name}, or reach out for support.',
-      NotificationDetails(android: androidDetails),
-      payload: '${friend.id};${friend.phoneNumber}',
-    );
-  }
-
-  // Remove a persistent notification
-  Future<void> removePersistentNotification(String friendId) async {
-    await flutterLocalNotificationsPlugin
-        .cancel(_getNotificationId(friendId, isPersistent: true));
-  }
-
-  // Cancel a scheduled reminder
-  Future<void> cancelReminder(String friendId) async {
-    final int id = _getNotificationId(friendId);
-    await flutterLocalNotificationsPlugin.cancel(id);
-    _friendNotificationIds.remove(friendId);
-
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('last_notification_$friendId');
-    await prefs.remove('next_notification_$friendId');
-  }
-
-  // Generate unique IDs
-  int _getNotificationId(String friendId, {bool isPersistent = false}) {
-    if (isPersistent) return (friendId.hashCode.abs() % 100000) + 200000;
-    return _friendNotificationIds[friendId] ?? (friendId.hashCode.abs() % 100000);
   }
 
   // Cancel all notifications (for testing)
