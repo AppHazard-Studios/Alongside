@@ -7,17 +7,20 @@ import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/friend.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-// Add these imports for notification permission
 import 'package:permission_handler/permission_handler.dart';
+import '../services/storage_service.dart';
 
 // Callback type for handling notification actions
 typedef NotificationActionCallback = void Function(String friendId, String action);
 
 class NotificationService {
+  DateTime? _lastMessageActionTime;
+  DateTime? get lastMessageActionTime => _lastMessageActionTime;
+  DateTime? _lastPersistentCancelTime;
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
+  /// Remember when we last tapped “message”
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
   FlutterLocalNotificationsPlugin();
@@ -62,7 +65,7 @@ class NotificationService {
     }
   }
 
-  // Handle notification actions
+  // Handle notification actions - Updated
   void _handleNotificationAction(NotificationResponse response) {
     final String actionId = response.actionId ?? "";
     final String payload = response.payload ?? "";
@@ -75,14 +78,25 @@ class NotificationService {
       friendId = payload;
     }
 
+    // Cancel the notification to avoid repeated triggers
+    if (friendId.isNotEmpty) {
+      // Cancel both reminder and persistent notifications to be safe
+      _lastPersistentCancelTime = DateTime.now();
+      flutterLocalNotificationsPlugin.cancel(_getNotificationId(friendId));
+      //flutterLocalNotificationsPlugin.cancel(_getNotificationId(friendId, isPersistent: true));
+    }
+
     if (actionId.isEmpty) {
       _actionCallback?.call("", "home");
     } else {
+      if (actionId == 'message') {
+        _lastMessageActionTime = DateTime.now();
+      }
       _actionCallback?.call(friendId, actionId);
     }
   }
 
-  // Create Android notification channels
+  // Create Android notification channels - Updated
   Future<void> _createNotificationChannel() async {
     try {
       const AndroidNotificationChannel reminderChannel = AndroidNotificationChannel(
@@ -97,11 +111,14 @@ class NotificationService {
           AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(reminderChannel);
 
+      // Change the persistent channel to low importance to reduce intrusiveness
       const AndroidNotificationChannel persistentChannel = AndroidNotificationChannel(
         'alongside_persistent',
         'Quick Access Notifications',
         description: 'Persistent notifications for quick access to friends',
-        importance: Importance.high,
+        importance: Importance.low, // Changed from high to low
+        playSound: false, // No sound
+        enableVibration: false, // No vibration
       );
 
       await flutterLocalNotificationsPlugin
@@ -115,7 +132,7 @@ class NotificationService {
     }
   }
 
-  // Show an immediate reminder notification
+  // Show an immediate reminder notification - Updated
   Future<void> showReminderNotification(Friend friend) async {
     try {
       final int id = _getNotificationId(friend.id);
@@ -133,11 +150,13 @@ class NotificationService {
             'message',
             'Message',
             showsUserInterface: true,
+            cancelNotification: true, // Add this to cancel notification on tap
           ),
           const AndroidNotificationAction(
             'call',
             'Call',
             showsUserInterface: true,
+            cancelNotification: true, // Add this to cancel notification on tap
           ),
         ],
       );
@@ -162,9 +181,14 @@ class NotificationService {
     }
   }
 
-  // Show a persistent notification - Fixed implementation
+  // Show a persistent notification - Updated for silent operation
   Future<void> showPersistentNotification(Friend friend) async {
     try {
+      if (_lastPersistentCancelTime != null &&
+                  DateTime.now().difference(_lastPersistentCancelTime!).inSeconds < 30) {
+              print("⏱  Skipping persistent notification (cooldown)");
+          return;
+        }
       if (!friend.hasPersistentNotification) {
         await removePersistentNotification(friend.id);
         return;
@@ -172,19 +196,39 @@ class NotificationService {
 
       final int id = _getNotificationId(friend.id, isPersistent: true);
 
-      // Make sure our notification flags are set properly
+      // Check if the notification already exists to avoid recreating it
+      final List<ActiveNotification>? activeNotifications =
+      await flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>()
+          ?.getActiveNotifications();
+
+      // If the notification is already active, don't recreate it
+      if (activeNotifications != null) {
+        for (var notification in activeNotifications) {
+          if (notification.id == id) {
+            print("Persistent notification already exists for ${friend.name}, skipping");
+            return;
+          }
+        }
+      }
+
       final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
         'alongside_persistent',
         'Quick Access Notifications',
         channelDescription: 'Persistent notifications for quick access to friends',
-        importance: Importance.high,
-        priority: Priority.high,
-        ongoing: true,  // This is crucial for persistent notifications
+        importance: Importance.low, // Use low importance for persistent notifications
+        priority: Priority.low,
+        ongoing: true,
         autoCancel: false,
-        category: AndroidNotificationCategory.service, // Improves persistence
+        category: AndroidNotificationCategory.service,
+        // Disable sound and vibration for persistent notifications
+        playSound: false,
+        enableVibration: false,
+        enableLights: false,
         styleInformation: BigTextStyleInformation(
           'Check in with them, or reach out for support.',
-          contentTitle: 'You\'re Alongside, ${friend.name}.',
+          contentTitle: 'You\'re Alongside ${friend.name}.',
           summaryText: friend.name,
         ),
         actions: [
@@ -192,11 +236,13 @@ class NotificationService {
             'message',
             'Message',
             showsUserInterface: true,
+            cancelNotification: false, // Keep persistent notification
           ),
           const AndroidNotificationAction(
             'call',
             'Call',
             showsUserInterface: true,
+            cancelNotification: false, // Keep persistent notification
           ),
         ],
       );
@@ -215,8 +261,83 @@ class NotificationService {
     }
   }
 
-  // The rest of your NotificationService methods remain unchanged...
-  // ... (Schedule reminders, remove notifications, etc.)
+  // Remove actions from persistent notification to prevent repeated triggers
+  Future<void> removePersistentNotificationActions(String friendId) async {
+    try {
+      final int id = _getNotificationId(friendId, isPersistent: true);
+
+      // Get active notifications
+      final List<ActiveNotification>? activeNotifications =
+      await flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>()
+          ?.getActiveNotifications();
+
+      // Check if this notification is active
+      bool isActive = false;
+      if (activeNotifications != null) {
+        for (var notification in activeNotifications) {
+          if (notification.id == id) {
+            isActive = true;
+            break;
+          }
+        }
+      }
+
+      // If active, replace it with a version without actions
+      if (isActive) {
+        final friend = await _getFriendFromId(friendId);
+        if (friend != null && friend.hasPersistentNotification) {
+          // Create a notification without action buttons
+          final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+            'alongside_persistent',
+            'Quick Access Notifications',
+            channelDescription: 'Persistent notifications for quick access to friends',
+            importance: Importance.low,
+            priority: Priority.low,
+            ongoing: true,
+            autoCancel: false,
+            category: AndroidNotificationCategory.service,
+            playSound: false,
+            enableVibration: false,
+            enableLights: false,
+            styleInformation: BigTextStyleInformation(
+              'Check in with them, or reach out for support.',
+              contentTitle: 'You\'re Alongside, ${friend.name}.',
+              summaryText: friend.name,
+            ),
+            // No actions here - this prevents further clicks
+          );
+
+          await flutterLocalNotificationsPlugin.show(
+            id,
+            'Alongside',
+            'Check in with ${friend.name}, or reach out for support.',
+            NotificationDetails(android: androidDetails),
+            payload: '${friend.id};${friend.phoneNumber}',
+          );
+        }
+      }
+    } catch (e) {
+      print("Error removing actions from notification: $e");
+    }
+  }
+
+  // Helper method to get a Friend from an ID
+  Future<Friend?> _getFriendFromId(String friendId) async {
+    try {
+      final StorageService storageService = StorageService();
+      final friends = await storageService.getFriends();
+      for (final friend in friends) {
+        if (friend.id == friendId) {
+          return friend;
+        }
+      }
+    } catch (e) {
+      print("Error getting friend: $e");
+    }
+    return null;
+  }
 
   // Remove a persistent notification
   Future<void> removePersistentNotification(String friendId) async {
@@ -255,7 +376,7 @@ class NotificationService {
     return '$hour:$minuteStr $period';
   }
 
-  // Schedule a future reminder
+  // Schedule a future reminder - Updated with cancelNotification parameter
   Future<void> scheduleReminder(Friend friend) async {
     if (friend.reminderDays <= 0) {
       await cancelReminder(friend.id);
@@ -313,11 +434,13 @@ class NotificationService {
           'message',
           'Message',
           showsUserInterface: true,
+          cancelNotification: true, // Add this to cancel notification on tap
         ),
         const AndroidNotificationAction(
           'call',
           'Call',
           showsUserInterface: true,
+          cancelNotification: true, // Add this to cancel notification on tap
         ),
       ],
     );
