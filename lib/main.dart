@@ -66,7 +66,6 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
     provider.notificationService.setActionCallback(_handleNotificationAction);
 
     // Start foreground service with delay
-
   }
 
   // Handle notification actions
@@ -102,30 +101,30 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
           child: Wrap(
             children: [
               ListTile(
-                leading: Icon(Icons.message, size: 24, color: AppConstants.primaryColor), // Increased icon size
+                leading: Icon(Icons.message, size: 22, color: AppConstants.primaryColor),
                 title: Text(
                   'Send Default Message',
                   style: TextStyle(
-                    fontSize: 17, // Increased font size
+                    fontSize: 15,
                     color: AppConstants.primaryTextColor,
                   ),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), // Increased padding
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 onTap: () {
                   Navigator.pop(context);
                   _messageFriend(friend);
                 },
               ),
               ListTile(
-                leading: Icon(Icons.edit, size: 24, color: AppConstants.primaryColor), // Increased icon size
+                leading: Icon(Icons.edit, size: 22, color: AppConstants.primaryColor),
                 title: Text(
                   'Customize Message',
                   style: TextStyle(
-                    fontSize: 17, // Increased font size
+                    fontSize: 15,
                     color: AppConstants.primaryTextColor,
                   ),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), // Increased padding
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 onTap: () {
                   Navigator.pop(context);
                   _messageFriend(friend);
@@ -187,29 +186,29 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
           floatingActionButtonTheme: const FloatingActionButtonThemeData(
             backgroundColor: Color(AppConstants.primaryColorValue),
             foregroundColor: Colors.white,
-            elevation: 6,
+            elevation: 4,
             extendedPadding: EdgeInsets.all(16),
           ),
           textTheme: const TextTheme(
             headlineMedium: TextStyle(
-              fontSize: 28,
+              fontSize: 24,
               fontWeight: FontWeight.bold,
               color: Color(AppConstants.primaryTextColorValue),
               letterSpacing: -0.5,
             ),
             titleLarge: TextStyle(
-              fontSize: 22, // Increased font size from 20 to 22
+              fontSize: 20,
               fontWeight: FontWeight.w600,
               color: Color(AppConstants.primaryTextColorValue),
               letterSpacing: -0.25,
             ),
             bodyLarge: TextStyle(
-              fontSize: 17, // Increased font size from 16 to 17
+              fontSize: 15,
               color: Color(AppConstants.primaryTextColorValue),
               height: 1.5,
             ),
             labelLarge: TextStyle(
-              fontSize: 17, // Increased font size from 14 to 17
+              fontSize: 15,
               fontWeight: FontWeight.w500,
               letterSpacing: 0.1,
             ),
@@ -218,115 +217,115 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
             style: ElevatedButton.styleFrom(
               foregroundColor: Colors.white,
               backgroundColor: const Color(AppConstants.primaryColorValue),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
               ),
               elevation: 2,
               textStyle: const TextStyle(
-                fontSize: 17, // Increased font size
+                fontSize: 15,
                 fontWeight: FontWeight.w600,
               ),
             ),
           ),
           appBarTheme: const AppBarTheme(
-            backgroundColor: Color(AppConstants.backgroundColorValue),
-            foregroundColor: Color(AppConstants.primaryTextColorValue),
+            backgroundColor: Color(AppConstants.primaryColorValue),
+            foregroundColor: Colors.white,
             centerTitle: true,
             elevation: 0,
             iconTheme: IconThemeData(
-              color: Color(AppConstants.primaryTextColorValue),
-              size: 24, // Standardize icon size
+              color: Colors.white,
+              size: 22,
             ),
             titleTextStyle: TextStyle(
-              fontSize: 20, // Standardize title font size
+              fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Color(AppConstants.primaryTextColorValue),
+              color: Colors.white,
               letterSpacing: -0.25,
             ),
-            titleSpacing: 20,
+            titleSpacing: 16,
           ),
           cardTheme: CardTheme(
             color: const Color(AppConstants.cardColorValue),
             elevation: 2,
             shadowColor: Colors.black.withOpacity(0.1),
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(12),
             ),
           ),
           dialogTheme: DialogTheme(
             shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(16)),
+              borderRadius: BorderRadius.all(Radius.circular(14)),
             ),
             backgroundColor: const Color(AppConstants.cardColorValue),
             elevation: 24,
             shadowColor: Colors.black.withOpacity(0.15),
             titleTextStyle: const TextStyle(
-              fontSize: 22, // Increased font size
+              fontSize: 18,
               fontWeight: FontWeight.w700,
               color: Color(AppConstants.primaryTextColorValue),
               letterSpacing: -0.2,
             ),
             contentTextStyle: const TextStyle(
-              fontSize: 17, // Increased font size
+              fontSize: 15,
               color: Color(AppConstants.primaryTextColorValue),
               height: 1.5,
             ),
           ),
           bottomSheetTheme: const BottomSheetThemeData(
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
             ),
             backgroundColor: Color(AppConstants.cardColorValue),
-            modalElevation: 12,
+            modalElevation: 10,
             clipBehavior: Clip.antiAlias,
           ),
           listTileTheme: const ListTileThemeData(
-            contentPadding: EdgeInsets.symmetric(horizontal: 28, vertical: 4), // CHANGE FROM 12 TO 4
-            minLeadingWidth: 24,
-            minVerticalPadding: 8, // CHANGE FROM 16 TO 8
+            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+            minLeadingWidth: 20,
+            minVerticalPadding: 6,
             iconColor: Color(AppConstants.primaryColorValue),
             titleTextStyle: TextStyle(
-              fontSize: 17,
+              fontSize: 15,
               color: Color(AppConstants.primaryTextColorValue),
             ),
             subtitleTextStyle: TextStyle(
-              fontSize: 15,
+              fontSize: 13,
               color: Color(AppConstants.secondaryTextColorValue),
             ),
           ),
           inputDecorationTheme: InputDecorationTheme(
             fillColor: Colors.white,
             filled: true,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide(
                 color: const Color(AppConstants.borderColorValue),
                 width: 1.0,
               ),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide(
                 color: const Color(AppConstants.borderColorValue),
                 width: 1.0,
               ),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide(
                 color: const Color(AppConstants.primaryColorValue),
-                width: 2.0,
+                width: 1.5,
               ),
             ),
             labelStyle: TextStyle(
-                fontSize: 17, // Increased font size
+                fontSize: 15,
                 color: const Color(AppConstants.secondaryTextColorValue)
             ),
             hintStyle: TextStyle(
-                fontSize: 16, // Increased font size
+                fontSize: 14,
                 color: const Color(AppConstants.secondaryTextColorValue).withOpacity(0.7)
             ),
           ),

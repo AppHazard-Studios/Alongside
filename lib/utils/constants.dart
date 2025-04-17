@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
-
 // utils/constants.dart
+
+import 'package:flutter/material.dart';
 
 class AppConstants {
   // Preset messages for check-ins
