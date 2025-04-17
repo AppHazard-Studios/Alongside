@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.apphazard.alongside"
+    namespace = "com.apphazardstudios.alongside"
     compileSdk = 35
     ndkVersion = "27.0.12077973"
 
@@ -23,7 +23,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID.
-        applicationId = "com.apphazard.alongside"
+        applicationId = "com.apphazardstudios.alongside"
         // These values are provided via Flutter.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion

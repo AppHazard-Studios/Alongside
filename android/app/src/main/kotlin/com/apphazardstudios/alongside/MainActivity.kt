@@ -1,4 +1,4 @@
-package com.apphazard.alongside
+package com.apphazardstudios.alongside
 
 import io.flutter.embedding.android.FlutterActivity
 

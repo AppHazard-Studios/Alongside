@@ -1,11 +1,12 @@
-package your.package.name
+package com.apphazardstudios.alongside
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import com.apphazardstudios.alongside.MainActivity
 
-class BootReceiver : BroadcastReceiver() {
+class bootreceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
             Log.d("BootReceiver", "Device boot completed, starting app services")

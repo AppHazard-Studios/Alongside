@@ -109,10 +109,38 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
     // Ensure we are at home first
     _navigatorKey.currentState?.popUntil((route) => route.isFirst);
 
+    // Add a slight delay to ensure navigation is complete
+    await Future.delayed(const Duration(milliseconds: 100));
+
     if (action == 'message') {
-      _showMessageOptionsForFriend(friend);
+      // This is where we need to show the message interface with options
+      final context = _navigatorKey.currentContext!;
+      if (context.mounted) {
+        // Find the matching friend card and simulate a message button press
+        // This will reuse your existing message interface
+        _showMessageOptionsForFriend(friend);
+      }
     } else if (action == 'call') {
-      _callFriend(friend);
+      // Direct phone call implementation
+      final phoneNumber = friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+      try {
+        final telUri = Uri.parse('tel:$phoneNumber');
+        // Use the explicit LaunchMode.externalApplication to ensure it opens the phone app
+        await launchUrl(telUri, mode: LaunchMode.externalApplication);
+      } catch (e) {
+        if (_navigatorKey.currentContext != null) {
+          ScaffoldMessenger.of(_navigatorKey.currentContext!).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Unable to open phone app. Try again later.',
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+              ),
+              backgroundColor: Colors.redAccent,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
     }
   }
 

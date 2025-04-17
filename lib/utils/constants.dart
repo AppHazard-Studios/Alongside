@@ -46,10 +46,10 @@ class AppConstants {
   static const List<int> reminderOptions = [0, 1, 3, 7, 14, 30];
 
   // App theme colors
-  static const int primaryColorValue = 0xFFAC7858; // Brown primary color
-  static const int secondaryColorValue = 0xFFCDAA84; // Lighter brown
-  static const int backgroundColorValue = 0xFFFCF5EC; // Light beige background
-  static const int cardColorValue = 0xFFFDF8F2; // White-ish card background
+  static const int primaryColorValue = 0xFFB47E5D; // Warmer brown primary color
+  static const int secondaryColorValue = 0xFFD4B08A; // Warmer lighter brown
+  static const int backgroundColorValue = 0xFFFDF6EB; // Warmer light beige background
+  static const int cardColorValue = 0xFFFFF8F0; // Warmer white-ish card background
 
   // Text colors
   static const int primaryTextColorValue = 0xFF4F453D; // Dark grey

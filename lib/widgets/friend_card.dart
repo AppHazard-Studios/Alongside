@@ -84,10 +84,7 @@ class FriendCard extends StatelessWidget {
           // "Alongside" information section - add icons for visual balance
           if (friend.helpingWith != null && friend.helpingWith!.isNotEmpty ||
               friend.theyHelpingWith != null && friend.theyHelpingWith!.isNotEmpty ||
-          )if (friend.reminderDays > 0) ...[
-            _buildReminderInfo(),
-            const SizedBox(height: 10),
-          ],
+              friend.reminderDays > 0)
             Padding(
               padding: const EdgeInsets.only(left: 16, right: 16, bottom: 14),
               child: Column(
@@ -153,35 +150,10 @@ class FriendCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
                   ],
-                  if (friend.reminderDays > 0) ...[
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.calendar_today_outlined,
-                          size: 18,
-                          color: AppConstants.primaryColor,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: RichText(
-                            text: TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: 'Reminder: ',
-                                  style: labelStyle,
-                                ),
-                                TextSpan(
-                                  text: 'Every ${friend.reminderDays} ${friend.reminderDays == 1 ? 'day' : 'days'}',
-                                  style: valueStyle,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+    if (friend.reminderDays > 0) ...[
+    _buildReminderInfo(),
+    const SizedBox(height: 10),
+    ],
                 ],
               ),
             ),
