@@ -471,13 +471,71 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     final TimeOfDay? pickedTime = await showTimePicker(
       context: context,
       initialTime: _reminderTime,
-      builder: (context, child) {
+      builder: (BuildContext context, Widget? child) {
         return Theme(
-          data: Theme.of(context).copyWith(
+          data: ThemeData.light().copyWith(
             colorScheme: ColorScheme.light(
+              // Use the Google Clock colors
               primary: AppConstants.primaryColor,
               onPrimary: Colors.white,
               onSurface: AppConstants.primaryTextColor,
+              surface: Colors.white,
+            ),
+            // Dialog background
+            dialogBackgroundColor: Colors.white,
+            // Button styles
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: AppConstants.primaryColor,
+                textStyle: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            // Time picker theme
+            timePickerTheme: TimePickerThemeData(
+              backgroundColor: Colors.white,
+              hourMinuteShape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              dayPeriodShape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              dayPeriodColor: Colors.grey.shade200,
+              dayPeriodTextColor: AppConstants.primaryTextColor,
+              dayPeriodBorderSide: BorderSide.none,
+              hourMinuteColor: MaterialStateColor.resolveWith((states) =>
+              states.contains(MaterialState.selected)
+                  ? AppConstants.primaryColor
+                  : Colors.grey.shade200
+              ),
+              hourMinuteTextColor: MaterialStateColor.resolveWith((states) =>
+              states.contains(MaterialState.selected)
+                  ? Colors.white
+                  : AppConstants.primaryTextColor
+              ),
+              dialHandColor: AppConstants.primaryColor,
+              dialBackgroundColor: Colors.grey.shade200,
+              hourMinuteTextStyle: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+              dayPeriodTextStyle: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+              helpTextStyle: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: AppConstants.secondaryTextColor,
+              ),
+              dialTextColor: MaterialStateColor.resolveWith((states) =>
+              states.contains(MaterialState.selected)
+                  ? Colors.white
+                  : AppConstants.primaryTextColor
+              ),
+              entryModeIconColor: AppConstants.primaryColor,
             ),
           ),
           child: child!,

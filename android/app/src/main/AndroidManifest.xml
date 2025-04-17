@@ -1,36 +1,21 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Basic permissions -->
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.CALL_PHONE" />
-
-    <!-- Notification permissions -->
-    <uses-permission android:name="android.permission.VIBRATE" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-
-    <!-- Alarm and scheduling permissions -->
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
-
-    <!-- Background/foreground service permissions -->
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Add these permissions at the top level -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
-
-    <!-- For Android 12+ foreground service -->
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
-
-    <!-- For system alerts if needed -->
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
 
     <application
-        android:label="alongside"
+        android:label="Alongside"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
-            android:taskAffinity=""
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
@@ -49,28 +34,14 @@
             </intent-filter>
         </activity>
 
-        <!-- Flutter Local Notifications Plugin Receivers -->
-        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
-        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
+        <!-- Add the boot receiver to restart notifications on device boot -->
+        <receiver
+            android:name=".BootReceiver"
+            android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED"/>
-                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
-                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
-                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
-
-        <!-- Flutter Foreground Task Service -->
-        <service
-            android:name="com.pravera.flutter_foreground_task.service.ForegroundService"
-            android:foregroundServiceType="dataSync"
-            android:stopWithTask="false" />
-
-        <!-- Flutter Local Notifications Service -->
-        <service
-            android:name="com.dexterous.flutterlocalnotifications.ForegroundService"
-            android:exported="false"
-            android:stopWithTask="false"/>
 
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
@@ -78,12 +49,4 @@
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
-
-    <!-- Required to query activities that can process text -->
-    <queries>
-        <intent>
-            <action android:name="android.intent.action.PROCESS_TEXT"/>
-            <data android:mimeType="text/plain"/>
-        </intent>
-    </queries>
 </manifest>

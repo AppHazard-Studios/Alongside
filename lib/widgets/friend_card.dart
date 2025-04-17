@@ -8,6 +8,7 @@ import '../main.dart';
 import '../models/friend.dart';
 import '../screens/add_friend_screen.dart';
 import '../utils/constants.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FriendCard extends StatelessWidget {
   final Friend friend;
@@ -83,7 +84,10 @@ class FriendCard extends StatelessWidget {
           // "Alongside" information section - add icons for visual balance
           if (friend.helpingWith != null && friend.helpingWith!.isNotEmpty ||
               friend.theyHelpingWith != null && friend.theyHelpingWith!.isNotEmpty ||
-              friend.reminderDays > 0)
+          )if (friend.reminderDays > 0) ...[
+            _buildReminderInfo(),
+            const SizedBox(height: 10),
+          ],
             Padding(
               padding: const EdgeInsets.only(left: 16, right: 16, bottom: 14),
               child: Column(
@@ -217,6 +221,77 @@ class FriendCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildReminderInfo() {
+    return FutureBuilder<String?>(
+      future: _getNextReminderTime(),
+      builder: (context, snapshot) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.calendar_today_outlined,
+                  size: 18,
+                  color: AppConstants.primaryColor,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: 'Reminder: ',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: AppConstants.primaryTextColor,
+                            fontSize: 14,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'Every ${friend.reminderDays} ${friend.reminderDays == 1 ? 'day' : 'days'}',
+                          style: TextStyle(
+                            color: AppConstants.secondaryTextColor,
+                            fontSize: 14,
+                            height: 1.4,
+                            letterSpacing: 0.1,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (snapshot.hasData && snapshot.data != null) ...[
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.only(left: 26),
+                child: Text(
+                  'Next: ${snapshot.data}',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppConstants.secondaryTextColor,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+
+  Future<String?> _getNextReminderTime() async {
+    if (friend.reminderDays <= 0) return null;
+
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('next_notification_${friend.id}');
   }
 
   // Update the profile image to be slightly smaller

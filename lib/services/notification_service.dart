@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/friend.dart';
 import '../widgets/friend_card.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -86,6 +87,7 @@ class NotificationService {
       _actionCallback?.call("", "home");
     }
   }
+
   // Create notification channels for Android
   Future<void> _createNotificationChannel() async {
     const AndroidNotificationChannel reminderChannel = AndroidNotificationChannel(
@@ -114,6 +116,40 @@ class NotificationService {
         ?.createNotificationChannel(persistentChannel);
   }
 
+  // Show a reminder notification immediately
+  Future<void> showReminderNotification(Friend friend) async {
+    final int notificationId = _getNotificationId(friend.id);
+
+    final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      'alongside_reminders',
+      'Friend Reminders',
+      importance: Importance.high,
+      priority: Priority.high,
+      styleInformation: BigTextStyleInformation(
+        'It\'s been ${friend.reminderDays} ${friend.reminderDays == 1 ? 'day' : 'days'} since your last check-in',
+      ),
+      actions: [
+        const AndroidNotificationAction('message', 'Message'),
+        const AndroidNotificationAction('call', 'Call'),
+      ],
+    );
+
+    final NotificationDetails notificationDetails = NotificationDetails(android: androidDetails);
+
+    // Store the current time as the last notification time
+    final prefs = await SharedPreferences.getInstance();
+    final lastNotificationKey = 'last_notification_${friend.id}';
+    await prefs.setInt(lastNotificationKey, DateTime.now().millisecondsSinceEpoch);
+
+    await flutterLocalNotificationsPlugin.show(
+      notificationId,
+      'Check in with ${friend.name}',
+      'It\'s been ${friend.reminderDays} ${friend.reminderDays == 1 ? 'day' : 'days'} since your last check-in',
+      notificationDetails,
+      payload: '${friend.id};${friend.phoneNumber}',
+    );
+  }
+
   // Schedule reminder for friend check-in
   Future<void> scheduleReminder(Friend friend) async {
     if (friend.reminderDays <= 0) {
@@ -123,6 +159,7 @@ class NotificationService {
 
     final int notificationId = _getNotificationId(friend.id);
 
+    // Parse the reminder time
     int hour = 9;
     int minute = 0;
     final List<String> timeParts = friend.reminderTime.split(':');
@@ -131,40 +168,95 @@ class NotificationService {
       minute = int.tryParse(timeParts[1]) ?? 0;
     }
 
-    final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
-    var scheduledDate = tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
-    if (scheduledDate.isBefore(now)) {
-      scheduledDate = scheduledDate.add(const Duration(days: 1));
-    }
-    scheduledDate = scheduledDate.add(Duration(days: friend.reminderDays - 1));
+    // Get the last notification time or use the current time if it doesn't exist
+    final prefs = await SharedPreferences.getInstance();
+    final lastNotificationKey = 'last_notification_${friend.id}';
+    int? lastNotificationTime = prefs.getInt(lastNotificationKey);
 
-    final AndroidNotificationDetails androidDetails =
-    AndroidNotificationDetails(
+    DateTime baseTime;
+    if (lastNotificationTime != null) {
+      // Use the last notification time as the base
+      baseTime = DateTime.fromMillisecondsSinceEpoch(lastNotificationTime);
+    } else {
+      // If no previous notification, use the current time and save it
+      baseTime = DateTime.now();
+      await prefs.setInt(lastNotificationKey, baseTime.millisecondsSinceEpoch);
+    }
+
+    // Calculate the next notification time
+    final nextNotificationDate = DateTime(
+      baseTime.year,
+      baseTime.month,
+      baseTime.day + friend.reminderDays,
+      hour,
+      minute,
+    );
+
+    // If the calculated time is in the past, adjust to the next valid time
+    final now = DateTime.now();
+    var scheduledDate = tz.TZDateTime.from(nextNotificationDate, tz.local);
+    if (scheduledDate.isBefore(now)) {
+      // Calculate how many reminder intervals have passed
+      final daysBetween = now.difference(baseTime).inDays;
+      final reminderCycles = (daysBetween / friend.reminderDays).ceil();
+
+      // Set the next reminder date based on the original date plus the required cycles
+      scheduledDate = tz.TZDateTime(
+        tz.local,
+        baseTime.year,
+        baseTime.month,
+        baseTime.day + (reminderCycles * friend.reminderDays),
+        hour,
+        minute,
+      );
+
+      // Ensure it's in the future
+      if (scheduledDate.isBefore(now)) {
+        scheduledDate = scheduledDate.add(Duration(days: friend.reminderDays));
+      }
+    }
+
+    final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       'alongside_reminders',
       'Friend Reminders',
-      //description: 'Notifications for friend check-in reminders',
       importance: Importance.high,
       priority: Priority.high,
       styleInformation: BigTextStyleInformation(
-        'It’s been ${friend.reminderDays} ${friend.reminderDays == 1 ? 'day' : 'days'} since your last check-in',
+        'It\'s been ${friend.reminderDays} ${friend.reminderDays == 1 ? 'day' : 'days'} since your last check-in',
       ),
+      actions: [
+        const AndroidNotificationAction('message', 'Message'),
+        const AndroidNotificationAction('call', 'Call'),
+      ],
     );
 
-    final NotificationDetails notificationDetails =
-    NotificationDetails(android: androidDetails);
+    final NotificationDetails notificationDetails = NotificationDetails(android: androidDetails);
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
       notificationId,
-      'Check in with, ${friend.name}',
-      'It’s been ${friend.reminderDays} ${friend.reminderDays == 1 ? 'day' : 'days'} since your last check-in',
+      'Check in with ${friend.name}',
+      'It\'s been ${friend.reminderDays} ${friend.reminderDays == 1 ? 'day' : 'days'} since your last check-in',
       scheduledDate,
       notificationDetails,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      // Removed uiLocalNotificationDateInterpretation
       matchDateTimeComponents: DateTimeComponents.time,
-      payload: friend.id,
+      payload: '${friend.id};${friend.phoneNumber}',
     );
 
     _friendNotificationIds[friend.id] = notificationId;
+
+    // Update the next notification time text in the database
+    final nextNotificationString = '${scheduledDate.month}/${scheduledDate.day}/${scheduledDate.year} at ${_formatTimeOfDay(TimeOfDay(hour: scheduledDate.hour, minute: scheduledDate.minute))}';
+    await prefs.setString('next_notification_${friend.id}', nextNotificationString);
+  }
+
+  // Helper method to format time in 12-hour format
+  String _formatTimeOfDay(TimeOfDay time) {
+    final hour = time.hour == 0 ? 12 : time.hour > 12 ? time.hour - 12 : time.hour;
+    final period = time.hour < 12 ? 'AM' : 'PM';
+    final minute = time.minute < 10 ? '0${time.minute}' : '${time.minute}';
+    return '$hour:$minute $period';
   }
 
   // Show persistent notification with actions.
@@ -187,35 +279,9 @@ class NotificationService {
       summaryText: friend.name,
     );
 
-    void _handleNotificationAction(NotificationResponse response) {
-      final String actionId = response.actionId ?? "";
-      final String payload = response.payload ?? "";
-
-      String friendId = "";
-      String friendPhone = "";
-      if (payload.contains(";")) {
-        final parts = payload.split(";");
-        if (parts.length >= 2) {
-          friendId = parts[0];
-          friendPhone = parts[1];
-        }
-      } else {
-        friendId = payload;
-      }
-
-      // Call the callback with the appropriate action
-      if (actionId.isNotEmpty) {
-        _actionCallback?.call(friendId, actionId);
-      } else {
-        // Default tap - navigate to home
-        _actionCallback?.call("", "home");
-      }
-    }
-
     final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       'alongside_persistent',
       'Quick Access Notifications',
-      //description: 'Persistent notifications for quick access to friends',
       importance: Importance.high,
       priority: Priority.high,
       ongoing: true,
@@ -235,7 +301,6 @@ class NotificationService {
       notificationDetails,
       payload: '${friend.id};${friend.phoneNumber}',
     );
-
   }
 
   // Remove persistent notification
@@ -249,6 +314,11 @@ class NotificationService {
     final int notificationId = _getNotificationId(friendId);
     await flutterLocalNotificationsPlugin.cancel(notificationId);
     _friendNotificationIds.remove(friendId);
+
+    // Clear the last notification time and next notification text
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('last_notification_$friendId');
+    await prefs.remove('next_notification_$friendId');
   }
 
   // Generate a unique notification ID based on the friend's ID.
@@ -276,7 +346,6 @@ class NotificationService {
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       'alongside_reminders',
       'Friend Reminders',
-      //description: 'Notifications for friend check-in reminders',
       importance: Importance.high,
       priority: Priority.high,
     );
@@ -292,10 +361,7 @@ class NotificationService {
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       payload: 'test',
     );
-
   }
-
-  // --- Modified Message and Call Functionality ---
 
   // For the message action, we now simply trigger the callback so that the main app
   // can navigate to the home screen and simulate clicking the message button.
@@ -308,6 +374,7 @@ class NotificationService {
       final Uri telUri = Uri.parse('tel:$sanitizedPhone');
       await launchUrl(telUri, mode: LaunchMode.externalApplication);
     } catch (e) {
+      print('Error launching phone app: $e');
     }
   }
 }

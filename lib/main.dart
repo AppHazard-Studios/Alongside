@@ -9,7 +9,7 @@ import 'utils/constants.dart';
 import 'screens/add_friend_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
-//import 'services/foreground_service.dart';
+import 'services/foreground_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -60,12 +60,38 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
     super.dispose();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    if (state == AppLifecycleState.resumed) {
+      // Ensure the service is running when the app comes to the foreground
+      ForegroundServiceManager.startForegroundService();
+
+      // Refresh notifications
+      final provider = Provider.of<FriendsProvider>(context, listen: false);
+      if (provider.friends.isNotEmpty) {
+        for (final friend in provider.friends) {
+          if (friend.hasPersistentNotification) {
+            provider.notificationService.showPersistentNotification(friend);
+          }
+        }
+      }
+    }
+  }
+
   Future<void> _initializeApp() async {
     // Set up notification action handlers
     final provider = Provider.of<FriendsProvider>(context, listen: false);
     provider.notificationService.setActionCallback(_handleNotificationAction);
 
-    // Start foreground service with delay
+    // Initialize and start foreground service
+    await ForegroundServiceManager.initForegroundService();
+
+    // Start service with a slight delay to ensure the app is fully loaded
+    Future.delayed(const Duration(seconds: 3), () async {
+      await ForegroundServiceManager.startForegroundService();
+    });
   }
 
   // Handle notification actions
@@ -145,6 +171,25 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
       await launchUrl(smsUri, mode: LaunchMode.externalApplication);
     } catch (e) {
       // Error handling for messaging
+      ScaffoldMessenger.of(_navigatorKey.currentContext!).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Unable to open messaging app. Try again later.',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+            ),
+          ),
+          duration: const Duration(seconds: 2),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        ),
+      );
     }
   }
 
@@ -156,6 +201,25 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
       await launchUrl(telUri, mode: LaunchMode.externalApplication);
     } catch (e) {
       // Error handling for call
+      ScaffoldMessenger.of(_navigatorKey.currentContext!).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Unable to open phone app. Try again later.',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+            ),
+          ),
+          duration: const Duration(seconds: 2),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        ),
+      );
     }
   }
 
