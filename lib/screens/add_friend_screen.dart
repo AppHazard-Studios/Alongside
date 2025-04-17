@@ -516,8 +516,9 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
+                // Reduced vertical spacing between options
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  padding: const EdgeInsets.symmetric(vertical: 2),
                   child: ListTile(
                     leading: Icon(Icons.emoji_emotions, color: AppConstants.primaryColor, size: 22),
                     title: Text(
@@ -535,7 +536,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  padding: const EdgeInsets.symmetric(vertical: 2),
                   child: ListTile(
                     leading: Icon(Icons.photo_library, color: AppConstants.primaryColor, size: 22),
                     title: Text(

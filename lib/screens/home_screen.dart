@@ -257,7 +257,8 @@ class HomeScreen extends StatelessWidget {
               child: const Text('Close'),
             ),
           ],
-          actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          // Reduced vertical padding to minimize white space before close button
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),

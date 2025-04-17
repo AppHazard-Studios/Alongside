@@ -334,12 +334,15 @@ class FriendCard extends StatelessWidget {
                   ),
                 ),
 
-                // Header with title and manage button
+                // Header with title and settings icon - Centered title with icon on right
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      // Empty spacer to balance the title
+                      SizedBox(width: 48),
+                      // Centered title
                       Text(
                         'Message ${friend.name}',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -349,7 +352,8 @@ class FriendCard extends StatelessWidget {
                           color: AppConstants.primaryTextColor,
                         ),
                       ),
-                      TextButton.icon(
+                      // Settings icon
+                      IconButton(
                         onPressed: () {
                           Navigator.pop(context);
                           Navigator.push(
@@ -360,10 +364,9 @@ class FriendCard extends StatelessWidget {
                           );
                         },
                         icon: Icon(Icons.settings, color: AppConstants.primaryColor, size: 22),
-                        label: Text('Manage', style: TextStyle(color: AppConstants.primaryColor, fontSize: 15)),
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        ),
+                        padding: EdgeInsets.zero,
+                        constraints: BoxConstraints(),
+                        splashRadius: 24,
                       ),
                     ],
                   ),
@@ -377,39 +380,32 @@ class FriendCard extends StatelessWidget {
                     itemCount: allMessages.length + 1,
                     itemBuilder: (context, index) {
                       if (index == allMessages.length) {
-                        // Create custom message option
+                        // Create custom message option - styled differently
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Card(
-                            elevation: 1,
-                            color: Colors.white, // Explicit white background
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              side: BorderSide(color: Colors.grey.withOpacity(0.1), width: 1),
-                            ),
-                            child: InkWell(
-                              onTap: () => _showCustomMessageDialog(context),
-                              borderRadius: BorderRadius.circular(10),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.add_circle_outline,
-                                      size: 20,
+                          child: InkWell(
+                            onTap: () => _showCustomMessageDialog(context),
+                            borderRadius: BorderRadius.circular(10),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.add_circle_outline,
+                                    size: 20,
+                                    color: AppConstants.primaryColor,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    'Create custom message',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w500,
                                       color: AppConstants.primaryColor,
                                     ),
-                                    const SizedBox(width: 10),
-                                    Text(
-                                      'Create custom message',
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w500,
-                                        color: AppConstants.primaryColor,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
@@ -745,46 +741,63 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
           ),
         ),
       )
-          : Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: ReorderableListView.builder(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          itemCount: _customMessages.length,
-          onReorder: (oldIndex, newIndex) {
-            setState(() {
-              if (oldIndex < newIndex) {
-                newIndex -= 1;
-              }
-              final item = _customMessages.removeAt(oldIndex);
-              _customMessages.insert(newIndex, item);
+          : Theme(
+        // Override the default drag appearance
+        data: Theme.of(context).copyWith(
+          canvasColor: Colors.transparent,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: ReorderableListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            buildDefaultDragHandles: false,
+            proxyDecorator: (child, index, animation) {
+              final dragBorderRadius = BorderRadius.circular(10);
 
-              // Save the new order
-              Provider.of<FriendsProvider>(context, listen: false)
-                  .storageService
-                  .saveCustomMessages(_customMessages);
-            });
-          },
-          itemBuilder: (context, index) {
-            return Dismissible(
-              key: Key('dismissible-${_customMessages[index]}'),
-              background: Container(
-                color: AppConstants.deleteColor.withOpacity(0.1),
-                alignment: Alignment.centerRight,
-                padding: const EdgeInsets.only(right: 16),
-                child: Icon(
-                  Icons.delete,
-                  color: AppConstants.deleteColor,
-                  size: 22,
+              // Remove the white background shadow completely
+              return Material(
+                color: Colors.transparent,
+                borderRadius: dragBorderRadius,
+                elevation: 0,
+                child: AnimatedBuilder(
+                  animation: animation,
+                  builder: (BuildContext context, Widget? child) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        borderRadius: dragBorderRadius,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2 * animation.value),
+                            blurRadius: 8 * animation.value,
+                            offset: Offset(0, 4 * animation.value), // Bottom only shadow
+                            spreadRadius: 0,
+                          ),
+                        ],
+                      ),
+                      child: child,
+                    );
+                  },
+                  child: child,
                 ),
-              ),
-              direction: DismissDirection.endToStart,
-              onDismissed: (direction) {
-                _deleteMessage(index);
-              },
-              confirmDismiss: (direction) {
-                return _confirmDelete(index);
-              },
-              child: Card(
+              );
+            },
+            itemCount: _customMessages.length,
+            onReorder: (oldIndex, newIndex) {
+              setState(() {
+                if (oldIndex < newIndex) {
+                  newIndex -= 1;
+                }
+                final item = _customMessages.removeAt(oldIndex);
+                _customMessages.insert(newIndex, item);
+
+                // Save the new order
+                Provider.of<FriendsProvider>(context, listen: false)
+                    .storageService
+                    .saveCustomMessages(_customMessages);
+              });
+            },
+            itemBuilder: (context, index) {
+              return Card(
                 key: ValueKey(_customMessages[index]), // Required for ReorderableListView
                 margin: const EdgeInsets.symmetric(vertical: 5),
                 elevation: 1,
@@ -793,30 +806,53 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
                   side: BorderSide(color: Colors.grey.withOpacity(0.1), width: 1),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.only(left: 14),
-                  child: ListTile(
-                    title: Text(
-                      _customMessages[index],
-                      style: TextStyle(
-                        fontSize: 15,
-                        color: AppConstants.primaryTextColor,
-                        height: 1.4,
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                  child: Row(
+                    children: [
+                      // Delete icon on the left
+                      IconButton(
+                        icon: Icon(
+                          Icons.delete_outline,
+                          color: AppConstants.deleteColor,
+                          size: 22,
+                        ),
+                        onPressed: () => _confirmDelete(index),
+                        padding: const EdgeInsets.all(8),
+                        constraints: const BoxConstraints(),
+                        splashRadius: 24,
                       ),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      vertical: 8,
-                    ),
-                    trailing: ReorderableDragStartListener(
-                      index: index,
-                      child: Icon(Icons.drag_handle,
-                          color: AppConstants.secondaryTextColor,
-                          size: 22),
-                    ),
+                      // Message content
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Text(
+                            _customMessages[index],
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: AppConstants.primaryTextColor,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Drag handle with increased padding
+                      Padding(
+                        padding: const EdgeInsets.only(right: 12),
+                        child: ReorderableDragStartListener(
+                          index: index,
+                          child: Icon(
+                            Icons.drag_handle,
+                            color: AppConstants.secondaryTextColor,
+                            size: 22,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -828,7 +864,7 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
   }
 
   Future<bool> _confirmDelete(int index) async {
-    return await showDialog(
+    final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
@@ -878,7 +914,13 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
         ],
         actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       ),
-    ) ?? false; // In case the dialog is dismissed
+    );
+
+    if (shouldDelete == true) {
+      _deleteMessage(index);
+    }
+
+    return shouldDelete ?? false;
   }
 
   void _deleteMessage(int index) {
@@ -936,112 +978,112 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
     final dialogWidth = screenWidth * 0.85; // 85% of screen width
 
     showDialog(
-        context: context,
-        builder: (context) {
-      return AlertDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
           title: Text(
-          'Add Custom Message',
-          style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
-          color: AppConstants.primaryTextColor,
-          letterSpacing: -0.2,
-      ),
-    ),
-    contentPadding: const EdgeInsets.all(20),
-    content: Container(
-    width: dialogWidth, // Fixed width container
-    child: TextFormField(
-    controller: textController,
-    // Use the same style as the AddFriend form fields
-    decoration: InputDecoration(
-    labelText: 'Type your message...',
-    border: const OutlineInputBorder(),
-    contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
-    floatingLabelBehavior: FloatingLabelBehavior.auto,
-    labelStyle: TextStyle(
-    fontSize: 15,
-    color: AppConstants.secondaryTextColor,
-    ),
-      filled: true,
-      fillColor: Colors.white,
-    ),
-      style: TextStyle(
-        fontSize: 15,
-        color: AppConstants.primaryTextColor,
-        height: 1.4,
-      ),
-      minLines: 2, // Start with 2 lines
-      maxLines: 5, // Grow up to 5 lines
-      textCapitalization: TextCapitalization.sentences,
-      textInputAction: TextInputAction.newline, // Allow new lines
-    ),
-    ),
-        backgroundColor: AppConstants.dialogBackgroundColor,
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.all(14),
-              foregroundColor: AppConstants.primaryColor,
-              textStyle: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
+            'Add Custom Message',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: AppConstants.primaryTextColor,
+              letterSpacing: -0.2,
             ),
-            child: const Text('Cancel'),
           ),
-          TextButton(
-            onPressed: () async {
-              if (textController.text.isNotEmpty) {
-                Navigator.pop(context);
+          contentPadding: const EdgeInsets.all(20),
+          content: Container(
+            width: dialogWidth, // Fixed width container
+            child: TextFormField(
+              controller: textController,
+              // Use the same style as the AddFriend form fields
+              decoration: InputDecoration(
+                labelText: 'Type your message...',
+                border: const OutlineInputBorder(),
+                contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
+                floatingLabelBehavior: FloatingLabelBehavior.auto,
+                labelStyle: TextStyle(
+                  fontSize: 15,
+                  color: AppConstants.secondaryTextColor,
+                ),
+                filled: true,
+                fillColor: Colors.white,
+              ),
+              style: TextStyle(
+                fontSize: 15,
+                color: AppConstants.primaryTextColor,
+                height: 1.4,
+              ),
+              minLines: 2, // Start with 2 lines
+              maxLines: 5, // Grow up to 5 lines
+              textCapitalization: TextCapitalization.sentences,
+              textInputAction: TextInputAction.newline, // Allow new lines
+            ),
+          ),
+          backgroundColor: AppConstants.dialogBackgroundColor,
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.all(14),
+                foregroundColor: AppConstants.primaryColor,
+                textStyle: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                if (textController.text.isNotEmpty) {
+                  Navigator.pop(context);
 
-                // Add the new message
-                setState(() {
-                  _customMessages.add(textController.text);
-                });
+                  // Add the new message
+                  setState(() {
+                    _customMessages.add(textController.text);
+                  });
 
-                // Save to storage
-                await Provider.of<FriendsProvider>(context, listen: false)
-                    .storageService
-                    .saveCustomMessages(_customMessages);
+                  // Save to storage
+                  await Provider.of<FriendsProvider>(context, listen: false)
+                      .storageService
+                      .saveCustomMessages(_customMessages);
 
-                // Show a brief feedback that message was saved with updated styling
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Message saved',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
+                  // Show a brief feedback that message was saved with updated styling
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Message saved',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
                       ),
+                      duration: const Duration(seconds: 2),
+                      backgroundColor: AppConstants.primaryColor,
+                      behavior: SnackBarBehavior.floating,
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     ),
-                    duration: const Duration(seconds: 2),
-                    backgroundColor: AppConstants.primaryColor,
-                    behavior: SnackBarBehavior.floating,
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  ),
-                );
-              }
-            },
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.all(14),
-              foregroundColor: AppConstants.primaryColor,
-              textStyle: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
+                  );
+                }
+              },
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.all(14),
+                foregroundColor: AppConstants.primaryColor,
+                textStyle: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
+              child: const Text('Save'),
             ),
-            child: const Text('Save'),
-          ),
-        ],
-        actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      );
-        },
+          ],
+          actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        );
+      },
     );
   }
 }
