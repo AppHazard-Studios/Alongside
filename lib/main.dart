@@ -11,12 +11,29 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'services/foreground_service.dart';
 
+// Global key for navigation from notification callbacks
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize notifications
   final notificationService = NotificationService();
   await notificationService.initialize();
+
+  // Cold-start & background callback: navigate via named route
+  notificationService.setActionCallback((friendId, action) {
+    // Always return to home first
+    navigatorKey.currentState?.popUntil((route) => route.isFirst);
+
+    // Then deep-link into /notification with arguments
+    Future.delayed(const Duration(milliseconds: 100), () {
+      navigatorKey.currentState?.pushNamed(
+        '/notification',
+        arguments: {'id': friendId, 'action': action},
+      );
+    });
+  });
 
   runApp(
     MultiProvider(
@@ -41,14 +58,12 @@ class AlongsideApp extends StatefulWidget {
 }
 
 class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver {
-  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    // Initialize after render to avoid startup crashes
+    // After first frame, also register the in-app callback
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeApp();
     });
@@ -63,192 +78,38 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-
     if (state == AppLifecycleState.resumed) {
-      // Ensure the service is running when the app comes to the foreground
       ForegroundServiceManager.startForegroundService();
-
-      // Refresh notifications
       final provider = Provider.of<FriendsProvider>(context, listen: false);
-      if (provider.friends.isNotEmpty) {
-        for (final friend in provider.friends) {
-          if (friend.hasPersistentNotification) {
-            provider.notificationService.showPersistentNotification(friend);
-          }
+      for (final f in provider.friends) {
+        if (f.hasPersistentNotification) {
+          provider.notificationService.showPersistentNotification(f);
         }
       }
     }
   }
 
   Future<void> _initializeApp() async {
-    // Set up notification action handlers
     final provider = Provider.of<FriendsProvider>(context, listen: false);
+
+    // In-app callback (when already running)
     provider.notificationService.setActionCallback(_handleNotificationAction);
 
-    // Initialize and start foreground service
     await ForegroundServiceManager.initForegroundService();
-
-    // Start service with a slight delay to ensure the app is fully loaded
-    Future.delayed(const Duration(seconds: 3), () async {
-      await ForegroundServiceManager.startForegroundService();
+    Future.delayed(const Duration(seconds: 3), () {
+      ForegroundServiceManager.startForegroundService();
     });
   }
 
-  // Handle notification actions
-  void _handleNotificationAction(String friendId, String action) async {
-    if (action == 'home') {
-      // Navigate to home screen
-      _navigatorKey.currentState?.popUntil((route) => route.isFirst);
-      return;
-    }
-
-    final provider = Provider.of<FriendsProvider>(context, listen: false);
-    final friend = provider.getFriendById(friendId);
-    if (friend == null) return;
-
-    // Ensure we are at home first
-    _navigatorKey.currentState?.popUntil((route) => route.isFirst);
-
-    // Add a slight delay to ensure navigation is complete
-    await Future.delayed(const Duration(milliseconds: 100));
-
-    if (action == 'message') {
-      // This is where we need to show the message interface with options
-      final context = _navigatorKey.currentContext!;
-      if (context.mounted) {
-        // Find the matching friend card and simulate a message button press
-        // This will reuse your existing message interface
-        _showMessageOptionsForFriend(friend);
-      }
-    } else if (action == 'call') {
-      // Direct phone call implementation
-      final phoneNumber = friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
-      try {
-        final telUri = Uri.parse('tel:$phoneNumber');
-        // Use the explicit LaunchMode.externalApplication to ensure it opens the phone app
-        await launchUrl(telUri, mode: LaunchMode.externalApplication);
-      } catch (e) {
-        if (_navigatorKey.currentContext != null) {
-          ScaffoldMessenger.of(_navigatorKey.currentContext!).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Unable to open phone app. Try again later.',
-                style: const TextStyle(color: Colors.white, fontSize: 14),
-              ),
-              backgroundColor: Colors.redAccent,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-      }
-    }
-  }
-
-  // Helper method: Show a bottom sheet for message options
-  void _showMessageOptionsForFriend(Friend friend) {
-    showModalBottomSheet(
-      context: _navigatorKey.currentContext!,
-      isScrollControlled: true,
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Wrap(
-            children: [
-              ListTile(
-                leading: Icon(Icons.message, size: 22, color: AppConstants.primaryColor),
-                title: Text(
-                  'Send Default Message',
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: AppConstants.primaryTextColor,
-                  ),
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                onTap: () {
-                  Navigator.pop(context);
-                  _messageFriend(friend);
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.edit, size: 22, color: AppConstants.primaryColor),
-                title: Text(
-                  'Customize Message',
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: AppConstants.primaryTextColor,
-                  ),
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                onTap: () {
-                  Navigator.pop(context);
-                  _messageFriend(friend);
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  // Send an SMS message to the friend
-  void _messageFriend(Friend friend) async {
-    final phoneNumber = friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
-    try {
-      final smsUri = Uri.parse('sms:$phoneNumber');
-      await launchUrl(smsUri, mode: LaunchMode.externalApplication);
-    } catch (e) {
-      // Error handling for messaging
-      ScaffoldMessenger.of(_navigatorKey.currentContext!).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Unable to open messaging app. Try again later.',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-            ),
-          ),
-          duration: const Duration(seconds: 2),
-          backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
-          elevation: 4,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        ),
+  void _handleNotificationAction(String friendId, String action) {
+    // Mirror cold-start: navigate via /notification
+    navigatorKey.currentState?.popUntil((route) => route.isFirst);
+    Future.delayed(const Duration(milliseconds: 100), () {
+      navigatorKey.currentState?.pushNamed(
+        '/notification',
+        arguments: {'id': friendId, 'action': action},
       );
-    }
-  }
-
-  // Directly call the friend
-  void _callFriend(Friend friend) async {
-    final phoneNumber = friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
-    try {
-      final telUri = Uri.parse('tel:$phoneNumber');
-      await launchUrl(telUri, mode: LaunchMode.externalApplication);
-    } catch (e) {
-      // Error handling for call
-      ScaffoldMessenger.of(_navigatorKey.currentContext!).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Unable to open phone app. Try again later.',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-            ),
-          ),
-          duration: const Duration(seconds: 2),
-          backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
-          elevation: 4,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        ),
-      );
-    }
+    });
   }
 
   @override
@@ -256,10 +117,9 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
     return WithForegroundTask(
       child: MaterialApp(
         title: 'Alongside',
-        navigatorKey: _navigatorKey,
+        navigatorKey: navigatorKey,
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          // Your existing theme configuration...
           primaryColor: const Color(AppConstants.primaryColorValue),
           scaffoldBackgroundColor: const Color(AppConstants.backgroundColorValue),
           cardColor: const Color(AppConstants.cardColorValue),
@@ -325,17 +185,13 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
             foregroundColor: Colors.white,
             centerTitle: true,
             elevation: 0,
-            iconTheme: IconThemeData(
-              color: Colors.white,
-              size: 22,
-            ),
+            iconTheme: IconThemeData(color: Colors.white, size: 22),
             titleTextStyle: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: Colors.white,
               letterSpacing: -0.25,
             ),
-            titleSpacing: 16,
           ),
           cardTheme: CardTheme(
             color: const Color(AppConstants.cardColorValue),
@@ -369,9 +225,6 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
             ),
-            backgroundColor: Color(AppConstants.cardColorValue),
-            modalElevation: 10,
-            clipBehavior: Clip.antiAlias,
           ),
           listTileTheme: const ListTileThemeData(
             contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 2),
@@ -414,14 +267,58 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
             ),
             labelStyle: TextStyle(
                 fontSize: 15,
-                color: const Color(AppConstants.secondaryTextColorValue)
-            ),
+                color: const Color(AppConstants.secondaryTextColorValue)),
             hintStyle: TextStyle(
                 fontSize: 14,
-                color: const Color(AppConstants.secondaryTextColorValue).withOpacity(0.7)
-            ),
+                color: const Color(AppConstants.secondaryTextColorValue)
+                    .withOpacity(0.7)),
           ),
         ),
+        // Define routes, including the notification handler
+        routes: {
+          '/notification': (ctx) {
+            final args =
+            ModalRoute.of(ctx)!.settings.arguments as Map<String, String>;
+            final friendId = args['id']!;
+            final action = args['action']!;
+            final provider =
+            Provider.of<FriendsProvider>(ctx, listen: false);
+            final friend = provider.getFriendById(friendId);
+
+            if (friend != null) {
+              if (action == 'message') {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  showModalBottomSheet(
+                    context: ctx,
+                    isScrollControlled: true,
+                    builder: (_) => Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Wrap(children: [
+                        ListTile(
+                          leading: Icon(Icons.message,
+                              color: AppConstants.primaryColor),
+                          title: const Text('Send Message'),
+                          onTap: () {
+                            Navigator.pop(ctx);
+                            final smsUri =
+                            Uri.parse('sms:${friend.phoneNumber}');
+                            launchUrl(smsUri,
+                                mode: LaunchMode.externalApplication);
+                          },
+                        ),
+                      ]),
+                    ),
+                  );
+                });
+              } else if (action == 'call') {
+                final telUri = Uri.parse('tel:${friend.phoneNumber}');
+                launchUrl(telUri, mode: LaunchMode.externalApplication);
+              }
+            }
+            // Finally render home
+            return const HomeScreen();
+          },
+        },
         home: const HomeScreen(),
       ),
     );
