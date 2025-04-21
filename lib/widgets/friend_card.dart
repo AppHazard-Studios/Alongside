@@ -1,6 +1,5 @@
 // widgets/friend_card.dart
 import 'dart:io';
-import 'dart:ui' show lerpDouble;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -10,184 +9,387 @@ import '../screens/add_friend_screen.dart';
 import '../utils/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class FriendCard extends StatelessWidget {
+class FriendCard extends StatefulWidget {
   final Friend friend;
+  final bool isHighlighted;
 
   const FriendCard({
     Key? key,
     required this.friend,
+    this.isHighlighted = false,
   }) : super(key: key);
 
   @override
+  State<FriendCard> createState() => _FriendCardState();
+}
+
+class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateMixin {
+  bool _isExpanded = false;
+  late AnimationController _controller;
+  late Animation<double> _expandAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _expandAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _toggleExpand() {
+    setState(() {
+      _isExpanded = !_isExpanded;
+      if (_isExpanded) {
+        _controller.forward();
+      } else {
+        _controller.reverse();
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final TextStyle labelStyle = TextStyle(
-      fontWeight: FontWeight.bold,
-      color: AppConstants.primaryTextColor,
-      fontSize: 14,
-      letterSpacing: 0.2,
-    );
-
-    final TextStyle valueStyle = TextStyle(
-      color: AppConstants.secondaryTextColor,
-      fontSize: 14,
-      height: 1.4,
-      letterSpacing: 0.1,
-    );
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 14),
-      elevation: 2,
-      shadowColor: Colors.black.withOpacity(0.12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.withOpacity(0.1), width: 1),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      margin: EdgeInsets.symmetric(
+        vertical: 8,
+        horizontal: widget.isHighlighted ? 0 : 16,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header with profile image, name, and edit button consistently at top
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 8, 12),
+      decoration: BoxDecoration(
+        color: AppConstants.cardColor,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: widget.isHighlighted
+                ? AppConstants.primaryColor.withOpacity(0.15)
+                : Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+            spreadRadius: 0,
+          ),
+        ],
+        border: widget.isHighlighted
+            ? Border.all(color: AppConstants.primaryColor.withOpacity(0.3), width: 1.5)
+            : Border.all(color: AppConstants.borderColor.withOpacity(0.7), width: 1),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: _toggleExpand,
+            splashColor: AppConstants.primaryColor.withOpacity(0.05),
+            highlightColor: AppConstants.primaryColor.withOpacity(0.02),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Main card content (always visible)
+            Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 _buildProfileImage(),
-                const SizedBox(width: 14),
+                const SizedBox(width: 16),
                 Expanded(
-                  child: Text(
-                    friend.name,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 18,
-                      letterSpacing: -0.2,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            widget.friend.name,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: Color(AppConstants.primaryTextColorValue),
+                            ),
+                          ),
+                          // Removed the reminder badge - not useful enough in collapsed view
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      if (widget.friend.helpingWith != null &&
+                          widget.friend.helpingWith!.isNotEmpty) ...[
+                        Text(
+                          'Alongside them in:',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppConstants.primaryColor,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          widget.friend.helpingWith!,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Color(AppConstants.primaryTextColorValue),
+                            height: 1.3,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12), // Added more spacing before the dropdown icon
+                AnimatedRotation(
+                  turns: _isExpanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 300),
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: AppConstants.primaryColor.withOpacity(0.08),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.keyboard_arrow_down,
+                      color: AppConstants.primaryColor,
+                      size: 20,
                     ),
                   ),
                 ),
-                IconButton(
-                  icon: Icon(Icons.edit, color: AppConstants.primaryColor, size: 22),
-                  tooltip: 'Edit friend details',
-                  padding: const EdgeInsets.all(6),
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => AddFriendScreen(friend: friend),
+              ],
+            ),
+          ),
+
+                // Expandable details with a completely seamless transition
+                AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, child) {
+                    return ClipRect(
+                      child: Align(
+                        heightFactor: _expandAnimation.value,
+                        child: child,
                       ),
                     );
                   },
-                ),
-              ],
-            ),
-          ),
+                  child: Container(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.white,
+                          AppConstants.backgroundColor.withOpacity(0.5),
+                        ],
+                        stops: const [0.0, 1.0],
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Very subtle separator
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Container(
+                            height: 1,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppConstants.borderColor.withOpacity(0),
+                                  AppConstants.borderColor.withOpacity(0.3),
+                                  AppConstants.borderColor.withOpacity(0),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
 
-          // "Alongside" information section - add icons for visual balance
-          if (friend.helpingWith != null && friend.helpingWith!.isNotEmpty ||
-              friend.theyHelpingWith != null && friend.theyHelpingWith!.isNotEmpty ||
-              friend.reminderDays > 0)
-            Padding(
-              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (friend.helpingWith != null && friend.helpingWith!.isNotEmpty) ...[
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.favorite_outline,
-                          size: 18,
-                          color: AppConstants.primaryColor,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: RichText(
-                            text: TextSpan(
+                        const SizedBox(height: 16),
+
+                        // Additional info sections
+                        if (widget.friend.theyHelpingWith != null &&
+                            widget.friend.theyHelpingWith!.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                TextSpan(
-                                  text: 'You\'re alongside them in: ',
-                                  style: labelStyle,
+                                Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: AppConstants.secondaryColor.withOpacity(0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.person_outline,
+                                    size: 14,
+                                    color: AppConstants.secondaryColor,
+                                  ),
                                 ),
-                                TextSpan(
-                                  text: friend.helpingWith,
-                                  style: valueStyle,
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'They\'re alongside you in:',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                          color: AppConstants.secondaryTextColor,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        widget.friend.theyHelpingWith!,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: AppConstants.primaryTextColor,
+                                          height: 1.3,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                  ],
-                  if (friend.theyHelpingWith != null && friend.theyHelpingWith!.isNotEmpty) ...[
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.person_outline,
-                          size: 18,
-                          color: AppConstants.secondaryColor,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: RichText(
-                            text: TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: 'They\'re alongside you in: ',
-                                  style: labelStyle,
-                                ),
-                                TextSpan(
-                                  text: friend.theyHelpingWith,
-                                  style: valueStyle,
-                                ),
-                              ],
+
+                        if (widget.friend.theyHelpingWith != null &&
+                            widget.friend.theyHelpingWith!.isNotEmpty)
+                          const SizedBox(height: 16),
+
+                        if (widget.friend.reminderDays > 0)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: FutureBuilder<String?>(
+                              future: _getNextReminderTime(),
+                              builder: (context, snapshot) {
+                                return Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: AppConstants.accentColor.withOpacity(0.1),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.calendar_today_outlined,
+                                        size: 14,
+                                        color: AppConstants.accentColor,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Reminder every ${widget.friend.reminderDays} ${widget.friend.reminderDays == 1 ? 'day' : 'days'}',
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                              color: AppConstants.secondaryTextColor,
+                                            ),
+                                          ),
+                                          if (snapshot.hasData && snapshot.data != null) ...[
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              'Next: ${snapshot.data}',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: AppConstants.primaryTextColor,
+                                                height: 1.3,
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                  ],
-    if (friend.reminderDays > 0) ...[
-    _buildReminderInfo(),
-    const SizedBox(height: 10),
+
+                        const SizedBox(height: 20),
+
+                        // Action buttons
+    Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    child: Row(
+    children: [
+    Expanded(
+    child: _buildActionButton(
+    context,
+    Icons.message_rounded,
+    'Message',
+    () => _showMessageOptions(context),
+    inverted: false, // Primary filled button
+    ),
+    ),
+    const SizedBox(width: 12),
+    Expanded(
+    child: _buildActionButton(
+    context,
+    Icons.phone_rounded,
+    'Call',
+    () => _callFriend(context),
+    inverted: true, // Inverted outlined button
+    ),
+    ),
+    const SizedBox(width: 12),
+    _buildEditButton(),
     ],
-                ],
-              ),
-            ),
-
-          // Divider to separate content from actions
-          Divider(
-            height: 1,
-            thickness: 1,
-            color: AppConstants.borderColor.withOpacity(0.6),
-          ),
-
-          // Action buttons
-          Padding(
-            padding: const EdgeInsets.all(10),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildActionButton(
-                    context,
-                    Icons.message,
-                    'Message',
-                        () => _showMessageOptions(context),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _buildActionButton(
-                    context,
-                    Icons.phone,
-                    'Call',
-                        () => _callFriend(context),
+    ),
+    ),
+                      ],
+                    ),
                   ),
                 ),
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReminderBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppConstants.accentColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppConstants.accentColor.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.notifications_active_rounded,
+            size: 12,
+            color: AppConstants.accentColor,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            '${widget.friend.reminderDays}d',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppConstants.accentColor,
             ),
           ),
         ],
@@ -195,155 +397,118 @@ class FriendCard extends StatelessWidget {
     );
   }
 
-  Widget _buildReminderInfo() {
-    return FutureBuilder<String?>(
-      future: _getNextReminderTime(),
-      builder: (context, snapshot) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  Icons.calendar_today_outlined,
-                  size: 18,
-                  color: AppConstants.primaryColor,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: 'Reminder: ',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: AppConstants.primaryTextColor,
-                            fontSize: 14,
-                            letterSpacing: 0.2,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'Every ${friend.reminderDays} ${friend.reminderDays == 1 ? 'day' : 'days'}',
-                          style: TextStyle(
-                            color: AppConstants.secondaryTextColor,
-                            fontSize: 14,
-                            height: 1.4,
-                            letterSpacing: 0.1,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            if (snapshot.hasData && snapshot.data != null) ...[
-              const SizedBox(height: 4),
-              Padding(
-                padding: const EdgeInsets.only(left: 26),
-                child: Text(
-                  'Next: ${snapshot.data}',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppConstants.secondaryTextColor,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ),
-            ],
-          ],
-        );
-      },
+  Widget _buildProfileImage() {
+    return Container(
+      width: 56,
+      height: 56,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: widget.friend.isEmoji
+            ? widget.isHighlighted
+            ? AppConstants.primaryColor.withOpacity(0.08)
+            : AppConstants.profileCircleColor
+            : null,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+        image: !widget.friend.isEmoji
+            ? DecorationImage(
+          image: FileImage(File(widget.friend.profileImage)),
+          fit: BoxFit.cover,
+        )
+            : null,
+      ),
+      child: widget.friend.isEmoji
+          ? Center(
+        child: Text(
+          widget.friend.profileImage,
+          style: const TextStyle(fontSize: 30),
+        ),
+      )
+          : null,
     );
   }
 
-  Future<String?> _getNextReminderTime() async {
-    if (friend.reminderDays <= 0) return null;
-
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('next_notification_${friend.id}');
-  }
-
-  // Update the profile image to be slightly smaller
-  Widget _buildProfileImage() {
-    if (friend.isEmoji) {
-      return Container(
-        width: 52,
-        height: 52,
-        decoration: BoxDecoration(
-          color: AppConstants.profileCircleColor,
-          shape: BoxShape.circle,
-        ),
-        child: Center(
-          child: Text(
-            friend.profileImage,
-            style: const TextStyle(fontSize: 28),
-          ),
-        ),
-      );
-    } else {
-      return Container(
-        width: 52,
-        height: 52,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          image: DecorationImage(
-            image: FileImage(File(friend.profileImage)),
-            fit: BoxFit.cover,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.15),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-      );
-    }
-  }
-
-  // Update the action buttons to be more compact
   Widget _buildActionButton(
       BuildContext context,
       IconData icon,
       String label,
-      VoidCallback onPressed) {
-    return Material(
-      color: AppConstants.primaryColor.withOpacity(0.12),
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(8),
-        splashColor: AppConstants.primaryColor.withOpacity(0.2),
-        highlightColor: AppConstants.primaryColor.withOpacity(0.1),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 18,
-                color: AppConstants.primaryColor,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  color: AppConstants.primaryColor,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.3,
-                ),
-              ),
-            ],
+      VoidCallback onPressed,
+      {bool inverted = false}) {
+    return SizedBox(
+      height: 48,
+      child: ElevatedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 18),
+        label: Text(
+          label,
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: inverted ? AppConstants.primaryColor : Colors.white,
           ),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: inverted
+              ? Colors.white
+              : AppConstants.primaryColor,
+          foregroundColor: inverted
+              ? AppConstants.primaryColor
+              : Colors.white,
+          elevation: 0,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: inverted
+                ? BorderSide(color: AppConstants.primaryColor, width: 1.5)
+                : BorderSide.none,
+          ),
+          padding: EdgeInsets.zero,
         ),
       ),
     );
+  }
+  Widget _buildEditButton() {
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: AppConstants.backgroundColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppConstants.borderColor,
+          width: 1,
+        ),
+      ),
+      child: IconButton(
+        icon: Icon(
+          Icons.edit_outlined,
+          color: AppConstants.primaryColor,
+          size: 20,
+        ),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AddFriendScreen(friend: widget.friend),
+            ),
+          );
+        },
+        splashRadius: 24,
+        padding: EdgeInsets.zero,
+      ),
+    );
+  }
+
+  Future<String?> _getNextReminderTime() async {
+    if (widget.friend.reminderDays <= 0) return null;
+
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('next_notification_${widget.friend.id}');
   }
 
   void _showMessageOptions(BuildContext context) async {
@@ -356,147 +521,167 @@ class FriendCard extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      // Use the app's main background color instead of a tinted primary color
-      backgroundColor: const Color(AppConstants.backgroundColorValue),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (context) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.6,
-          maxChildSize: 0.9,
-          minChildSize: 0.4,
-          expand: false,
-          builder: (context, scrollController) {
-            return Column(
-              children: [
-                // Handle at the top
-                Container(
-                  margin: const EdgeInsets.only(top: 12, bottom: 0),
-                  width: 80,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppConstants.bottomSheetHandleColor,
-                    borderRadius: BorderRadius.circular(10),
+        return Container(
+          margin: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppConstants.cardColor,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: DraggableScrollableSheet(
+            initialChildSize: 0.6,
+            maxChildSize: 0.9,
+            minChildSize: 0.4,
+            expand: false,
+            builder: (context, scrollController) {
+              return Column(
+                children: [
+                  // Handle at the top
+                  Container(
+                    margin: const EdgeInsets.only(top: 12, bottom: 0),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppConstants.bottomSheetHandleColor,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
-                ),
 
-                // Header with title and settings icon - Centered title with icon on right
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Empty spacer to balance the title
-                      SizedBox(width: 48),
-                      // Centered title
-                      Text(
-                        'Message ${friend.name}',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.2,
-                          color: AppConstants.primaryTextColor,
+                  // Header with title and settings icon
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    child: Row(
+                      children: [
+                        // Profile icon
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: AppConstants.primaryColor.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.message_rounded,
+                            color: AppConstants.primaryColor,
+                            size: 20,
+                          ),
                         ),
-                      ),
-                      // Settings icon
-                      IconButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ManageMessagesScreen(),
+                        const SizedBox(width: 12),
+                        // Centered title
+                        Expanded(
+                          child: Text(
+                            'Message ${widget.friend.name}',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: AppConstants.primaryTextColor,
                             ),
-                          );
-                        },
-                        icon: Icon(Icons.settings, color: AppConstants.primaryColor, size: 22),
-                        padding: EdgeInsets.zero,
-                        constraints: BoxConstraints(),
-                        splashRadius: 24,
-                      ),
-                    ],
+                          ),
+                        ),
+                        // Settings icon
+                        IconButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ManageMessagesScreen(),
+                              ),
+                            );
+                          },
+                          icon: Icon(Icons.settings, color: AppConstants.primaryColor, size: 22),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          splashRadius: 24,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
 
-                // Message list
-                Expanded(
-                  child: ListView.builder(
-                    controller: scrollController,
-                    padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 14),
-                    itemCount: allMessages.length + 1,
-                    itemBuilder: (context, index) {
-                      if (index == allMessages.length) {
-                        // Create custom message option - styled differently
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: InkWell(
-                            onTap: () => _showCustomMessageDialog(context),
-                            borderRadius: BorderRadius.circular(10),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.add_circle_outline,
-                                    size: 20,
-                                    color: AppConstants.primaryColor,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Text(
-                                    'Create custom message',
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w500,
+                  const Divider(),
+
+                  // Message list
+                  Expanded(
+                    child: ListView.builder(
+                      controller: scrollController,
+                      padding: const EdgeInsets.all(16),
+                      itemCount: allMessages.length + 1,
+                      itemBuilder: (context, index) {
+                        if (index == allMessages.length) {
+                          // Create custom message option
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: InkWell(
+                              onTap: () => _showCustomMessageDialog(context),
+                              borderRadius: BorderRadius.circular(16),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                                decoration: BoxDecoration(
+                                  color: AppConstants.primaryColor.withOpacity(0.08),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.add_circle_outline,
+                                      size: 20,
                                       color: AppConstants.primaryColor,
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      'Create custom message',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w500,
+                                        color: AppConstants.primaryColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      }
+                          );
+                        }
 
-                      // Regular message option
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Card(
-                          elevation: 1,
-                          color: Colors.white, // Explicit white background
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            side: BorderSide(color: Colors.grey.withOpacity(0.1), width: 1),
-                          ),
-                          child: InkWell(
-                            onTap: () {
-                              Navigator.pop(context);
-                              _sendMessage(context, allMessages[index]);
-                            },
-                            borderRadius: BorderRadius.circular(10),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-                              child: Text(
-                                allMessages[index],
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  color: AppConstants.primaryTextColor,
-                                  height: 1.4,
+                        // Regular message option
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Card(
+                            elevation: 0,
+                            color: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              side: BorderSide(color: AppConstants.borderColor, width: 1),
+                            ),
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.pop(context);
+                                _sendMessage(context, allMessages[index]);
+                              },
+                              borderRadius: BorderRadius.circular(16),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                                child: Text(
+                                  allMessages[index],
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: AppConstants.primaryTextColor,
+                                    height: 1.4,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                      );
-                    },
+                        );
+                      },
+                    ),
                   ),
-                ),
-
-                const SizedBox(height: 6),
-              ],
-            );
-          },
+                ],
+              );
+            },
+          ),
         );
       },
     );
@@ -504,10 +689,8 @@ class FriendCard extends StatelessWidget {
 
   void _showCustomMessageDialog(BuildContext context) {
     final textController = TextEditingController();
-
-    // Calculate a fixed width based on screen size
     final screenWidth = MediaQuery.of(context).size.width;
-    final dialogWidth = screenWidth * 0.85; // 85% of screen width
+    final dialogWidth = screenWidth * 0.85;
 
     showDialog(
       context: context,
@@ -523,14 +706,16 @@ class FriendCard extends StatelessWidget {
             ),
           ),
           contentPadding: const EdgeInsets.all(20),
-          content: Container(
-            width: dialogWidth, // Fixed width container
+          content: SizedBox(
+            width: dialogWidth,
             child: TextFormField(
               controller: textController,
-              // Use the same style as the AddFriend form fields
               decoration: InputDecoration(
                 labelText: 'Type your message...',
-                border: const OutlineInputBorder(),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: AppConstants.borderColor),
+                ),
                 contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
                 floatingLabelBehavior: FloatingLabelBehavior.auto,
                 labelStyle: TextStyle(
@@ -545,13 +730,16 @@ class FriendCard extends StatelessWidget {
                 color: AppConstants.primaryTextColor,
                 height: 1.4,
               ),
-              minLines: 2, // Start with 2 lines
-              maxLines: 5, // Grow up to 5 lines
+              minLines: 2,
+              maxLines: 5,
               textCapitalization: TextCapitalization.sentences,
-              textInputAction: TextInputAction.newline, // Allow new lines
+              textInputAction: TextInputAction.newline,
             ),
           ),
           backgroundColor: AppConstants.dialogBackgroundColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -568,21 +756,19 @@ class FriendCard extends StatelessWidget {
             TextButton(
               onPressed: () async {
                 if (textController.text.isNotEmpty) {
-                  // Save the custom message
                   final storageService = Provider.of<FriendsProvider>(
                     context,
                     listen: false,
                   ).storageService;
 
                   await storageService.addCustomMessage(textController.text);
-                  Navigator.pop(context); // Just close the dialog, don't send message
+                  Navigator.pop(context);
 
-                  // Show a brief feedback that message was saved with updated styling
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
                         'Message saved',
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 14,
                         ),
@@ -592,7 +778,7 @@ class FriendCard extends StatelessWidget {
                       behavior: SnackBarBehavior.floating,
                       elevation: 4,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     ),
@@ -607,21 +793,19 @@ class FriendCard extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              child: const Text('Save'), // Changed from "Save & Send" to just "Save"
+              child: const Text('Save'),
             ),
           ],
-          actionsPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         );
       },
     );
   }
 
   void _sendMessage(BuildContext context, String message) async {
-    final phoneNumber = friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+    final phoneNumber = widget.friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
     try {
-      final smsUri =
-      Uri.parse('sms:$phoneNumber?body=${Uri.encodeComponent(message)}');
+      final smsUri = Uri.parse('sms:$phoneNumber?body=${Uri.encodeComponent(message)}');
       bool launched = await launchUrl(
         smsUri,
         mode: LaunchMode.externalApplication,
@@ -634,10 +818,9 @@ class FriendCard extends StatelessWidget {
         );
       }
     } catch (e) {
-      // For error snackbars, use a warning color to differentiate them
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
+          content: const Text(
             'Unable to open messaging app. Try again later.',
             style: TextStyle(
               color: Colors.white,
@@ -649,7 +832,7 @@ class FriendCard extends StatelessWidget {
           behavior: SnackBarBehavior.floating,
           elevation: 4,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
           ),
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
@@ -658,7 +841,7 @@ class FriendCard extends StatelessWidget {
   }
 
   void _callFriend(BuildContext context) async {
-    final phoneNumber = friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+    final phoneNumber = widget.friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
     try {
       final telUri = Uri.parse('tel:$phoneNumber');
       bool launched = await launchUrl(
@@ -669,10 +852,9 @@ class FriendCard extends StatelessWidget {
         throw Exception('Could not launch dialer');
       }
     } catch (e) {
-      // For error snackbars, use a warning color to differentiate them
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
+          content: const Text(
             'Unable to open phone app. Try again later.',
             style: TextStyle(
               color: Colors.white,
@@ -684,7 +866,7 @@ class FriendCard extends StatelessWidget {
           behavior: SnackBarBehavior.floating,
           elevation: 4,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
           ),
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
@@ -724,31 +906,30 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppConstants.backgroundColor,
       appBar: AppBar(
         title: Text(
           'Manage Custom Messages',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            letterSpacing: -0.3,
-            color: Colors.white,
+            color: AppConstants.primaryTextColor,
           ),
         ),
-        backgroundColor: AppConstants.primaryColor,
-        elevation: 1,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         leading: IconButton(
           icon: Icon(
-            Icons.arrow_back,
-            color: Colors.white,
-            size: 22,
+            Icons.arrow_back_rounded,
+            color: AppConstants.primaryColor,
+            size: 24,
           ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: _isLoading
           ? Center(
-          child:
-          CircularProgressIndicator(color: AppConstants.primaryColor))
+          child: CircularProgressIndicator(color: AppConstants.primaryColor))
           : _customMessages.isEmpty
           ? Center(
         child: Padding(
@@ -756,30 +937,34 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.message_outlined,
-                size: 64,
-                color: AppConstants.secondaryColor.withOpacity(0.5),
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: AppConstants.primaryColor.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.message_outlined,
+                  size: 48,
+                  color: AppConstants.primaryColor,
+                ),
               ),
               const SizedBox(height: 20),
               Text(
                 'No custom messages yet',
-                style: Theme.of(context)
-                    .textTheme
-                    .headlineMedium
-                    ?.copyWith(
+                style: TextStyle(
                   color: AppConstants.primaryTextColor,
                   fontSize: 22,
+                  fontWeight: FontWeight.bold,
                 ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
               Text(
                 'Add custom messages when sending texts to friends',
-                style:
-                Theme.of(context).textTheme.bodyLarge?.copyWith(
+                style: TextStyle(
                   color: AppConstants.secondaryTextColor,
-                  fontSize: 15,
+                  fontSize: 16,
                   height: 1.4,
                 ),
                 textAlign: TextAlign.center,
@@ -789,7 +974,6 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
         ),
       )
           : Theme(
-        // Override the default drag appearance
         data: Theme.of(context).copyWith(
           canvasColor: Colors.transparent,
         ),
@@ -799,9 +983,8 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
             padding: const EdgeInsets.symmetric(vertical: 10),
             buildDefaultDragHandles: false,
             proxyDecorator: (child, index, animation) {
-              final dragBorderRadius = BorderRadius.circular(10);
+              final dragBorderRadius = BorderRadius.circular(16);
 
-              // Remove the white background shadow completely
               return Material(
                 color: Colors.transparent,
                 borderRadius: dragBorderRadius,
@@ -816,7 +999,7 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
                           BoxShadow(
                             color: Colors.black.withOpacity(0.2 * animation.value),
                             blurRadius: 8 * animation.value,
-                            offset: Offset(0, 4 * animation.value), // Bottom only shadow
+                            offset: Offset(0, 4 * animation.value),
                             spreadRadius: 0,
                           ),
                         ],
@@ -845,18 +1028,18 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
             },
             itemBuilder: (context, index) {
               return Card(
-                key: ValueKey(_customMessages[index]), // Required for ReorderableListView
+                key: ValueKey(_customMessages[index]),
                 margin: const EdgeInsets.symmetric(vertical: 5),
-                elevation: 1,
+                elevation: 0,
+                color: AppConstants.cardColor,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  side: BorderSide(color: Colors.grey.withOpacity(0.1), width: 1),
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(color: AppConstants.borderColor, width: 1),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
                   child: Row(
                     children: [
-                      // Delete icon on the left
                       IconButton(
                         icon: Icon(
                           Icons.delete_outline,
@@ -868,7 +1051,6 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
                         constraints: const BoxConstraints(),
                         splashRadius: 24,
                       ),
-                      // Message content
                       Expanded(
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -882,7 +1064,6 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
                           ),
                         ),
                       ),
-                      // Drag handle with increased padding
                       Padding(
                         padding: const EdgeInsets.only(right: 12),
                         child: ReorderableDragStartListener(
@@ -933,6 +1114,9 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
         ),
         backgroundColor: AppConstants.dialogBackgroundColor,
         contentPadding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -995,7 +1179,7 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
         ),
         action: SnackBarAction(
           label: 'Undo',
-          textColor: Colors.white, // White text for better visibility
+          textColor: Colors.white,
           onPressed: () {
             setState(() {
               _customMessages.insert(index, deletedMessage);
@@ -1010,7 +1194,7 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
         behavior: SnackBarBehavior.floating,
         elevation: 4,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
         ),
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
@@ -1019,10 +1203,8 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
 
   void _showAddMessageDialog() {
     final textController = TextEditingController();
-
-    // Calculate a fixed width based on screen size
     final screenWidth = MediaQuery.of(context).size.width;
-    final dialogWidth = screenWidth * 0.85; // 85% of screen width
+    final dialogWidth = screenWidth * 0.85;
 
     showDialog(
       context: context,
@@ -1038,14 +1220,15 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
             ),
           ),
           contentPadding: const EdgeInsets.all(20),
-          content: Container(
-            width: dialogWidth, // Fixed width container
+          content: SizedBox(
+            width: dialogWidth,
             child: TextFormField(
               controller: textController,
-              // Use the same style as the AddFriend form fields
               decoration: InputDecoration(
                 labelText: 'Type your message...',
-                border: const OutlineInputBorder(),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
                 floatingLabelBehavior: FloatingLabelBehavior.auto,
                 labelStyle: TextStyle(
@@ -1060,13 +1243,16 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
                 color: AppConstants.primaryTextColor,
                 height: 1.4,
               ),
-              minLines: 2, // Start with 2 lines
-              maxLines: 5, // Grow up to 5 lines
+              minLines: 2,
+              maxLines: 5,
               textCapitalization: TextCapitalization.sentences,
-              textInputAction: TextInputAction.newline, // Allow new lines
+              textInputAction: TextInputAction.newline,
             ),
           ),
           backgroundColor: AppConstants.dialogBackgroundColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -1110,7 +1296,7 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
                       behavior: SnackBarBehavior.floating,
                       elevation: 4,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     ),

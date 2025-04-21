@@ -453,6 +453,7 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
           seedColor: const Color(AppConstants.primaryColorValue),
           primary: const Color(AppConstants.primaryColorValue),
           secondary: const Color(AppConstants.secondaryColorValue),
+          tertiary: const Color(AppConstants.accentColorValue),
           background: const Color(AppConstants.backgroundColorValue),
           surface: const Color(AppConstants.cardColorValue),
           onPrimary: Colors.white,
@@ -465,7 +466,9 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
           backgroundColor: Color(AppConstants.primaryColorValue),
           foregroundColor: Colors.white,
           elevation: 4,
-          extendedPadding: EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(16)),
+          ),
         ),
         textTheme: const TextTheme(
           headlineMedium: TextStyle(
@@ -497,9 +500,9 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
             backgroundColor: const Color(AppConstants.primaryColorValue),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(16),
             ),
-            elevation: 2,
+            elevation: 0,
             textStyle: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w600,
@@ -507,33 +510,40 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
           ),
         ),
         appBarTheme: const AppBarTheme(
-          backgroundColor: Color(AppConstants.primaryColorValue),
-          foregroundColor: Colors.white,
-          centerTitle: true,
+          backgroundColor: Colors.transparent,
+          foregroundColor: Color(AppConstants.primaryTextColorValue),
+          centerTitle: false,
           elevation: 0,
-          iconTheme: IconThemeData(color: Colors.white, size: 22),
+          iconTheme: IconThemeData(
+              color: Color(AppConstants.primaryColorValue),
+              size: 24
+          ),
           titleTextStyle: TextStyle(
-            fontSize: 18,
+            fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: Color(AppConstants.primaryTextColorValue),
             letterSpacing: -0.25,
           ),
         ),
         cardTheme: CardTheme(
           color: const Color(AppConstants.cardColorValue),
-          elevation: 2,
-          shadowColor: Colors.black.withOpacity(0.1),
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          elevation: 0,
+          shadowColor: Colors.black.withOpacity(0.05),
+          margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 6),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(
+              color: const Color(AppConstants.borderColorValue),
+              width: 1,
+            ),
           ),
         ),
         dialogTheme: DialogTheme(
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(14)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
           ),
           backgroundColor: const Color(AppConstants.cardColorValue),
-          elevation: 24,
+          elevation: 4,
           shadowColor: Colors.black.withOpacity(0.15),
           titleTextStyle: const TextStyle(
             fontSize: 18,
@@ -548,8 +558,10 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
           ),
         ),
         bottomSheetTheme: const BottomSheetThemeData(
+          backgroundColor: Colors.transparent,
+          modalBackgroundColor: Colors.transparent,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
         ),
         listTileTheme: const ListTileThemeData(
@@ -569,23 +581,23 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
         inputDecorationTheme: InputDecorationTheme(
           fillColor: Colors.white,
           filled: true,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide(
               color: const Color(AppConstants.borderColorValue),
               width: 1.0,
             ),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide(
               color: const Color(AppConstants.borderColorValue),
               width: 1.0,
             ),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide(
               color: const Color(AppConstants.primaryColorValue),
               width: 1.5,

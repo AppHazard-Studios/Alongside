@@ -46,32 +46,34 @@ class AppConstants {
   static const List<int> reminderOptions = [0, 1, 3, 7, 14, 30];
 
   // App theme colors
-  static const int primaryColorValue = 0xFFB47E5D; // Warmer brown primary color
-  static const int secondaryColorValue = 0xFFD4B08A; // Warmer lighter brown
-  static const int backgroundColorValue = 0xFFFDF6EB; // Warmer light beige background
-  static const int cardColorValue = 0xFFFFF8F0; // Warmer white-ish card background
+  static const int primaryColorValue = 0xFF3F8CFF; // Vibrant blue
+  static const int secondaryColorValue = 0xFF2DCCA7; // Teal accent
+  static const int accentColorValue = 0xFFFFAB40; // Warm orange accent
+  static const int backgroundColorValue =
+  0xFFF8FBFF; // Light blue-tinted background
+  static const int cardColorValue = 0xFFFFFFFF; // Pure white cards
 
   // Text colors
-  static const int primaryTextColorValue = 0xFF4F453D; // Dark grey
-  static const int secondaryTextColorValue = 0xFF867C74; // Medium grey
+  static const int primaryTextColorValue = 0xFF2A3747; // Dark blue-gray
+  static const int secondaryTextColorValue = 0xFF617387; // Medium blue-gray
 
   // UI Element colors
-  static const int profileCircleColorValue = 0xFFECE4DC; // Light beige for profile circles
-  static const int emojiPickerColorValue = 0xFFECE4DC; // For emoji picker backgrounds
-  static const int notificationSettingsColorValue = 0xFFFDF8F2; // Light grey for notification settings
-  static const int dialogBackgroundColorValue = 0xFFFDF8F2; // Background for dialogs
-  static const int bottomSheetHandleColorValue = 0xFFDDDDDD; // Color for bottom sheet drag handle
-  static const int deleteColorValue = 0xFFE53935; // Red color for delete actions
-  static const int borderColorValue = 0xFFE0D6CF; // Border color for cards & inputs
-
-  // Opacity variants for primary color
-  static const double emphasizedOpacity = 1.0;
-  static const double mediumOpacity = 0.7;
-  static const double lightOpacity = 0.3;
+  static const int profileCircleColorValue =
+  0xFFEEF6FF; // Light blue for profile circles
+  static const int emojiPickerColorValue =
+  0xFFE9F2FF; // Light blue for emoji picker backgrounds
+  static const int notificationSettingsColorValue =
+  0xFFF4F8FF; // Very light blue for settings
+  static const int dialogBackgroundColorValue = 0xFFFFFFFF; // White for dialogs
+  static const int bottomSheetHandleColorValue =
+  0xFFDDEAFF; // Light blue for handles
+  static const int deleteColorValue = 0xFFFF4D6B; // Soft red for delete actions
+  static const int borderColorValue = 0xFFE1EBFD; // Light blue borders
 
   // Helper method to easily get Color objects
   static Color get primaryColor => const Color(primaryColorValue);
   static Color get secondaryColor => const Color(secondaryColorValue);
+  static Color get accentColor => const Color(accentColorValue);
   static Color get backgroundColor => const Color(backgroundColorValue);
   static Color get cardColor => const Color(cardColorValue);
   static Color get primaryTextColor => const Color(primaryTextColorValue);

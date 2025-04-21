@@ -58,42 +58,41 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.friend == null ? 'Add Friend' : 'Edit Friend',
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            letterSpacing: -0.3,
-            color: Colors.white,
-          ),
-        ),
-        backgroundColor: AppConstants.primaryColor,
-        elevation: 1,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.white,
-            size: 22,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          // Add Save button to app bar for both add and edit modes
-          Padding(
-            padding: const EdgeInsets.only(right: 12.0),
-            child: IconButton(
-              icon: const Icon(
-                Icons.check,
-                color: Colors.white,
-                size: 24,
-              ),
-              tooltip: 'Save',
-              onPressed: _saveFriend,
+        appBar: AppBar(
+          title: Text(
+            widget.friend == null ? 'Add Friend' : 'Edit Friend',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppConstants.primaryTextColor,
             ),
           ),
-        ],
-      ),
+          backgroundColor: Colors.transparent, // Transparent background
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(
+              Icons.arrow_back_rounded,
+              color: AppConstants.primaryColor,
+              size: 24,
+            ),
+            onPressed: () => Navigator.pop(context),
+          ),
+          actions: [
+            // Add Save button to app bar for both add and edit modes
+            Padding(
+              padding: const EdgeInsets.only(right: 12.0),
+              child: IconButton(
+                icon: Icon(
+                  Icons.check_rounded,
+                  color: AppConstants.primaryColor,
+                  size: 24,
+                ),
+                tooltip: 'Save',
+                onPressed: _saveFriend,
+              ),
+            ),
+          ],
+        ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: SafeArea(
@@ -108,31 +107,38 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                 Center(
                   child: Column(
                     children: [
-                      GestureDetector(
-                        onTap: _showProfileOptions,
-                        child: Container(
-                          width: 100,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            color: _isEmoji ? AppConstants.profileCircleColor : null,
-                            shape: BoxShape.circle,
-                            image: !_isEmoji
-                                ? DecorationImage(
-                              image: FileImage(File(_profileImage)),
-                              fit: BoxFit.cover,
-                            )
-                                : null,
+                    GestureDetector(
+                    onTap: _showProfileOptions,
+                    child: Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        color: _isEmoji ? AppConstants.profileCircleColor : null,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
                           ),
-                          child: _isEmoji
-                              ? Center(
-                            child: Text(
-                              _profileImage,
-                              style: const TextStyle(fontSize: 50),
-                            ),
-                          )
-                              : null,
-                        ),
+                        ],
+                        image: !_isEmoji
+                            ? DecorationImage(
+                          image: FileImage(File(_profileImage)),
+                          fit: BoxFit.cover,
+                        )
+                            : null,
                       ),
+                      child: _isEmoji
+                          ? Center(
+                        child: Text(
+                          _profileImage,
+                          style: const TextStyle(fontSize: 50),
+                        ),
+                      )
+                          : null,
+                    ),
+                  ),
                       const SizedBox(height: 12),
                       TextButton.icon(
                         onPressed: _showProfileOptions,
@@ -278,7 +284,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                   elevation: 0,
                   color: AppConstants.notificationSettingsColor,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(20),
                     side: BorderSide(color: AppConstants.borderColor),
                   ),
                   child: Padding(
@@ -403,39 +409,39 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                   const SizedBox(height: 28),
 
                   // Delete button styled similar to Message/Call buttons
-                  Material(
-                    color: AppConstants.deleteColor.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(8),
-                    child: InkWell(
-                      onTap: _confirmDelete,
-                      borderRadius: BorderRadius.circular(8),
-                      splashColor: AppConstants.deleteColor.withOpacity(0.2),
-                      highlightColor: AppConstants.deleteColor.withOpacity(0.1),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.delete,
-                              size: 20,
-                              color: AppConstants.deleteColor,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Remove Friend',
-                              style: TextStyle(
-                                color: AppConstants.deleteColor,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.3,
-                              ),
-                            ),
-                          ],
-                        ),
+          Material(
+            color: AppConstants.deleteColor.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(16),
+            child: InkWell(
+              onTap: _confirmDelete,
+              borderRadius: BorderRadius.circular(16),
+              splashColor: AppConstants.deleteColor.withOpacity(0.2),
+              highlightColor: AppConstants.deleteColor.withOpacity(0.1),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.delete_outline_rounded,
+                      size: 20,
+                      color: AppConstants.deleteColor,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Remove Friend',
+                      style: TextStyle(
+                        color: AppConstants.deleteColor,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.3,
                       ),
                     ),
-                  ),
+                  ],
+                ),
+              ),
+            ),
+          ),
                 ],
 
                 // Add bottom padding for when scrolling all the way down
