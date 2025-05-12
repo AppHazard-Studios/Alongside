@@ -5,12 +5,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:flutter_contacts/flutter_contacts.dart'; // Updated import
+import 'package:flutter_contacts/flutter_contacts.dart';
 import '../main.dart';
 import '../models/friend.dart';
 import '../utils/constants.dart';
-import 'package:flutter_contacts/flutter_contacts.dart';
-import 'package:flutter_contacts/contact.dart';
 
 class AddFriendScreen extends StatefulWidget {
   final Friend? friend;
@@ -59,52 +57,54 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     }
   }
 
-  // New method to pick a contact
+  // Method to pick a contact
   Future<void> _pickContact() async {
-    // Request contacts permission
     if (await FlutterContacts.requestPermission()) {
       try {
-        // Get all contacts (without thumbnails)
         final contacts = await FlutterContacts.getContacts(
           withProperties: true,
           withPhoto: false,
         );
 
-        // Show contact selection dialog
-        final contact = await showDialog<Contact>(
+        // Show iOS-style contact picker
+        showCupertinoModalPopup(
           context: context,
-          builder: (context) => AlertDialog(
-            title: Text('Select a contact'),
-            content: Container(
-              width: double.maxFinite,
-              height: 300,
-              child: ListView.builder(
-                itemCount: contacts.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text(contacts[index].displayName),
-                    onTap: () => Navigator.pop(context, contacts[index]),
-                  );
-                },
-              ),
-            ),
+          builder: (context) => CupertinoActionSheet(
+            title: const Text('Select a Contact'),
             actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('Cancel'),
+              SizedBox(
+                height: 300,
+                child: CupertinoScrollbar(
+                  child: ListView.builder(
+                    itemCount: contacts.length,
+                    itemBuilder: (context, index) {
+                      return CupertinoActionSheetAction(
+                        onPressed: () {
+                          Navigator.pop(context, contacts[index]);
+                        },
+                        child: Text(contacts[index].displayName),
+                      );
+                    },
+                  ),
+                ),
               ),
             ],
+            cancelButton: CupertinoActionSheetAction(
+              onPressed: () => Navigator.pop(context),
+              isDestructiveAction: true,
+              child: const Text('Cancel'),
+            ),
           ),
-        );
-
-        if (contact != null && contact.phones.isNotEmpty) {
-          setState(() {
-            _nameController.text = contact.displayName;
-            _phoneController.text = contact.phones.first.number;
-          });
-        } else if (contact != null) {
-          _showErrorSnackBar('Selected contact has no phone number');
-        }
+        ).then((contact) {
+          if (contact != null && contact.phones.isNotEmpty) {
+            setState(() {
+              _nameController.text = contact.displayName;
+              _phoneController.text = contact.phones.first.number;
+            });
+          } else if (contact != null) {
+            _showErrorSnackBar('Selected contact has no phone number');
+          }
+        });
       } catch (e) {
         _showErrorSnackBar('Error accessing contacts: $e');
       }
@@ -112,198 +112,74 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       _showErrorSnackBar('Permission to access contacts was denied');
     }
   }
+
   void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: const TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Colors.redAccent,
-        behavior: SnackBarBehavior.floating,
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    // Use Cupertino-style toast or alert instead of Material SnackBar
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Error'),
+        content: Text(message),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: Text(
+    return CupertinoPageScaffold(
+      backgroundColor: CupertinoColors.systemGroupedBackground,
+      navigationBar: CupertinoNavigationBar(
+        middle: Text(
           widget.friend == null ? 'Add Friend' : 'Edit Friend',
           style: const TextStyle(
             fontSize: 17,
             fontWeight: FontWeight.w600,
-            color: Colors.black,
           ),
         ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(CupertinoIcons.back, color: Colors.black87, size: 24),
+        leading: CupertinoButton(
+          padding: EdgeInsets.zero,
+          child: const Icon(CupertinoIcons.back),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          // Add Save button to app bar for both add and edit modes
-          Padding(
-            padding: const EdgeInsets.only(right: 12.0),
-            child: CupertinoButton(
-              padding: EdgeInsets.zero,
-              onPressed: _saveFriend,
-              child: Text(
-                'Save',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                  color: AppConstants.primaryColor,
-                ),
-              ),
+        trailing: CupertinoButton(
+          padding: EdgeInsets.zero,
+          onPressed: _saveFriend,
+          child: Text(
+            'Save',
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 16,
+              color: AppConstants.primaryColor,
             ),
           ),
-        ],
+        ),
+        backgroundColor: CupertinoColors.white,
+        border: null,
       ),
-      body: SingleChildScrollView(
-        child: SafeArea(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Add top padding for breathing room
-                const SizedBox(height: 16),
-
-                Center(
-                  child: Column(
-                    children: [
-                      GestureDetector(
-                        onTap: _showProfileOptions,
-                        child: Container(
-                          width: 100,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            color: _isEmoji ? AppConstants.profileCircleColor : null,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 10,
-                                offset: const Offset(0, 2),
-                                spreadRadius: 0,
-                              ),
-                            ],
-                            image: !_isEmoji
-                                ? DecorationImage(
-                              image: FileImage(File(_profileImage)),
-                              fit: BoxFit.cover,
-                            )
-                                : null,
-                          ),
-                          child: _isEmoji
-                              ? Center(
-                            child: Text(
-                              _profileImage,
-                              style: const TextStyle(fontSize: 50),
-                            ),
-                          )
-                              : null,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextButton.icon(
-                        onPressed: _showProfileOptions,
-                        icon: Icon(CupertinoIcons.camera, color: AppConstants.primaryColor, size: 18),
-                        label: Text(
-                          'Change Profile',
-                          style: TextStyle(
-                            color: AppConstants.primaryColor,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Spacing
-                const SizedBox(height: 24),
-
-                // Form fields
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Name field with modern iOS-style
-                      _buildIOSStyleTextField(
-                        controller: _nameController,
-                        label: 'Name',
-                        icon: CupertinoIcons.person,
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Please enter a name';
-                          }
-                          return null;
-                        },
-                        textCapitalization: TextCapitalization.words,
-                      ),
-
-                      // Phone field with contact picker
-                      _buildIOSStyleTextField(
-                        controller: _phoneController,
-                        label: 'Phone Number',
-                        icon: CupertinoIcons.phone,
-                        hintText: 'Enter phone number to text/call',
-                        keyboardType: TextInputType.phone,
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Please enter a phone number';
-                          }
-                          if (!value.contains(RegExp(r'[0-9]'))) {
-                            return 'Please enter a valid phone number';
-                          }
-                          return null;
-                        },
-                        suffixIcon: IconButton(
-                          icon: const Icon(CupertinoIcons.book, size: 22),
-                          onPressed: _pickContact,
-                          color: AppConstants.primaryColor,
-                        ),
-                      ),
-
-                      _buildIOSStyleTextField(
-                        controller: _helpingThemWithController,
-                        label: 'What are you alongside them in?',
-                        icon: CupertinoIcons.heart,
-                        hintText: 'e.g., "Accountability for exercise"',
-                        textCapitalization: TextCapitalization.sentences,
-                      ),
-
-                      _buildIOSStyleTextField(
-                        controller: _helpingYouWithController,
-                        label: 'What are they alongside you in?',
-                        icon: CupertinoIcons.person_2,
-                        hintText: 'e.g., "Prayer for family issues"',
-                        textCapitalization: TextCapitalization.sentences,
-                      ),
-
-                      // Reduce spacing before notification section
-                      const SizedBox(height: 24),
-
-                      // iOS-style card for notification settings
-                      Container(
-                        margin: const EdgeInsets.only(bottom: 20),
+      child: SafeArea(
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.only(top: 16),
+            children: [
+              // Profile image selection
+              Center(
+                child: Column(
+                  children: [
+                    GestureDetector(
+                      onTap: _showProfileOptions,
+                      child: Container(
+                        width: 100,
+                        height: 100,
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
+                          color: _isEmoji ? AppConstants.profileCircleColor : null,
+                          shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.05),
@@ -312,324 +188,273 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                               spreadRadius: 0,
                             ),
                           ],
+                          image: !_isEmoji
+                              ? DecorationImage(
+                            image: FileImage(File(_profileImage)),
+                            fit: BoxFit.cover,
+                          )
+                              : null,
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                              child: Text(
-                                'Notification Settings',
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ),
-
-                            // Reminder dropdown with iOS-style
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Check-in Reminder',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.black54,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey.shade50,
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: DropdownButtonFormField<int>(
-                                      value: _reminderDays,
-                                      decoration: InputDecoration(
-                                        prefixIcon: Icon(
-                                            CupertinoIcons.bell,
-                                            color: AppConstants.primaryColor,
-                                            size: 20
-                                        ),
-                                        contentPadding: const EdgeInsets.symmetric(
-                                            vertical: 14,
-                                            horizontal: 14
-                                        ),
-                                        border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(10),
-                                          borderSide: BorderSide(
-                                            color: Colors.grey.shade300,
-                                            width: 1.0,
-                                          ),
-                                        ),
-                                        enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(10),
-                                          borderSide: BorderSide(
-                                            color: Colors.grey.shade300,
-                                            width: 1.0,
-                                          ),
-                                        ),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(10),
-                                          borderSide: BorderSide(
-                                            color: AppConstants.primaryColor,
-                                            width: 1.5,
-                                          ),
-                                        ),
-                                      ),
-                                      items: AppConstants.reminderOptions.map((days) {
-                                        final label = days == 0
-                                            ? 'No reminder'
-                                            : days == 1
-                                            ? 'Every day'
-                                            : 'Every $days days';
-
-                                        return DropdownMenuItem(
-                                          value: days,
-                                          child: Text(
-                                            label,
-                                            style: const TextStyle(
-                                              fontSize: 15,
-                                              color: Colors.black87,
-                                            ),
-                                          ),
-                                        );
-                                      }).toList(),
-                                      onChanged: (value) {
-                                        setState(() {
-                                          _reminderDays = value ?? 0;
-                                        });
-                                      },
-                                      icon: const Icon(CupertinoIcons.chevron_down, size: 16),
-                                      dropdownColor: Colors.white,
-                                      isExpanded: true,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            // Only show time picker if reminders are enabled
-                            if (_reminderDays > 0) ...[
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Reminder Time',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
-                                        color: Colors.black54,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    InkWell(
-                                      onTap: _showIOSTimePicker,
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          border: Border.all(color: Colors.grey.shade300),
-                                          borderRadius: BorderRadius.circular(10),
-                                        ),
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
-                                          child: Row(
-                                            children: [
-                                              Icon(CupertinoIcons.clock, color: AppConstants.primaryColor, size: 20),
-                                              const SizedBox(width: 12),
-                                              Text(
-                                                _formatTimeOfDay(_reminderTime),
-                                                style: const TextStyle(
-                                                  fontSize: 15,
-                                                  color: Colors.black87,
-                                                ),
-                                              ),
-                                              const Spacer(),
-                                              const Icon(CupertinoIcons.chevron_right, size: 16, color: Colors.black45),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-
-                            // Show in notification toggle with modern iOS switch style
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    CupertinoIcons.rectangle_stack_badge_person_crop,
-                                    size: 20,
-                                    color: AppConstants.primaryColor,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Show in notification area',
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w500,
-                                            color: Colors.black87,
-                                          ),
-                                        ),
-                                        Text(
-                                          'Keep a quick access notification for this friend',
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            color: Colors.black54,
-                                            height: 1.3,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  CupertinoSwitch(
-                                    value: _hasPersistentNotification,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        _hasPersistentNotification = value;
-                                      });
-                                    },
-                                    activeColor: AppConstants.primaryColor,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                          ],
-                        ),
+                        child: _isEmoji
+                            ? Center(
+                          child: Text(
+                            _profileImage,
+                            style: const TextStyle(fontSize: 50),
+                          ),
+                        )
+                            : null,
                       ),
-
-                      // Add delete button for edit mode only
-                      if (widget.friend != null) ...[
-                        const SizedBox(height: 24),
-
-                        // Delete button styled like iOS
-                        CupertinoButton(
-                          padding: EdgeInsets.zero,
-                          onPressed: _confirmDelete,
-                          child: Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            decoration: BoxDecoration(
-                              color: Colors.red.shade50,
-                              borderRadius: BorderRadius.circular(10),
+                    ),
+                    const SizedBox(height: 12),
+                    CupertinoButton(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      onPressed: _showProfileOptions,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(CupertinoIcons.camera, color: AppConstants.primaryColor, size: 18),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Change Profile',
+                            style: TextStyle(
+                              color: AppConstants.primaryColor,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
                             ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  CupertinoIcons.delete,
-                                  size: 18,
-                                  color: Colors.red,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Remove Friend',
-                                  style: TextStyle(
-                                    color: Colors.red,
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // iOS-style grouped sections
+              _buildFormSection(
+                children: [
+                  _buildIOSTextField(
+                    controller: _nameController,
+                    label: 'Name',
+                    placeholder: 'Enter name',
+                    icon: CupertinoIcons.person,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter a name';
+                      }
+                      return null;
+                    },
+                    textCapitalization: TextCapitalization.words,
+                  ),
+                  _buildIOSDivider(),
+                  _buildIOSTextField(
+                    controller: _phoneController,
+                    label: 'Phone Number',
+                    placeholder: 'Enter phone number',
+                    icon: CupertinoIcons.phone,
+                    keyboardType: TextInputType.phone,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter a phone number';
+                      }
+                      if (!value.contains(RegExp(r'[0-9]'))) {
+                        return 'Please enter a valid phone number';
+                      }
+                      return null;
+                    },
+                    suffix: CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      child: Icon(
+                        CupertinoIcons.book,
+                        color: AppConstants.primaryColor,
+                        size: 22,
+                      ),
+                      onPressed: _pickContact,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              _buildFormSection(
+                children: [
+                  _buildIOSTextField(
+                    controller: _helpingThemWithController,
+                    label: 'What are you alongside them in?',
+                    placeholder: 'e.g., "Accountability for exercise"',
+                    icon: CupertinoIcons.heart,
+                    textCapitalization: TextCapitalization.sentences,
+                  ),
+                  _buildIOSDivider(),
+                  _buildIOSTextField(
+                    controller: _helpingYouWithController,
+                    label: 'What are they alongside you in?',
+                    placeholder: 'e.g., "Prayer for family issues"',
+                    icon: CupertinoIcons.person_2,
+                    textCapitalization: TextCapitalization.sentences,
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              // Notification settings section
+              _buildFormSection(
+                header: 'NOTIFICATION SETTINGS',
+                children: [
+                  _buildReminderSelector(),
+
+                  if (_reminderDays > 0) ...[
+                    _buildIOSDivider(),
+                    _buildTimeSelector(),
+                  ],
+
+                  _buildIOSDivider(),
+                  _buildToggleRow(
+                    icon: CupertinoIcons.rectangle_stack_badge_person_crop,
+                    title: 'Show in notification area',
+                    subtitle: 'Keep a quick access notification for this friend',
+                    value: _hasPersistentNotification,
+                    onChanged: (value) {
+                      setState(() {
+                        _hasPersistentNotification = value;
+                      });
+                    },
+                  ),
+                ],
+              ),
+
+              // Delete button for edit mode
+              if (widget.friend != null) ...[
+                const SizedBox(height: 24),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: CupertinoButton(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    color: CupertinoColors.systemRed.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                    onPressed: _confirmDelete,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          CupertinoIcons.delete,
+                          size: 18,
+                          color: CupertinoColors.systemRed,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Remove Friend',
+                          style: TextStyle(
+                            color: CupertinoColors.systemRed,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
-
-                      // Add bottom padding for when scrolling all the way down
-                      const SizedBox(height: 40),
-                    ],
+                    ),
                   ),
                 ),
               ],
-            ),
+
+              const SizedBox(height: 40),
+            ],
           ),
         ),
       ),
     );
   }
 
-  // iOS-style text field builder
-  Widget _buildIOSStyleTextField({
+  Widget _buildFormSection({String? header, required List<Widget> children}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (header != null)
+          Padding(
+            padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+            child: Text(
+              header,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: CupertinoColors.systemGrey,
+              ),
+            ),
+          ),
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: CupertinoColors.white,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+                spreadRadius: 0,
+              ),
+            ],
+          ),
+          child: Column(
+            children: children,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildIOSTextField({
     required TextEditingController controller,
     required String label,
     required IconData icon,
-    String? hintText,
+    String? placeholder,
     FormFieldValidator<String>? validator,
     TextInputType? keyboardType,
     TextCapitalization textCapitalization = TextCapitalization.none,
-    Widget? suffixIcon,
+    Widget? suffix,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: Colors.black54,
-            ),
-          ),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: controller,
-            decoration: InputDecoration(
-              hintText: hintText,
-              prefixIcon: Icon(icon, color: AppConstants.primaryColor, size: 20),
-              suffixIcon: suffixIcon,
-              contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(
-                  color: Colors.grey.shade300,
-                  width: 1.0,
+          Icon(icon, color: AppConstants.primaryColor, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: CupertinoColors.systemGrey,
+                  ),
                 ),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(
-                  color: Colors.grey.shade300,
-                  width: 1.0,
+                const SizedBox(height: 6),
+                CupertinoTextField(
+                  controller: controller,
+                  placeholder: placeholder,
+                  placeholderStyle: TextStyle(
+                    color: CupertinoColors.systemGrey.withOpacity(0.7),
+                    fontSize: 15,
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 0),
+                  decoration: const BoxDecoration(
+                    color: CupertinoColors.white,
+                    border: Border(), // No border - iOS style
+                  ),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: CupertinoColors.black,
+                  ),
+                  suffix: suffix,
+                  keyboardType: keyboardType,
+                  textCapitalization: textCapitalization,
                 ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(
-                  color: AppConstants.primaryColor,
-                  width: 1.5,
-                ),
-              ),
-              filled: true,
-              fillColor: Colors.grey.shade50,
-              hintStyle: TextStyle(
-                fontSize: 14,
-                color: Colors.black38,
-              ),
-            ),
-            validator: validator,
-            keyboardType: keyboardType,
-            textCapitalization: textCapitalization,
-            style: const TextStyle(
-              fontSize: 15,
-              color: Colors.black87,
+              ],
             ),
           ),
         ],
@@ -637,22 +462,85 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     );
   }
 
-  // iOS-style time picker
-  void _showIOSTimePicker() {
+  Widget _buildIOSDivider() {
+    return Container(
+      margin: const EdgeInsets.only(left: 48),
+      height: 0.5,
+      color: CupertinoColors.systemGrey4,
+    );
+  }
+
+  Widget _buildReminderSelector() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Icon(
+            CupertinoIcons.bell,
+            color: AppConstants.primaryColor,
+            size: 20,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Check-in Reminder',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: CupertinoColors.systemGrey,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                GestureDetector(
+                  onTap: _showReminderPicker,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _reminderDays == 0
+                            ? 'No reminder'
+                            : _reminderDays == 1
+                            ? 'Every day'
+                            : 'Every $_reminderDays days',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: CupertinoColors.black,
+                        ),
+                      ),
+                      const Icon(
+                        CupertinoIcons.chevron_down,
+                        size: 16,
+                        color: CupertinoColors.systemGrey2,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showReminderPicker() {
     showCupertinoModalPopup(
       context: context,
       builder: (BuildContext context) {
         return Container(
           height: 280,
-          color: Colors.white,
+          color: CupertinoColors.systemBackground,
           child: Column(
             children: [
               Container(
                 height: 40,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
+                  color: CupertinoColors.systemGroupedBackground,
                   border: Border(
-                    bottom: BorderSide(color: Colors.grey.shade300, width: 0.5),
+                    bottom: BorderSide(color: CupertinoColors.systemGrey5, width: 0.5),
                   ),
                 ),
                 child: Row(
@@ -661,20 +549,179 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                     CupertinoButton(
                       padding: EdgeInsets.zero,
                       onPressed: () => Navigator.pop(context),
-                      child: Text(
-                        'Cancel',
-                        style: TextStyle(color: Colors.redAccent),
-                      ),
+                      child: const Text('Cancel'),
                     ),
                     CupertinoButton(
                       padding: EdgeInsets.zero,
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Done'),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: CupertinoPicker(
+                  scrollController: FixedExtentScrollController(
+                    initialItem: AppConstants.reminderOptions.indexOf(_reminderDays),
+                  ),
+                  itemExtent: 40,
+                  onSelectedItemChanged: (index) {
+                    setState(() {
+                      _reminderDays = AppConstants.reminderOptions[index];
+                    });
+                  },
+                  children: AppConstants.reminderOptions.map((days) {
+                    final label = days == 0
+                        ? 'No reminder'
+                        : days == 1
+                        ? 'Every day'
+                        : 'Every $days days';
+                    return Center(
                       child: Text(
-                        'Done',
-                        style: TextStyle(color: AppConstants.primaryColor),
+                        label,
+                        style: const TextStyle(fontSize: 16),
                       ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTimeSelector() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Icon(
+            CupertinoIcons.clock,
+            color: AppConstants.primaryColor,
+            size: 20,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Reminder Time',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: CupertinoColors.systemGrey,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                GestureDetector(
+                  onTap: _showIOSTimePicker,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _formatTimeOfDay(_reminderTime),
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: CupertinoColors.black,
+                        ),
+                      ),
+                      const Icon(
+                        CupertinoIcons.chevron_down,
+                        size: 16,
+                        color: CupertinoColors.systemGrey2,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToggleRow({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 20,
+            color: AppConstants.primaryColor,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: CupertinoColors.black,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: CupertinoColors.systemGrey,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          CupertinoSwitch(
+            value: value,
+            onChanged: onChanged,
+            activeColor: AppConstants.primaryColor,
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showIOSTimePicker() {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          height: 280,
+          color: CupertinoColors.systemBackground,
+          child: Column(
+            children: [
+              Container(
+                height: 40,
+                decoration: BoxDecoration(
+                  color: CupertinoColors.systemGroupedBackground,
+                  border: Border(
+                    bottom: BorderSide(color: CupertinoColors.systemGrey5, width: 0.5),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                    CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Done'),
                     ),
                   ],
                 ),
@@ -683,7 +730,8 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                 child: CupertinoDatePicker(
                   mode: CupertinoDatePickerMode.time,
                   initialDateTime: DateTime(
-                      2023, 1, 1, _reminderTime.hour, _reminderTime.minute),
+                    2023, 1, 1, _reminderTime.hour, _reminderTime.minute,
+                  ),
                   onDateTimeChanged: (DateTime newDateTime) {
                     setState(() {
                       _reminderTime = TimeOfDay(
@@ -723,89 +771,31 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   }
 
   void _showProfileOptions() {
-    showModalBottomSheet(
+    showCupertinoModalPopup(
       context: context,
-      backgroundColor: Colors.transparent,
       builder: (context) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-          ),
-          child: SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  margin: const EdgeInsets.only(top: 8, bottom: 16),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                // iOS-style option list
-                CupertinoButton(
-                  padding: EdgeInsets.zero,
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _showEmojiPicker();
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-                    child: Row(
-                      children: [
-                        Icon(
-                          CupertinoIcons.smiley,
-                          color: AppConstants.primaryColor,
-                          size: 22,
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Choose Emoji',
-                          style: TextStyle(
-                            fontSize: 17,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const Divider(height: 1, indent: 60),
-                CupertinoButton(
-                  padding: EdgeInsets.zero,
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _pickImage();
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-                    child: Row(
-                      children: [
-                        Icon(
-                          CupertinoIcons.photo,
-                          color: AppConstants.primaryColor,
-                          size: 22,
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Choose from Gallery',
-                          style: TextStyle(
-                            fontSize: 17,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-              ],
+        return CupertinoActionSheet(
+          title: const Text('Profile Picture Options'),
+          actions: [
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(context);
+                _showEmojiPicker();
+              },
+              child: const Text('Choose Emoji'),
             ),
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(context);
+                _pickImage();
+              },
+              child: const Text('Choose from Gallery'),
+            ),
+          ],
+          cancelButton: CupertinoActionSheetAction(
+            onPressed: () => Navigator.pop(context),
+            isDestructiveAction: true,
+            child: const Text('Cancel'),
           ),
         );
       },
@@ -815,75 +805,53 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   void _showEmojiPicker() {
     const emojis = AppConstants.profileEmojis;
 
-    showDialog(
+    showCupertinoDialog(
       context: context,
-      builder: (context) {
-        return Dialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  'Choose an Emoji',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Choose an Emoji'),
+        content: SizedBox(
+          height: 300,
+          width: double.maxFinite,
+          child: GridView.builder(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 5,
+              mainAxisSpacing: 8,
+              crossAxisSpacing: 8,
+            ),
+            itemCount: emojis.length,
+            itemBuilder: (context, index) {
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _profileImage = emojis[index];
+                    _isEmoji = true;
+                  });
+                  Navigator.pop(context);
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.systemGrey5,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      emojis[index],
+                      style: const TextStyle(fontSize: 26),
+                    ),
                   ),
                 ),
-              ),
-              const Divider(height: 1),
-              Container(
-                height: 300,
-                padding: const EdgeInsets.all(16),
-                child: GridView.builder(
-                  shrinkWrap: true,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 5,
-                    mainAxisSpacing: 8,
-                    crossAxisSpacing: 8,
-                  ),
-                  itemCount: emojis.length,
-                  itemBuilder: (context, index) {
-                    return InkWell(
-                      onTap: () {
-                        setState(() {
-                          _profileImage = emojis[index];
-                          _isEmoji = true;
-                        });
-                        Navigator.pop(context);
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Text(
-                            emojis[index],
-                            style: const TextStyle(fontSize: 26),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              Divider(height: 1),
-              CupertinoButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(
-                  'Cancel',
-                  style: TextStyle(color: AppConstants.primaryColor),
-                ),
-              ),
-            ],
+              );
+            },
           ),
-        );
-      },
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            isDestructiveAction: true,
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -907,7 +875,21 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   }
 
   void _saveFriend() {
-    if (_formKey.currentState?.validate() ?? false) {
+    // Validate fields
+    bool isValid = true;
+
+    if (_nameController.text.trim().isEmpty) {
+      _showErrorSnackBar('Please enter a name');
+      isValid = false;
+    } else if (_phoneController.text.trim().isEmpty) {
+      _showErrorSnackBar('Please enter a phone number');
+      isValid = false;
+    } else if (!_phoneController.text.contains(RegExp(r'[0-9]'))) {
+      _showErrorSnackBar('Please enter a valid phone number');
+      isValid = false;
+    }
+
+    if (isValid) {
       final name = _nameController.text.trim();
       final phoneNumber = _phoneController.text.trim();
 
@@ -927,50 +909,46 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       if (widget.friend == null) {
         Provider.of<FriendsProvider>(context, listen: false).addFriend(friend);
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '$name added as a friend',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
+        // Show success alert with iOS style
+        showCupertinoDialog(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: Text('$name Added'),
+            content: Text('$name has been added as a friend.'),
+            actions: [
+              CupertinoDialogAction(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                },
+                child: const Text('OK'),
               ),
-            ),
-            duration: const Duration(seconds: 2),
-            backgroundColor: AppConstants.primaryColor,
-            behavior: SnackBarBehavior.floating,
-            elevation: 4,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            ],
           ),
         );
       } else {
         Provider.of<FriendsProvider>(context, listen: false).updateFriend(friend);
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Changes saved for $name',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
+        // Show a toast for iOS (Cupertino doesn't have a built-in toast)
+        // Using dialog instead
+        showCupertinoDialog(
+          context: context,
+          barrierDismissible: true,
+          builder: (context) => CupertinoAlertDialog(
+            title: Text('Changes Saved'),
+            content: Text('Your changes for $name have been saved.'),
+            actions: [
+              CupertinoDialogAction(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                },
+                child: const Text('OK'),
               ),
-            ),
-            duration: const Duration(seconds: 2),
-            backgroundColor: AppConstants.primaryColor,
-            behavior: SnackBarBehavior.floating,
-            elevation: 4,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            ],
           ),
         );
       }
-
-      Navigator.pop(context);
     }
   }
 
@@ -979,7 +957,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       context: context,
       builder: (context) {
         return CupertinoAlertDialog(
-          title: Text('Remove Friend'),
+          title: const Text('Remove Friend'),
           content: Text(
             'Are you sure you want to remove ${widget.friend?.name} from your Alongside friends?',
           ),
@@ -987,7 +965,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             CupertinoDialogAction(
               onPressed: () => Navigator.pop(context),
               isDefaultAction: true,
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
             ),
             CupertinoDialogAction(
               onPressed: () {
@@ -996,30 +974,28 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                   context,
                   listen: false,
                 ).removeFriend(widget.friend!.id);
-                Navigator.pop(context); // Return to home screen
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      '${widget.friend?.name} removed',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
+                // Show a quick toast for feedback
+                showCupertinoDialog(
+                  context: context,
+                  barrierDismissible: true,
+                  builder: (context) => CupertinoAlertDialog(
+                    title: Text('Friend Removed'),
+                    content: Text('${widget.friend?.name} has been removed.'),
+                    actions: [
+                      CupertinoDialogAction(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.pop(context);
+                        },
+                        child: const Text('OK'),
                       ),
-                    ),
-                    duration: const Duration(seconds: 2),
-                    backgroundColor: AppConstants.primaryColor,
-                    behavior: SnackBarBehavior.floating,
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    ],
                   ),
                 );
               },
               isDestructiveAction: true,
-              child: Text('Remove'),
+              child: const Text('Remove'),
             ),
           ],
         );
