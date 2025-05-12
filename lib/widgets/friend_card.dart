@@ -1,4 +1,5 @@
 // widgets/friend_card.dart
+// widgets/friend_card.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -12,11 +13,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 class FriendCard extends StatefulWidget {
   final Friend friend;
   final bool isHighlighted;
+  final bool isExpanded;
+  final Function(String) onExpand;
+  final int index;
+  final Function(int, int)? onReorder;
 
   const FriendCard({
     Key? key,
     required this.friend,
     this.isHighlighted = false,
+    this.isExpanded = false,
+    required this.onExpand,
+    required this.index,
+    this.onReorder,
   }) : super(key: key);
 
   @override
@@ -24,7 +33,6 @@ class FriendCard extends StatefulWidget {
 }
 
 class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateMixin {
-  bool _isExpanded = false;
   late AnimationController _controller;
   late Animation<double> _expandAnimation;
 
@@ -39,6 +47,24 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
       parent: _controller,
       curve: Curves.easeOutCubic,
     );
+
+    // Initialize animation state based on expanded prop
+    if (widget.isExpanded) {
+      _controller.value = 1.0;
+    }
+  }
+
+  @override
+  void didUpdateWidget(FriendCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Update animation when expanded state changes
+    if (widget.isExpanded != oldWidget.isExpanded) {
+      if (widget.isExpanded) {
+        _controller.forward();
+      } else {
+        _controller.reverse();
+      }
+    }
   }
 
   @override
@@ -48,18 +74,70 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
   }
 
   void _toggleExpand() {
-    setState(() {
-      _isExpanded = !_isExpanded;
-      if (_isExpanded) {
-        _controller.forward();
-      } else {
-        _controller.reverse();
-      }
-    });
+    widget.onExpand(widget.friend.id);
   }
 
   @override
   Widget build(BuildContext context) {
+    return LongPressDraggable<int>(
+      data: widget.index,
+      feedback: Material(
+        elevation: 8,
+        borderRadius: BorderRadius.circular(24),
+        child: Container(
+          width: MediaQuery.of(context).size.width - 32,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppConstants.cardColor,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Row(
+            children: [
+              _buildProfileImage(),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  widget.friend.name,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Color(AppConstants.primaryTextColorValue),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      childWhenDragging: Opacity(
+        opacity: 0.3,
+        child: _buildCardContent(),
+      ),
+      onDragStarted: () {
+        // Optional: Add haptic feedback
+      },
+      onDragEnd: (details) {
+        // Handle drag end if needed
+      },
+      onDraggableCanceled: (velocity, offset) {
+        // Handle cancellation if needed
+      },
+      maxSimultaneousDrags: widget.onReorder == null ? 0 : 1, // Only allow dragging when reorder is enabled
+      child: DragTarget<int>(
+        builder: (context, candidateData, rejectedData) {
+          return _buildCardContent();
+        },
+        onWillAccept: (data) => data != null && data != widget.index,
+        onAccept: (data) {
+          if (widget.onReorder != null) {
+            widget.onReorder!(data, widget.index);
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildCardContent() {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       margin: EdgeInsets.symmetric(
@@ -95,79 +173,79 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Main card content (always visible)
-            Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            child: Row(
-              children: [
-                _buildProfileImage(),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  child: Row(
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            widget.friend.name,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: Color(AppConstants.primaryTextColorValue),
+                      _buildProfileImage(),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  widget.friend.name,
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(AppConstants.primaryTextColorValue),
+                                  ),
+                                ),
+                                // Removed the reminder badge
+                              ],
                             ),
-                          ),
-                          // Removed the reminder badge - not useful enough in collapsed view
-                        ],
+                            const SizedBox(height: 6),
+                            if (widget.friend.helpingWith != null &&
+                                widget.friend.helpingWith!.isNotEmpty) ...[
+                              Text(
+                                'Alongside them in:',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppConstants.primaryColor,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                widget.friend.helpingWith!,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Color(AppConstants.primaryTextColorValue),
+                                  height: 1.3,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 6),
-                      if (widget.friend.helpingWith != null &&
-                          widget.friend.helpingWith!.isNotEmpty) ...[
-                        Text(
-                          'Alongside them in:',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
+                      const SizedBox(width: 12),
+                      AnimatedRotation(
+                        turns: widget.isExpanded ? 0.5 : 0,
+                        duration: const Duration(milliseconds: 300),
+                        child: Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: AppConstants.primaryColor.withOpacity(0.08),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.keyboard_arrow_down,
                             color: AppConstants.primaryColor,
+                            size: 20,
                           ),
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          widget.friend.helpingWith!,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Color(AppConstants.primaryTextColorValue),
-                            height: 1.3,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+                      ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 12), // Added more spacing before the dropdown icon
-                AnimatedRotation(
-                  turns: _isExpanded ? 0.5 : 0,
-                  duration: const Duration(milliseconds: 300),
-                  child: Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: AppConstants.primaryColor.withOpacity(0.08),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.keyboard_arrow_down,
-                      color: AppConstants.primaryColor,
-                      size: 20,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
 
-                // Expandable details with a completely seamless transition
+                // Expandable details with a seamless transition
                 AnimatedBuilder(
                   animation: _controller,
                   builder: (context, child) {
@@ -324,34 +402,34 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                         const SizedBox(height: 20),
 
                         // Action buttons
-    Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 16),
-    child: Row(
-    children: [
-    Expanded(
-    child: _buildActionButton(
-    context,
-    Icons.message_rounded,
-    'Message',
-    () => _showMessageOptions(context),
-    inverted: false, // Primary filled button
-    ),
-    ),
-    const SizedBox(width: 12),
-    Expanded(
-    child: _buildActionButton(
-    context,
-    Icons.phone_rounded,
-    'Call',
-    () => _callFriend(context),
-    inverted: true, // Inverted outlined button
-    ),
-    ),
-    const SizedBox(width: 12),
-    _buildEditButton(),
-    ],
-    ),
-    ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: _buildActionButton(
+                                  context,
+                                  Icons.message_rounded,
+                                  'Message',
+                                      () => _showMessageOptions(context),
+                                  inverted: false,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildActionButton(
+                                  context,
+                                  Icons.phone_rounded,
+                                  'Call',
+                                      () => _callFriend(context),
+                                  inverted: true,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              _buildEditButton(),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -364,6 +442,8 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
     );
   }
 
+  // Rest of your methods remain unchanged...
+  // Include all your existing methods here
   Widget _buildReminderBadge() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -579,27 +659,50 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                             ),
                           ),
                         ),
-                        // Settings icon
-                        IconButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const ManageMessagesScreen(),
-                              ),
-                            );
-                          },
-                          icon: Icon(Icons.settings, color: AppConstants.primaryColor, size: 22),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          splashRadius: 24,
+                        // Settings icon with circle background to match other UI elements
+                        Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: AppConstants.primaryColor.withOpacity(0.08),
+                            shape: BoxShape.circle,
+                          ),
+                          child: IconButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const ManageMessagesScreen(),
+                                ),
+                              );
+                            },
+                            icon: Icon(Icons.settings, color: AppConstants.primaryColor, size: 16),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            splashRadius: 14,
+                          ),
                         ),
                       ],
                     ),
                   ),
 
-                  const Divider(),
+                  // Use same gradient divider as in friend cards
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Container(
+                      height: 1,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppConstants.borderColor.withOpacity(0),
+                            AppConstants.borderColor.withOpacity(0.3),
+                            AppConstants.borderColor.withOpacity(0),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
 
                   // Message list
                   Expanded(
@@ -874,6 +977,8 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
     }
   }
 }
+
+// Keep the rest of the file unchanged...
 
 // New screen to manage custom messages
 class ManageMessagesScreen extends StatefulWidget {

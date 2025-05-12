@@ -5,9 +5,17 @@ import '../main.dart';
 import '../widgets/friend_card.dart';
 import '../utils/constants.dart';
 import 'add_friend_screen.dart';
+import 'dart:ui';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  String? _expandedFriendId;
 
   @override
   Widget build(BuildContext context) {
@@ -149,7 +157,12 @@ class HomeScreen extends StatelessWidget {
             );
           }
 
-          return ListView.builder(
+          // Auto-expand the first friend card if none is expanded
+          if (_expandedFriendId == null && friends.isNotEmpty) {
+            _expandedFriendId = friends[0].id;
+          }
+
+          return ReorderableListView.builder(
             padding: const EdgeInsets.only(
               left: 16,
               right: 16,
@@ -157,13 +170,62 @@ class HomeScreen extends StatelessWidget {
               bottom: 24,
             ),
             itemCount: friends.length,
+            onReorder: (oldIndex, newIndex) {
+              // Handle list reordering
+              if (oldIndex < newIndex) {
+                newIndex -= 1;
+              }
+
+              setState(() {
+                final item = friends.removeAt(oldIndex);
+                friends.insert(newIndex, item);
+                friendsProvider.reorderFriends(friends);
+              });
+            },
+            proxyDecorator: (child, index, animation) {
+              // Custom appearance for the dragged item
+              return AnimatedBuilder(
+                animation: animation,
+                builder: (BuildContext context, Widget? child) {
+                  final double animValue = Curves.easeInOut.transform(animation.value);
+                  final double elevation = lerpDouble(0, 6, animValue)!;
+                  return Material(
+                    elevation: elevation,
+                    color: Colors.transparent,
+                    shadowColor: Colors.black.withOpacity(0.5),
+                    child: child,
+                  );
+                },
+                child: child,
+              );
+            },
             itemBuilder: (context, index) {
-              return FriendCard(friend: friends[index]);
+              return FriendCard(
+                key: Key(friends[index].id),
+                friend: friends[index],
+                isExpanded: friends[index].id == _expandedFriendId,
+                onExpand: _handleCardExpanded,
+                index: index,
+                onReorder: (oldIndex, newIndex) {
+                  setState(() {
+                    final item = friends.removeAt(oldIndex);
+                    friends.insert(newIndex, item);
+                    friendsProvider.reorderFriends(friends);
+                  });
+                },
+              );
             },
           );
         },
       ),
     );
+  }
+
+  void _handleCardExpanded(String friendId) {
+    setState(() {
+      // Toggle expansion if clicking the same card, otherwise expand the clicked card
+      _expandedFriendId = _expandedFriendId == friendId ? null : friendId;
+    });
   }
 
   void _showAboutDialog(BuildContext context) {
@@ -267,3 +329,5 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
+
+// Extension import at the top of the file

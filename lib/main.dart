@@ -187,21 +187,29 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
                         ),
                       ),
                       // Settings icon
-                      IconButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ManageMessagesScreen(),
-                            ),
-                          );
-                        },
-                        icon: Icon(Icons.settings, color: AppConstants.primaryColor, size: 22),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        splashRadius: 24,
-                      ),
+            Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+            color: AppConstants.primaryColor.withOpacity(0.08),
+            shape: BoxShape.circle,
+            ),
+            child: IconButton(
+            onPressed: () {
+            Navigator.pop(context);
+            Navigator.push(
+            context,
+            MaterialPageRoute(
+            builder: (context) => const ManageMessagesScreen(),
+            ),
+            );
+            },
+            icon: Icon(Icons.settings, color: AppConstants.primaryColor, size: 16),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            splashRadius: 14,
+            ),
+            ),
                     ],
                   ),
                 ),
@@ -730,6 +738,12 @@ class FriendsProvider with ChangeNotifier {
         await notificationService.showPersistentNotification(friend);
       }
     }
+  }
+
+  Future<void> reorderFriends(List<Friend> reorderedFriends) async {
+    _friends = reorderedFriends;
+    await storageService.saveFriends(_friends);
+    notifyListeners();
   }
 
   Future<void> addFriend(Friend friend) async {
