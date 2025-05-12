@@ -1,9 +1,10 @@
-// utils/constants.dart
+// utils/constants.dart - iOS-styled version
 
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 
 class AppConstants {
-  // Preset messages for check-ins
+  // Preset messages for check-ins (unchanged)
   static const List<String> presetMessages = [
     // ✅ Check-ins
     "Just checking in. How are you doing today?",
@@ -18,57 +19,43 @@ class AppConstants {
     "Not proud of today. Thanks for walking with me anyway.",
   ];
 
-  // Emoji options for profile pictures
+  // Emoji options for profile pictures (unchanged)
   static const List<String> profileEmojis = [
-    "😊", // kind, warm
-    "🙂", // steady, approachable
-    "😇", // faithful, gentle
-    "😎", // confident, relaxed
-    "😅", // honest, human
-    "😉", // playful, close
-    "😐", // lowkey, chill
-    "😶", // quiet type, good listener
-    "🙏", // spiritual, prayerful
-    "✝️", // Jesus-centered
-    "❤️", // compassionate, loving
-    "🤍", // pure-hearted, gentle
-    "🔥", // intense, passionate
-    "⚓", // steady, grounded
-    "🛡️", // protector type
-    "👊", // strong and loyal
-    "💪", // determined, resilient
-    "🤝", // dependable, mutual support
-    "🙌", // encourager, uplifting
-    "🕊️", // peaceful, calm presence
+    "😊", "🙂", "😇", "😎", "😅", "😉", "😐", "😶", "🙏", "✝️",
+    "❤️", "🤍", "🔥", "⚓", "🛡️", "👊", "💪", "🤝", "🙌", "🕊️",
   ];
 
-  // Reminder options in days
+  // Reminder options in days (unchanged)
   static const List<int> reminderOptions = [0, 1, 3, 7, 14, 30];
 
-  // App theme colors
-  static const int primaryColorValue = 0xFF3F8CFF; // Vibrant blue
-  static const int secondaryColorValue = 0xFF2DCCA7; // Teal accent
-  static const int accentColorValue = 0xFFFFAB40; // Warm orange accent
-  static const int backgroundColorValue =
-  0xFFF8FBFF; // Light blue-tinted background
+  // App theme colors - modernized for iOS feel
+  static const int primaryColorValue = 0xFF007AFF; // iOS blue
+  static const int secondaryColorValue = 0xFF5AC8FA; // iOS light blue
+  static const int accentColorValue = 0xFFFF9500; // iOS orange
+  static const int backgroundColorValue = 0xFFF2F2F7; // iOS light background
   static const int cardColorValue = 0xFFFFFFFF; // Pure white cards
 
-  // Text colors
-  static const int primaryTextColorValue = 0xFF2A3747; // Dark blue-gray
-  static const int secondaryTextColorValue = 0xFF617387; // Medium blue-gray
+  // Text colors - iOS standard
+  static const int primaryTextColorValue = 0xFF000000; // Pure black
+  static const int secondaryTextColorValue = 0xFF8E8E93; // iOS gray
 
-  // UI Element colors
-  static const int profileCircleColorValue =
-  0xFFEEF6FF; // Light blue for profile circles
-  static const int emojiPickerColorValue =
-  0xFFE9F2FF; // Light blue for emoji picker backgrounds
-  static const int notificationSettingsColorValue =
-  0xFFF4F8FF; // Very light blue for settings
+  // UI Element colors - iOS style
+  static const int profileCircleColorValue = 0xFFE1E6EB; // Light gray for profile circles
+  static const int emojiPickerColorValue = 0xFFF2F2F7; // Light background for emoji picker
+  static const int notificationSettingsColorValue = 0xFFF9F9FB; // Very light for settings
   static const int dialogBackgroundColorValue = 0xFFFFFFFF; // White for dialogs
-  static const int bottomSheetHandleColorValue =
-  0xFFDDEAFF; // Light blue for handles
-  static const int deleteColorValue = 0xFFFF4D6B; // Soft red for delete actions
-  static const int borderColorValue = 0xFFE1EBFD; // Light blue borders
+  static const int bottomSheetHandleColorValue = 0xFFDCDCDD; // iOS-style handle
+  static const int deleteColorValue = 0xFFFF3B30; // iOS red
+  static const int borderColorValue = 0xFFDCDCDC; // iOS light border
+
+  // Additional iOS-style colors
+  static const int iosSuccessGreen = 0xFF34C759; // iOS green
+  static const int iosSeparatorColor = 0xFFC6C6C8; // iOS separator color
+  static const int iosGroupedBackground = 0xFFF2F2F7; // iOS grouped background
+
+  // Card shape and elevation
+  static const double cardBorderRadius = 14.0;
+  static const double cardElevation = 0.5;
 
   // Helper method to easily get Color objects
   static Color get primaryColor => const Color(primaryColorValue);
@@ -85,4 +72,73 @@ class AppConstants {
   static Color get bottomSheetHandleColor => const Color(bottomSheetHandleColorValue);
   static Color get deleteColor => const Color(deleteColorValue);
   static Color get borderColor => const Color(borderColorValue);
+
+  // Helper methods for iOS-specific colors
+  static Color get successGreen => const Color(iosSuccessGreen);
+  static Color get separatorColor => const Color(iosSeparatorColor);
+  static Color get groupedBackground => const Color(iosGroupedBackground);
+
+  // Common text styles
+  static TextStyle get title1 => const TextStyle(
+    fontSize: 28,
+    fontWeight: FontWeight.bold,
+    letterSpacing: 0.35,
+    color: Color(primaryTextColorValue),
+  );
+
+  static TextStyle get title2 => const TextStyle(
+    fontSize: 22,
+    fontWeight: FontWeight.bold,
+    letterSpacing: 0.35,
+    color: Color(primaryTextColorValue),
+  );
+
+  static TextStyle get title3 => const TextStyle(
+    fontSize: 20,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0.35,
+    color: Color(primaryTextColorValue),
+  );
+
+  static TextStyle get headline => const TextStyle(
+    fontSize: 17,
+    fontWeight: FontWeight.w600,
+    letterSpacing: -0.41,
+    color: Color(primaryTextColorValue),
+  );
+
+  static TextStyle get body => const TextStyle(
+    fontSize: 17,
+    fontWeight: FontWeight.normal,
+    letterSpacing: -0.41,
+    color: Color(primaryTextColorValue),
+  );
+
+  static TextStyle get callout => const TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.normal,
+    letterSpacing: -0.32,
+    color: Color(primaryTextColorValue),
+  );
+
+  static TextStyle get subhead => const TextStyle(
+    fontSize: 15,
+    fontWeight: FontWeight.normal,
+    letterSpacing: -0.24,
+    color: Color(primaryTextColorValue),
+  );
+
+  static TextStyle get footnote => const TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.normal,
+    letterSpacing: -0.08,
+    color: Color(secondaryTextColorValue),
+  );
+
+  static TextStyle get caption => const TextStyle(
+    fontSize: 12,
+    fontWeight: FontWeight.normal,
+    letterSpacing: 0,
+    color: Color(secondaryTextColorValue),
+  );
 }

@@ -1,11 +1,12 @@
 // screens/home_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import '../main.dart';
 import '../widgets/friend_card.dart';
 import '../utils/constants.dart';
 import 'add_friend_screen.dart';
-import 'dart:ui';
+import '../models/friend.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -20,42 +21,44 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8F8F8), // iOS background color
       appBar: AppBar(
-        backgroundColor: AppConstants.primaryColor,
-        elevation: 1,
+        backgroundColor: const Color(0xFFF8F8F8),
+        elevation: 0,
         title: const Text(
           'Alongside',
           style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
-            color: Colors.white,
-            letterSpacing: -0.3,
+            fontWeight: FontWeight.w600,
+            fontSize: 20,
+            color: Color(0xFF000000),
+            letterSpacing: -0.5,
           ),
         ),
-        // Info button on the left
-        leading: IconButton(
-          icon: const Icon(
-            Icons.info_outline,
-            color: Colors.white,
-            size: 22,
+        // Info button on the left with iOS style
+        leading: CupertinoButton(
+          padding: EdgeInsets.zero,
+          child: const Icon(
+            CupertinoIcons.info,
+            color: Color(AppConstants.primaryColorValue),
+            size: 24,
           ),
-          padding: const EdgeInsets.only(left: 16.0),
           onPressed: () => _showAboutDialog(context),
         ),
-        // Add button on the right
+        // Add button on the right with iOS style
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: IconButton(
-              icon: const Icon(
-                Icons.add,
-                color: Colors.white,
+            padding: const EdgeInsets.only(right: 8.0),
+            child: CupertinoButton(
+              padding: EdgeInsets.zero,
+              child: const Icon(
+                CupertinoIcons.add,
+                color: Color(AppConstants.primaryColorValue),
                 size: 28,
               ),
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
+                  CupertinoPageRoute(
                     builder: (context) => const AddFriendScreen(),
                   ),
                 );
@@ -69,9 +72,8 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (context, friendsProvider, child) {
           if (friendsProvider.isLoading) {
             return Center(
-              child: CircularProgressIndicator(
-                color: AppConstants.primaryColor,
-                strokeWidth: 3,
+              child: CupertinoActivityIndicator(
+                radius: 14,
               ),
             );
           }
@@ -94,62 +96,55 @@ class _HomeScreenState extends State<HomeScreen> {
                       builder: (context, value, child) {
                         return Transform.scale(
                           scale: value,
-                          child: Icon(
-                            Icons.people_alt_outlined,
-                            size: 72,
-                            color: AppConstants.secondaryColor.withOpacity(0.5),
+                          child: Container(
+                            width: 120,
+                            height: 120,
+                            decoration: BoxDecoration(
+                              color: const Color(AppConstants.primaryColorValue).withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              CupertinoIcons.person_2_fill,
+                              size: 54,
+                              color: const Color(AppConstants.primaryColorValue),
+                            ),
                           ),
                         );
                       },
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 32),
                     Text(
                       'Walk alongside a friend',
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        color: AppConstants.primaryTextColor,
-                        fontWeight: FontWeight.w800,
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 24,
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                     Text(
                       'Add someone to walk with—through setbacks, growth, and everything in between.',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: AppConstants.secondaryTextColor,
-                        fontSize: 15,
+                      style: TextStyle(
+                        color: Colors.black54,
+                        fontSize: 16,
                         height: 1.5,
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 32),
-                    ElevatedButton.icon(
+                    const SizedBox(height: 40),
+                    _buildIOSButton(
+                      context: context,
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
+                          CupertinoPageRoute(
                             builder: (context) => const AddFriendScreen(),
                           ),
                         );
                       },
-                      icon: const Icon(Icons.add, size: 20),
-                      label: const Text(
-                        'Add Friend',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 12,
-                        ),
-                        textStyle: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
+                      text: 'Add Friend',
+                      icon: CupertinoIcons.add,
                     ),
                   ],
                 ),
@@ -162,107 +157,115 @@ class _HomeScreenState extends State<HomeScreen> {
             _expandedFriendId = friends[0].id;
           }
 
-          return ReorderableListView.builder(
-            padding: const EdgeInsets.only(
-              left: 16,
-              right: 16,
-              top: 12,
-              bottom: 24,
-            ),
-            itemCount: friends.length,
-            onReorder: (oldIndex, newIndex) {
-              // Handle list reordering
-              if (oldIndex < newIndex) {
-                newIndex -= 1;
-              }
-
-              setState(() {
-                final item = friends.removeAt(oldIndex);
-                friends.insert(newIndex, item);
-                friendsProvider.reorderFriends(friends);
-              });
-            },
-            proxyDecorator: (child, index, animation) {
-              // Custom appearance for the dragged item
-              return AnimatedBuilder(
-                animation: animation,
-                builder: (BuildContext context, Widget? child) {
-                  final double animValue = Curves.easeInOut.transform(animation.value);
-                  final double elevation = lerpDouble(0, 6, animValue)!;
-                  return Material(
-                    elevation: elevation,
-                    color: Colors.transparent,
-                    shadowColor: Colors.black.withOpacity(0.5),
-                    child: child,
-                  );
-                },
-                child: child,
-              );
-            },
-            itemBuilder: (context, index) {
-              return FriendCard(
-                key: Key(friends[index].id),
-                friend: friends[index],
-                isExpanded: friends[index].id == _expandedFriendId,
-                onExpand: _handleCardExpanded,
-                index: index,
-                onReorder: (oldIndex, newIndex) {
-                  setState(() {
-                    final item = friends.removeAt(oldIndex);
-                    friends.insert(newIndex, item);
-                    friendsProvider.reorderFriends(friends);
-                  });
-                },
-              );
-            },
-          );
+          return _buildIOSStyleList(context, friends);
         },
+      ),
+    );
+  }
+
+  Widget _buildIOSStyleList(BuildContext context, List<Friend> friends) {
+    return ListView.builder(
+      padding: const EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 12,
+        bottom: 24,
+      ),
+      itemCount: friends.length,
+      itemBuilder: (context, index) {
+        // We're reusing the existing FriendCard widget
+        // You would need to update the FriendCard widget separately
+        // to have iOS styling
+        return FriendCard(
+          friend: friends[index],
+          index: index,
+          isExpanded: friends[index].id == _expandedFriendId,
+          onExpand: _handleCardExpanded,
+        );
+      },
+    );
+  }
+
+  // iOS-style button widget
+  Widget _buildIOSButton({
+    required BuildContext context,
+    required VoidCallback onPressed,
+    required String text,
+    IconData? icon,
+    bool isPrimary = true,
+  }) {
+    final color = isPrimary
+        ? const Color(AppConstants.primaryColorValue)
+        : Colors.white;
+    final textColor = isPrimary
+        ? Colors.white
+        : const Color(AppConstants.primaryColorValue);
+    final borderColor = const Color(AppConstants.primaryColorValue);
+
+    return Container(
+      height: 50,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        color: color,
+        border: !isPrimary ? Border.all(color: borderColor, width: 1.5) : null,
+        boxShadow: isPrimary ? [
+          BoxShadow(
+            color: color.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ] : null,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onPressed,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, color: textColor, size: 18),
+                  const SizedBox(width: 8),
+                ],
+                Text(
+                  text,
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
 
   void _handleCardExpanded(String friendId) {
     setState(() {
-      // Toggle expansion if clicking the same card, otherwise expand the clicked card
       _expandedFriendId = _expandedFriendId == friendId ? null : friendId;
     });
   }
 
   void _showAboutDialog(BuildContext context) {
-    showDialog(
+    showCupertinoDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Row(
-            children: [
-              Icon(
-                Icons.info_outline,
-                color: AppConstants.primaryColor,
-                size: 22,
-              ),
-              const SizedBox(width: 10),
-              Text(
-                'About Alongside',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: AppConstants.primaryTextColor,
-                  letterSpacing: -0.2,
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: AppConstants.dialogBackgroundColor,
-          contentPadding: const EdgeInsets.all(20),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text('About Alongside'),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 12.0),
+          child: Column(
             children: [
               Text(
                 'Alongside helps you walk with your friends through the highs and lows of life.',
                 style: TextStyle(
-                  fontSize: 15,
-                  color: AppConstants.primaryTextColor,
+                  fontSize: 14,
                   height: 1.4,
                 ),
               ),
@@ -270,8 +273,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Text(
                 'As Christians, we\'re called to carry one another\'s burdens—and this app helps you do that with just a few taps.',
                 style: TextStyle(
-                  fontSize: 15,
-                  color: AppConstants.primaryTextColor,
+                  fontSize: 14,
                   height: 1.4,
                 ),
               ),
@@ -279,23 +281,22 @@ class _HomeScreenState extends State<HomeScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppConstants.primaryColor.withOpacity(0.1),
+                  color: const Color(AppConstants.primaryColorValue).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   children: [
                     Icon(
-                      Icons.security,
-                      size: 20,
-                      color: AppConstants.primaryColor,
+                      CupertinoIcons.lock,
+                      size: 18,
+                      color: const Color(AppConstants.primaryColorValue),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         'Everything stays on your device. It\'s private, secure, and fully in your control.',
                         style: TextStyle(
-                          fontSize: 14,
-                          color: AppConstants.primaryTextColor,
+                          fontSize: 13,
                           height: 1.3,
                         ),
                       ),
@@ -305,29 +306,14 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                foregroundColor: AppConstants.primaryColor,
-                textStyle: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              child: const Text('Close'),
-            ),
-          ],
-          // Reduced vertical padding to minimize white space before close button
-          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Close'),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 }
-
-// Extension import at the top of the file
