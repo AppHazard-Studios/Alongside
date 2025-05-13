@@ -337,7 +337,6 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
 
     return completer.future;
   }
-
   void _showCustomMessageDialog(BuildContext context, Friend friend) {
     final textController = TextEditingController();
 
@@ -453,97 +452,6 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
       overlayEntry.remove();
     });
   }
-  void _showCustomMessageDialog(BuildContext context, Friend friend) {
-    final textController = TextEditingController();
-
-    showCupertinoDialog(
-      context: context,
-      builder: (context) {
-        return CupertinoAlertDialog(
-          title: const Text('Create Message'),
-          content: Padding(
-            padding: const EdgeInsets.only(top: 16),
-            child: CupertinoTextField(
-              controller: textController,
-              placeholder: 'Type your message...',
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: CupertinoColors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: CupertinoColors.systemGrey4,
-                  width: 0.5,
-                ),
-              ),
-              style: const TextStyle(
-                fontSize: 15,
-                color: CupertinoColors.label,
-              ),
-              minLines: 2,
-              maxLines: 5,
-              textCapitalization: TextCapitalization.sentences,
-              textInputAction: TextInputAction.newline,
-            ),
-          ),
-          actions: [
-            CupertinoDialogAction(
-              onPressed: () => Navigator.pop(context),
-              isDefaultAction: true,
-              child: const Text('Cancel'),
-            ),
-            CupertinoDialogAction(
-              onPressed: () async {
-                if (textController.text.isNotEmpty) {
-                  final storageService = Provider.of<FriendsProvider>(
-                    context,
-                    listen: false,
-                  ).storageService;
-
-                  await storageService.addCustomMessage(textController.text);
-                  Navigator.pop(context);
-
-                  _showSuccessToast(context, 'Message saved');
-                }
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showSuccessToast(BuildContext context, String message) {
-    // iOS doesn't have built-in toasts, but we can simulate with an overlay
-    final overlay = Overlay.of(context);
-    final overlayEntry = OverlayEntry(
-      builder: (context) => Positioned(
-        bottom: 100,
-        width: MediaQuery.of(context).size.width,
-        child: Center(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: CupertinoColors.darkBackgroundGray.withOpacity(0.8),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              message,
-              style: const TextStyle(
-                color: CupertinoColors.white,
-                fontSize: 15,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    overlay.insert(overlayEntry);
-    Future.delayed(const Duration(seconds: 2), () {
-      overlayEntry.remove();
-    });
-  }
 
   void _sendMessage(BuildContext context, Friend friend, String message) async {
     final phoneNumber = friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
@@ -578,6 +486,7 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
       }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
