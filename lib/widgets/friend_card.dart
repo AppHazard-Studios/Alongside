@@ -1,13 +1,13 @@
-// widgets/friend_card.dart
-// widgets/friend_card.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../main.dart';
 import '../models/friend.dart';
 import '../screens/add_friend_screen.dart';
 import '../utils/constants.dart';
+import '../utils/text_styles.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class FriendCard extends StatefulWidget {
@@ -40,12 +40,12 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 250), // iOS animations are typically faster
       vsync: this,
     );
     _expandAnimation = CurvedAnimation(
       parent: _controller,
-      curve: Curves.easeOutCubic,
+      curve: Curves.easeOutQuart, // More iOS-like curve
     );
 
     // Initialize animation state based on expanded prop
@@ -79,17 +79,24 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
+    // Use Cupertino-style draggable
     return LongPressDraggable<int>(
       data: widget.index,
       feedback: Material(
-        elevation: 8,
-        borderRadius: BorderRadius.circular(24),
+        color: Colors.transparent,
         child: Container(
           width: MediaQuery.of(context).size.width - 32,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppConstants.cardColor,
-            borderRadius: BorderRadius.circular(24),
+            color: CupertinoColors.systemBackground,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: CupertinoColors.systemGrey4.withOpacity(0.2),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Row(
             children: [
@@ -98,11 +105,8 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
               Expanded(
                 child: Text(
                   widget.friend.name,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: Color(AppConstants.primaryTextColorValue),
-                  ),
+                  style: AppTextStyles.cardTitle,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -116,13 +120,7 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
       onDragStarted: () {
         // Optional: Add haptic feedback
       },
-      onDragEnd: (details) {
-        // Handle drag end if needed
-      },
-      onDraggableCanceled: (velocity, offset) {
-        // Handle cancellation if needed
-      },
-      maxSimultaneousDrags: widget.onReorder == null ? 0 : 1, // Only allow dragging when reorder is enabled
+      maxSimultaneousDrags: widget.onReorder == null ? 0 : 1,
       child: DragTarget<int>(
         builder: (context, candidateData, rejectedData) {
           return _buildCardContent();
@@ -139,42 +137,45 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
 
   Widget _buildCardContent() {
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 250),
       margin: EdgeInsets.symmetric(
-        vertical: 8,
+        vertical: 6,
         horizontal: widget.isHighlighted ? 0 : 16,
       ),
       decoration: BoxDecoration(
-        color: AppConstants.cardColor,
-        borderRadius: BorderRadius.circular(24),
+        color: CupertinoColors.systemBackground,
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: widget.isHighlighted
                 ? AppConstants.primaryColor.withOpacity(0.15)
-                : Colors.black.withOpacity(0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+                : CupertinoColors.systemGrey5.withOpacity(0.5),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
             spreadRadius: 0,
           ),
         ],
-        border: widget.isHighlighted
-            ? Border.all(color: AppConstants.primaryColor.withOpacity(0.3), width: 1.5)
-            : Border.all(color: AppConstants.borderColor.withOpacity(0.7), width: 1),
+        border: Border.all(
+          color: widget.isHighlighted
+              ? AppConstants.primaryColor.withOpacity(0.3)
+              : CupertinoColors.systemGrey5,
+          width: widget.isHighlighted ? 1.5 : 1,
+        ),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(16),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: _toggleExpand,
-            splashColor: AppConstants.primaryColor.withOpacity(0.05),
-            highlightColor: AppConstants.primaryColor.withOpacity(0.02),
+            splashColor: Colors.transparent,
+            highlightColor: CupertinoColors.systemGrey6.withOpacity(0.4),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Main card content (always visible)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
                       _buildProfileImage(),
@@ -183,39 +184,33 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // Friend name row
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(
-                                  widget.friend.name,
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(AppConstants.primaryTextColorValue),
+                                Flexible(
+                                  child: Text(
+                                    widget.friend.name,
+                                    style: AppTextStyles.cardContent,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                // Removed the reminder badge
+                                if (widget.friend.reminderDays > 0)
+                                  _buildReminderBadge(),
                               ],
                             ),
                             const SizedBox(height: 6),
+                            // "Alongside them in:" section
                             if (widget.friend.helpingWith != null &&
                                 widget.friend.helpingWith!.isNotEmpty) ...[
                               Text(
                                 'Alongside them in:',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppConstants.primaryColor,
-                                ),
+                                style: AppTextStyles.cardLabel,
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 widget.friend.helpingWith!,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Color(AppConstants.primaryTextColorValue),
-                                  height: 1.3,
-                                ),
+                                style: AppTextStyles.cardContent,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -226,7 +221,7 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                       const SizedBox(width: 12),
                       AnimatedRotation(
                         turns: widget.isExpanded ? 0.5 : 0,
-                        duration: const Duration(milliseconds: 300),
+                        duration: const Duration(milliseconds: 250),
                         child: Container(
                           width: 28,
                           height: 28,
@@ -235,9 +230,9 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
-                            Icons.keyboard_arrow_down,
+                            CupertinoIcons.chevron_down,
                             color: AppConstants.primaryColor,
-                            size: 20,
+                            size: 16,
                           ),
                         ),
                       ),
@@ -245,7 +240,7 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                   ),
                 ),
 
-                // Expandable details with a seamless transition
+                // Expandable details section
                 AnimatedBuilder(
                   animation: _controller,
                   builder: (context, child) {
@@ -259,13 +254,13 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                   child: Container(
                     padding: const EdgeInsets.only(bottom: 16),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: CupertinoColors.systemBackground,
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.white,
-                          AppConstants.backgroundColor.withOpacity(0.5),
+                          CupertinoColors.systemBackground,
+                          CupertinoColors.systemGrey6.withOpacity(0.5),
                         ],
                         stops: const [0.0, 1.0],
                       ),
@@ -273,26 +268,18 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Very subtle separator
+                        // iOS-style separator
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Container(
-                            height: 1,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  AppConstants.borderColor.withOpacity(0),
-                                  AppConstants.borderColor.withOpacity(0.3),
-                                  AppConstants.borderColor.withOpacity(0),
-                                ],
-                              ),
-                            ),
+                            height: 0.5,
+                            color: CupertinoColors.separator,
                           ),
                         ),
 
                         const SizedBox(height: 16),
 
-                        // Additional info sections
+                        // "They're alongside you in:" section
                         if (widget.friend.theyHelpingWith != null &&
                             widget.friend.theyHelpingWith!.isNotEmpty)
                           Padding(
@@ -307,7 +294,7 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                                     shape: BoxShape.circle,
                                   ),
                                   child: Icon(
-                                    Icons.person_outline,
+                                    CupertinoIcons.person,
                                     size: 14,
                                     color: AppConstants.secondaryColor,
                                   ),
@@ -319,20 +306,14 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                                     children: [
                                       Text(
                                         'They\'re alongside you in:',
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w500,
-                                          color: AppConstants.secondaryTextColor,
-                                        ),
+                                        style: AppTextStyles.cardLabel,
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
                                         widget.friend.theyHelpingWith!,
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: AppConstants.primaryTextColor,
-                                          height: 1.3,
-                                        ),
+                                        style: AppTextStyles.cardContent,
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 3,
                                       ),
                                     ],
                                   ),
@@ -345,6 +326,7 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                             widget.friend.theyHelpingWith!.isNotEmpty)
                           const SizedBox(height: 16),
 
+                        // Reminder section
                         if (widget.friend.reminderDays > 0)
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -361,7 +343,7 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                                         shape: BoxShape.circle,
                                       ),
                                       child: Icon(
-                                        Icons.calendar_today_outlined,
+                                        CupertinoIcons.calendar,
                                         size: 14,
                                         color: AppConstants.accentColor,
                                       ),
@@ -373,21 +355,14 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                                         children: [
                                           Text(
                                             'Reminder every ${widget.friend.reminderDays} ${widget.friend.reminderDays == 1 ? 'day' : 'days'}',
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w500,
-                                              color: AppConstants.secondaryTextColor,
-                                            ),
+                                            style: AppTextStyles.cardSecondaryContent,
                                           ),
                                           if (snapshot.hasData && snapshot.data != null) ...[
                                             const SizedBox(height: 2),
                                             Text(
                                               'Next: ${snapshot.data}',
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                color: AppConstants.primaryTextColor,
-                                                height: 1.3,
-                                              ),
+                                              style: AppTextStyles.cardContent,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
                                           ],
                                         ],
@@ -407,22 +382,22 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                           child: Row(
                             children: [
                               Expanded(
-                                child: _buildActionButton(
+                                child: _buildCupertinoButton(
                                   context,
-                                  Icons.message_rounded,
+                                  CupertinoIcons.chat_bubble_fill,
                                   'Message',
                                       () => _showMessageOptions(context),
-                                  inverted: false,
+                                  isPrimary: true,
                                 ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
-                                child: _buildActionButton(
+                                child: _buildCupertinoButton(
                                   context,
-                                  Icons.phone_rounded,
+                                  CupertinoIcons.phone_fill,
                                   'Call',
                                       () => _callFriend(context),
-                                  inverted: true,
+                                  isPrimary: false,
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -442,8 +417,6 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
     );
   }
 
-  // Rest of your methods remain unchanged...
-  // Include all your existing methods here
   Widget _buildReminderBadge() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -459,7 +432,7 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            Icons.notifications_active_rounded,
+            CupertinoIcons.bell_fill,
             size: 12,
             color: AppConstants.accentColor,
           ),
@@ -470,6 +443,7 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: AppConstants.accentColor,
+              fontFamily: '.SF Pro Text',
             ),
           ),
         ],
@@ -486,13 +460,13 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
         color: widget.friend.isEmoji
             ? widget.isHighlighted
             ? AppConstants.primaryColor.withOpacity(0.08)
-            : AppConstants.profileCircleColor
+            : CupertinoColors.systemGrey5 // iOS standard gray
             : null,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
+            color: CupertinoColors.systemGrey.withOpacity(0.1),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
         ],
         image: !widget.friend.isEmoji
@@ -513,73 +487,82 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
     );
   }
 
-  Widget _buildActionButton(
+  // iOS-style button
+  Widget _buildCupertinoButton(
       BuildContext context,
       IconData icon,
       String label,
-      VoidCallback onPressed,
-      {bool inverted = false}) {
+      VoidCallback onPressed, {
+        bool isPrimary = true,
+      }) {
+    final Color backgroundColor = isPrimary
+        ? AppConstants.primaryColor
+        : CupertinoColors.systemBackground;
+
+    final Color textColor = isPrimary
+        ? CupertinoColors.white
+        : AppConstants.primaryColor;
+
+    // Match iOS button height
     return SizedBox(
-      height: 48,
-      child: ElevatedButton.icon(
+      height: 44, // Standard iOS button height
+      child: CupertinoButton(
+        padding: EdgeInsets.zero,
         onPressed: onPressed,
-        icon: Icon(icon, size: 18),
-        label: Text(
-          label,
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: inverted ? AppConstants.primaryColor : Colors.white,
-          ),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: inverted
-              ? Colors.white
-              : AppConstants.primaryColor,
-          foregroundColor: inverted
-              ? AppConstants.primaryColor
-              : Colors.white,
-          elevation: 0,
-          shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: inverted
-                ? BorderSide(color: AppConstants.primaryColor, width: 1.5)
-                : BorderSide.none,
-          ),
-          padding: EdgeInsets.zero,
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(10), // iOS uses 10px radius for buttons
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 16, // iOS icons in buttons are smaller
+              color: textColor,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 15, // iOS button text size
+                fontWeight: FontWeight.w600,
+                color: textColor,
+                fontFamily: '.SF Pro Text',
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ),
       ),
     );
   }
+
   Widget _buildEditButton() {
     return Container(
-      width: 48,
-      height: 48,
+      width: 44,
+      height: 44,
       decoration: BoxDecoration(
-        color: AppConstants.backgroundColor,
-        borderRadius: BorderRadius.circular(16),
+        color: CupertinoColors.systemGrey6,
+        borderRadius: BorderRadius.circular(10), // iOS uses 10px for buttons
         border: Border.all(
-          color: AppConstants.borderColor,
+          color: CupertinoColors.systemGrey5,
           width: 1,
         ),
       ),
-      child: IconButton(
-        icon: Icon(
-          Icons.edit_outlined,
-          color: AppConstants.primaryColor,
-          size: 20,
-        ),
+      child: CupertinoButton(
+        padding: EdgeInsets.zero,
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(
+            CupertinoPageRoute(
               builder: (context) => AddFriendScreen(friend: widget.friend),
             ),
           );
         },
-        splashRadius: 24,
-        padding: EdgeInsets.zero,
+        child: Icon(
+          CupertinoIcons.pencil,
+          color: AppConstants.primaryColor,
+          size: 18,
+        ),
       ),
     );
   }
@@ -597,17 +580,14 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
 
     final allMessages = [...AppConstants.presetMessages, ...customMessages];
 
-    showModalBottomSheet(
+    showCupertinoModalPopup(
       context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: Colors.transparent,
       builder: (context) {
         return Container(
-          margin: const EdgeInsets.all(16),
+          margin: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppConstants.cardColor,
-            borderRadius: BorderRadius.circular(24),
+            color: CupertinoColors.systemBackground,
+            borderRadius: BorderRadius.circular(14),
           ),
           child: DraggableScrollableSheet(
             initialChildSize: 0.6,
@@ -619,32 +599,32 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                 children: [
                   // Handle at the top
                   Container(
-                    margin: const EdgeInsets.only(top: 12, bottom: 0),
+                    margin: const EdgeInsets.only(top: 8, bottom: 8),
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: AppConstants.bottomSheetHandleColor,
-                      borderRadius: BorderRadius.circular(10),
+                      color: CupertinoColors.systemGrey3,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
 
                   // Header with title and settings icon
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Row(
                       children: [
                         // Profile icon
                         Container(
-                          width: 40,
-                          height: 40,
+                          width: 36,
+                          height: 36,
                           decoration: BoxDecoration(
                             color: AppConstants.primaryColor.withOpacity(0.1),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
-                            Icons.message_rounded,
+                            CupertinoIcons.chat_bubble_fill,
                             color: AppConstants.primaryColor,
-                            size: 20,
+                            size: 18,
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -652,56 +632,44 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                         Expanded(
                           child: Text(
                             'Message ${widget.friend.name}',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: AppConstants.primaryTextColor,
-                            ),
+                            style: AppTextStyles.dialogTitle,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        // Settings icon with circle background to match other UI elements
-                        Container(
-                          width: 28,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            color: AppConstants.primaryColor.withOpacity(0.08),
-                            shape: BoxShape.circle,
-                          ),
-                          child: IconButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const ManageMessagesScreen(),
-                                ),
-                              );
-                            },
-                            icon: Icon(Icons.settings, color: AppConstants.primaryColor, size: 16),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                            splashRadius: 14,
+                        // Settings icon
+                        CupertinoButton(
+                          padding: EdgeInsets.zero,
+                          onPressed: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              CupertinoPageRoute(
+                                builder: (context) => const ManageMessagesScreen(),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: AppConstants.primaryColor.withOpacity(0.08),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              CupertinoIcons.gear,
+                              color: AppConstants.primaryColor,
+                              size: 16,
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
 
-                  // Use same gradient divider as in friend cards
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Container(
-                      height: 1,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppConstants.borderColor.withOpacity(0),
-                            AppConstants.borderColor.withOpacity(0.3),
-                            AppConstants.borderColor.withOpacity(0),
-                          ],
-                        ),
-                      ),
-                    ),
+                  // iOS-style separator
+                  Container(
+                    height: 0.5,
+                    color: CupertinoColors.separator,
                   ),
 
                   // Message list
@@ -715,24 +683,27 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                           // Create custom message option
                           return Padding(
                             padding: const EdgeInsets.symmetric(vertical: 4),
-                            child: InkWell(
-                              onTap: () => _showCustomMessageDialog(context),
-                              borderRadius: BorderRadius.circular(16),
+                            child: CupertinoButton(
+                              padding: EdgeInsets.zero,
+                              onPressed: () {
+                                Navigator.pop(context);
+                                _showCustomMessageDialog(context);
+                              },
                               child: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                                 decoration: BoxDecoration(
                                   color: AppConstants.primaryColor.withOpacity(0.08),
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Icon(
-                                      Icons.add_circle_outline,
-                                      size: 20,
+                                      CupertinoIcons.add_circled,
+                                      size: 18,
                                       color: AppConstants.primaryColor,
                                     ),
-                                    const SizedBox(width: 10),
+                                    const SizedBox(width: 8),
                                     Text(
                                       'Create custom message',
                                       style: TextStyle(
@@ -740,6 +711,7 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                                         fontWeight: FontWeight.w500,
                                         color: AppConstants.primaryColor,
                                       ),
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ],
                                 ),
@@ -751,29 +723,27 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                         // Regular message option
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Card(
-                            elevation: 0,
-                            color: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              side: BorderSide(color: AppConstants.borderColor, width: 1),
-                            ),
-                            child: InkWell(
-                              onTap: () {
-                                Navigator.pop(context);
-                                _sendMessage(context, allMessages[index]);
-                              },
-                              borderRadius: BorderRadius.circular(16),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                                child: Text(
-                                  allMessages[index],
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    color: AppConstants.primaryTextColor,
-                                    height: 1.4,
-                                  ),
+                          child: CupertinoButton(
+                            padding: EdgeInsets.zero,
+                            onPressed: () {
+                              Navigator.pop(context);
+                              _sendMessage(context, allMessages[index]);
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                              decoration: BoxDecoration(
+                                color: CupertinoColors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: CupertinoColors.systemGrey5,
+                                  width: 1,
                                 ),
+                              ),
+                              child: Text(
+                                allMessages[index],
+                                style: AppTextStyles.body,
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ),
@@ -792,46 +762,34 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
 
   void _showCustomMessageDialog(BuildContext context) {
     final textController = TextEditingController();
-    final screenWidth = MediaQuery.of(context).size.width;
-    final dialogWidth = screenWidth * 0.85;
 
-    showDialog(
+    showCupertinoDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
+        return CupertinoAlertDialog(
           title: Text(
             'Create Message',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: AppConstants.primaryTextColor,
-              letterSpacing: -0.2,
-            ),
+            style: AppTextStyles.dialogTitle,
           ),
-          contentPadding: const EdgeInsets.all(20),
-          content: SizedBox(
-            width: dialogWidth,
-            child: TextFormField(
+          content: Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: CupertinoTextField(
               controller: textController,
-              decoration: InputDecoration(
-                labelText: 'Type your message...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppConstants.borderColor),
+              placeholder: 'Type your message...',
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: CupertinoColors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: CupertinoColors.systemGrey4,
+                  width: 0.5,
                 ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
-                floatingLabelBehavior: FloatingLabelBehavior.auto,
-                labelStyle: TextStyle(
-                  fontSize: 15,
-                  color: AppConstants.secondaryTextColor,
-                ),
-                filled: true,
-                fillColor: Colors.white,
               ),
-              style: TextStyle(
+              style: AppTextStyles.body,
+              placeholderStyle: TextStyle(
                 fontSize: 15,
-                color: AppConstants.primaryTextColor,
-                height: 1.4,
+                color: CupertinoColors.placeholderText,
+                fontFamily: '.SF Pro Text',
               ),
               minLines: 2,
               maxLines: 5,
@@ -839,24 +797,19 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
               textInputAction: TextInputAction.newline,
             ),
           ),
-          backgroundColor: AppConstants.dialogBackgroundColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
           actions: [
-            TextButton(
+            CupertinoDialogAction(
               onPressed: () => Navigator.pop(context),
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.all(14),
-                foregroundColor: AppConstants.primaryColor,
-                textStyle: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
+              isDefaultAction: true,
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  fontFamily: '.SF Pro Text',
+                  fontWeight: FontWeight.w400,
                 ),
               ),
-              child: const Text('Cancel'),
             ),
-            TextButton(
+            CupertinoDialogAction(
               onPressed: () async {
                 if (textController.text.isNotEmpty) {
                   final storageService = Provider.of<FriendsProvider>(
@@ -867,42 +820,54 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                   await storageService.addCustomMessage(textController.text);
                   Navigator.pop(context);
 
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Message saved',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                        ),
-                      ),
-                      duration: const Duration(seconds: 2),
-                      backgroundColor: AppConstants.primaryColor,
-                      behavior: SnackBarBehavior.floating,
-                      elevation: 4,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    ),
-                  );
+                  _showSuccessToast(context, 'Message saved');
                 }
               },
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.all(14),
-                foregroundColor: AppConstants.primaryColor,
-                textStyle: const TextStyle(
-                  fontSize: 15,
+              child: Text(
+                'Save',
+                style: TextStyle(
+                  fontFamily: '.SF Pro Text',
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              child: const Text('Save'),
             ),
           ],
-          actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         );
       },
     );
+  }
+
+  void _showSuccessToast(BuildContext context, String message) {
+    // iOS doesn't have built-in toasts, but we can simulate with an overlay
+    final overlay = Overlay.of(context);
+    final overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        bottom: 100,
+        width: MediaQuery.of(context).size.width,
+        child: Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: CupertinoColors.darkBackgroundGray.withOpacity(0.8),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: CupertinoColors.white,
+                fontSize: 15,
+                fontFamily: '.SF Pro Text',
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(overlayEntry);
+    Future.delayed(const Duration(seconds: 2), () {
+      overlayEntry.remove();
+    });
   }
 
   void _sendMessage(BuildContext context, String message) async {
@@ -921,25 +886,22 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            'Unable to open messaging app. Try again later.',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-            ),
+      // Show error with Cupertino style
+      if (context.mounted) {
+        showCupertinoDialog(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: const Text('Error'),
+            content: const Text('Unable to open messaging app. Please try again later.'),
+            actions: [
+              CupertinoDialogAction(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
           ),
-          duration: const Duration(seconds: 2),
-          backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
-          elevation: 4,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        ),
-      );
+        );
+      }
     }
   }
 
@@ -955,30 +917,25 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
         throw Exception('Could not launch dialer');
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            'Unable to open phone app. Try again later.',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-            ),
+      // Show error with Cupertino style
+      if (context.mounted) {
+        showCupertinoDialog(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: const Text('Error'),
+            content: const Text('Unable to open phone app. Please try again later.'),
+            actions: [
+              CupertinoDialogAction(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
           ),
-          duration: const Duration(seconds: 2),
-          backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
-          elevation: 4,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        ),
-      );
+        );
+      }
     }
   }
 }
-
-// Keep the rest of the file unchanged...
 
 // New screen to manage custom messages
 class ManageMessagesScreen extends StatefulWidget {
@@ -1011,244 +968,174 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppConstants.backgroundColor,
+      backgroundColor: CupertinoColors.systemGroupedBackground,
       appBar: AppBar(
         title: Text(
-          'Manage Custom Messages',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppConstants.primaryTextColor,
-          ),
+          'Manage Messages',
+          style: AppTextStyles.navTitle,
         ),
-        backgroundColor: Colors.transparent,
+        backgroundColor: CupertinoColors.systemBackground,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_rounded,
-            color: AppConstants.primaryColor,
-            size: 24,
-          ),
+          icon: const Icon(CupertinoIcons.back),
           onPressed: () => Navigator.pop(context),
+          splashRadius: 24,
         ),
       ),
       body: _isLoading
-          ? Center(
-          child: CircularProgressIndicator(color: AppConstants.primaryColor))
+          ? const Center(child: CupertinoActivityIndicator())
           : _customMessages.isEmpty
-          ? Center(
-        child: Padding(
-          padding: const EdgeInsets.all(28),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: AppConstants.primaryColor.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.message_outlined,
-                  size: 48,
-                  color: AppConstants.primaryColor,
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'No custom messages yet',
-                style: TextStyle(
-                  color: AppConstants.primaryTextColor,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Add custom messages when sending texts to friends',
-                style: TextStyle(
-                  color: AppConstants.secondaryTextColor,
-                  fontSize: 16,
-                  height: 1.4,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      )
-          : Theme(
-        data: Theme.of(context).copyWith(
-          canvasColor: Colors.transparent,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: ReorderableListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            buildDefaultDragHandles: false,
-            proxyDecorator: (child, index, animation) {
-              final dragBorderRadius = BorderRadius.circular(16);
-
-              return Material(
-                color: Colors.transparent,
-                borderRadius: dragBorderRadius,
-                elevation: 0,
-                child: AnimatedBuilder(
-                  animation: animation,
-                  builder: (BuildContext context, Widget? child) {
-                    return Container(
-                      decoration: BoxDecoration(
-                        borderRadius: dragBorderRadius,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2 * animation.value),
-                            blurRadius: 8 * animation.value,
-                            offset: Offset(0, 4 * animation.value),
-                            spreadRadius: 0,
-                          ),
-                        ],
-                      ),
-                      child: child,
-                    );
-                  },
-                  child: child,
-                ),
-              );
-            },
-            itemCount: _customMessages.length,
-            onReorder: (oldIndex, newIndex) {
-              setState(() {
-                if (oldIndex < newIndex) {
-                  newIndex -= 1;
-                }
-                final item = _customMessages.removeAt(oldIndex);
-                _customMessages.insert(newIndex, item);
-
-                // Save the new order
-                Provider.of<FriendsProvider>(context, listen: false)
-                    .storageService
-                    .saveCustomMessages(_customMessages);
-              });
-            },
-            itemBuilder: (context, index) {
-              return Card(
-                key: ValueKey(_customMessages[index]),
-                margin: const EdgeInsets.symmetric(vertical: 5),
-                elevation: 0,
-                color: AppConstants.cardColor,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(color: AppConstants.borderColor, width: 1),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: Icon(
-                          Icons.delete_outline,
-                          color: AppConstants.deleteColor,
-                          size: 22,
-                        ),
-                        onPressed: () => _confirmDelete(index),
-                        padding: const EdgeInsets.all(8),
-                        constraints: const BoxConstraints(),
-                        splashRadius: 24,
-                      ),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Text(
-                            _customMessages[index],
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: AppConstants.primaryTextColor,
-                              height: 1.4,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 12),
-                        child: ReorderableDragStartListener(
-                          index: index,
-                          child: Icon(
-                            Icons.drag_handle,
-                            color: AppConstants.secondaryTextColor,
-                            size: 22,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ),
+          ? _buildEmptyState()
+          : _buildMessagesList(),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddMessageDialog,
         backgroundColor: AppConstants.primaryColor,
-        child: const Icon(Icons.add, size: 24),
+        child: const Icon(CupertinoIcons.add, size: 24),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppConstants.primaryColor.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                CupertinoIcons.bubble_left,
+                size: 48,
+                color: AppConstants.primaryColor,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'No custom messages yet',
+              style: AppTextStyles.title,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Add custom messages when sending texts to friends',
+              style: AppTextStyles.secondary,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMessagesList() {
+    return Container(
+      color: CupertinoColors.systemGroupedBackground,
+      child: ReorderableListView.builder(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        buildDefaultDragHandles: false,
+        proxyDecorator: (child, index, animation) {
+          return Material(
+            color: Colors.transparent,
+            child: child,
+          );
+        },
+        itemCount: _customMessages.length,
+        onReorder: (oldIndex, newIndex) {
+          setState(() {
+            if (oldIndex < newIndex) {
+              newIndex -= 1;
+            }
+            final item = _customMessages.removeAt(oldIndex);
+            _customMessages.insert(newIndex, item);
+
+            // Save the new order
+            Provider.of<FriendsProvider>(context, listen: false)
+                .storageService
+                .saveCustomMessages(_customMessages);
+          });
+        },
+        itemBuilder: (context, index) {
+          return Container(
+            key: ValueKey(_customMessages[index]),
+            margin: const EdgeInsets.only(bottom: 8),
+            decoration: BoxDecoration(
+              color: CupertinoColors.white,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: CupertinoColors.systemGrey6.withOpacity(0.5),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              child: Row(
+                children: [
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: () => _confirmDelete(index),
+                    child: Icon(
+                      CupertinoIcons.delete,
+                      color: CupertinoColors.destructiveRed,
+                      size: 20,
+                    ),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Text(
+                        _customMessages[index],
+                        style: AppTextStyles.body,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                  ReorderableDragStartListener(
+                    index: index,
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      child: const Icon(
+                        CupertinoIcons.line_horizontal_3,
+                        color: CupertinoColors.systemGrey,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 
   Future<bool> _confirmDelete(int index) async {
-    final shouldDelete = await showDialog<bool>(
+    final shouldDelete = await showCupertinoDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          'Delete Message',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: AppConstants.primaryTextColor,
-            letterSpacing: -0.2,
-          ),
-        ),
-        content: Text(
-          'Are you sure you want to delete this custom message?',
-          style: TextStyle(
-            fontSize: 15,
-            color: AppConstants.primaryTextColor,
-            height: 1.4,
-          ),
-        ),
-        backgroundColor: AppConstants.dialogBackgroundColor,
-        contentPadding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Delete Message'),
+        content: const Text('Are you sure you want to delete this custom message?'),
         actions: [
-          TextButton(
+          CupertinoDialogAction(
             onPressed: () => Navigator.pop(context, false),
-            style: TextButton.styleFrom(
-              foregroundColor: AppConstants.primaryColor,
-              padding: const EdgeInsets.all(14),
-              textStyle: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            isDefaultAction: true,
             child: const Text('Cancel'),
           ),
-          TextButton(
+          CupertinoDialogAction(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(
-              foregroundColor: AppConstants.deleteColor,
-              padding: const EdgeInsets.all(14),
-              textStyle: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            isDestructiveAction: true,
             child: const Text('Delete'),
           ),
         ],
-        actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       ),
     );
 
@@ -1272,106 +1159,73 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
         .storageService
         .deleteCustomMessage(deletedMessage);
 
-    // Show snackbar with updated styling
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Message deleted',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 14,
+    // Show iOS-style toast
+    final overlay = Overlay.of(context);
+    final overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        bottom: 100,
+        width: MediaQuery.of(context).size.width,
+        child: Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: CupertinoColors.darkBackgroundGray.withOpacity(0.8),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Text(
+              'Message deleted',
+              style: TextStyle(
+                color: CupertinoColors.white,
+                fontSize: 15,
+              ),
+            ),
           ),
         ),
-        action: SnackBarAction(
-          label: 'Undo',
-          textColor: Colors.white,
-          onPressed: () {
-            setState(() {
-              _customMessages.insert(index, deletedMessage);
-              Provider.of<FriendsProvider>(context, listen: false)
-                  .storageService
-                  .saveCustomMessages(_customMessages);
-            });
-          },
-        ),
-        duration: const Duration(seconds: 2),
-        backgroundColor: AppConstants.primaryColor,
-        behavior: SnackBarBehavior.floating,
-        elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
     );
+
+    overlay.insert(overlayEntry);
+    Future.delayed(const Duration(seconds: 2), () {
+      overlayEntry.remove();
+    });
   }
 
   void _showAddMessageDialog() {
     final textController = TextEditingController();
-    final screenWidth = MediaQuery.of(context).size.width;
-    final dialogWidth = screenWidth * 0.85;
 
-    showDialog(
+    showCupertinoDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text(
-            'Add Custom Message',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: AppConstants.primaryTextColor,
-              letterSpacing: -0.2,
-            ),
-          ),
-          contentPadding: const EdgeInsets.all(20),
-          content: SizedBox(
-            width: dialogWidth,
-            child: TextFormField(
+        return CupertinoAlertDialog(
+          title: const Text('Add Custom Message'),
+          content: Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: CupertinoTextField(
               controller: textController,
-              decoration: InputDecoration(
-                labelText: 'Type your message...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+              placeholder: 'Type your message...',
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: CupertinoColors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: CupertinoColors.systemGrey4,
+                  width: 0.5,
                 ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
-                floatingLabelBehavior: FloatingLabelBehavior.auto,
-                labelStyle: TextStyle(
-                  fontSize: 15,
-                  color: AppConstants.secondaryTextColor,
-                ),
-                filled: true,
-                fillColor: Colors.white,
               ),
-              style: TextStyle(
-                fontSize: 15,
-                color: AppConstants.primaryTextColor,
-                height: 1.4,
-              ),
+              style: AppTextStyles.body,
               minLines: 2,
               maxLines: 5,
               textCapitalization: TextCapitalization.sentences,
               textInputAction: TextInputAction.newline,
             ),
           ),
-          backgroundColor: AppConstants.dialogBackgroundColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
           actions: [
-            TextButton(
+            CupertinoDialogAction(
               onPressed: () => Navigator.pop(context),
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.all(14),
-                foregroundColor: AppConstants.primaryColor,
-                textStyle: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              isDefaultAction: true,
               child: const Text('Cancel'),
             ),
-            TextButton(
+            CupertinoDialogAction(
               onPressed: () async {
                 if (textController.text.isNotEmpty) {
                   Navigator.pop(context);
@@ -1386,40 +1240,40 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
                       .storageService
                       .saveCustomMessages(_customMessages);
 
-                  // Show a brief feedback that message was saved with updated styling
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Message saved',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
+                  // Show iOS-style toast
+                  final overlay = Overlay.of(context);
+                  final overlayEntry = OverlayEntry(
+                    builder: (context) => Positioned(
+                      bottom: 100,
+                      width: MediaQuery.of(context).size.width,
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: CupertinoColors.darkBackgroundGray.withOpacity(0.8),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Text(
+                            'Message saved',
+                            style: TextStyle(
+                              color: CupertinoColors.white,
+                              fontSize: 15,
+                            ),
+                          ),
                         ),
                       ),
-                      duration: const Duration(seconds: 2),
-                      backgroundColor: AppConstants.primaryColor,
-                      behavior: SnackBarBehavior.floating,
-                      elevation: 4,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     ),
                   );
+
+                  overlay.insert(overlayEntry);
+                  Future.delayed(const Duration(seconds: 2), () {
+                    overlayEntry.remove();
+                  });
                 }
               },
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.all(14),
-                foregroundColor: AppConstants.primaryColor,
-                textStyle: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
               child: const Text('Save'),
             ),
           ],
-          actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         );
       },
     );

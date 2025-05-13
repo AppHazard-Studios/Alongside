@@ -1,8 +1,10 @@
 // screens/call_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/friend.dart';
 import '../utils/constants.dart';
+import '../utils/text_styles.dart';
 
 class CallScreen extends StatefulWidget {
   final Friend friend;
@@ -63,115 +65,100 @@ class _CallScreenState extends State<CallScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Using Scaffold but with iOS styling
     return Scaffold(
+      backgroundColor: CupertinoColors.systemGroupedBackground,
       appBar: AppBar(
         title: Text(
           'Call ${widget.friend.name}',
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            letterSpacing: -0.3,
-            color: Colors.white,
-          ),
+          style: AppTextStyles.navTitle,
+          overflow: TextOverflow.ellipsis,
         ),
-        backgroundColor: AppConstants.primaryColor,
+        backgroundColor: CupertinoColors.systemBackground,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.white,
-            size: 22,
-          ),
+          icon: const Icon(CupertinoIcons.back),
           onPressed: () => Navigator.of(context).pop(),
+          splashRadius: 24,
         ),
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (_isLoading) ...[
-                CircularProgressIndicator(color: AppConstants.primaryColor),
-                const SizedBox(height: 24),
-                Text(
-                  'Initiating call to ${widget.friend.name}...',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: AppConstants.primaryTextColor,
-                    fontWeight: FontWeight.w500,
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (_isLoading) ...[
+                  const CupertinoActivityIndicator(radius: 14),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Initiating call to ${widget.friend.name}...',
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.body,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
                   ),
-                ),
-              ] else if (_hasError) ...[
-                Icon(
-                  Icons.error_outline,
-                  size: 64,
-                  color: Colors.redAccent,
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  _errorMessage,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: AppConstants.primaryTextColor,
-                    fontWeight: FontWeight.w500,
+                ] else if (_hasError) ...[
+                  const Icon(
+                    CupertinoIcons.exclamationmark_circle,
+                    size: 56,
+                    color: CupertinoColors.destructiveRed,
                   ),
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: _initiateCall,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppConstants.primaryColor,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  const SizedBox(height: 24),
+                  Text(
+                    _errorMessage,
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.body,
                   ),
-                  child: const Text('Try Again'),
-                ),
-              ] else ...[
-                Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: AppConstants.primaryColor.withOpacity(0.1),
-                    shape: BoxShape.circle,
+                  const SizedBox(height: 24),
+                  CupertinoButton.filled(
+                    onPressed: _initiateCall,
+                    child: const Text('Try Again'),
                   ),
-                  child: Icon(
-                    Icons.call,
-                    size: 64,
-                    color: AppConstants.primaryColor,
+                ] else ...[
+                  Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: AppConstants.primaryColor.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      CupertinoIcons.phone_fill,
+                      size: 48,
+                      color: AppConstants.primaryColor,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Ready to call ${widget.friend.name}',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 20,
-                    color: AppConstants.primaryTextColor,
-                    fontWeight: FontWeight.bold,
+                  const SizedBox(height: 24),
+                  Text(
+                    'Ready to call ${widget.friend.name}',
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.title,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  widget.friend.phoneNumber,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: AppConstants.secondaryTextColor,
+                  const SizedBox(height: 8),
+                  Text(
+                    widget.friend.phoneNumber,
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.secondary,
                   ),
-                ),
-                const SizedBox(height: 32),
-                ElevatedButton.icon(
-                  onPressed: _initiateCall,
-                  icon: const Icon(Icons.call),
-                  label: const Text('Call Now'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppConstants.primaryColor,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  const SizedBox(height: 32),
+                  CupertinoButton.filled(
+                    onPressed: _initiateCall,
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(CupertinoIcons.phone_fill, size: 16),
+                        SizedBox(width: 8),
+                        Text('Call Now'),
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
