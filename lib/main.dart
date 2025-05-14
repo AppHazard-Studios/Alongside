@@ -1,4 +1,5 @@
-// main.dart - Refactored with consistent styling
+// This is a consolidated update for lib/main.dart that standardizes text styles
+// by replacing inline styles with references to AppTextStyles
 
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -272,21 +273,16 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
                                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
-                                    children: const [
-                                      Icon(
+                                    children: [
+                                      const Icon(
                                         CupertinoIcons.add_circled,
                                         size: 18,
                                         color: Color(0xFF007AFF),
                                       ),
-                                      SizedBox(width: 8),
+                                      const SizedBox(width: 8),
                                       Text(
                                         'Create custom message',
-                                        style: TextStyle(
-                                          fontSize: 17,
-                                          fontWeight: FontWeight.w400,
-                                          color: Color(0xFF007AFF),
-                                          fontFamily: '.SF Pro Text',
-                                        ),
+                                        style: AppTextStyles.accentText,
                                       ),
                                     ],
                                   ),

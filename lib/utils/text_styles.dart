@@ -20,35 +20,35 @@ class AppTextStyles {
 
   // Body text style
   static const TextStyle body = TextStyle(
-    fontSize: 17,
+    fontSize: 16,
     fontFamily: _fontFamily,
     color: _textColor,
   );
 
   // Body text style - this was missing but referenced
   static const TextStyle bodyText = TextStyle(
-    fontSize: 17,
+    fontSize: 16,
     fontFamily: _fontFamily,
     color: _textColor,
   );
 
   // Secondary text style for subtitles and descriptions
   static const TextStyle secondary = TextStyle(
-    fontSize: 15,
+    fontSize: 16,
     fontFamily: _fontFamily,
     color: _secondaryColor,
   );
 
   // Secondary text style - this was missing but referenced
   static const TextStyle secondaryText = TextStyle(
-    fontSize: 15,
+    fontSize: 16,
     fontFamily: _fontFamily,
     color: _secondaryColor,
   );
 
   // Accent text style - this was missing but referenced
   static const TextStyle accentText = TextStyle(
-    fontSize: 17,
+    fontSize: 18,
     fontFamily: _fontFamily,
     color: _primaryColor,
     fontWeight: FontWeight.w500,
@@ -56,7 +56,7 @@ class AppTextStyles {
 
   // Button text style
   static const TextStyle button = TextStyle(
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: FontWeight.w600,
     fontFamily: _fontFamily,
     color: Colors.white,
@@ -64,7 +64,7 @@ class AppTextStyles {
 
   // Dialog title style
   static const TextStyle dialogTitle = TextStyle(
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: FontWeight.w600,
     fontFamily: _fontFamily,
     color: _textColor,
@@ -79,7 +79,14 @@ class AppTextStyles {
 
   // Nav bar title style
   static const TextStyle navTitle = TextStyle(
-    fontSize: 17,
+    fontSize: 22,
+    fontWeight: FontWeight.w600,
+    fontFamily: _fontFamily,
+    color: _textColor,
+  );
+
+  static const TextStyle navTitle2 = TextStyle(
+    fontSize: 20,
     fontWeight: FontWeight.w600,
     fontFamily: _fontFamily,
     color: _textColor,
@@ -87,7 +94,7 @@ class AppTextStyles {
 
   // Section title style
   static const TextStyle sectionTitle = TextStyle(
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: FontWeight.w600,
     fontFamily: _fontFamily,
     color: _textColor,
@@ -95,7 +102,7 @@ class AppTextStyles {
 
   // Card title style
   static const TextStyle cardTitle = TextStyle(
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: FontWeight.w600,
     fontFamily: _fontFamily,
     color: _textColor,
@@ -103,7 +110,7 @@ class AppTextStyles {
 
   // Card content style
   static const TextStyle cardContent = TextStyle(
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: FontWeight.w400,
     fontFamily: _fontFamily,
     color: _textColor,
@@ -111,7 +118,7 @@ class AppTextStyles {
 
   // Card secondary text
   static const TextStyle cardSecondaryContent = TextStyle(
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: FontWeight.w400,
     fontFamily: _fontFamily,
     color: _secondaryColor,
@@ -119,28 +126,28 @@ class AppTextStyles {
 
   // Form input text style - this was missing but referenced
   static const TextStyle inputText = TextStyle(
-    fontSize: 17,
+    fontSize: 16,
     fontFamily: _fontFamily,
     color: _textColor,
   );
 
   // Form label style
   static const TextStyle formLabel = TextStyle(
-    fontSize: 15,
+    fontSize: 16,
     fontFamily: _fontFamily,
     color: _secondaryColor,
   );
 
   // Form input style
   static const TextStyle formInput = TextStyle(
-    fontSize: 17,
+    fontSize: 16,
     fontFamily: _fontFamily,
     color: _textColor,
   );
 
   // Form placeholder style - this was missing but referenced
   static const TextStyle placeholder = TextStyle(
-    fontSize: 17,
+    fontSize: 16,
     fontFamily: _fontFamily,
     color: Color(0xFFBEBEC0),  // iOS placeholder color
   );

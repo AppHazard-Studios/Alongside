@@ -1,4 +1,3 @@
-// lib/widgets/friend_card.dart - Updated to match Add Friend styling
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -79,9 +78,6 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
-    // Use same horizontal margin as Add Friend screen
-    //const double horizontalMargin = 16.0;
-
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
       margin: const EdgeInsets.symmetric(
@@ -148,11 +144,9 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                                       const SizedBox(width: 4),
                                       Text(
                                         '${widget.friend.reminderDays}d',
-                                        style: const TextStyle(
-                                          fontSize: 13,
+                                        style: AppTextStyles.caption.copyWith(
                                           fontWeight: FontWeight.w500,
-                                          color: Color(0xFFFF9500),
-                                          fontFamily: '.SF Pro Text',
+                                          color: const Color(0xFFFF9500),
                                         ),
                                       ),
                                     ],
@@ -167,7 +161,6 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                               'Alongside them in:',
                               style: AppTextStyles.accentText.copyWith(
                                 fontSize: 15,
-                                color: const Color(0xFF007AFF),
                               ),
                             ),
                             Text(
@@ -236,7 +229,6 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                                     'They\'re alongside you in:',
                                     style: AppTextStyles.accentText.copyWith(
                                       fontSize: 15,
-                                      color: const Color(0xFF007AFF),
                                     ),
                                   ),
                                   Text(
@@ -413,11 +405,8 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
             const SizedBox(width: 6),
             Text(
               label,
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w400,
+              style: AppTextStyles.button.copyWith(
                 color: textColor,
-                fontFamily: '.SF Pro Text',
               ),
             ),
           ],
@@ -539,21 +528,16 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                           },
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
-                              Icon(
+                            children: [
+                              const Icon(
                                 CupertinoIcons.add_circled,
                                 size: 18,
                                 color: Color(0xFF007AFF),
                               ),
-                              SizedBox(width: 8),
+                              const SizedBox(width: 8),
                               Text(
                                 'Create custom message',
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w400,
-                                  color: Color(0xFF007AFF),
-                                  fontFamily: '.SF Pro Text',
-                                ),
+                                style: AppTextStyles.accentText,
                               ),
                             ],
                           ),
@@ -635,7 +619,12 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(context),
             isDefaultAction: true,
-            child: const Text('Cancel'),
+            child: Text(
+              'Cancel',
+              style: AppTextStyles.button.copyWith(
+                color: CupertinoColors.activeBlue,
+              ),
+            ),
           ),
           CupertinoDialogAction(
             onPressed: () async {
@@ -646,7 +635,12 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                 _showSuccessToast(context, 'Message saved');
               }
             },
-            child: const Text('Save'),
+            child: Text(
+              'Save',
+              style: AppTextStyles.button.copyWith(
+                color: CupertinoColors.activeBlue,
+              ),
+            ),
           ),
         ],
       ),
@@ -669,10 +663,9 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
             ),
             child: Text(
               message,
-              style: const TextStyle(
+              style: AppTextStyles.button.copyWith(
                 color: Colors.white,
                 fontSize: 15,
-                fontFamily: '.SF Pro Text',
               ),
             ),
           ),
@@ -700,12 +693,23 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
         showCupertinoDialog(
           context: context,
           builder: (context) => CupertinoAlertDialog(
-            title: const Text('Error'),
-            content: const Text('Unable to open messaging app. Please try again later.'),
+            title: Text(
+              'Error',
+              style: AppTextStyles.dialogTitle,
+            ),
+            content: Text(
+              'Unable to open messaging app. Please try again later.',
+              style: AppTextStyles.dialogContent,
+            ),
             actions: [
               CupertinoDialogAction(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('OK'),
+                child: Text(
+                  'OK',
+                  style: AppTextStyles.button.copyWith(
+                    color: CupertinoColors.activeBlue,
+                  ),
+                ),
               ),
             ],
           ),
@@ -728,12 +732,23 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
         showCupertinoDialog(
           context: context,
           builder: (context) => CupertinoAlertDialog(
-            title: const Text('Error'),
-            content: const Text('Unable to open phone app. Please try again later.'),
+            title: Text(
+              'Error',
+              style: AppTextStyles.dialogTitle,
+            ),
+            content: Text(
+              'Unable to open phone app. Please try again later.',
+              style: AppTextStyles.dialogContent,
+            ),
             actions: [
               CupertinoDialogAction(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('OK'),
+                child: Text(
+                  'OK',
+                  style: AppTextStyles.button.copyWith(
+                    color: CupertinoColors.activeBlue,
+                  ),
+                ),
               ),
             ],
           ),

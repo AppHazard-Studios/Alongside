@@ -1,4 +1,3 @@
-// lib/screens/manage_messages_screen.dart - Removed floating action button
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
@@ -96,14 +95,9 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
             CupertinoButton(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               color: const Color(0xFF007AFF), // Match iOS style
-              child: const Text(
+              child: Text(
                 'Create Message',
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w400,
-                  color: Colors.white,
-                  fontFamily: '.SF Pro Text',
-                ),
+                style: AppTextStyles.button,
               ),
               onPressed: _showAddMessageDialog,
             ),
@@ -126,17 +120,12 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
               color: const Color(0xFF007AFF),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Icon(CupertinoIcons.add, size: 18, color: Colors.white),
-                  SizedBox(width: 8),
+                children: [
+                  const Icon(CupertinoIcons.add, size: 18, color: Colors.white),
+                  const SizedBox(width: 8),
                   Text(
                     'Create Message',
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.white,
-                      fontFamily: '.SF Pro Text',
-                    ),
+                    style: AppTextStyles.button,
                   ),
                 ],
               ),
@@ -241,12 +230,22 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(context, false),
             isDefaultAction: true,
-            child: const Text('Cancel'),
+            child: Text(
+              'Cancel',
+              style: AppTextStyles.button.copyWith(
+                color: CupertinoColors.activeBlue,
+              ),
+            ),
           ),
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(context, true),
             isDestructiveAction: true,
-            child: const Text('Delete'),
+            child: Text(
+              'Delete',
+              style: AppTextStyles.button.copyWith(
+                color: CupertinoColors.destructiveRed,
+              ),
+            ),
           ),
         ],
       ),
@@ -285,12 +284,11 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
               color: Colors.black.withOpacity(0.8),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Text(
+            child: Text(
               'Message deleted',
-              style: TextStyle(
+              style: AppTextStyles.button.copyWith(
                 color: Colors.white,
                 fontSize: 15,
-                fontFamily: '.SF Pro Text',
               ),
             ),
           ),
@@ -339,7 +337,12 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(context),
             isDefaultAction: true,
-            child: const Text('Cancel'),
+            child: Text(
+              'Cancel',
+              style: AppTextStyles.button.copyWith(
+                color: CupertinoColors.activeBlue,
+              ),
+            ),
           ),
           CupertinoDialogAction(
             onPressed: () async {
@@ -369,12 +372,11 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
                           color: Colors.black.withOpacity(0.8),
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const Text(
+                        child: Text(
                           'Message saved',
-                          style: TextStyle(
+                          style: AppTextStyles.button.copyWith(
                             color: Colors.white,
                             fontSize: 15,
-                            fontFamily: '.SF Pro Text',
                           ),
                         ),
                       ),
@@ -388,7 +390,12 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
                 });
               }
             },
-            child: const Text('Save'),
+            child: Text(
+              'Save',
+              style: AppTextStyles.button.copyWith(
+                color: CupertinoColors.activeBlue,
+              ),
+            ),
           ),
         ],
       ),

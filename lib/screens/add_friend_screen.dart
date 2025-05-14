@@ -1,4 +1,3 @@
-// lib/screens/add_friend_screen.dart - Complete file
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -9,7 +8,8 @@ import 'package:flutter_contacts/flutter_contacts.dart';
 import '../main.dart';
 import '../models/friend.dart';
 import '../utils/constants.dart';
-import '../widgets/no_underline_field.dart'; // Import our custom field
+import '../utils/text_styles.dart';
+import '../widgets/no_underline_field.dart';
 
 class AddFriendScreen extends StatefulWidget {
   final Friend? friend;
@@ -71,7 +71,10 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
         showCupertinoModalPopup(
           context: context,
           builder: (context) => CupertinoActionSheet(
-            title: const Text('Select a Contact'),
+            title: Text(
+              'Select a Contact',
+              style: AppTextStyles.dialogTitle,
+            ),
             actions: [
               SizedBox(
                 height: 300,
@@ -83,7 +86,10 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                         onPressed: () {
                           Navigator.pop(context, contacts[index]);
                         },
-                        child: Text(contacts[index].displayName),
+                        child: Text(
+                          contacts[index].displayName,
+                          style: AppTextStyles.bodyText,
+                        ),
                       );
                     },
                   ),
@@ -93,7 +99,12 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             cancelButton: CupertinoActionSheetAction(
               onPressed: () => Navigator.pop(context),
               isDestructiveAction: true,
-              child: const Text('Cancel'),
+              child: Text(
+                'Cancel',
+                style: AppTextStyles.button.copyWith(
+                  color: CupertinoColors.destructiveRed,
+                ),
+              ),
             ),
           ),
         ).then((contact) {
@@ -118,12 +129,23 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text('Error'),
-        content: Text(message),
+        title: Text(
+          'Error',
+          style: AppTextStyles.dialogTitle,
+        ),
+        content: Text(
+          message,
+          style: AppTextStyles.dialogContent,
+        ),
         actions: [
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
+            child: Text(
+              'OK',
+              style: AppTextStyles.button.copyWith(
+                color: CupertinoColors.activeBlue,
+              ),
+            ),
           ),
         ],
       ),
@@ -135,34 +157,51 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     showCupertinoModalPopup(
       context: context,
       builder: (context) => CupertinoActionSheet(
-        title: const Text('Choose Profile Image'),
+        title: Text(
+          'Choose Profile Image',
+          style: AppTextStyles.dialogTitle,
+        ),
         actions: [
           CupertinoActionSheetAction(
             onPressed: () {
               Navigator.pop(context);
               _showEmojiPicker();
             },
-            child: const Text('Choose Emoji'),
+            child: Text(
+              'Choose Emoji',
+              style: AppTextStyles.bodyText,
+            ),
           ),
           CupertinoActionSheetAction(
             onPressed: () async {
               Navigator.pop(context);
               await _pickImage(ImageSource.camera);
             },
-            child: const Text('Take Photo'),
+            child: Text(
+              'Take Photo',
+              style: AppTextStyles.bodyText,
+            ),
           ),
           CupertinoActionSheetAction(
             onPressed: () async {
               Navigator.pop(context);
               await _pickImage(ImageSource.gallery);
             },
-            child: const Text('Choose from Library'),
+            child: Text(
+              'Choose from Library',
+              style: AppTextStyles.bodyText,
+            ),
           ),
         ],
         cancelButton: CupertinoActionSheetAction(
           onPressed: () => Navigator.pop(context),
           isDestructiveAction: true,
-          child: const Text('Cancel'),
+          child: Text(
+            'Cancel',
+            style: AppTextStyles.button.copyWith(
+              color: CupertinoColors.destructiveRed,
+            ),
+          ),
         ),
       ),
     );
@@ -210,20 +249,26 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               children: [
                 CupertinoButton(
                   padding: EdgeInsets.zero,
-                  child: const Text('Cancel'),
+                  child: Text(
+                    'Cancel',
+                    style: AppTextStyles.button.copyWith(
+                      color: CupertinoColors.activeBlue,
+                    ),
+                  ),
                   onPressed: () => Navigator.pop(context),
                 ),
-                const Text(
+                Text(
                   'Choose Emoji',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: '.SF Pro Text',
-                  ),
+                  style: AppTextStyles.navTitle,
                 ),
                 CupertinoButton(
                   padding: EdgeInsets.zero,
-                  child: const Text('Done'),
+                  child: Text(
+                    'Done',
+                    style: AppTextStyles.button.copyWith(
+                      color: CupertinoColors.activeBlue,
+                    ),
+                  ),
                   onPressed: () => Navigator.pop(context),
                 ),
               ],
@@ -284,11 +329,21 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 CupertinoButton(
-                  child: const Text('Cancel'),
+                  child: Text(
+                    'Cancel',
+                    style: AppTextStyles.button.copyWith(
+                      color: CupertinoColors.activeBlue,
+                    ),
+                  ),
                   onPressed: () => Navigator.pop(context),
                 ),
                 CupertinoButton(
-                  child: const Text('Done'),
+                  child: Text(
+                    'Done',
+                    style: AppTextStyles.button.copyWith(
+                      color: CupertinoColors.activeBlue,
+                    ),
+                  ),
                   onPressed: () {
                     setState(() {
                       _reminderDays = selectedOption;
@@ -323,10 +378,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                           : days == 1
                           ? 'Every day'
                           : 'Every $days days',
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontFamily: '.SF Pro Text',
-                      ),
+                      style: AppTextStyles.bodyText,
                     ),
                   );
                 }).toList(),
@@ -350,11 +402,21 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 CupertinoButton(
-                  child: const Text('Cancel'),
+                  child: Text(
+                    'Cancel',
+                    style: AppTextStyles.button.copyWith(
+                      color: CupertinoColors.activeBlue,
+                    ),
+                  ),
                   onPressed: () => Navigator.pop(context),
                 ),
                 CupertinoButton(
-                  child: const Text('Done'),
+                  child: Text(
+                    'Done',
+                    style: AppTextStyles.button.copyWith(
+                      color: CupertinoColors.activeBlue,
+                    ),
+                  ),
                   onPressed: () {
                     Navigator.pop(context);
                   },
@@ -442,17 +504,13 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
         elevation: 0, // No shadow
         title: Text(
           widget.friend == null ? 'Add Friend' : 'Edit Friend',
-          style: const TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            fontFamily: '.SF Pro Text',
-            color: Colors.black,
-          ),
+          style: AppTextStyles.navTitle,
         ),
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(
             CupertinoIcons.back,
+            size: 26,
             color: Color(0xFF007AFF),
           ),
           onPressed: () => Navigator.pop(context),
@@ -461,14 +519,9 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
         actions: [
           TextButton(
             onPressed: _saveFriend,
-            child: const Text(
+            child: Text(
               'Save',
-              style: TextStyle(
-                fontWeight: FontWeight.w400,
-                fontSize: 17,
-                color: Color(0xFF007AFF),
-                fontFamily: '.SF Pro Text',
-              ),
+              style: AppTextStyles.accentText,
             ),
           ),
         ],
@@ -514,14 +567,9 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                       color: Color(0xFF007AFF),
                       size: 20,
                     ),
-                    label: const Text(
+                    label: Text(
                       'Change Profile',
-                      style: TextStyle(
-                        color: Color(0xFF007AFF),
-                        fontSize: 17,
-                        fontWeight: FontWeight.w400,
-                        fontFamily: '.SF Pro Text',
-                      ),
+                      style: AppTextStyles.accentText,
                     ),
                   ),
                 ],
@@ -691,13 +739,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               padding: const EdgeInsets.only(left: 16, bottom: 8),
               child: Text(
                 'NOTIFICATION SETTINGS',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w400,
-                  color: const Color(0xFF8E8E93),
-                  letterSpacing: 0.5,
-                  fontFamily: '.SF Pro Text',
-                ),
+                style: AppTextStyles.caption,
               ),
             ),
             Container(
@@ -730,13 +772,9 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 'Check-in Reminder',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  color: Color(0xFF8E8E93),
-                                  fontFamily: '.SF Pro Text',
-                                ),
+                                style: AppTextStyles.secondaryText,
                               ),
                               GestureDetector(
                                 onTap: _showReminderPicker,
@@ -749,10 +787,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                                           : _reminderDays == 1
                                           ? 'Every day'
                                           : 'Every $_reminderDays days',
-                                      style: const TextStyle(
-                                        fontSize: 17,
-                                        fontFamily: '.SF Pro Text',
-                                      ),
+                                      style: AppTextStyles.bodyText,
                                     ),
                                     const Icon(
                                       CupertinoIcons.chevron_down,
@@ -789,20 +824,13 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 'Show in notification area',
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  fontFamily: '.SF Pro Text',
-                                ),
+                                style: AppTextStyles.bodyText,
                               ),
-                              const Text(
+                              Text(
                                 'Keep a quick access notification for this friend',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  color: Color(0xFF8E8E93),
-                                  fontFamily: '.SF Pro Text',
-                                ),
+                                style: AppTextStyles.secondaryText,
                               ),
                             ],
                           ),

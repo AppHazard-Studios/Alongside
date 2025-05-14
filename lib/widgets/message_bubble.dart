@@ -1,6 +1,6 @@
-// lib/widgets/message_bubble.dart - Create a proper widget file
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import '../utils/text_styles.dart';
 
 class MessageBubble extends StatelessWidget {
   final String message;
@@ -47,11 +47,9 @@ class MessageBubble extends StatelessWidget {
                   ),
                   child: Text(
                     message,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontFamily: '.SF Pro Text',
-                      color: isSelectable ? Colors.black : const Color(0xFF007AFF),
-                    ),
+                    style: isSelectable
+                        ? AppTextStyles.bodyText
+                        : AppTextStyles.accentText,
                   ),
                 ),
               ),

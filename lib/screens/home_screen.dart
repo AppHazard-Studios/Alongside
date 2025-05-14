@@ -1,4 +1,3 @@
-// lib/screens/home_screen.dart - Updated with modern iOS navbar
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
@@ -25,13 +24,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.systemGroupedBackground, // Modern iOS background
       navigationBar: CupertinoNavigationBar(
-        middle: const Text(
+        middle: Text(
           'Alongside',
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            fontFamily: '.SF Pro Text',
-          ),
+          style: AppTextStyles.navTitle,
         ),
         backgroundColor: CupertinoColors.systemGroupedBackground, // Match background for modern look
         border: null, // Remove border for modern look
@@ -39,6 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: EdgeInsets.zero,
           child: const Icon(
             CupertinoIcons.info,
+            size: 24,
             color: Color(0xFF007AFF),
           ),
           onPressed: () => _showAboutDialog(context),
@@ -47,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: EdgeInsets.zero,
           child: const Icon(
             CupertinoIcons.add,
+            size: 26,
             color: Color(0xFF007AFF),
           ),
           onPressed: () {
@@ -239,7 +236,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       const Icon(
                         CupertinoIcons.lock,
-                        size: 18,
+                        size: 24,
                         color: Color(0xFF007AFF),
                       ),
                       const SizedBox(width: 10),
@@ -262,17 +259,15 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
+            child: Text(
               'Close',
-              style: TextStyle(
-                fontFamily: '.SF Pro Text',
-                fontSize: 17,
-                fontWeight: FontWeight.w400,
-                letterSpacing: -0.41,
+              style: AppTextStyles.button.copyWith(
+                color: CupertinoColors.activeBlue,
               ),
             ),
           ),
         ],
       ),
     );
-  }}
+  }
+}
