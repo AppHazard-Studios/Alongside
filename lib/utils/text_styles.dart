@@ -1,192 +1,154 @@
-// lib/utils/text_styles.dart - Revised and standardized
-
+// lib/utils/text_styles.dart - Complete file with ALL required styles
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 
-/// Consolidated and standardized text styles for the entire app
 class AppTextStyles {
-  // Base properties
+  // Base font family
   static const String _fontFamily = '.SF Pro Text';
-  static const String _displayFontFamily = '.SF Pro Display';
-  static const Color _textColor = Color(0xFF000000);
-  static const Color _secondaryTextColor = Color(0xFF8E8E93);
-  static const Color _accentColor = Color(0xFF007AFF);
 
-  // NAVIGATION & HEADERS
+  // Base colors
+  static const Color _primaryColor = Color(0xFF007AFF);  // iOS blue
+  static const Color _textColor = Color(0xFF000000);     // Black
+  static const Color _secondaryColor = Color(0xFF8E8E93); // iOS gray
 
-  // Navigation bar title (17pt, semibold)
-  static const navTitle = TextStyle(
-    fontSize: 17,
-    fontWeight: FontWeight.w600,
-    color: _textColor,
-    letterSpacing: -0.41,
-    fontFamily: _fontFamily,
-  );
-
-  // Page title (22pt, semibold, Display font)
-  static const title = TextStyle(
+  // Title style for main headings
+  static const TextStyle title = TextStyle(
     fontSize: 22,
     fontWeight: FontWeight.w600,
-    color: _textColor,
-    letterSpacing: -0.5,
-    fontFamily: _displayFontFamily,
-  );
-
-  // Section title (17pt, semibold)
-  static const sectionTitle = TextStyle(
-    fontSize: 17,
-    fontWeight: FontWeight.w600,
-    color: _textColor,
-    letterSpacing: -0.41,
     fontFamily: _fontFamily,
-  );
-
-  // CONTENT TEXT
-
-  // Card title, used in friend cards (17pt, semibold)
-  static const cardTitle = TextStyle(
-    fontSize: 17,
-    fontWeight: FontWeight.w600,
     color: _textColor,
-    letterSpacing: -0.41,
-    fontFamily: _fontFamily,
   );
 
-  // Card content text (17pt, regular)
-  static const cardContent = TextStyle(
+  // Body text style
+  static const TextStyle body = TextStyle(
     fontSize: 17,
-    fontWeight: FontWeight.w400,
-    color: _textColor,
-    letterSpacing: -0.41,
     fontFamily: _fontFamily,
+    color: _textColor,
   );
 
-  // Blue accent label text (15pt, iOS blue)
-  static const cardLabel = TextStyle(
+  // Body text style - this was missing but referenced
+  static const TextStyle bodyText = TextStyle(
+    fontSize: 17,
+    fontFamily: _fontFamily,
+    color: _textColor,
+  );
+
+  // Secondary text style for subtitles and descriptions
+  static const TextStyle secondary = TextStyle(
     fontSize: 15,
-    fontWeight: FontWeight.w400,
-    color: _accentColor,
-    letterSpacing: -0.24,
     fontFamily: _fontFamily,
+    color: _secondaryColor,
   );
 
-  // Secondary gray text (15pt, gray)
-  static const cardSecondaryContent = TextStyle(
+  // Secondary text style - this was missing but referenced
+  static const TextStyle secondaryText = TextStyle(
     fontSize: 15,
-    fontWeight: FontWeight.w400,
-    color: _secondaryTextColor,
-    letterSpacing: -0.24,
     fontFamily: _fontFamily,
+    color: _secondaryColor,
   );
 
-  // FORM ELEMENTS
-
-  // Form field label (13pt, medium, gray)
-  static const formFieldLabel = TextStyle(
-    fontSize: 13,
+  // Accent text style - this was missing but referenced
+  static const TextStyle accentText = TextStyle(
+    fontSize: 17,
+    fontFamily: _fontFamily,
+    color: _primaryColor,
     fontWeight: FontWeight.w500,
-    color: _secondaryTextColor,
-    letterSpacing: -0.08,
-    fontFamily: _fontFamily,
-    height: 1.2,
   );
 
-  // Form field text (15pt, regular)
-  static const formFieldText = TextStyle(
-    fontSize: 15,
-    fontWeight: FontWeight.w400,
-    color: _textColor,
-    letterSpacing: -0.24,
-    fontFamily: _fontFamily,
-  );
-
-  // Form field placeholder (15pt, gray)
-  static const formFieldHint = TextStyle(
-    fontSize: 15,
-    fontWeight: FontWeight.w400,
-    color: Color(0xFFC7C7CC),
-    letterSpacing: -0.24,
-    fontFamily: _fontFamily,
-  );
-
-  // Section header caps (13pt, medium, gray)
-  static const sectionHeader = TextStyle(
-    fontSize: 13,
-    fontWeight: FontWeight.w500,
-    color: _secondaryTextColor,
-    letterSpacing: 0.07,
-    fontFamily: _fontFamily,
-  );
-
-  // BUTTONS & INTERACTIVE ELEMENTS
-
-  // Button text (17pt, semibold, white)
-  static const button = TextStyle(
+  // Button text style
+  static const TextStyle button = TextStyle(
     fontSize: 17,
     fontWeight: FontWeight.w600,
-    color: CupertinoColors.white,
-    letterSpacing: -0.41,
     fontFamily: _fontFamily,
+    color: Colors.white,
   );
 
-  // Secondary button text (16pt, medium, blue)
-  static const secondaryButton = TextStyle(
-    fontSize: 16,
-    fontWeight: FontWeight.w500,
-    color: _accentColor,
-    letterSpacing: -0.32,
-    fontFamily: _fontFamily,
-  );
-
-  // DIALOG ELEMENTS
-
-  // Dialog title (17pt, semibold)
-  static const dialogTitle = TextStyle(
+  // Dialog title style
+  static const TextStyle dialogTitle = TextStyle(
     fontSize: 17,
     fontWeight: FontWeight.w600,
-    color: _textColor,
-    letterSpacing: -0.41,
     fontFamily: _fontFamily,
+    color: _textColor,
   );
 
-  // Dialog content (13pt, regular)
-  static const dialogContent = TextStyle(
+  // Dialog content style
+  static const TextStyle dialogContent = TextStyle(
     fontSize: 13,
-    fontWeight: FontWeight.w400,
-    color: _textColor,
-    letterSpacing: -0.08,
     fontFamily: _fontFamily,
-    height: 1.38,
+    color: _textColor,
   );
 
-  // GENERAL PURPOSE
+  // Nav bar title style
+  static const TextStyle navTitle = TextStyle(
+    fontSize: 17,
+    fontWeight: FontWeight.w600,
+    fontFamily: _fontFamily,
+    color: _textColor,
+  );
 
-  // Body text (15pt, regular)
-  static const body = TextStyle(
+  // Section title style
+  static const TextStyle sectionTitle = TextStyle(
+    fontSize: 17,
+    fontWeight: FontWeight.w600,
+    fontFamily: _fontFamily,
+    color: _textColor,
+  );
+
+  // Card title style
+  static const TextStyle cardTitle = TextStyle(
+    fontSize: 17,
+    fontWeight: FontWeight.w600,
+    fontFamily: _fontFamily,
+    color: _textColor,
+  );
+
+  // Card content style
+  static const TextStyle cardContent = TextStyle(
+    fontSize: 17,
+    fontWeight: FontWeight.w400,
+    fontFamily: _fontFamily,
+    color: _textColor,
+  );
+
+  // Card secondary text
+  static const TextStyle cardSecondaryContent = TextStyle(
     fontSize: 15,
     fontWeight: FontWeight.w400,
+    fontFamily: _fontFamily,
+    color: _secondaryColor,
+  );
+
+  // Form input text style - this was missing but referenced
+  static const TextStyle inputText = TextStyle(
+    fontSize: 17,
+    fontFamily: _fontFamily,
     color: _textColor,
-    letterSpacing: -0.24,
-    fontFamily: _fontFamily,
-    height: 1.3,
   );
 
-  // Secondary text (15pt, gray)
-  static const secondary = TextStyle(
+  // Form label style
+  static const TextStyle formLabel = TextStyle(
     fontSize: 15,
-    fontWeight: FontWeight.w400,
-    color: _secondaryTextColor,
-    letterSpacing: -0.24,
     fontFamily: _fontFamily,
-    height: 1.3,
+    color: _secondaryColor,
   );
 
-  // Small text/caption (13pt, gray)
-  static const caption = TextStyle(
-    fontSize: 13,
-    fontWeight: FontWeight.w400,
-    color: _secondaryTextColor,
-    letterSpacing: -0.08,
+  // Form input style
+  static const TextStyle formInput = TextStyle(
+    fontSize: 17,
     fontFamily: _fontFamily,
+    color: _textColor,
+  );
+
+  // Form placeholder style - this was missing but referenced
+  static const TextStyle placeholder = TextStyle(
+    fontSize: 17,
+    fontFamily: _fontFamily,
+    color: Color(0xFFBEBEC0),  // iOS placeholder color
+  );
+
+  // Small caption text
+  static const TextStyle caption = TextStyle(
+    fontSize: 13,
+    fontFamily: _fontFamily,
+    color: _secondaryColor,
   );
 }

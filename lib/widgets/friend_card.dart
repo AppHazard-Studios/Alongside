@@ -1,5 +1,4 @@
-// lib/widgets/friend_card.dart - Exact match to your screenshot
-
+// lib/widgets/friend_card.dart - Updated to match Add Friend styling
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -9,6 +8,7 @@ import '../main.dart';
 import '../models/friend.dart';
 import '../screens/add_friend_screen.dart';
 import '../screens/manage_messages_screen.dart';
+import '../utils/text_styles.dart';
 
 class FriendCard extends StatefulWidget {
   final Friend friend;
@@ -79,12 +79,15 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
+    // Use same horizontal margin as Add Friend screen
+    //const double horizontalMargin = 16.0;
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
       margin: const EdgeInsets.symmetric(
-        horizontal: 16,
         vertical: 8,
       ),
+      width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -106,7 +109,7 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Main card content (always visible) - EXACT match to screenshot
+              // Main card content (always visible)
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
@@ -123,11 +126,7 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                               Expanded(
                                 child: Text(
                                   widget.friend.name,
-                                  style: const TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w400,
-                                    fontFamily: '.SF Pro Text',
-                                  ),
+                                  style: AppTextStyles.cardTitle,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -164,20 +163,16 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                           // Alongside them in section
                           if (widget.friend.helpingWith != null &&
                               widget.friend.helpingWith!.isNotEmpty) ...[
-                            const Text(
+                            Text(
                               'Alongside them in:',
-                              style: TextStyle(
+                              style: AppTextStyles.accentText.copyWith(
                                 fontSize: 15,
-                                color: Color(0xFF007AFF),
-                                fontFamily: '.SF Pro Text',
+                                color: const Color(0xFF007AFF),
                               ),
                             ),
                             Text(
                               widget.friend.helpingWith!,
-                              style: const TextStyle(
-                                fontSize: 17,
-                                fontFamily: '.SF Pro Text',
-                              ),
+                              style: AppTextStyles.bodyText,
                             ),
                           ],
                         ],
@@ -198,7 +193,7 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                 ),
               ),
 
-              // Expandable details section - EXACTLY matching the screenshot
+              // Expandable details section
               AnimatedBuilder(
                 animation: _controller,
                 builder: (context, child) {
@@ -237,20 +232,16 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
+                                  Text(
                                     'They\'re alongside you in:',
-                                    style: TextStyle(
+                                    style: AppTextStyles.accentText.copyWith(
                                       fontSize: 15,
-                                      color: Color(0xFF007AFF),
-                                      fontFamily: '.SF Pro Text',
+                                      color: const Color(0xFF007AFF),
                                     ),
                                   ),
                                   Text(
                                     widget.friend.theyHelpingWith!,
-                                    style: const TextStyle(
-                                      fontSize: 17,
-                                      fontFamily: '.SF Pro Text',
-                                    ),
+                                    style: AppTextStyles.bodyText,
                                   ),
                                 ],
                               ),
@@ -279,18 +270,11 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                                 children: [
                                   Text(
                                     'Reminder every ${widget.friend.reminderDays} ${widget.friend.reminderDays == 1 ? 'day' : 'days'}',
-                                    style: const TextStyle(
-                                      fontSize: 15,
-                                      color: Color(0xFF8E8E93),
-                                      fontFamily: '.SF Pro Text',
-                                    ),
+                                    style: AppTextStyles.secondaryText,
                                   ),
                                   Text(
                                     'Next: 5/14/2025 at 6:32 PM', // This should be dynamic
-                                    style: const TextStyle(
-                                      fontSize: 17,
-                                      fontFamily: '.SF Pro Text',
-                                    ),
+                                    style: AppTextStyles.bodyText,
                                   ),
                                 ],
                               ),
@@ -369,13 +353,13 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
     );
   }
 
-  // Create the profile image exactly as shown in screenshot
+  // Create the profile image with consistent size
   Widget _buildProfileImage() {
     return Container(
       width: 56,
       height: 56,
-      decoration: BoxDecoration(
-        color: const Color(0xFFEEEEEE),
+      decoration: const BoxDecoration(
+        color: Color(0xFFEEEEEE),
         shape: BoxShape.circle,
       ),
       child: widget.friend.isEmoji
@@ -394,7 +378,7 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
     );
   }
 
-  // Action button styling exactly matching the screenshot
+  // Action button styling
   Widget _buildActionButton({
     required String label,
     required IconData icon,
@@ -442,11 +426,15 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
     );
   }
 
-  // Message options popup exactly matching the design
+  // Message options popup with fixed width messages
   void _showMessageOptions(BuildContext context) async {
     final provider = Provider.of<FriendsProvider>(context, listen: false);
     final customMessages = await provider.storageService.getCustomMessages();
     final allMessages = [...provider.storageService.getDefaultMessages(), ...customMessages];
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    // Fixed width for all messages
+    final messageWidth = screenWidth * 0.85;
 
     showModalBottomSheet(
       context: context,
@@ -483,11 +471,7 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                     child: Center(
                       child: Text(
                         'Message ${widget.friend.name}',
-                        style: const TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: '.SF Pro Text',
-                        ),
+                        style: AppTextStyles.navTitle,
                       ),
                     ),
                   ),
@@ -527,7 +511,7 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
               color: const Color(0xFFE5E5EA),
             ),
 
-            // List of messages
+            // List of messages with fixed width
             ConstrainedBox(
               constraints: BoxConstraints(
                 maxHeight: MediaQuery.of(context).size.height * 0.6,
@@ -541,18 +525,18 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                     // Create custom message button
                     return Padding(
                       padding: const EdgeInsets.only(top: 8),
-                      child: InkWell(
-                        onTap: () {
-                          Navigator.pop(context);
-                          _showCustomMessageDialog(context);
-                        },
-                        borderRadius: BorderRadius.circular(8),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF007AFF).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
+                      child: Container(
+                        width: messageWidth,
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF007AFF).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.pop(context);
+                            _showCustomMessageDialog(context);
+                          },
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: const [
@@ -578,30 +562,29 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                     );
                   }
 
-                  // Regular message option
+                  // Regular message option with fixed width
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 8),
-                    child: InkWell(
-                      onTap: () {
-                        Navigator.pop(context);
-                        _sendMessage(context, allMessages[index]);
-                      },
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: const Color(0xFFE5E5EA),
-                            width: 1,
-                          ),
+                    child: Container(
+                      width: messageWidth,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: const Color(0xFFE5E5EA),
+                          width: 1,
                         ),
-                        child: Text(
-                          allMessages[index],
-                          style: const TextStyle(
-                            fontSize: 17,
-                            fontFamily: '.SF Pro Text',
+                      ),
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.pop(context);
+                          _sendMessage(context, allMessages[index]);
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                          child: Text(
+                            allMessages[index],
+                            style: AppTextStyles.bodyText,
                           ),
                         ),
                       ),
@@ -623,13 +606,9 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text(
+        title: Text(
           'Create Message',
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            fontFamily: '.SF Pro Text',
-          ),
+          style: AppTextStyles.dialogTitle,
         ),
         content: Padding(
           padding: const EdgeInsets.only(top: 16),
@@ -645,15 +624,8 @@ class _FriendCardState extends State<FriendCard> with SingleTickerProviderStateM
                 width: 1,
               ),
             ),
-            style: const TextStyle(
-              fontSize: 17,
-              fontFamily: '.SF Pro Text',
-            ),
-            placeholderStyle: const TextStyle(
-              color: Color(0xFFCCCCCC),
-              fontSize: 17,
-              fontFamily: '.SF Pro Text',
-            ),
+            style: AppTextStyles.inputText,
+            placeholderStyle: AppTextStyles.placeholder,
             minLines: 2,
             maxLines: 5,
             textCapitalization: TextCapitalization.sentences,

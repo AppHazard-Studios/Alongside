@@ -1,9 +1,9 @@
-// Final check for ManageMessagesScreen.dart - make it match the rest of the app
-
+// lib/screens/manage_messages_screen.dart - Removed floating action button
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import '../main.dart';
+import '../utils/text_styles.dart';
 
 class ManageMessagesScreen extends StatefulWidget {
   const ManageMessagesScreen({Key? key}) : super(key: key);
@@ -37,16 +37,12 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF2F2F7), // iOS grouped background
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Manage Messages',
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            fontFamily: '.SF Pro Text',
-          ),
+          style: AppTextStyles.navTitle,
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFF2F2F7), // Match background
         elevation: 0,
         leading: IconButton(
           icon: const Icon(
@@ -61,11 +57,7 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
           : _customMessages.isEmpty
           ? _buildEmptyState()
           : _buildMessagesList(),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddMessageDialog,
-        backgroundColor: const Color(0xFF007AFF),
-        child: const Icon(CupertinoIcons.add, size: 24),
-      ),
+      // Removed floating action button
     );
   }
 
@@ -89,24 +81,31 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
+            Text(
               'No custom messages yet',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w600,
-                fontFamily: '.SF Pro Display',
-              ),
+              style: AppTextStyles.title,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Add custom messages when sending texts to friends',
-              style: TextStyle(
-                fontSize: 15,
-                color: Color(0xFF8E8E93),
-                fontFamily: '.SF Pro Text',
-              ),
+              style: AppTextStyles.secondary,
               textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            CupertinoButton(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              color: const Color(0xFF007AFF), // Match iOS style
+              child: const Text(
+                'Create Message',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w400,
+                  color: Colors.white,
+                  fontFamily: '.SF Pro Text',
+                ),
+              ),
+              onPressed: _showAddMessageDialog,
             ),
           ],
         ),
@@ -117,81 +116,111 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
   Widget _buildMessagesList() {
     return Container(
       color: const Color(0xFFF2F2F7),
-      child: ReorderableListView.builder(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-        buildDefaultDragHandles: false,
-        itemCount: _customMessages.length,
-        onReorder: (oldIndex, newIndex) {
-          setState(() {
-            if (oldIndex < newIndex) {
-              newIndex -= 1;
-            }
-            final item = _customMessages.removeAt(oldIndex);
-            _customMessages.insert(newIndex, item);
-
-            Provider.of<FriendsProvider>(context, listen: false)
-                .storageService
-                .saveCustomMessages(_customMessages);
-          });
-        },
-        itemBuilder: (context, index) {
-          return Container(
-            key: ValueKey(_customMessages[index]),
-            margin: const EdgeInsets.only(bottom: 8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
-                  blurRadius: 4,
-                  offset: const Offset(0, 1),
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      child: Column(
+        children: [
+          // Add button at the top of the list
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: CupertinoButton(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              color: const Color(0xFF007AFF),
               child: Row(
-                children: [
-                  CupertinoButton(
-                    padding: EdgeInsets.zero,
-                    onPressed: () => _confirmDelete(index),
-                    child: const Icon(
-                      CupertinoIcons.delete,
-                      color: Color(0xFFFF3B30),
-                      size: 20,
-                    ),
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Text(
-                        _customMessages[index],
-                        style: const TextStyle(
-                          fontSize: 17,
-                          fontFamily: '.SF Pro Text',
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ),
-                  ReorderableDragStartListener(
-                    index: index,
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      child: const Icon(
-                        CupertinoIcons.line_horizontal_3,
-                        color: Color(0xFF8E8E93),
-                        size: 20,
-                      ),
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Icon(CupertinoIcons.add, size: 18, color: Colors.white),
+                  SizedBox(width: 8),
+                  Text(
+                    'Create Message',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.white,
+                      fontFamily: '.SF Pro Text',
                     ),
                   ),
                 ],
               ),
+              onPressed: _showAddMessageDialog,
             ),
-          );
-        },
+          ),
+
+          // Message list
+          Expanded(
+            child: ReorderableListView.builder(
+              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 20),
+              buildDefaultDragHandles: false,
+              itemCount: _customMessages.length,
+              onReorder: (oldIndex, newIndex) {
+                setState(() {
+                  if (oldIndex < newIndex) {
+                    newIndex -= 1;
+                  }
+                  final item = _customMessages.removeAt(oldIndex);
+                  _customMessages.insert(newIndex, item);
+
+                  Provider.of<FriendsProvider>(context, listen: false)
+                      .storageService
+                      .saveCustomMessages(_customMessages);
+                });
+              },
+              itemBuilder: (context, index) {
+                return Container(
+                  key: ValueKey(_customMessages[index]),
+                  margin: const EdgeInsets.only(bottom: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.03),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                    child: Row(
+                      children: [
+                        CupertinoButton(
+                          padding: EdgeInsets.zero,
+                          onPressed: () => _confirmDelete(index),
+                          child: const Icon(
+                            CupertinoIcons.delete,
+                            color: Color(0xFFFF3B30),
+                            size: 20,
+                          ),
+                        ),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: Text(
+                              _customMessages[index],
+                              style: AppTextStyles.bodyText,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ),
+                        ReorderableDragStartListener(
+                          index: index,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            child: const Icon(
+                              CupertinoIcons.line_horizontal_3,
+                              color: Color(0xFF8E8E93),
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -200,20 +229,13 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
     final shouldDelete = await showCupertinoDialog<bool>(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text(
+        title: Text(
           'Delete Message',
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            fontFamily: '.SF Pro Text',
-          ),
+          style: AppTextStyles.dialogTitle,
         ),
-        content: const Text(
+        content: Text(
           'Are you sure you want to delete this custom message?',
-          style: TextStyle(
-            fontSize: 13,
-            fontFamily: '.SF Pro Text',
-          ),
+          style: AppTextStyles.dialogContent,
         ),
         actions: [
           CupertinoDialogAction(
@@ -288,13 +310,9 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text(
+        title: Text(
           'Add Custom Message',
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            fontFamily: '.SF Pro Text',
-          ),
+          style: AppTextStyles.dialogTitle,
         ),
         content: Padding(
           padding: const EdgeInsets.only(top: 16),
@@ -310,15 +328,8 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
                 width: 1,
               ),
             ),
-            style: const TextStyle(
-              fontSize: 17,
-              fontFamily: '.SF Pro Text',
-            ),
-            placeholderStyle: const TextStyle(
-              color: Color(0xFFCCCCCC),
-              fontSize: 17,
-              fontFamily: '.SF Pro Text',
-            ),
+            style: AppTextStyles.inputText,
+            placeholderStyle: AppTextStyles.placeholder,
             minLines: 2,
             maxLines: 5,
             textCapitalization: TextCapitalization.sentences,

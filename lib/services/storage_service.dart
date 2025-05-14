@@ -2,6 +2,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/friend.dart';
+import '../utils/constants.dart';
 
 class StorageService {
   static const String _friendsKey = 'friends';
@@ -49,5 +50,10 @@ class StorageService {
     final messages = await getCustomMessages();
     messages.remove(message);
     await saveCustomMessages(messages);
+  }
+
+  // Get default messages
+  List<String> getDefaultMessages() {
+    return AppConstants.presetMessages;
   }
 }

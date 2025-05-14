@@ -1,11 +1,8 @@
 // lib/services/foreground_service.dart
 import 'dart:async';
 import 'dart:isolate';
-import 'dart:ui';
-import 'package:flutter/material.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/friend.dart';
 import 'storage_service.dart';
 import 'notification_service.dart';
 
@@ -32,7 +29,6 @@ class AlongsideTaskHandler extends TaskHandler {
     _initialized = true;
   }
 
-  @override
   Future<void> onEvent(DateTime timestamp, SendPort? sendPort) async {
     if (_initialized) {
       await _checkAndUpdateNotifications();
@@ -52,7 +48,6 @@ class AlongsideTaskHandler extends TaskHandler {
     }
   }
 
-  @override
   void onButtonPressed(String id) {
     // Use named parameter `key` here instead of positional
     FlutterForegroundTask.getData<String>(key: id).then((message) {

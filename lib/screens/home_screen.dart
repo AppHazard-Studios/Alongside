@@ -1,4 +1,4 @@
-// screens/home_screen.dart
+// lib/screens/home_screen.dart - Updated with modern iOS navbar
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
@@ -21,48 +21,45 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Use Scaffold but with iOS styling
-    return Scaffold(
-      backgroundColor: CupertinoColors.systemGroupedBackground,
-      appBar: AppBar(
-        title: Text(
+    // Use CupertinoPageScaffold for more native iOS feel
+    return CupertinoPageScaffold(
+      backgroundColor: CupertinoColors.systemGroupedBackground, // Modern iOS background
+      navigationBar: CupertinoNavigationBar(
+        middle: const Text(
           'Alongside',
-          style: AppTextStyles.navTitle,
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            fontFamily: '.SF Pro Text',
+          ),
         ),
-        centerTitle: true,
-        backgroundColor: CupertinoColors.systemBackground,
-        elevation: 0,
-        // Info button on the left with iOS style
-        leading: IconButton(
-          icon: const Icon(
+        backgroundColor: CupertinoColors.systemGroupedBackground, // Match background for modern look
+        border: null, // Remove border for modern look
+        leading: CupertinoButton(
+          padding: EdgeInsets.zero,
+          child: const Icon(
             CupertinoIcons.info,
-            color: Color(AppConstants.primaryColorValue),
-            size: 22,
+            color: Color(0xFF007AFF),
           ),
           onPressed: () => _showAboutDialog(context),
-          splashRadius: 24,
         ),
-        // Add button on the right with iOS style
-        actions: [
-          IconButton(
-            icon: const Icon(
-              CupertinoIcons.add,
-              color: Color(AppConstants.primaryColorValue),
-              size: 22,
-            ),
-            onPressed: () {
-              Navigator.push(
-                context,
-                CupertinoPageRoute(
-                  builder: (context) => const AddFriendScreen(),
-                ),
-              );
-            },
-            splashRadius: 24,
+        trailing: CupertinoButton(
+          padding: EdgeInsets.zero,
+          child: const Icon(
+            CupertinoIcons.add,
+            color: Color(0xFF007AFF),
           ),
-        ],
+          onPressed: () {
+            Navigator.push(
+              context,
+              CupertinoPageRoute(
+                builder: (context) => const AddFriendScreen(),
+              ),
+            );
+          },
+        ),
       ),
-      body: Consumer<FriendsProvider>(
+      child: Consumer<FriendsProvider>(
         builder: (context, friendsProvider, child) {
           if (friendsProvider.isLoading) {
             return const Center(
@@ -161,7 +158,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // iOS-style button widget
   Widget _buildAddFriendButton(BuildContext context) {
-    // CupertinoButton.filled inside a MaterialApp
+    // CupertinoButton.filled for proper iOS style
     return CupertinoButton.filled(
       onPressed: () {
         Navigator.push(
@@ -193,32 +190,41 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showAboutDialog(BuildContext context) {
-    // Calculate a wider width for the dialog content
+    // Calculate a much wider width for the dialog content
     final screenWidth = MediaQuery.of(context).size.width;
-    final contentWidth = screenWidth * 0.8; // 80% of screen width
+    // Use almost full screen width for dialog content
+    final contentWidth = screenWidth * 0.95;
 
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
         title: Text(
           'About Alongside',
-          style: AppTextStyles.dialogTitle,
+          style: AppTextStyles.dialogTitle.copyWith(
+            fontSize: 20, // Increased size
+          ),
         ),
         content: SizedBox(
-          width: contentWidth, // Set explicit width for content
+          width: contentWidth, // Much wider content
           child: Padding(
             padding: const EdgeInsets.only(top: 16.0, bottom: 8.0),
             child: Column(
               children: [
                 Text(
                   'Alongside helps you walk with your friends through the highs and lows of life.',
-                  style: AppTextStyles.dialogContent,
+                  style: AppTextStyles.dialogContent.copyWith(
+                    fontSize: 16, // Increased size
+                    height: 1.4,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
                 Text(
                   'As Christians, we\'re called to carry one another\'s burdens—and this app helps you do that with just a few taps.',
-                  style: AppTextStyles.dialogContent,
+                  style: AppTextStyles.dialogContent.copyWith(
+                    fontSize: 16, // Increased size
+                    height: 1.4,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
@@ -241,7 +247,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Text(
                           'Everything stays on your device. It\'s private, secure, and fully in your control.',
                           style: AppTextStyles.dialogContent.copyWith(
-                            height: 1.3,
+                            fontSize: 16, // Increased size
+                            height: 1.4,
                           ),
                         ),
                       ),
@@ -255,7 +262,7 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(context),
-            child: Text(
+            child: const Text(
               'Close',
               style: TextStyle(
                 fontFamily: '.SF Pro Text',

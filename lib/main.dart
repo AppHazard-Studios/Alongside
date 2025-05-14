@@ -1,8 +1,6 @@
-// main.dart
+// main.dart - Refactored with consistent styling
+
 import 'dart:async';
-import 'dart:io';
-import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
@@ -12,11 +10,10 @@ import 'models/friend.dart';
 import 'services/storage_service.dart';
 import 'utils/constants.dart';
 import 'utils/text_styles.dart';
-import 'screens/add_friend_screen.dart';
+import 'utils/ui_constants.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'services/foreground_service.dart';
-import 'widgets/friend_card.dart';
 import 'screens/call_screen.dart';
 import 'screens/manage_messages_screen.dart';
 
@@ -68,6 +65,7 @@ class AlongsideApp extends StatefulWidget {
 
 class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver {
   // Static flag to prevent multiple dialog displays
+  // ignore: unused_field
   bool _skipNextPersistentRepost = false;
   static bool isShowingDialog = false;
   static Map<String, int> processedActions = {};
@@ -134,19 +132,19 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
     });
   }
 
-  // Updated to return a Future
-// Updated _showFullMessageOptionsDialog method in main.dart for consistency
-
+  // Show the message options dialog with variable height messages
   Future<void> _showFullMessageOptionsDialog(BuildContext context, Friend friend) async {
     final provider = Provider.of<FriendsProvider>(context, listen: false);
     final customMessages = await provider.storageService.getCustomMessages();
     final allMessages = [...AppConstants.presetMessages, ...customMessages];
 
+    // Get screen width for fixed message width
+    final screenWidth = MediaQuery.of(context).size.width;
+    // ignore: unused_local_variable
+    final messageWidth = screenWidth - 32; // Fixed width for all messages
+
     // Wrap the showModalBottomSheet in a Completer to make it return a Future
     final completer = Completer<void>();
-
-    // Calculate proper padding values to match Add Friend screen
-    final horizontalPadding = 16.0;
 
     showModalBottomSheet(
       context: context,
@@ -158,9 +156,9 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
       builder: (context) {
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 8),
-          decoration: BoxDecoration(
-            color: CupertinoColors.systemBackground,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -178,7 +176,7 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
 
               // Header with title and settings icon
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -196,30 +194,36 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
                       ),
                     ),
                     // Settings icon in iOS style
-                    Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF007AFF).withOpacity(0.08),
-                        shape: BoxShape.circle,
-                      ),
-                      child: IconButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          Navigator.push(
-                            context,
+                    CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: () {
+                        // First close the modal bottom sheet
+                        Navigator.pop(context);
+
+                        // Add a slight delay to avoid navigation issues
+                        Future.delayed(const Duration(milliseconds: 100), () {
+                          // Then navigate to manage messages screen
+                          navigatorKey.currentState?.push(
                             MaterialPageRoute(
                               builder: (context) => const ManageMessagesScreen(),
                             ),
                           );
-                        },
-                        icon: const Icon(
-                          CupertinoIcons.gear,
-                          color: Color(0xFF007AFF),
-                          size: 16,
+                        });
+                      },
+                      child: Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF007AFF).withOpacity(0.08),
+                          shape: BoxShape.circle,
                         ),
-                        padding: EdgeInsets.zero,
-                        splashRadius: 14,
+                        child: const Center(
+                          child: Icon(
+                            CupertinoIcons.gear,
+                            color: Color(0xFF007AFF),
+                            size: 16,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -232,92 +236,95 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
                 color: CupertinoColors.separator,
               ),
 
-              // Message list with proper padding that matches Add Friend screen
+              // Message list with fixed width messages
               Flexible(
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
                     maxHeight: MediaQuery.of(context).size.height * 0.7,
                   ),
                   child: ListView.builder(
-                    padding: EdgeInsets.symmetric(
-                      vertical: 8,
-                      horizontal: horizontalPadding,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                      horizontal: 16,
                     ),
                     itemCount: allMessages.length + 1,
                     shrinkWrap: true,
                     itemBuilder: (context, index) {
                       if (index == allMessages.length) {
-                        // Create custom message option
+                        // Create custom message option with fixed width
                         return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: InkWell(
-                            onTap: () {
-                              Navigator.pop(context);
-                              _showCustomMessageDialog(context, friend);
-                            },
-                            borderRadius: BorderRadius.circular(10),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 14,
-                                horizontal: 16,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF007AFF).withOpacity(0.08),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(
-                                    CupertinoIcons.add_circled,
-                                    size: 18,
-                                    color: Color(0xFF007AFF),
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Container(
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF007AFF).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  _showCustomMessageDialog(context, friend);
+                                },
+                                borderRadius: BorderRadius.circular(16),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: const [
+                                      Icon(
+                                        CupertinoIcons.add_circled,
+                                        size: 18,
+                                        color: Color(0xFF007AFF),
+                                      ),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        'Create custom message',
+                                        style: TextStyle(
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.w400,
+                                          color: Color(0xFF007AFF),
+                                          fontFamily: '.SF Pro Text',
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Create custom message',
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w500,
-                                      color: const Color(0xFF007AFF),
-                                      fontFamily: '.SF Pro Text',
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
                             ),
                           ),
                         );
                       }
 
-                      // Regular message option
+                      // Regular message option with fixed width
                       return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: InkWell(
-                          onTap: () {
-                            Navigator.pop(context);
-                            _sendMessage(context, friend, allMessages[index]);
-                          },
-                          borderRadius: BorderRadius.circular(10),
-                          child: Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 14,
-                              horizontal: 16,
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: const Color(0xFFE5E5EA),
+                              width: 1,
                             ),
-                            decoration: BoxDecoration(
-                              color: CupertinoColors.white,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: CupertinoColors.systemGrey5,
-                                width: 1,
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.pop(context);
+                                _sendMessage(context, friend, allMessages[index]);
+                              },
+                              borderRadius: BorderRadius.circular(16),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                child: Text(
+                                  allMessages[index],
+                                  style: AppTextStyles.bodyText,
+                                ),
                               ),
-                            ),
-                            child: Text(
-                              allMessages[index],
-                              style: AppTextStyles.cardContent,
-                              maxLines: 4,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ),
@@ -338,119 +345,64 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
 
     return completer.future;
   }
+
   void _showCustomMessageDialog(BuildContext context, Friend friend) {
     final textController = TextEditingController();
 
     showCupertinoDialog(
       context: context,
-      builder: (context) {
-        return CupertinoAlertDialog(
-          title: Text(
-            'Create Message',
-            style: AppTextStyles.dialogTitle,
-          ),
-          content: Padding(
-            padding: const EdgeInsets.only(top: 16),
-            child: CupertinoTextField(
-              controller: textController,
-              placeholder: 'Type your message...',
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: CupertinoColors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: CupertinoColors.systemGrey4,
-                  width: 0.5,
-                ),
-              ),
-              style: AppTextStyles.cardContent,
-              placeholderStyle: TextStyle(
-                fontSize: 15,
-                color: CupertinoColors.placeholderText,
-                fontFamily: '.SF Pro Text',
-                letterSpacing: -0.24,
-              ),
-              minLines: 2,
-              maxLines: 5,
-              textCapitalization: TextCapitalization.sentences,
-              textInputAction: TextInputAction.newline,
-            ),
-          ),
-          actions: [
-            CupertinoDialogAction(
-              onPressed: () => Navigator.pop(context),
-              isDefaultAction: true,
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  fontFamily: '.SF Pro Text',
-                  fontSize: 17,
-                  fontWeight: FontWeight.w400,
-                  letterSpacing: -0.41,
-                ),
-              ),
-            ),
-            CupertinoDialogAction(
-              onPressed: () async {
-                if (textController.text.isNotEmpty) {
-                  final storageService = Provider.of<FriendsProvider>(
-                    context,
-                    listen: false,
-                  ).storageService;
-
-                  await storageService.addCustomMessage(textController.text);
-                  Navigator.pop(context);
-
-                  _showSuccessToast(context, 'Message saved');
-                }
-              },
-              child: Text(
-                'Save',
-                style: TextStyle(
-                  fontFamily: '.SF Pro Text',
-                  fontSize: 17,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: -0.41,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-  void _showSuccessToast(BuildContext context, String message) {
-    // iOS doesn't have built-in toasts, but we can simulate with an overlay
-    final overlay = Overlay.of(context);
-    final overlayEntry = OverlayEntry(
-      builder: (context) => Positioned(
-        bottom: 100,
-        width: MediaQuery.of(context).size.width,
-        child: Center(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      builder: (context) => CupertinoAlertDialog(
+        title: Text(
+          'Create Message',
+          style: AppTextStyles.dialogTitle,
+        ),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: CupertinoTextField(
+            controller: textController,
+            placeholder: 'Type your message...',
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: CupertinoColors.darkBackgroundGray.withOpacity(0.8),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              message,
-              style: const TextStyle(
-                color: CupertinoColors.white,
-                fontSize: 15,
-                fontFamily: '.SF Pro Text',
-                letterSpacing: -0.24,
+              color: CupertinoColors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: CupertinoColors.systemGrey4,
+                width: 0.5,
               ),
             ),
+            style: AppTextStyles.inputText,
+            placeholderStyle: AppTextStyles.placeholder,
+            minLines: 2,
+            maxLines: 5,
+            textCapitalization: TextCapitalization.sentences,
+            textInputAction: TextInputAction.newline,
           ),
         ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            isDefaultAction: true,
+            child: const Text('Cancel'),
+          ),
+          CupertinoDialogAction(
+            onPressed: () async {
+              if (textController.text.isNotEmpty) {
+                final storageService = Provider.of<FriendsProvider>(
+                  context,
+                  listen: false,
+                ).storageService;
+
+                await storageService.addCustomMessage(textController.text);
+                Navigator.pop(context);
+
+                UIConstants.showToast(context, 'Message saved');
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
       ),
     );
-
-    overlay.insert(overlayEntry);
-    Future.delayed(const Duration(seconds: 2), () {
-      overlayEntry.remove();
-    });
   }
 
   void _sendMessage(BuildContext context, Friend friend, String message) async {
@@ -473,8 +425,11 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
         showCupertinoDialog(
           context: context,
           builder: (context) => CupertinoAlertDialog(
-            title: const Text('Error'),
-            content: const Text('Unable to open messaging app. Please try again later.'),
+            title: Text('Error', style: AppTextStyles.dialogTitle),
+            content: Text(
+              'Unable to open messaging app. Please try again later.',
+              style: AppTextStyles.dialogContent,
+            ),
             actions: [
               CupertinoDialogAction(
                 onPressed: () => Navigator.pop(context),
@@ -486,7 +441,6 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
       }
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -511,7 +465,7 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
         textTheme: TextTheme(
           headlineMedium: AppTextStyles.title,
           titleLarge: AppTextStyles.sectionTitle,
-          bodyLarge: AppTextStyles.body,
+          bodyLarge: AppTextStyles.bodyText,
           labelLarge: AppTextStyles.button,
         ),
         // Use lighter app bar styling
@@ -628,7 +582,7 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
   }
 }
 
-// Your existing FriendsProvider class (unchanged)
+// FriendsProvider class
 class FriendsProvider with ChangeNotifier {
   final StorageService storageService;
   final NotificationService notificationService;

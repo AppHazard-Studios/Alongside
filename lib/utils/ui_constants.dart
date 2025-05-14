@@ -1,112 +1,130 @@
-// lib/utils/ui_constants.dart - New file for consistent UI styling
+// utils/ui_constants.dart - UI standardization
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-/// Centralized UI constants to ensure consistency across the entire app
+/// Standardized UI constants to ensure consistency across the app
 class UIConstants {
-  // Standard padding values
-  static const double screenEdgePadding = 16.0;
+  // SPACING & PADDING
+
+  // Standard screen edge padding - used consistently in all screens
+  static const double screenPadding = 16.0;
+
+  // Content padding within cards and containers
   static const double contentPadding = 16.0;
+
+  // Content item vertical spacing
   static const double itemSpacing = 8.0;
+
+  // Small spacing between related elements
   static const double smallSpacing = 4.0;
 
-  // Border radius values
-  static const double cardBorderRadius = 10.0;
-  static const double buttonBorderRadius = 10.0;
+  // Standard padding for all cards and containers
+  static const EdgeInsets standardPadding = EdgeInsets.all(16.0);
 
-  // Container styling
-  static BoxDecoration standardCardDecoration = BoxDecoration(
+  // Input field padding
+  static const EdgeInsets inputPadding = EdgeInsets.symmetric(vertical: 12.0, horizontal: 0);
+
+  // List item padding
+  static const EdgeInsets listItemPadding = EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0);
+
+  // BORDER RADIUS
+
+  // Used for cards
+  static const double cardRadius = 10.0;
+
+  // Used for buttons
+  static const double buttonRadius = 8.0;
+
+  // Used for small elements like chips
+  static const double smallRadius = 6.0;
+
+  // Used for the bottom sheet handle
+  static const double sheetHandleRadius = 2.0;
+
+  // CONTAINER STYLING
+
+  // Standard card decoration without shadow
+  static BoxDecoration cardDecoration = BoxDecoration(
     color: CupertinoColors.white,
-    borderRadius: BorderRadius.circular(cardBorderRadius),
+    borderRadius: BorderRadius.circular(cardRadius),
     border: Border.all(
       color: CupertinoColors.systemGrey5,
-      width: 1.0,
+      width: 0.5,
     ),
   );
 
-  // Blue accent styling
+  // Card decoration with shadow
+  static BoxDecoration elevatedCardDecoration = BoxDecoration(
+    color: CupertinoColors.white,
+    borderRadius: BorderRadius.circular(cardRadius),
+    boxShadow: [
+      BoxShadow(
+        color: CupertinoColors.black.withOpacity(0.05),
+        blurRadius: 8,
+        offset: const Offset(0, 2),
+      ),
+    ],
+  );
+
+  // iOS accent container styling (light blue background)
   static BoxDecoration accentCardDecoration = BoxDecoration(
     color: const Color(0xFF007AFF).withOpacity(0.08),
-    borderRadius: BorderRadius.circular(cardBorderRadius),
+    borderRadius: BorderRadius.circular(cardRadius),
   );
 
-  // Standard container padding
-  static const EdgeInsets cardPadding = EdgeInsets.symmetric(
-    vertical: 14.0,
-    horizontal: 16.0,
-  );
+  // MESSAGE STYLING
 
-  // Separator styling
+  // Method to create message box decoration based on content length
+  static BoxDecoration getMessageBoxDecoration(String message) {
+    return BoxDecoration(
+      color: CupertinoColors.white,
+      borderRadius: BorderRadius.circular(cardRadius),
+      border: Border.all(
+        color: CupertinoColors.systemGrey5,
+        width: 0.5,
+      ),
+    );
+  }
+
+  // SHADOWS
+
+  // Subtle shadow - for cards
+  static List<BoxShadow> subtleShadow = [
+    BoxShadow(
+      color: CupertinoColors.black.withOpacity(0.05),
+      blurRadius: 8,
+      offset: const Offset(0, 2),
+    ),
+  ];
+
+  // DIVIDERS & SEPARATORS
+
+  // iOS-style separator
   static const Divider iosSeparator = Divider(
     height: 0.5,
     thickness: 0.5,
     color: CupertinoColors.separator,
   );
 
-  // Icon styling
-  static Widget circularSettingsIcon({required VoidCallback onPressed}) {
-    return Container(
-      width: 28,
-      height: 28,
-      decoration: BoxDecoration(
-        color: const Color(0xFF007AFF).withOpacity(0.08),
-        shape: BoxShape.circle,
-      ),
-      child: IconButton(
-        onPressed: onPressed,
-        icon: const Icon(
-          CupertinoIcons.gear,
-          color: Color(0xFF007AFF),
-          size: 16,
-        ),
-        padding: EdgeInsets.zero,
-        splashRadius: 14,
-      ),
-    );
-  }
+  // Margin to indent separators (iOS style)
+  static const EdgeInsets separatorIndent = EdgeInsets.only(left: 16.0);
 
-  // Standard appbar styling
-  static AppBar standardAppBar({
-    required String title,
-    VoidCallback? onBackPressed,
-    List<Widget>? actions,
+  // INPUT FIELD STYLING
+
+  // No yellow underlines with these styles
+  static InputDecoration getInputDecoration({
+    required String labelText,
+    String? hintText,
+    Widget? prefix,
+    Widget? suffix,
   }) {
-    return AppBar(
-      title: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 17,
-          fontWeight: FontWeight.w600,
-          color: CupertinoColors.black,
-          fontFamily: '.SF Pro Text',
-          letterSpacing: -0.41,
-        ),
-      ),
-      centerTitle: true,
-      backgroundColor: CupertinoColors.systemBackground,
-      elevation: 0,
-      leading: onBackPressed != null
-          ? IconButton(
-        icon: const Icon(CupertinoIcons.back),
-        onPressed: onBackPressed,
-        splashRadius: 24,
-      )
-          : null,
-      actions: actions,
-    );
-  }
-
-  // Consistent form field styling (no yellow underlines)
-  static InputDecoration cleanInputDecoration({required String hintText}) {
     return InputDecoration(
+      labelText: labelText,
       hintText: hintText,
-      hintStyle: const TextStyle(
-        fontSize: 15,
-        color: CupertinoColors.placeholderText,
-        fontFamily: '.SF Pro Text',
-      ),
-      border: InputBorder.none, // Remove all borders including underlines
+      prefix: prefix,
+      suffix: suffix,
+      border: InputBorder.none,
       enabledBorder: InputBorder.none,
       focusedBorder: InputBorder.none,
       errorBorder: InputBorder.none,
@@ -115,67 +133,111 @@ class UIConstants {
     );
   }
 
-  // Cupertino form field styling (for iOS native feel)
-  static Widget buildFormField({
-    required String label,
-    required TextEditingController controller,
-    required IconData icon,
-    String placeholder = '',
-    TextInputType keyboardType = TextInputType.text,
-    TextCapitalization textCapitalization = TextCapitalization.none,
-    Widget? suffix,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            color: const Color(0xFF007AFF),
-            size: 20,
+  // Clean CupertinoTextField style - no yellow underlines
+  static BoxDecoration cleanCupertinoInputDecoration = const BoxDecoration(
+    color: CupertinoColors.white,
+    border: Border(
+      bottom: BorderSide(
+        width: 0,
+        color: Colors.transparent,
+      ),
+    ),
+  );
+
+  // CUSTOM UI COMPONENTS
+
+  // Settings icon in circle background
+  static Widget buildSettingsIcon({required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          color: const Color(0xFF007AFF).withOpacity(0.08),
+          shape: BoxShape.circle,
+        ),
+        child: const Center(
+          child: Icon(
+            CupertinoIcons.gear,
+            size: 16,
+            color: Color(0xFF007AFF),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: CupertinoColors.systemGrey,
-                    fontFamily: '.SF Pro Text',
-                  ),
-                ),
-                const SizedBox(height: 6),
-                CupertinoTextField(
-                  controller: controller,
-                  placeholder: placeholder,
-                  placeholderStyle: TextStyle(
-                    color: CupertinoColors.systemGrey.withOpacity(0.7),
-                    fontSize: 15,
-                    fontFamily: '.SF Pro Text',
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 0),
-                  decoration: const BoxDecoration(
-                    color: CupertinoColors.white,
-                    border: Border(), // No border - iOS style
-                  ),
-                  style: const TextStyle(
-                    fontSize: 15,
-                    color: CupertinoColors.black,
-                    fontFamily: '.SF Pro Text',
-                  ),
-                  suffix: suffix,
-                  keyboardType: keyboardType,
-                  textCapitalization: textCapitalization,
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
+  }
+
+  // Action button with label and icon
+  static Widget buildActionButton({
+    required String label,
+    required IconData icon,
+    required VoidCallback onPressed,
+    Color backgroundColor = const Color(0xFF007AFF),
+    Color textColor = Colors.white,
+    Color? borderColor,
+  }) {
+    return SizedBox(
+      height: 44,
+      child: CupertinoButton(
+        padding: EdgeInsets.zero,
+        onPressed: onPressed,
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(buttonRadius),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: textColor,
+              size: 18,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: textColor,
+                fontFamily: '.SF Pro Text',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Toast notification
+  static void showToast(BuildContext context, String message) {
+    final overlay = Overlay.of(context);
+    final overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        bottom: 100,
+        width: MediaQuery.of(context).size.width,
+        child: Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: CupertinoColors.darkBackgroundGray.withOpacity(0.8),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: CupertinoColors.white,
+                fontSize: 15,
+                fontFamily: '.SF Pro Text',
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(overlayEntry);
+    Future.delayed(const Duration(seconds: 2), () {
+      overlayEntry.remove();
+    });
   }
 }

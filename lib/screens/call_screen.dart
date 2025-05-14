@@ -1,10 +1,12 @@
-// screens/call_screen.dart
+// lib/screens/call_screen.dart - Consistent styling
+
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/friend.dart';
 import '../utils/constants.dart';
 import '../utils/text_styles.dart';
+import '../utils/ui_constants.dart';
 
 class CallScreen extends StatefulWidget {
   final Friend friend;
@@ -85,7 +87,7 @@ class _CallScreenState extends State<CallScreen> {
       body: SafeArea(
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.all(24.0),
+            padding: EdgeInsets.all(UIConstants.screenPadding * 1.5),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -95,7 +97,7 @@ class _CallScreenState extends State<CallScreen> {
                   Text(
                     'Initiating call to ${widget.friend.name}...',
                     textAlign: TextAlign.center,
-                    style: AppTextStyles.body,
+                    style: AppTextStyles.bodyText,
                     overflow: TextOverflow.ellipsis,
                     maxLines: 2,
                   ),
@@ -109,7 +111,7 @@ class _CallScreenState extends State<CallScreen> {
                   Text(
                     _errorMessage,
                     textAlign: TextAlign.center,
-                    style: AppTextStyles.body,
+                    style: AppTextStyles.bodyText,
                   ),
                   const SizedBox(height: 24),
                   CupertinoButton.filled(
@@ -142,17 +144,20 @@ class _CallScreenState extends State<CallScreen> {
                   Text(
                     widget.friend.phoneNumber,
                     textAlign: TextAlign.center,
-                    style: AppTextStyles.secondary,
+                    style: AppTextStyles.secondaryText,
                   ),
                   const SizedBox(height: 32),
                   CupertinoButton.filled(
                     onPressed: _initiateCall,
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(CupertinoIcons.phone_fill, size: 16),
-                        SizedBox(width: 8),
-                        Text('Call Now'),
+                        const Icon(CupertinoIcons.phone_fill, size: 16),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Call Now',
+                          style: AppTextStyles.button,
+                        ),
                       ],
                     ),
                   ),
