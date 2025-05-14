@@ -1,13 +1,13 @@
-// lib/widgets/character_components.dart
+// lib/widgets/character_components.dart - No shadows, with patterns
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import '../utils/colors.dart';
 import '../utils/text_styles.dart';
 
-/// A collection of custom UI components with more personality
+/// A collection of custom UI components with personality without shadows
 class CharacterComponents {
-  // Playful button with slight bounce animation
+  // Playful button with pattern background instead of shadow
   static Widget playfulButton({
     required String label,
     required IconData icon,
@@ -16,87 +16,70 @@ class CharacterComponents {
     Color? textColor,
     Color? borderColor,
     double borderRadius = 12,
-    bool showShadow = true,
   }) {
     final bgColor = backgroundColor ?? AppColors.primary;
     final txtColor = textColor ?? Colors.white;
 
-    return TweenAnimationBuilder<double>(
-      tween: Tween<double>(begin: 1.0, end: 1.0),
-      duration: const Duration(milliseconds: 150),
-      builder: (context, scale, child) {
+    return StatefulBuilder(
+      builder: (context, setState) {
+        bool isPressed = false;
         return GestureDetector(
-          onTapDown: (_) => {}, // This will be handled by the StatefulWrapper
-          onTapUp: (_) => {},
-          onTap: onPressed,
-          child: Transform.scale(
-            scale: scale,
-            child: child,
+          onTapDown: (_) {
+            setState(() => isPressed = true);
+          },
+          onTapUp: (_) {
+            setState(() => isPressed = false);
+            onPressed();
+          },
+          onTapCancel: () {
+            setState(() => isPressed = false);
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeInOut,
+            height: 50,
+            transform: isPressed ? Matrix4.translationValues(0, 1, 0) : Matrix4.identity(),
+            decoration: BoxDecoration(
+              // Gradient for character
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  bgColor,
+                  bgColor.withBlue((bgColor.blue + 20).clamp(0, 255))
+                ],
+              ),
+              borderRadius: BorderRadius.circular(borderRadius),
+              border: borderColor != null
+                  ? Border.all(color: borderColor, width: 1.0)
+                  : null,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  color: txtColor,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: AppTextStyles.button.copyWith(
+                    color: txtColor,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
-      child: StatefulBuilder(
-        builder: (context, setState) {
-          bool isPressed = false;
-          return GestureDetector(
-            onTapDown: (_) {
-              setState(() => isPressed = true);
-            },
-            onTapUp: (_) {
-              setState(() => isPressed = false);
-              Future.delayed(const Duration(milliseconds: 50), () {
-                if (onPressed != null) {
-                  onPressed();
-                }
-              });
-            },
-            onTapCancel: () {
-              setState(() => isPressed = false);
-            },
-            child: Container(
-              height: 50,
-              decoration: BoxDecoration(
-                color: bgColor,
-                borderRadius: BorderRadius.circular(borderRadius),
-                border: borderColor != null
-                    ? Border.all(color: borderColor, width: 1.5)
-                    : null,
-                boxShadow: showShadow
-                    ? [
-                  BoxShadow(
-                    color: bgColor.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-                    : null,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    icon,
-                    color: txtColor,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    label,
-                    style: AppTextStyles.button.copyWith(
-                      color: txtColor,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
     );
   }
 
-  // Playful Card with subtle hover effect and optional illustration
+  // Playful Card with pattern background instead of shadow
   static Widget playfulCard({
     required Widget child,
     VoidCallback? onTap,
@@ -105,7 +88,6 @@ class CharacterComponents {
     Color? borderColor,
     double borderRadius = 16,
     Widget? illustration,
-    bool showShadow = true,
   }) {
     final bgColor = backgroundColor ?? AppColors.cardBackground;
     final border = borderColor ?? AppColors.divider;
@@ -130,24 +112,24 @@ class CharacterComponents {
             curve: Curves.easeInOut,
             padding: padding,
             decoration: BoxDecoration(
-              color: bgColor,
+              // Subtle gradient for character
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  bgColor,
+                  bgColor.withOpacity(0.95),
+                ],
+              ),
               borderRadius: BorderRadius.circular(borderRadius),
               border: Border.all(
                 color: border,
-                width: 1.5,
+                width: 1.0,
               ),
-              boxShadow: showShadow
-                  ? [
-                BoxShadow(
-                  color: Colors.black.withOpacity(isPressed ? 0.05 : 0.1),
-                  blurRadius: isPressed ? 4 : 8,
-                  offset: isPressed
-                      ? const Offset(0, 2)
-                      : const Offset(0, 4),
-                ),
-              ]
-                  : null,
             ),
+            transform: isPressed && onTap != null
+                ? Matrix4.translationValues(0, 1, 0)
+                : Matrix4.identity(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -164,13 +146,14 @@ class CharacterComponents {
     );
   }
 
-  // Playful Profile Picture with an animated pulse on tap
+  // Playful Profile Picture with pattern instead of shadow
   static Widget playfulProfilePicture({
     required String imageOrEmoji,
     required bool isEmoji,
     double size = 60,
     Color? backgroundColor,
     VoidCallback? onTap,
+    List<BoxShadow>? boxShadow, // Ignored parameter, kept for compatibility
   }) {
     final bgColor = backgroundColor ?? AppColors.primaryLight;
 
@@ -189,41 +172,38 @@ class CharacterComponents {
           onTapCancel: onTap != null ? () {
             setState(() => isPressed = false);
           } : null,
-          child: TweenAnimationBuilder<double>(
-            tween: Tween<double>(begin: 1.0, end: isPressed ? 0.95 : 1.0),
+          child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
-            builder: (context, value, child) {
-              return Transform.scale(
-                scale: value,
-                child: child,
-              );
-            },
-            child: Container(
-              width: size,
-              height: size,
-              decoration: BoxDecoration(
-                color: bgColor,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withOpacity(0.2),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              // Gradient for character
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  bgColor.withOpacity(0.9),
+                  bgColor.withOpacity(0.6),
                 ],
               ),
-              child: isEmoji
-                  ? Center(
-                child: Text(
-                  imageOrEmoji,
-                  style: TextStyle(fontSize: size * 0.5),
-                ),
-              )
-                  : ClipOval(
-                child: Image.file(
-                  File(imageOrEmoji),
-                  fit: BoxFit.cover,
-                ),
+              shape: BoxShape.circle,
+              border: Border.all(
+                  color: bgColor.withOpacity(0.3),
+                  width: 1.5
+              ),
+            ),
+            transform: isPressed ? Matrix4.translationValues(0, 1, 0) : Matrix4.identity(),
+            child: isEmoji
+                ? Center(
+              child: Text(
+                imageOrEmoji,
+                style: TextStyle(fontSize: size * 0.5),
+              ),
+            )
+                : ClipOval(
+              child: Image.file(
+                File(imageOrEmoji),
+                fit: BoxFit.cover,
               ),
             ),
           ),
@@ -232,31 +212,27 @@ class CharacterComponents {
     );
   }
 
-  // Subtle animation wrapper that adds a gentle floating effect
+  // Subtle animation wrapper with refined parameters
   static Widget floatingElement({
     required Widget child,
     Duration period = const Duration(seconds: 2),
     double yOffset = 4,
   }) {
-    return StatefulBuilder(
-      builder: (context, setState) {
-        return TweenAnimationBuilder<double>(
-          tween: Tween<double>(begin: -1, end: 1),
-          duration: period,
-          curve: Curves.easeInOut,
-          builder: (context, value, child) {
-            return Transform.translate(
-              offset: Offset(0, value * yOffset / 2),
-              child: child,
-            );
-          },
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: -1, end: 1),
+      duration: period,
+      curve: Curves.easeInOut,
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(0, value * yOffset / 2),
           child: child,
         );
       },
+      child: child,
     );
   }
 
-  // Progress indicator with character (curved ends, animated)
+  // Progress indicator with pattern instead of shadow
   static Widget playfulProgressIndicator({
     required double value,
     Color? backgroundColor,
@@ -283,8 +259,16 @@ class CharacterComponents {
                     : Duration.zero,
                 curve: Curves.easeInOut,
                 width: constraints.maxWidth * value.clamp(0.0, 1.0),
+                // Gradient for progress indicator
                 decoration: BoxDecoration(
-                  color: pgColor,
+                  gradient: LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      pgColor,
+                      pgColor.withOpacity(0.8),
+                    ],
+                  ),
                   borderRadius: BorderRadius.circular(height / 2),
                 ),
               ),
@@ -295,7 +279,7 @@ class CharacterComponents {
     );
   }
 
-  // Tag/Pill with playful bounce on tap
+  // Tag/Pill with pattern instead of shadow
   static Widget playfulTag({
     required String label,
     IconData? icon,
@@ -307,68 +291,68 @@ class CharacterComponents {
     final bgColor = backgroundColor ?? AppColors.primaryLight;
     final txtColor = textColor ?? AppColors.primary;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: TweenAnimationBuilder<double>(
-        tween: Tween<double>(begin: 1.0, end: 1.0),
-        duration: const Duration(milliseconds: 150),
-        builder: (context, scale, child) {
-          return Transform.scale(
-            scale: scale,
-            child: child,
-          );
-        },
-        child: StatefulBuilder(
-          builder: (context, setState) {
-            bool isPressed = false;
+    return StatefulBuilder(
+      builder: (context, setState) {
+        bool isPressed = false;
 
-            return GestureDetector(
-              onTapDown: onTap != null ? (_) {
-                setState(() => isPressed = true);
-              } : null,
-              onTapUp: onTap != null ? (_) {
-                setState(() => isPressed = false);
-                onTap();
-              } : null,
-              onTapCancel: onTap != null ? () {
-                setState(() => isPressed = false);
-              } : null,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 100),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: bgColor,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (icon != null) ...[
-                      Icon(
-                        icon,
-                        color: txtColor,
-                        size: fontSize + 2,
-                      ),
-                      const SizedBox(width: 6),
-                    ],
-                    Text(
-                      label,
-                      style: TextStyle(
-                        color: txtColor,
-                        fontSize: fontSize,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
+        return GestureDetector(
+          onTapDown: onTap != null ? (_) {
+            setState(() => isPressed = true);
+          } : null,
+          onTapUp: onTap != null ? (_) {
+            setState(() => isPressed = false);
+            onTap();
+          } : null,
+          onTapCancel: onTap != null ? () {
+            setState(() => isPressed = false);
+          } : null,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 6,
+            ),
+            decoration: BoxDecoration(
+              // Gradient background for character
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  bgColor.withOpacity(1.0),
+                  bgColor.withOpacity(0.8),
+                ],
               ),
-            );
-          },
-        ),
-      ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: bgColor.withOpacity(0.5),
+                width: 1,
+              ),
+            ),
+            transform: isPressed ? Matrix4.translationValues(0, 1, 0) : Matrix4.identity(),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (icon != null) ...[
+                  Icon(
+                    icon,
+                    color: txtColor,
+                    size: fontSize + 2,
+                  ),
+                  const SizedBox(width: 6),
+                ],
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: txtColor,
+                    fontSize: fontSize,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -380,24 +364,51 @@ class CharacterComponents {
     final hour = DateTime.now().hour;
     String greeting;
     IconData icon;
+    Color iconBgColor;
+    Color iconColor;
 
     if (hour < 12) {
       greeting = "Good Morning";
       icon = CupertinoIcons.sun_max_fill;
+      iconBgColor = AppColors.joyful.withOpacity(0.2);
+      iconColor = AppColors.joyful;
     } else if (hour < 17) {
       greeting = "Good Afternoon";
       icon = CupertinoIcons.sun_min_fill;
+      iconBgColor = AppColors.accent.withOpacity(0.2);
+      iconColor = AppColors.accent;
     } else {
       greeting = "Good Evening";
       icon = CupertinoIcons.moon_stars_fill;
+      iconBgColor = AppColors.calm.withOpacity(0.2);
+      iconColor = AppColors.calm;
     }
 
     return Row(
       children: [
-        Icon(
-          icon,
-          color: AppColors.accent,
-          size: 24,
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            // Gradient background for icon
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                iconBgColor,
+                iconBgColor.withOpacity(0.7),
+              ],
+            ),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: iconColor.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: Icon(
+            icon,
+            color: iconColor,
+            size: 18,
+          ),
         ),
         const SizedBox(width: 8),
         Text(
@@ -410,7 +421,7 @@ class CharacterComponents {
     );
   }
 
-  // Mood Icons with personality
+  // Mood Icons with pattern instead of shadow
   static Widget moodIcon({
     required String mood,
     double size = 40,
@@ -448,8 +459,20 @@ class CharacterComponents {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
+        // Gradient background for character
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            color.withOpacity(0.2),
+            color.withOpacity(0.1),
+          ],
+        ),
         shape: BoxShape.circle,
+        border: Border.all(
+          color: color.withOpacity(0.3),
+          width: 1,
+        ),
       ),
       child: Center(
         child: Icon(
@@ -461,7 +484,7 @@ class CharacterComponents {
     );
   }
 
-  // Badge with bounce animation
+  // Badge with pattern instead of shadow
   static Widget bouncingBadge({
     required String text,
     Color? backgroundColor,
@@ -471,17 +494,29 @@ class CharacterComponents {
     final txtColor = textColor ?? Colors.white;
 
     return TweenAnimationBuilder<double>(
-      tween: Tween<double>(begin: 0.8, end: 1.0),
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.elasticOut,
+      tween: Tween<double>(begin: 0.9, end: 1.0),
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOut,
       builder: (context, value, child) {
         return Transform.scale(
           scale: value,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: bgColor,
+              // Gradient background for character
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  bgColor,
+                  bgColor.withOpacity(0.9),
+                ],
+              ),
               borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.2),
+                width: 1,
+              ),
             ),
             child: Text(
               text,

@@ -1,4 +1,4 @@
-// lib/theme/app_theme.dart
+// lib/theme/app_theme.dart - Refined version
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import '../utils/colors.dart';
@@ -65,22 +65,25 @@ class AppTheme {
       elevation: 0,
       iconTheme: IconThemeData(
         color: AppColors.primary,
-        size: 22,
+        size: 20, // Slightly smaller for iOS feel
       ),
       titleTextStyle: AppTextStyles.navTitle,
       toolbarHeight: 44, // iOS navigation bar height
+      centerTitle: true, // iOS standard
     ),
 
-    // Button styling
+    // Button styling - Cupertino-like
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
-        elevation: 0,
+        elevation: 0, // Flat iOS style
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        // Minimum size for better touch targets
+        minimumSize: const Size(44, 44),
       ),
     ),
 
@@ -91,14 +94,14 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       ),
     ),
 
     // Icon theme
     iconTheme: IconThemeData(
       color: AppColors.primary,
-      size: 24,
+      size: 22, // Slightly smaller for iOS
     ),
 
     // Card theme - rounded corners
@@ -110,23 +113,79 @@ class AppTheme {
         side: BorderSide(color: AppColors.divider, width: 1),
       ),
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
+      // Subtle shadow
+      shadowColor: Colors.black.withOpacity(0.04),
     ),
 
     // Dialog theme - rounded corners
     dialogTheme: DialogTheme(
       backgroundColor: AppColors.cardBackground,
-      elevation: 4,
+      elevation: 0, // No elevation - will use shadow
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
+      shadowColor: Colors.black.withOpacity(0.1),
     ),
 
     // Bottom sheet theme
     bottomSheetTheme: BottomSheetThemeData(
       backgroundColor: AppColors.cardBackground,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
+      // Larger modal radius for iOS feel
+      modalBackgroundColor: AppColors.cardBackground,
+      modalElevation: 0, // No elevation - will use shadow in implementation
+    ),
+
+    // Input decoration theme
+    inputDecorationTheme: InputDecorationTheme(
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: AppColors.divider),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: AppColors.divider),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: AppColors.primary),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: AppColors.error),
+      ),
+      // Make labels a bit smaller and lighter - iOS style
+      labelStyle: TextStyle(
+        color: AppColors.textSecondary,
+        fontSize: 14,
+      ),
+      hintStyle: TextStyle(
+        color: AppColors.textSecondary.withOpacity(0.7),
+        fontSize: 14,
+      ),
+      // Add more padding
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 12,
+      ),
+    ),
+
+    // Switch theme
+    switchTheme: SwitchThemeData(
+      thumbColor: MaterialStateProperty.resolveWith((states) {
+        if (states.contains(MaterialState.selected)) {
+          return Colors.white;
+        }
+        return Colors.white;
+      }),
+      trackColor: MaterialStateProperty.resolveWith((states) {
+        if (states.contains(MaterialState.selected)) {
+          return AppColors.primary;
+        }
+        return Colors.grey.withOpacity(0.3);
+      }),
     ),
 
     // Color scheme
@@ -153,13 +212,77 @@ class AppTheme {
       textTheme: CupertinoTextThemeData(
         primaryColor: AppColors.primary,
         textStyle: AppTextStyles.bodyText,
-        navTitleTextStyle: AppTextStyles.navTitle,
-        navActionTextStyle: AppTextStyles.button.copyWith(color: AppColors.primary),
-        navLargeTitleTextStyle: AppTextStyles.navTitle,
-        actionTextStyle: AppTextStyles.button.copyWith(color: AppColors.primary),
+        navTitleTextStyle: AppTextStyles.navTitle.copyWith(
+          fontSize: 17, // iOS standard
+          fontWeight: FontWeight.w600,
+        ),
+        navActionTextStyle: AppTextStyles.button.copyWith(
+          color: AppColors.primary,
+          fontSize: 16,
+        ),
+        navLargeTitleTextStyle: AppTextStyles.title.copyWith(
+          fontSize: 28,
+          fontWeight: FontWeight.w700,
+        ),
+        actionTextStyle: AppTextStyles.button.copyWith(
+          color: AppColors.primary,
+          fontSize: 16,
+        ),
+        tabLabelTextStyle: AppTextStyles.caption.copyWith(
+          fontSize: 10,
+        ),
+        // Adding more iOS-specific styles
+        pickerTextStyle: AppTextStyles.bodyText.copyWith(
+          fontSize: 16,
+        ),
       ),
       barBackgroundColor: AppColors.background,
       scaffoldBackgroundColor: AppColors.background,
+    );
+  }
+
+  // Consistent text field styling for the entire app
+  static BoxDecoration get textFieldDecoration {
+    return BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(
+        color: AppColors.divider,
+        width: 1,
+      ),
+    );
+  }
+
+  // Consistent button styling
+  static BoxDecoration get buttonDecoration {
+    return BoxDecoration(
+      color: AppColors.primary,
+      borderRadius: BorderRadius.circular(12),
+      boxShadow: AppColors.subtleShadow,
+    );
+  }
+
+  // Cupertino button styling
+  static ButtonStyle get cupertinoButtonStyle {
+    return ButtonStyle(
+      backgroundColor: MaterialStateProperty.resolveWith((states) {
+        if (states.contains(MaterialState.pressed)) {
+          return AppColors.primaryButtonPressed;
+        }
+        return AppColors.primary;
+      }),
+      shape: MaterialStateProperty.all(
+        RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      // No elevation for iOS feel
+      elevation: MaterialStateProperty.all(0),
+      // Minimum size
+      minimumSize: MaterialStateProperty.all(const Size(44, 44)),
+      padding: MaterialStateProperty.all(
+        const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      ),
     );
   }
 }

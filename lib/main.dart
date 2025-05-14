@@ -1,9 +1,10 @@
-// lib/main_new.dart
+// lib/main.dart - Fixed for localization
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+//import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
-import 'screens/home_screen_new.dart';
+import 'screens/home_screen.dart';
 import 'services/notification_service.dart';
 import 'models/friend.dart';
 import 'services/storage_service.dart';
@@ -16,7 +17,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'services/foreground_service.dart';
 import 'screens/call_screen.dart';
-import 'screens/message_screen_new.dart';
+import 'screens/message_screen.dart';
 import 'screens/manage_messages_screen.dart';
 
 // Global key for navigation from notification callbacks
@@ -53,19 +54,19 @@ void main() async {
           ),
         ),
       ],
-      child: const AlongsideAppNew(),
+      child: const AlongsideApp(),
     ),
   );
 }
 
-class AlongsideAppNew extends StatefulWidget {
-  const AlongsideAppNew({Key? key}) : super(key: key);
+class AlongsideApp extends StatefulWidget {
+  const AlongsideApp({Key? key}) : super(key: key);
 
   @override
-  State<AlongsideAppNew> createState() => _AlongsideAppNewState();
+  State<AlongsideApp> createState() => _AlongsideAppState();
 }
 
-class _AlongsideAppNewState extends State<AlongsideAppNew> with WidgetsBindingObserver {
+class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver {
   // Static flag to prevent multiple dialog displays
   bool _skipNextPersistentRepost = false;
   static bool isShowingDialog = false;
@@ -133,84 +134,26 @@ class _AlongsideAppNewState extends State<AlongsideAppNew> with WidgetsBindingOb
     });
   }
 
-  // Show the message options dialog with variable height messages
-  Future<void> _showFullMessageOptionsDialog(BuildContext context, Friend friend) async {
-    final provider = Provider.of<FriendsProvider>(context, listen: false);
-    final customMessages = await provider.storageService.getCustomMessages();
-    final allMessages = [...AppConstants.presetMessages, ...customMessages];
-
-    // Get screen width for fixed message width
-    final screenWidth = MediaQuery.of(context).size.width;
-    final messageWidth = screenWidth - 32; // Fixed width for all messages
-
-    // Navigate to the message screen instead of showing a dialog
-    Navigator.push(
-      context,
-      CupertinoPageRoute(
-        builder: (context) => MessageScreenNew(friend: friend),
-      ),
-    );
-  }
-
-  void _sendMessage(BuildContext context, Friend friend, String message) async {
-    final phoneNumber = friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
-    try {
-      final smsUri = Uri.parse('sms:$phoneNumber?body=${Uri.encodeComponent(message)}');
-      bool launched = await launchUrl(
-        smsUri,
-        mode: LaunchMode.externalApplication,
-      );
-      if (!launched) {
-        final telUri = Uri.parse('tel:$phoneNumber');
-        await launchUrl(
-          telUri,
-          mode: LaunchMode.externalApplication,
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        showCupertinoDialog(
-          context: context,
-          builder: (context) => CupertinoAlertDialog(
-            title: Text('Error', style: AppTextStyles.dialogTitle),
-            content: Text(
-              'Unable to open messaging app. Please try again later.',
-              style: AppTextStyles.dialogContent,
-            ),
-            actions: [
-              CupertinoDialogAction(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
-      }
-    }
-  }
-
-  // Page transition builder for iOS-style transitions with character
-  PageTransitionsBuilder _buildPageTransitions() {
-    return CupertinoPageTransitionsBuilder();
-  }
-
   @override
   Widget build(BuildContext context) {
-    // We'll use MaterialApp for compatibility but with Cupertino styling
+    // Use MaterialApp with Cupertino styling for better localization support
     return MaterialApp(
       title: 'Alongside',
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme.copyWith(
-        pageTransitionsTheme: PageTransitionsTheme(
-          builders: {
-            TargetPlatform.iOS: _buildPageTransitions(),
-            TargetPlatform.android: _buildPageTransitions(),
-          },
-        ),
-      ),
+      theme: AppTheme.lightTheme,
+      // Add localization support
+      localizationsDelegates: const [
+        //GlobalMaterialLocalizations.delegate,
+        //GlobalWidgetsLocalizations.delegate,
+        //GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en', ''), // English
+      ],
       // Define routes, including the updated notification handler
       routes: {
+        '/': (context) => const WithForegroundTask(child: HomeScreenNew()),
         '/notification': (ctx) {
           final args = ModalRoute.of(ctx)!.settings.arguments as Map<String, String>;
           final friendId = args['id']!;
@@ -276,9 +219,6 @@ class _AlongsideAppNewState extends State<AlongsideAppNew> with WidgetsBindingOb
           return CallScreen(friend: friend);
         },
       },
-      home: WithForegroundTask(
-        child: const HomeScreenNew(),
-      ),
     );
   }
 }

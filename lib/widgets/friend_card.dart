@@ -1,4 +1,4 @@
-// lib/widgets/friend_card_new.dart
+// lib/widgets/friend_card_new.dart - No shadow version with color patterns
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -100,373 +100,432 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween<double>(begin: 1.0, end: _isPressed ? 0.98 : 1.0),
-      duration: const Duration(milliseconds: 100),
-      curve: Curves.easeInOut,
-      builder: (context, scale, child) {
-        return Transform.scale(
-          scale: scale,
-          child: child,
-        );
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: _getBackgroundColor().withOpacity(0.5),
-              blurRadius: 15,
-              offset: const Offset(0, 4),
-              spreadRadius: 1,
-            ),
+    final cardBgColor = _getBackgroundColor();
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      transform: _isPressed
+          ? Matrix4.translationValues(0, 1, 0)
+          : Matrix4.identity(),
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        // Gradient background instead of shadow for character
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            cardBgColor.withOpacity(0.8),
+            Colors.white,
           ],
-          border: Border.all(
-            color: _getBackgroundColor().withOpacity(0.8),
-            width: 2,
-          ),
+          stops: const [0.0, 0.4],
         ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTapDown: (_) => setState(() => _isPressed = true),
-            onTapUp: (_) {
-              setState(() => _isPressed = false);
-              _toggleExpand();
-            },
-            onTapCancel: () => setState(() => _isPressed = false),
-            splashColor: Colors.transparent,
-            highlightColor: Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Main card content (always visible)
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      _buildProfileImage(),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Friend name row with reminder badge
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    widget.friend.name,
-                                    style: AppTextStyles.cardTitle.copyWith(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: cardBgColor.withOpacity(0.6),
+          width: 1.5,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTapDown: (_) => setState(() => _isPressed = true),
+          onTapUp: (_) {
+            setState(() => _isPressed = false);
+            _toggleExpand();
+          },
+          onTapCancel: () => setState(() => _isPressed = false),
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Main card content (always visible)
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    _buildProfileImage(),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Friend name row with reminder badge
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  widget.friend.name,
+                                  style: AppTextStyles.cardTitle.copyWith(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textPrimary,
                                   ),
-                                ),
-                                if (widget.friend.reminderDays > 0)
-                                  CharacterComponents.bouncingBadge(
-                                    text: '${widget.friend.reminderDays}d',
-                                    backgroundColor: AppColors.accent,
-                                    textColor: Colors.white,
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            // Alongside them in section
-                            if (widget.friend.helpingWith != null &&
-                                widget.friend.helpingWith!.isNotEmpty) ...[
-                              Text(
-                                'Alongside them in:',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.primary,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              Text(
-                                widget.friend.helpingWith!,
-                                style: AppTextStyles.bodyText.copyWith(
-                                  color: AppColors.textPrimary,
+                              if (widget.friend.reminderDays > 0)
+                                CharacterComponents.bouncingBadge(
+                                  text: '${widget.friend.reminderDays}d',
+                                  backgroundColor: AppColors.accent,
+                                  textColor: Colors.white,
                                 ),
-                              ),
                             ],
+                          ),
+                          const SizedBox(height: 4),
+                          // Alongside them in section
+                          if (widget.friend.helpingWith != null &&
+                              widget.friend.helpingWith!.isNotEmpty) ...[
+                            Text(
+                              'Alongside them in:',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                            Text(
+                              widget.friend.helpingWith!,
+                              style: AppTextStyles.bodyText.copyWith(
+                                color: AppColors.textPrimary,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Chevron icon that rotates when expanded
+                    TweenAnimationBuilder<double>(
+                      tween: Tween<double>(
+                        begin: 0.0,
+                        end: widget.isExpanded ? 0.5 : 0.0,
+                      ),
+                      duration: const Duration(milliseconds: 250),
+                      builder: (context, value, child) {
+                        return Transform.rotate(
+                          angle: value * 3.14, // Multiply by π for half rotation
+                          child: Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: cardBgColor.withOpacity(0.3),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              CupertinoIcons.chevron_down,
+                              color: AppColors.textPrimary,
+                              size: 14,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+
+              // Expandable details section
+              AnimatedBuilder(
+                animation: _controller,
+                builder: (context, child) {
+                  return ClipRect(
+                    child: Align(
+                      heightFactor: _expandAnimation.value,
+                      child: child,
+                    ),
+                  );
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Separator line
+                    Container(
+                      height: 1,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.transparent,
+                            cardBgColor.withOpacity(0.5),
+                            Colors.transparent,
                           ],
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      // Chevron icon that rotates when expanded
-                      TweenAnimationBuilder<double>(
-                        tween: Tween<double>(
-                          begin: 0.0,
-                          end: widget.isExpanded ? 0.5 : 0.0,
-                        ),
-                        duration: const Duration(milliseconds: 250),
-                        builder: (context, value, child) {
-                          return Transform.rotate(
-                            angle: value * 3.14, // Multiply by π for half rotation
-                            child: Container(
-                              width: 32,
-                              height: 32,
-                              decoration: BoxDecoration(
-                                color: _getBackgroundColor().withOpacity(0.3),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                CupertinoIcons.chevron_down,
-                                color: AppColors.textPrimary,
-                                size: 16,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
+                      margin: const EdgeInsets.symmetric(horizontal: 16),
+                    ),
 
-                // Expandable details section
-                AnimatedBuilder(
-                  animation: _controller,
-                  builder: (context, child) {
-                    return ClipRect(
-                      child: Align(
-                        heightFactor: _expandAnimation.value,
-                        child: child,
-                      ),
-                    );
-                  },
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Separator line
-                      Container(
-                        height: 1,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.transparent,
-                              _getBackgroundColor().withOpacity(0.5),
-                              Colors.transparent,
+                    // "They're alongside you in:" section
+                    if (widget.friend.theyHelpingWith != null &&
+                        widget.friend.theyHelpingWith!.isNotEmpty) ...[
+                      Padding(
+                        padding: const EdgeInsets.only(left: 16, right: 16, top: 16),
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            // Use the same color for both alongside sections
+                            color: AppColors.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppColors.primary.withOpacity(0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withOpacity(0.2),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  CupertinoIcons.person_2_fill,
+                                  size: 16,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'They\'re alongside you in:',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                    Text(
+                                      widget.friend.theyHelpingWith!,
+                                      style: AppTextStyles.bodyText.copyWith(
+                                        color: AppColors.textPrimary,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ],
                           ),
                         ),
-                        margin: const EdgeInsets.symmetric(horizontal: 16),
                       ),
+                    ],
 
-                      // "They're alongside you in:" section
-                      if (widget.friend.theyHelpingWith != null &&
-                          widget.friend.theyHelpingWith!.isNotEmpty) ...[
-                        Padding(
-                          padding: const EdgeInsets.only(left: 16, right: 16, top: 16),
-                          child: CharacterComponents.playfulCard(
-                            backgroundColor: _getBackgroundColor().withOpacity(0.2),
-                            borderColor: _getBackgroundColor().withOpacity(0.5),
-                            borderRadius:
-                            12,
-                            padding: const EdgeInsets.all(12),
-                            showShadow: false,
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  width: 32,
-                                  height: 32,
-                                  decoration: BoxDecoration(
-                                    color: _getBackgroundColor().withOpacity(0.6),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    CupertinoIcons.person_2_fill,
-                                    size: 16,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'They\'re alongside you in:',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                          color: _getBackgroundColor().withOpacity(1.0),
-                                        ),
-                                      ),
-                                      Text(
-                                        widget.friend.theyHelpingWith!,
-                                        style: AppTextStyles.bodyText.copyWith(
-                                          color: AppColors.textPrimary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-
-                      // Reminder section if reminder is set
-                      if (widget.friend.reminderDays > 0) ...[
-                        Padding(
-                          padding: const EdgeInsets.only(left: 16, right: 16, top: 16),
-                          child: CharacterComponents.playfulCard(
-                            backgroundColor: AppColors.accentLight,
-                            borderColor: AppColors.accent.withOpacity(0.5),
-                            borderRadius: 12,
-                            padding: const EdgeInsets.all(12),
-                            showShadow: false,
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  width: 32,
-                                  height: 32,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.accent.withOpacity(0.6),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    CupertinoIcons.bell_fill,
-                                    size: 16,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Reminder every ${widget.friend.reminderDays} ${widget.friend.reminderDays == 1 ? 'day' : 'days'}',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.accent,
-                                        ),
-                                      ),
-                                      Text(
-                                        'Next: 5/14/2025 at 6:32 PM', // This should be dynamic
-                                        style: AppTextStyles.bodyText.copyWith(
-                                          color: AppColors.textPrimary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-
-                      // Action buttons section
+                    // Reminder section if reminder is set
+                    if (widget.friend.reminderDays > 0) ...[
                       Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Row(
-                          children: [
-                            // Message button
-                            Expanded(
-                              child: CharacterComponents.playfulButton(
-                                label: 'Message',
-                                icon: CupertinoIcons.bubble_left_fill,
-                                backgroundColor: AppColors.primary,
-                                onPressed: () => _showMessageOptions(context),
+                        padding: const EdgeInsets.only(left: 16, right: 16, top: 16),
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.accent.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppColors.accent.withOpacity(0.3),
+                              width: 1,
+                            ),
+                            // Subtle dotted pattern for visual interest without shadows
+                            backgroundBlendMode: BlendMode.overlay,
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color: AppColors.accent.withOpacity(0.2),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  CupertinoIcons.bell_fill,
+                                  size: 16,
+                                  color: AppColors.accent,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Reminder every ${widget.friend.reminderDays} ${widget.friend.reminderDays == 1 ? 'day' : 'days'}',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.accent,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Next: 5/14/2025 at 6:32 PM', // This should be dynamic
+                                      style: AppTextStyles.bodyText.copyWith(
+                                        color: AppColors.textPrimary,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+
+                    // Action buttons section with improved styling
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          // Message button - CupertinoButton for better iOS feeling
+                          Expanded(
+                            child: CupertinoButton(
+                              padding: EdgeInsets.zero,
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(12),
+                              onPressed: () => _showMessageOptions(context),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(
+                                    CupertinoIcons.bubble_left_fill,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Message',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            // Call button
-                            Expanded(
-                              child: CharacterComponents.playfulButton(
-                                label: 'Call',
-                                icon: CupertinoIcons.phone_fill,
-                                backgroundColor: Colors.white,
-                                textColor: AppColors.primary,
-                                borderColor: AppColors.divider,
-                                onPressed: () => _callFriend(context),
+                          ),
+                          const SizedBox(width: 12),
+                          // Call button
+                          Expanded(
+                            child: CupertinoButton(
+                              padding: EdgeInsets.zero,
+                              onPressed: () => _callFriend(context),
+                              child: Container(
+                                height: 48, // Match primary button height
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: AppColors.divider,
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      CupertinoIcons.phone_fill,
+                                      color: AppColors.primary,
+                                      size: 16,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Call',
+                                      style: TextStyle(
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            // Edit button
-                            Container(
-                              width: 48,
-                              height: 48,
+                          ),
+                          const SizedBox(width: 12),
+                          // Edit button with consistent styling
+                          CupertinoButton(
+                            padding: EdgeInsets.zero,
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                CupertinoPageRoute(
+                                  builder: (context) => AddFriendScreen(friend: widget.friend),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              width: 44,
+                              height: 44,
                               decoration: BoxDecoration(
                                 color: AppColors.tertiaryLight,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: AppColors.tertiary.withOpacity(0.5),
-                                  width: 1.5,
+                                  color: AppColors.tertiary.withOpacity(0.3),
+                                  width: 1,
                                 ),
                               ),
-                              child: IconButton(
-                                icon: Icon(
-                                  CupertinoIcons.pencil,
-                                  size: 20,
-                                  color: AppColors.tertiary,
-                                ),
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    CupertinoPageRoute(
-                                      builder: (context) => AddFriendScreen(friend: widget.friend),
-                                    ),
-                                  );
-                                },
-                                padding: EdgeInsets.zero,
+                              child: Icon(
+                                CupertinoIcons.pencil,
+                                size: 18,
+                                color: AppColors.tertiary,
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  // Create the profile image with consistent size and playful styling
+  // Create the profile image with consistent size and patterns instead of shadows
   Widget _buildProfileImage() {
     // Different background colors based on the friend's index
     final colorIndex = widget.index % AppColors.extendedPalette.length;
-    final backgroundColor = AppColors.extendedPalette[colorIndex].withOpacity(0.2);
+    final backgroundColor = AppColors.extendedPalette[colorIndex].withOpacity(0.15);
+    final patternColor = AppColors.extendedPalette[colorIndex].withOpacity(0.1);
 
     return CharacterComponents.floatingElement(
-      yOffset: 3,
+      yOffset: 2, // Subtle movement
       period: const Duration(seconds: 3),
       child: Container(
-        width: 64,
-        height: 64,
+        width: 60,
+        height: 60,
         decoration: BoxDecoration(
-          color: backgroundColor,
+          // Gradient background instead of shadow
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              backgroundColor.withOpacity(0.8),
+              backgroundColor.withOpacity(0.3),
+            ],
+          ),
           shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.extendedPalette[colorIndex].withOpacity(0.3),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          border: Border.all(
+            color: AppColors.extendedPalette[colorIndex].withOpacity(0.3),
+            width: 1.5,
+          ),
         ),
         child: widget.friend.isEmoji
             ? Center(
           child: Text(
             widget.friend.profileImage,
-            style: const TextStyle(fontSize: 34),
+            style: const TextStyle(fontSize: 30),
           ),
         )
             : ClipOval(
@@ -479,7 +538,7 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
     );
   }
 
-  // Message options popup with colorful, playful messaging
+  // Message options popup with patterns instead of shadows
   void _showMessageOptions(BuildContext context) async {
     final provider = Provider.of<FriendsProvider>(context, listen: false);
     final customMessages = await provider.storageService.getCustomMessages();
@@ -495,42 +554,22 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -4),
-            ),
-          ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             // Handle at top with animation
-            TweenAnimationBuilder<double>(
-              tween: Tween<double>(begin: 0.0, end: 1.0),
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOutQuint,
-              builder: (context, value, child) {
-                return Opacity(
-                  opacity: value,
-                  child: Transform.translate(
-                    offset: Offset(0, (1 - value) * 10),
-                    child: Container(
-                      margin: const EdgeInsets.only(top: 12, bottom: 8),
-                      width: 40,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: AppColors.divider,
-                        borderRadius: BorderRadius.circular(2.5),
-                      ),
-                    ),
-                  ),
-                );
-              },
+            Container(
+              margin: const EdgeInsets.only(top: 12, bottom: 8),
+              width: 40,
+              height: 5,
+              decoration: BoxDecoration(
+                color: AppColors.divider,
+                borderRadius: BorderRadius.circular(2.5),
+              ),
             ),
 
-            // Header with gradient background
+            // Header with gradient background for character
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
@@ -547,49 +586,50 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const SizedBox(width: 24),
+                  const SizedBox(width: 32),
                   Expanded(
                     child: Center(
                       child: Text(
                         'Message ${widget.friend.name}',
                         style: AppTextStyles.navTitle.copyWith(
                           color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 17,
                         ),
                       ),
                     ),
                   ),
                   // Settings button
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.3),
-                      shape: BoxShape.circle,
-                    ),
-                    child: IconButton(
-                      padding: EdgeInsets.zero,
-                      icon: const Icon(
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
                         CupertinoIcons.gear,
                         size: 16,
-                        color: Colors.white,
+                        color: AppColors.primary,
                       ),
-                      onPressed: () {
-                        Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const ManageMessagesScreen(),
-                          ),
-                        );
-                      },
                     ),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        CupertinoPageRoute(
+                          builder: (context) => const ManageMessagesScreen(),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
             ),
 
-            // Messages list with staggered animation
+            // Messages list
             ConstrainedBox(
               constraints: BoxConstraints(
                 maxHeight: MediaQuery.of(context).size.height * 0.6,
@@ -599,23 +639,41 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
                 shrinkWrap: true,
                 itemCount: allMessages.length + 1,
                 itemBuilder: (context, index) {
-                  // Add staggered animation
-                  return TweenAnimationBuilder<double>(
-                    tween: Tween<double>(begin: 0.0, end: 1.0),
-                    duration: Duration(milliseconds: 300 + (index * 50)),
-                    curve: Curves.easeOutQuint,
-                    builder: (context, value, child) {
-                      return Opacity(
-                        opacity: value,
-                        child: Transform.translate(
-                          offset: Offset(0, (1 - value) * 20),
-                          child: child,
+                  if (index == allMessages.length) {
+                    return _buildCreateMessageButton(context);
+                  }
+
+                  final message = allMessages[index];
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _sendMessage(context, message);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                        decoration: BoxDecoration(
+                          // Use pattern instead of shadow
+                          color: index % 2 == 0
+                              ? Colors.white
+                              : AppColors.background,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: AppColors.divider,
+                            width: 1,
+                          ),
                         ),
-                      );
-                    },
-                    child: index == allMessages.length
-                        ? _buildCreateMessageButton(context)
-                        : _buildMessageOption(context, allMessages[index], index),
+                        child: Text(
+                          message,
+                          style: AppTextStyles.bodyText.copyWith(
+                            color: AppColors.textPrimary,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ),
+                    ),
                   );
                 },
               ),
@@ -626,45 +684,47 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
     );
   }
 
-  // Create message button with playful style
+  // Create message button with patterns instead of shadows
   Widget _buildCreateMessageButton(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(top: 8),
-      child: InkWell(
-        onTap: () {
+      child: CupertinoButton(
+        padding: EdgeInsets.zero,
+        onPressed: () {
           Navigator.pop(context);
           _showCustomMessageDialog(context);
         },
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
           decoration: BoxDecoration(
+            // Gradient for character
             gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
               colors: [
-                AppColors.primary.withOpacity(0.2),
-                AppColors.secondary.withOpacity(0.2),
+                AppColors.primary.withOpacity(0.1),
+                AppColors.primary.withOpacity(0.05),
               ],
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
             ),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: AppColors.primary.withOpacity(0.3),
-              width: 1.5,
+              color: AppColors.primary.withOpacity(0.2),
+              width: 1,
             ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: 32,
-                height: 32,
+                width: 28,
+                height: 28,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.2),
+                  color: AppColors.primary.withOpacity(0.15),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   CupertinoIcons.add,
-                  size: 18,
+                  size: 16,
                   color: AppColors.primary,
                 ),
               ),
@@ -672,7 +732,7 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
               Text(
                 'Create custom message',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 15,
                   fontWeight: FontWeight.w600,
                   color: AppColors.primary,
                 ),
@@ -684,48 +744,7 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
     );
   }
 
-  // Message option with playful style
-  Widget _buildMessageOption(BuildContext context, String message, int index) {
-    // Get different colors for each message to add visual interest
-    final colorIndex = index % AppColors.extendedPalette.length;
-    final color = AppColors.extendedPalette[colorIndex];
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: InkWell(
-        onTap: () {
-          Navigator.pop(context);
-          _sendMessage(context, message);
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: color.withOpacity(0.3),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: color.withOpacity(0.1),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Text(
-            message,
-            style: AppTextStyles.bodyText.copyWith(
-              color: AppColors.textPrimary,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // Display a custom message dialog with character
+  // Display a custom message dialog with patterns instead of shadows
   void _showCustomMessageDialog(BuildContext context) {
     final textController = TextEditingController();
 
@@ -736,17 +755,17 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
           'Create Message',
           style: AppTextStyles.dialogTitle.copyWith(
             color: AppColors.primary,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
           ),
         ),
         content: Padding(
           padding: const EdgeInsets.only(top: 16),
           child: Column(
             children: [
-              // Little character or emoji above the input
+              // Little emoji above the input
               Container(
                 margin: const EdgeInsets.only(bottom: 12),
-                child: Text(
+                child: const Text(
                   '✍️',
                   style: TextStyle(fontSize: 24),
                 ),
@@ -759,8 +778,8 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: AppColors.primary.withOpacity(0.3),
-                    width: 1.5,
+                    color: AppColors.primary.withOpacity(0.2),
+                    width: 1,
                   ),
                 ),
                 style: AppTextStyles.inputText,
@@ -789,7 +808,7 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
                 Navigator.pop(context);
                 final storageService = Provider.of<FriendsProvider>(context, listen: false).storageService;
                 await storageService.addCustomMessage(textController.text);
-                _showSuccessToast(context, 'Message saved! ✅');
+                _showSuccessToast(context, 'Message saved');
               }
             },
             child: Text(
@@ -805,7 +824,7 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
     );
   }
 
-  // Show a success toast notification with character
+  // Show a success toast notification with patterns instead of shadows
   void _showSuccessToast(BuildContext context, String message) {
     final overlay = Overlay.of(context);
     final overlayEntry = OverlayEntry(
@@ -813,43 +832,30 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
         bottom: 100,
         width: MediaQuery.of(context).size.width,
         child: Center(
-          child: TweenAnimationBuilder<double>(
-            tween: Tween<double>(begin: 0.0, end: 1.0),
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.elasticOut,
-            builder: (context, value, child) {
-              return Transform.scale(
-                scale: value,
-                child: child,
-              );
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.primary,
-                    AppColors.secondary,
-                  ],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                ),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Text(
-                message,
-                style: AppTextStyles.button.copyWith(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  CupertinoIcons.checkmark_circle_fill,
                   color: Colors.white,
-                  fontSize: 16,
+                  size: 16,
                 ),
-              ),
+                const SizedBox(width: 8),
+                Text(
+                  message,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -866,35 +872,77 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
   void _sendMessage(BuildContext context, String message) async {
     final phoneNumber = widget.friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
     try {
+      // Show a loading indicator
+      showCupertinoDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => Center(
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.7),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CupertinoActivityIndicator(
+                  color: Colors.white,
+                  radius: 12,
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Sending...',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      await Future.delayed(const Duration(milliseconds: 300));
+
       final smsUri = Uri.parse('sms:$phoneNumber?body=${Uri.encodeComponent(message)}');
       await launchUrl(
         smsUri,
         mode: LaunchMode.externalApplication,
       );
+
+      // Dismiss the loading indicator
+      if (context.mounted) {
+        Navigator.pop(context);
+      }
     } catch (e) {
       if (context.mounted) {
+        Navigator.pop(context); // Dismiss loading indicator
+
         showCupertinoDialog(
           context: context,
           builder: (context) => CupertinoAlertDialog(
-            title: Text(
+            title: const Text(
               'Error',
-              style: AppTextStyles.dialogTitle.copyWith(
-                color: AppColors.error,
+              style: TextStyle(
+                color: Color(0xFFFF3B30),
+                fontWeight: FontWeight.w600,
               ),
             ),
-            content: Text(
-              'Unable to open messaging app. Please try again later.',
-              style: AppTextStyles.dialogContent,
+            content: Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                'Unable to open messaging app. Please try again later.',
+                style: AppTextStyles.dialogContent.copyWith(
+                  height: 1.3,
+                ),
+              ),
             ),
             actions: [
               CupertinoDialogAction(
                 onPressed: () => Navigator.pop(context),
-                child: Text(
-                  'OK',
-                  style: AppTextStyles.button.copyWith(
-                    color: AppColors.primary,
-                  ),
-                ),
+                child: const Text('OK'),
               ),
             ],
           ),

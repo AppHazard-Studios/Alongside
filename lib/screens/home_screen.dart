@@ -1,9 +1,10 @@
-// lib/screens/home_screen_new.dart
+// lib/screens/home_screen_new.dart - No floating button version
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+//import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import '../main.dart';
-import '../widgets/friend_card_new.dart';
+import '../widgets/friend_card.dart';
 import '../utils/colors.dart';
 import '../utils/text_styles.dart';
 import '../widgets/character_components.dart';
@@ -62,33 +63,35 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
             ),
             child: Icon(
               CupertinoIcons.info,
-              size: 20,
+              size: 18,
               color: AppColors.primary,
             ),
           ),
           onPressed: () => _showAboutDialog(context),
         ),
-        trailing: CupertinoButton(
-          padding: EdgeInsets.zero,
-          child: Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: AppColors.secondaryLight,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              CupertinoIcons.add,
-              size: 22,
-              color: AppColors.secondary,
-            ),
-          ),
-          onPressed: () {
-            Navigator.push(
-              context,
-              CupertinoPageRoute(
-                builder: (context) => const AddFriendScreen(),
+        trailing: Consumer<FriendsProvider>(
+          builder: (context, provider, child) {
+            // Only show the add button in the header when we have friends
+            if (provider.isLoading || provider.friends.isEmpty) {
+              return const SizedBox.shrink(); // No button when empty or loading
+            }
+
+            return CupertinoButton(
+              padding: EdgeInsets.zero,
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.secondaryLight,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  CupertinoIcons.add,
+                  size: 20,
+                  color: AppColors.secondary,
+                ),
               ),
+              onPressed: () => _navigateToAddFriend(context),
             );
           },
         ),
@@ -133,6 +136,16 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
     );
   }
 
+  // Navigate to add friend screen
+  void _navigateToAddFriend(BuildContext context) {
+    Navigator.push(
+      context,
+      CupertinoPageRoute(
+        builder: (context) => const AddFriendScreen(),
+      ),
+    );
+  }
+
   // Animated app logo
   Widget _buildAnimatedLogo() {
     return AnimatedBuilder(
@@ -143,7 +156,7 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const SizedBox(width: 8),
+              const SizedBox(width: 4),
               Text(
                 'Alongside',
                 style: AppTextStyles.navTitle.copyWith(
@@ -192,136 +205,95 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
 
   Widget _buildFriendsList(BuildContext context, List<Friend> friends) {
     return SafeArea(
-      child: Stack(
-        children: [
-          // Time of day greeting
-          Padding(
-            padding: const EdgeInsets.only(
-              left: 16,
-              right: 16,
-              top: 8,
-              bottom: 80, // Space for the add button at bottom
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Greeting with animation
-                TweenAnimationBuilder<double>(
-                  tween: Tween<double>(begin: 0.0, end: 1.0),
-                  duration: const Duration(milliseconds: 500),
-                  curve: Curves.easeOutQuint,
-                  builder: (context, value, child) {
-                    return Opacity(
-                      opacity: value,
-                      child: Transform.translate(
-                        offset: Offset(0, (1 - value) * 20),
-                        child: child,
-                      ),
-                    );
-                  },
-                  child: CharacterComponents.personalizedGreeting(
-                    name: "Friend",
-                    style: AppTextStyles.title.copyWith(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ),
-
-                // Subheader
-                TweenAnimationBuilder<double>(
-                  tween: Tween<double>(begin: 0.0, end: 1.0),
-                  duration: const Duration(milliseconds: 500),
-                  curve: Curves.easeOutQuint,
-                  builder: (context, value, child) {
-                    return Opacity(
-                      opacity: value,
-                      child: Transform.translate(
-                        offset: Offset(0, (1 - value) * 20),
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 4, bottom: 16),
-                          child: Text(
-                            "Here's who you're walking alongside",
-                            style: AppTextStyles.secondary.copyWith(
-                              fontSize: 16,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-
-                // Friends list with staggered animation
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.only(bottom: 24),
-                    itemCount: friends.length,
-                    itemBuilder: (context, index) {
-                      // Staggered animation for each card
-                      return TweenAnimationBuilder<double>(
-                        tween: Tween<double>(begin: 0.0, end: 1.0),
-                        duration: Duration(milliseconds: 500 + (index * 100)),
-                        curve: Curves.easeOutQuint,
-                        builder: (context, value, child) {
-                          return Opacity(
-                            opacity: value,
-                            child: Transform.translate(
-                              offset: Offset(0, (1 - value) * 50),
-                              child: child,
-                            ),
-                          );
-                        },
-                        child: FriendCardNew(
-                          friend: friends[index],
-                          index: index,
-                          isExpanded: friends[index].id == _expandedFriendId,
-                          onExpand: _handleCardExpanded,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Floating add friend button
-          Positioned(
-            bottom: 20,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: TweenAnimationBuilder<double>(
-                tween: Tween<double>(begin: 0.0, end: 1.0),
-                duration: const Duration(milliseconds: 800),
-                curve: Curves.elasticOut,
-                builder: (context, value, child) {
-                  return Transform.scale(
-                    scale: value,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Greeting with animation
+            TweenAnimationBuilder<double>(
+              tween: Tween<double>(begin: 0.0, end: 1.0),
+              duration: const Duration(milliseconds: 500),
+              curve: Curves.easeOutQuint,
+              builder: (context, value, child) {
+                return Opacity(
+                  opacity: value,
+                  child: Transform.translate(
+                    offset: Offset(0, (1 - value) * 20),
                     child: child,
-                  );
-                },
-                child: CharacterComponents.playfulButton(
-                  label: 'Add Friend',
-                  icon: CupertinoIcons.person_add_solid,
-                  backgroundColor: AppColors.primary,
-                  borderRadius: 20,
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      CupertinoPageRoute(
-                        builder: (context) => const AddFriendScreen(),
-                      ),
-                    );
-                  },
+                  ),
+                );
+              },
+              child: Padding(
+                padding: const EdgeInsets.only(top: 8, bottom: 2),
+                child: CharacterComponents.personalizedGreeting(
+                  name: "Friend",
+                  style: AppTextStyles.title.copyWith(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+
+            // Subheader
+            TweenAnimationBuilder<double>(
+              tween: Tween<double>(begin: 0.0, end: 1.0),
+              duration: const Duration(milliseconds: 500),
+              curve: Curves.easeOutQuint,
+              builder: (context, value, child) {
+                return Opacity(
+                  opacity: value,
+                  child: Transform.translate(
+                    offset: Offset(0, (1 - value) * 20),
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 4, bottom: 16),
+                      child: Text(
+                        "Here's who you're walking alongside",
+                        style: AppTextStyles.secondary.copyWith(
+                          fontSize: 16,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+
+            // Friends list with staggered animation
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.only(bottom: 24),
+                itemCount: friends.length,
+                itemBuilder: (context, index) {
+                  // Staggered animation for each card
+                  return TweenAnimationBuilder<double>(
+                    tween: Tween<double>(begin: 0.0, end: 1.0),
+                    duration: Duration(milliseconds: 500 + (index * 100)),
+                    curve: Curves.easeOutQuint,
+                    builder: (context, value, child) {
+                      return Opacity(
+                        opacity: value,
+                        child: Transform.translate(
+                          offset: Offset(0, (1 - value) * 50),
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: FriendCardNew(
+                      friend: friends[index],
+                      index: index,
+                      isExpanded: friends[index].id == _expandedFriendId,
+                      onExpand: _handleCardExpanded,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -329,8 +301,7 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
   Widget _buildEmptyState(BuildContext context) {
     return Center(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(
-            horizontal: 32, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -407,7 +378,7 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
                     child: Text(
                       'Add someone to walk with—through setbacks, growth, and everything in between.',
                       style: AppTextStyles.secondary.copyWith(
-                        fontSize: 18,
+                        fontSize: 17,
                         color: AppColors.textSecondary,
                         height: 1.4,
                       ),
@@ -418,7 +389,7 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
               },
             ),
             const SizedBox(height: 40),
-            // Button with animation
+            // Single prominent button - no need for bottom floating button
             TweenAnimationBuilder<double>(
               tween: Tween<double>(begin: 0.0, end: 1.0),
               duration: const Duration(milliseconds: 900),
@@ -429,19 +400,33 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
                   child: child,
                 );
               },
-              child: CharacterComponents.playfulButton(
-                label: 'Add Your First Friend',
-                icon: CupertinoIcons.person_add_solid,
-                backgroundColor: AppColors.primary,
-                borderRadius: 20,
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    CupertinoPageRoute(
-                      builder: (context) => const AddFriendScreen(),
-                    ),
-                  );
-                },
+              child: SizedBox(
+                width: 240, // Fixed width for better proportion
+                child: CupertinoButton(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(16),
+                  onPressed: () => _navigateToAddFriend(context),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        CupertinoIcons.person_add_solid,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Add Your First Friend',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ],
