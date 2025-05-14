@@ -18,6 +18,7 @@ import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'services/foreground_service.dart';
 import 'widgets/friend_card.dart';
 import 'screens/call_screen.dart';
+import 'screens/manage_messages_screen.dart';
 
 // Global key for navigation from notification callbacks
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -418,7 +419,6 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
       },
     );
   }
-
   void _showSuccessToast(BuildContext context, String message) {
     // iOS doesn't have built-in toasts, but we can simulate with an overlay
     final overlay = Overlay.of(context);

@@ -1,147 +1,192 @@
-// utils/text_styles.dart
+// lib/utils/text_styles.dart - Revised and standardized
+
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 
-/// Precisely matched iOS typography system for consistent styling
+/// Consolidated and standardized text styles for the entire app
 class AppTextStyles {
-  // Form field label style - exact match to "Name", "Phone Number" etc. in Add Friend screen
-  static const formFieldLabel = TextStyle(
-    fontSize: 15,
-    fontWeight: FontWeight.w400,
-    color: Color(0xFF8E8E93), // iOS secondary label gray
-    letterSpacing: -0.24,
-    fontFamily: '.SF Pro Text',
-    height: 1.2,
-  );
+  // Base properties
+  static const String _fontFamily = '.SF Pro Text';
+  static const String _displayFontFamily = '.SF Pro Display';
+  static const Color _textColor = Color(0xFF000000);
+  static const Color _secondaryTextColor = Color(0xFF8E8E93);
+  static const Color _accentColor = Color(0xFF007AFF);
 
-  // Form field hint text style - exact match to "Enter name", "Enter phone number" in Add Friend
-  static const formFieldHint = TextStyle(
-    fontSize: 17,
-    fontWeight: FontWeight.w400,
-    color: Color(0xFFC7C7CC), // iOS placeholder color
-    letterSpacing: -0.41,
-    fontFamily: '.SF Pro Text',
-  );
+  // NAVIGATION & HEADERS
 
-  // Friend card label text - blue text like "Alongside them in:"
-  static const cardLabel = TextStyle(
-    fontSize: 15,
-    fontWeight: FontWeight.w400,
-    color: Color(0xFF007AFF), // iOS blue
-    letterSpacing: -0.24,
-    fontFamily: '.SF Pro Text',
-  );
-
-  // Friend card content text - black text like "Living more like Jesus"
-  static const cardContent = TextStyle(
-    fontSize: 17,
-    fontWeight: FontWeight.w400,
-    color: Color(0xFF000000), // Pure black
-    letterSpacing: -0.41,
-    fontFamily: '.SF Pro Text',
-  );
-
-  // Secondary content on friend card - gray text like "Reminder every 1 day"
-  static const cardSecondaryContent = TextStyle(
-    fontSize: 15,
-    fontWeight: FontWeight.w400,
-    color: Color(0xFF8E8E93), // iOS secondary label
-    letterSpacing: -0.24,
-    fontFamily: '.SF Pro Text',
-  );
-
-  // Section header - "NOTIFICATION SETTINGS" in Add Friend page
-  static const sectionHeader = TextStyle(
-    fontSize: 13,
-    fontWeight: FontWeight.w500,
-    color: Color(0xFF8E8E93), // iOS secondary label
-    letterSpacing: 0.07,
-    fontFamily: '.SF Pro Text',
-  );
-
-  // Navigation bar title
+  // Navigation bar title (17pt, semibold)
   static const navTitle = TextStyle(
     fontSize: 17,
     fontWeight: FontWeight.w600,
-    color: Color(0xFF000000),
+    color: _textColor,
     letterSpacing: -0.41,
-    fontFamily: '.SF Pro Text',
+    fontFamily: _fontFamily,
   );
 
-  // Page title
+  // Page title (22pt, semibold, Display font)
   static const title = TextStyle(
     fontSize: 22,
     fontWeight: FontWeight.w600,
-    color: Color(0xFF000000),
+    color: _textColor,
     letterSpacing: -0.5,
-    fontFamily: '.SF Pro Display',
+    fontFamily: _displayFontFamily,
   );
 
-  // Button text
+  // Section title (17pt, semibold)
+  static const sectionTitle = TextStyle(
+    fontSize: 17,
+    fontWeight: FontWeight.w600,
+    color: _textColor,
+    letterSpacing: -0.41,
+    fontFamily: _fontFamily,
+  );
+
+  // CONTENT TEXT
+
+  // Card title, used in friend cards (17pt, semibold)
+  static const cardTitle = TextStyle(
+    fontSize: 17,
+    fontWeight: FontWeight.w600,
+    color: _textColor,
+    letterSpacing: -0.41,
+    fontFamily: _fontFamily,
+  );
+
+  // Card content text (17pt, regular)
+  static const cardContent = TextStyle(
+    fontSize: 17,
+    fontWeight: FontWeight.w400,
+    color: _textColor,
+    letterSpacing: -0.41,
+    fontFamily: _fontFamily,
+  );
+
+  // Blue accent label text (15pt, iOS blue)
+  static const cardLabel = TextStyle(
+    fontSize: 15,
+    fontWeight: FontWeight.w400,
+    color: _accentColor,
+    letterSpacing: -0.24,
+    fontFamily: _fontFamily,
+  );
+
+  // Secondary gray text (15pt, gray)
+  static const cardSecondaryContent = TextStyle(
+    fontSize: 15,
+    fontWeight: FontWeight.w400,
+    color: _secondaryTextColor,
+    letterSpacing: -0.24,
+    fontFamily: _fontFamily,
+  );
+
+  // FORM ELEMENTS
+
+  // Form field label (13pt, medium, gray)
+  static const formFieldLabel = TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.w500,
+    color: _secondaryTextColor,
+    letterSpacing: -0.08,
+    fontFamily: _fontFamily,
+    height: 1.2,
+  );
+
+  // Form field text (15pt, regular)
+  static const formFieldText = TextStyle(
+    fontSize: 15,
+    fontWeight: FontWeight.w400,
+    color: _textColor,
+    letterSpacing: -0.24,
+    fontFamily: _fontFamily,
+  );
+
+  // Form field placeholder (15pt, gray)
+  static const formFieldHint = TextStyle(
+    fontSize: 15,
+    fontWeight: FontWeight.w400,
+    color: Color(0xFFC7C7CC),
+    letterSpacing: -0.24,
+    fontFamily: _fontFamily,
+  );
+
+  // Section header caps (13pt, medium, gray)
+  static const sectionHeader = TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.w500,
+    color: _secondaryTextColor,
+    letterSpacing: 0.07,
+    fontFamily: _fontFamily,
+  );
+
+  // BUTTONS & INTERACTIVE ELEMENTS
+
+  // Button text (17pt, semibold, white)
   static const button = TextStyle(
     fontSize: 17,
     fontWeight: FontWeight.w600,
     color: CupertinoColors.white,
     letterSpacing: -0.41,
-    fontFamily: '.SF Pro Text',
+    fontFamily: _fontFamily,
   );
 
-  // Alert dialog title
+  // Secondary button text (16pt, medium, blue)
+  static const secondaryButton = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w500,
+    color: _accentColor,
+    letterSpacing: -0.32,
+    fontFamily: _fontFamily,
+  );
+
+  // DIALOG ELEMENTS
+
+  // Dialog title (17pt, semibold)
   static const dialogTitle = TextStyle(
     fontSize: 17,
     fontWeight: FontWeight.w600,
-    color: Color(0xFF000000),
+    color: _textColor,
     letterSpacing: -0.41,
-    fontFamily: '.SF Pro Text',
+    fontFamily: _fontFamily,
   );
 
-  // Alert dialog content
+  // Dialog content (13pt, regular)
   static const dialogContent = TextStyle(
     fontSize: 13,
     fontWeight: FontWeight.w400,
-    color: Color(0xFF000000),
+    color: _textColor,
     letterSpacing: -0.08,
-    fontFamily: '.SF Pro Text',
+    fontFamily: _fontFamily,
     height: 1.38,
   );
 
-  // === ADDITIONAL STYLES REFERENCED IN CODE ===
+  // GENERAL PURPOSE
 
-  // Body text style - general purpose body text
+  // Body text (15pt, regular)
   static const body = TextStyle(
     fontSize: 15,
     fontWeight: FontWeight.w400,
-    color: Color(0xFF000000),
+    color: _textColor,
     letterSpacing: -0.24,
-    fontFamily: '.SF Pro Text',
+    fontFamily: _fontFamily,
     height: 1.3,
   );
 
-  // Secondary text style - general purpose secondary text
+  // Secondary text (15pt, gray)
   static const secondary = TextStyle(
     fontSize: 15,
     fontWeight: FontWeight.w400,
-    color: Color(0xFF8E8E93), // iOS secondary gray
+    color: _secondaryTextColor,
     letterSpacing: -0.24,
-    fontFamily: '.SF Pro Text',
+    fontFamily: _fontFamily,
     height: 1.3,
   );
 
-  // Section title (used in various screens)
-  static const sectionTitle = TextStyle(
-    fontSize: 17,
-    fontWeight: FontWeight.w600,
-    color: Color(0xFF000000),
-    letterSpacing: -0.41,
-    fontFamily: '.SF Pro Text',
-  );
-
-  // Card title - used in friend cards
-  static const cardTitle = TextStyle(
-    fontSize: 17,
-    fontWeight: FontWeight.w600,
-    color: Color(0xFF000000),
-    letterSpacing: -0.41,
-    fontFamily: '.SF Pro Text',
+  // Small text/caption (13pt, gray)
+  static const caption = TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.w400,
+    color: _secondaryTextColor,
+    letterSpacing: -0.08,
+    fontFamily: _fontFamily,
   );
 }

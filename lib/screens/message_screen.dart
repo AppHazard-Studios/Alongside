@@ -1,14 +1,12 @@
-// screens/message_screen.dart - Updated to match the popup style exactly
+// lib/screens/message_screen.dart - Exact match to the popup in your screenshot
 
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/friend.dart';
-import '../utils/constants.dart';
-import '../utils/text_styles.dart';
 import '../main.dart';
-import '../widgets/friend_card.dart';
+import 'manage_messages_screen.dart';
 
 class MessageScreen extends StatefulWidget {
   final Friend friend;
@@ -41,54 +39,57 @@ class _MessageScreenState extends State<MessageScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final allMessages = [...AppConstants.presetMessages, ..._customMessages];
-
-    // Match exact padding from popup dialog
-    final horizontalPadding = 16.0;
+    final provider = Provider.of<FriendsProvider>(context, listen: false);
+    final allMessages = [...provider.storageService.getDefaultMessages(), ..._customMessages];
 
     return Scaffold(
-      backgroundColor: CupertinoColors.systemBackground, // Match popup background
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(
-          'Message ${widget.friend.name}',
-          style: AppTextStyles.navTitle,
-          textAlign: TextAlign.center, // Center text like in popup
-          overflow: TextOverflow.ellipsis,
+        title: const Text(
+          'Message',
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            fontFamily: '.SF Pro Text',
+          ),
         ),
-        centerTitle: true, // Center title
-        backgroundColor: CupertinoColors.systemBackground,
+        centerTitle: true,
+        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back),
+          icon: const Icon(
+            CupertinoIcons.back,
+            color: Color(0xFF007AFF),
+          ),
           onPressed: () => Navigator.of(context).pop(),
-          splashRadius: 24,
         ),
         actions: [
-          // Settings icon in iOS style - match the popup styling exactly
-          Container(
-            width: 28,
-            height: 28,
-            margin: const EdgeInsets.only(right: 16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF007AFF).withOpacity(0.08),
-              shape: BoxShape.circle,
-            ),
-            child: IconButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  CupertinoPageRoute(
-                    builder: (context) => const ManageMessagesScreen(),
-                  ),
-                );
-              },
-              icon: const Icon(
-                CupertinoIcons.gear,
-                color: Color(0xFF007AFF),
-                size: 16,
+          // Settings button - Match exactly with popup
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: const Color(0xFF007AFF).withOpacity(0.1),
+                shape: BoxShape.circle,
               ),
-              padding: EdgeInsets.zero,
-              splashRadius: 14,
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                icon: const Icon(
+                  CupertinoIcons.gear,
+                  size: 14,
+                  color: Color(0xFF007AFF),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ManageMessagesScreen(),
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         ],
@@ -97,53 +98,46 @@ class _MessageScreenState extends State<MessageScreen> {
           ? const Center(child: CupertinoActivityIndicator())
           : Column(
         children: [
-          // iOS-style separator - exactly like in popup
+          // Separator line - exactly matching popup
           Container(
             height: 0.5,
-            color: CupertinoColors.separator,
+            color: const Color(0xFFE5E5EA),
           ),
 
-          // Message list - match popup styling exactly
+          // Message list - EXACTLY as shown in popup
           Expanded(
             child: ListView.builder(
-              padding: EdgeInsets.symmetric(
-                vertical: 8,
-                horizontal: horizontalPadding,
-              ),
+              padding: const EdgeInsets.all(16),
               itemCount: allMessages.length + 1,
-              shrinkWrap: true,
               itemBuilder: (context, index) {
                 if (index == allMessages.length) {
-                  // Create custom message option - match popup styling exactly
+                  // Create custom message button - EXACT match
                   return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    padding: const EdgeInsets.only(top: 8),
                     child: InkWell(
                       onTap: () => _showCustomMessageDialog(context),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(8),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 14,
-                          horizontal: 16,
-                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF007AFF).withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(10),
+                          color: const Color(0xFF007AFF).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
+                          children: const [
+                            Icon(
                               CupertinoIcons.add_circled,
                               size: 18,
                               color: Color(0xFF007AFF),
                             ),
-                            const SizedBox(width: 8),
+                            SizedBox(width: 8),
                             Text(
                               'Create custom message',
                               style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                                color: const Color(0xFF007AFF),
+                                fontSize: 17,
+                                fontWeight: FontWeight.w400,
+                                color: Color(0xFF007AFF),
                                 fontFamily: '.SF Pro Text',
                               ),
                             ),
@@ -154,31 +148,28 @@ class _MessageScreenState extends State<MessageScreen> {
                   );
                 }
 
-                // Regular message option - match popup styling exactly
+                // Regular message option - EXACT match with popup
                 return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  padding: const EdgeInsets.only(bottom: 8),
                   child: InkWell(
                     onTap: () => _sendMessage(context, allMessages[index]),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(8),
                     child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 14,
-                        horizontal: 16,
-                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                       decoration: BoxDecoration(
-                        color: CupertinoColors.white,
-                        borderRadius: BorderRadius.circular(10),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: CupertinoColors.systemGrey5,
+                          color: const Color(0xFFE5E5EA),
                           width: 1,
                         ),
                       ),
                       child: Text(
                         allMessages[index],
-                        style: AppTextStyles.cardContent,
-                        maxLines: 4,
-                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontFamily: '.SF Pro Text',
+                        ),
                       ),
                     ),
                   ),
@@ -196,86 +187,67 @@ class _MessageScreenState extends State<MessageScreen> {
 
     showCupertinoDialog(
       context: context,
-      builder: (context) {
-        return CupertinoAlertDialog(
-          title: Text(
-            'Create Message',
-            style: AppTextStyles.dialogTitle,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text(
+          'Create Message',
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            fontFamily: '.SF Pro Text',
           ),
-          content: Padding(
-            padding: const EdgeInsets.only(top: 16),
-            child: CupertinoTextField(
-              controller: textController,
-              placeholder: 'Type your message...',
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: CupertinoColors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: CupertinoColors.systemGrey4,
-                  width: 0.5,
-                ),
+        ),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: CupertinoTextField(
+            controller: textController,
+            placeholder: 'Type your message...',
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: const Color(0xFFE5E5EA),
+                width: 1,
               ),
-              style: AppTextStyles.cardContent,
-              placeholderStyle: TextStyle(
-                fontSize: 15,
-                color: CupertinoColors.placeholderText,
-                fontFamily: '.SF Pro Text',
-                letterSpacing: -0.24,
-              ),
-              minLines: 2,
-              maxLines: 5,
-              textCapitalization: TextCapitalization.sentences,
-              textInputAction: TextInputAction.newline,
             ),
+            style: const TextStyle(
+              fontSize: 17,
+              fontFamily: '.SF Pro Text',
+            ),
+            placeholderStyle: const TextStyle(
+              color: Color(0xFFCCCCCC),
+              fontSize: 17,
+              fontFamily: '.SF Pro Text',
+            ),
+            minLines: 2,
+            maxLines: 5,
+            textCapitalization: TextCapitalization.sentences,
           ),
-          actions: [
-            CupertinoDialogAction(
-              onPressed: () => Navigator.pop(context),
-              isDefaultAction: true,
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  fontFamily: '.SF Pro Text',
-                  fontSize: 17,
-                  fontWeight: FontWeight.w400,
-                  letterSpacing: -0.41,
-                ),
-              ),
-            ),
-            CupertinoDialogAction(
-              onPressed: () async {
-                if (textController.text.isNotEmpty) {
-                  final storageService = Provider.of<FriendsProvider>(
-                    context,
-                    listen: false,
-                  ).storageService;
-
-                  await storageService.addCustomMessage(textController.text);
-                  Navigator.pop(context);
-                  _loadMessages(); // Reload the messages list
-
-                  _showSuccessToast(context, 'Message saved');
-                }
-              },
-              child: Text(
-                'Save',
-                style: TextStyle(
-                  fontFamily: '.SF Pro Text',
-                  fontSize: 17,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: -0.41,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            isDefaultAction: true,
+            child: const Text('Cancel'),
+          ),
+          CupertinoDialogAction(
+            onPressed: () async {
+              if (textController.text.isNotEmpty) {
+                Navigator.pop(context);
+                final storageService = Provider.of<FriendsProvider>(context, listen: false).storageService;
+                await storageService.addCustomMessage(textController.text);
+                _loadMessages(); // Reload messages
+                _showSuccessToast(context, 'Message saved');
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
     );
   }
 
   void _showSuccessToast(BuildContext context, String message) {
-    // iOS doesn't have built-in toasts, but we can simulate with an overlay
     final overlay = Overlay.of(context);
     final overlayEntry = OverlayEntry(
       builder: (context) => Positioned(
@@ -285,16 +257,15 @@ class _MessageScreenState extends State<MessageScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: CupertinoColors.darkBackgroundGray.withOpacity(0.8),
+              color: Colors.black.withOpacity(0.8),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
               message,
               style: const TextStyle(
-                color: CupertinoColors.white,
+                color: Colors.white,
                 fontSize: 15,
                 fontFamily: '.SF Pro Text',
-                letterSpacing: -0.24,
               ),
             ),
           ),
@@ -312,17 +283,12 @@ class _MessageScreenState extends State<MessageScreen> {
     final phoneNumber = widget.friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
     try {
       final smsUri = Uri.parse('sms:$phoneNumber?body=${Uri.encodeComponent(message)}');
-
-      final launched = await launchUrl(
+      await launchUrl(
         smsUri,
         mode: LaunchMode.externalApplication,
       );
 
-      if (!launched) {
-        throw Exception('Could not launch SMS app');
-      }
-
-      // Return to home screen after launching SMS
+      // Navigate back to home screen
       if (mounted) {
         Navigator.of(context).popUntil((route) => route.isFirst);
       }
