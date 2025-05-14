@@ -1,21 +1,22 @@
-// This is a consolidated update for lib/main.dart that standardizes text styles
-// by replacing inline styles with references to AppTextStyles
-
+// lib/main_new.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
-import 'screens/home_screen.dart';
+import 'screens/home_screen_new.dart';
 import 'services/notification_service.dart';
 import 'models/friend.dart';
 import 'services/storage_service.dart';
 import 'utils/constants.dart';
 import 'utils/text_styles.dart';
 import 'utils/ui_constants.dart';
+import 'utils/colors.dart';
+import 'theme/app_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'services/foreground_service.dart';
 import 'screens/call_screen.dart';
+import 'screens/message_screen_new.dart';
 import 'screens/manage_messages_screen.dart';
 
 // Global key for navigation from notification callbacks
@@ -52,21 +53,20 @@ void main() async {
           ),
         ),
       ],
-      child: const AlongsideApp(),
+      child: const AlongsideAppNew(),
     ),
   );
 }
 
-class AlongsideApp extends StatefulWidget {
-  const AlongsideApp({Key? key}) : super(key: key);
+class AlongsideAppNew extends StatefulWidget {
+  const AlongsideAppNew({Key? key}) : super(key: key);
 
   @override
-  State<AlongsideApp> createState() => _AlongsideAppState();
+  State<AlongsideAppNew> createState() => _AlongsideAppNewState();
 }
 
-class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver {
+class _AlongsideAppNewState extends State<AlongsideAppNew> with WidgetsBindingObserver {
   // Static flag to prevent multiple dialog displays
-  // ignore: unused_field
   bool _skipNextPersistentRepost = false;
   static bool isShowingDialog = false;
   static Map<String, int> processedActions = {};
@@ -141,262 +141,13 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
 
     // Get screen width for fixed message width
     final screenWidth = MediaQuery.of(context).size.width;
-    // ignore: unused_local_variable
     final messageWidth = screenWidth - 32; // Fixed width for all messages
 
-    // Wrap the showModalBottomSheet in a Completer to make it return a Future
-    final completer = Completer<void>();
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) {
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 8),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Handle at the top
-              Container(
-                margin: const EdgeInsets.only(top: 8, bottom: 8),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: CupertinoColors.systemGrey3,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-
-              // Header with title and settings icon
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Empty space for balance (or back button if needed)
-                    const SizedBox(width: 28),
-                    // Centered title
-                    Expanded(
-                      child: Center(
-                        child: Text(
-                          'Message ${friend.name}',
-                          style: AppTextStyles.navTitle,
-                          textAlign: TextAlign.center,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ),
-                    // Settings icon in iOS style
-                    CupertinoButton(
-                      padding: EdgeInsets.zero,
-                      onPressed: () {
-                        // First close the modal bottom sheet
-                        Navigator.pop(context);
-
-                        // Add a slight delay to avoid navigation issues
-                        Future.delayed(const Duration(milliseconds: 100), () {
-                          // Then navigate to manage messages screen
-                          navigatorKey.currentState?.push(
-                            MaterialPageRoute(
-                              builder: (context) => const ManageMessagesScreen(),
-                            ),
-                          );
-                        });
-                      },
-                      child: Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF007AFF).withOpacity(0.08),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Center(
-                          child: Icon(
-                            CupertinoIcons.gear,
-                            color: Color(0xFF007AFF),
-                            size: 16,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // iOS-style separator
-              Container(
-                height: 0.5,
-                color: CupertinoColors.separator,
-              ),
-
-              // Message list with fixed width messages
-              Flexible(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxHeight: MediaQuery.of(context).size.height * 0.7,
-                  ),
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 16,
-                      horizontal: 16,
-                    ),
-                    itemCount: allMessages.length + 1,
-                    shrinkWrap: true,
-                    itemBuilder: (context, index) {
-                      if (index == allMessages.length) {
-                        // Create custom message option with fixed width
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Container(
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF007AFF).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: () {
-                                  Navigator.pop(context);
-                                  _showCustomMessageDialog(context, friend);
-                                },
-                                borderRadius: BorderRadius.circular(16),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const Icon(
-                                        CupertinoIcons.add_circled,
-                                        size: 18,
-                                        color: Color(0xFF007AFF),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        'Create custom message',
-                                        style: AppTextStyles.accentText,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      }
-
-                      // Regular message option with fixed width
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: const Color(0xFFE5E5EA),
-                              width: 1,
-                            ),
-                          ),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: () {
-                                Navigator.pop(context);
-                                _sendMessage(context, friend, allMessages[index]);
-                              },
-                              borderRadius: BorderRadius.circular(16),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                child: Text(
-                                  allMessages[index],
-                                  style: AppTextStyles.bodyText,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 8),
-            ],
-          ),
-        );
-      },
-    ).then((_) {
-      completer.complete();
-    });
-
-    return completer.future;
-  }
-
-  void _showCustomMessageDialog(BuildContext context, Friend friend) {
-    final textController = TextEditingController();
-
-    showCupertinoDialog(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: Text(
-          'Create Message',
-          style: AppTextStyles.dialogTitle,
-        ),
-        content: Padding(
-          padding: const EdgeInsets.only(top: 16),
-          child: CupertinoTextField(
-            controller: textController,
-            placeholder: 'Type your message...',
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: CupertinoColors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: CupertinoColors.systemGrey4,
-                width: 0.5,
-              ),
-            ),
-            style: AppTextStyles.inputText,
-            placeholderStyle: AppTextStyles.placeholder,
-            minLines: 2,
-            maxLines: 5,
-            textCapitalization: TextCapitalization.sentences,
-            textInputAction: TextInputAction.newline,
-          ),
-        ),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(context),
-            isDefaultAction: true,
-            child: const Text('Cancel'),
-          ),
-          CupertinoDialogAction(
-            onPressed: () async {
-              if (textController.text.isNotEmpty) {
-                final storageService = Provider.of<FriendsProvider>(
-                  context,
-                  listen: false,
-                ).storageService;
-
-                await storageService.addCustomMessage(textController.text);
-                Navigator.pop(context);
-
-                UIConstants.showToast(context, 'Message saved');
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
+    // Navigate to the message screen instead of showing a dialog
+    Navigator.push(
+      context,
+      CupertinoPageRoute(
+        builder: (context) => MessageScreenNew(friend: friend),
       ),
     );
   }
@@ -438,6 +189,11 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
     }
   }
 
+  // Page transition builder for iOS-style transitions with character
+  PageTransitionsBuilder _buildPageTransitions() {
+    return CupertinoPageTransitionsBuilder();
+  }
+
   @override
   Widget build(BuildContext context) {
     // We'll use MaterialApp for compatibility but with Cupertino styling
@@ -445,36 +201,12 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
       title: 'Alongside',
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        // Use primary color from our iOS styling
-        primaryColor: const Color(AppConstants.primaryColorValue),
-        primarySwatch: createMaterialColor(const Color(AppConstants.primaryColorValue)),
-        // Platform.iOS ensures we get iOS-style scroll behaviors, etc.
-        platform: TargetPlatform.iOS,
-        scaffoldBackgroundColor: CupertinoColors.systemGroupedBackground,
-        // Disable Material ink splashes to maintain iOS feel
-        splashColor: Colors.transparent,
-        highlightColor: Colors.transparent,
-        // Use System Font (.SF Pro Text) as default for everything
-        fontFamily: '.SF Pro Text',
-        // Cupertino-like text themes
-        textTheme: TextTheme(
-          headlineMedium: AppTextStyles.title,
-          titleLarge: AppTextStyles.sectionTitle,
-          bodyLarge: AppTextStyles.bodyText,
-          labelLarge: AppTextStyles.button,
-        ),
-        // Use lighter app bar styling
-        appBarTheme: AppBarTheme(
-          backgroundColor: CupertinoColors.systemBackground,
-          foregroundColor: CupertinoColors.label,
-          elevation: 0,
-          iconTheme: const IconThemeData(
-            color: Color(AppConstants.primaryColorValue),
-            size: 22,
-          ),
-          titleTextStyle: AppTextStyles.navTitle,
-          toolbarHeight: 44, // iOS navigation bar height
+      theme: AppTheme.lightTheme.copyWith(
+        pageTransitionsTheme: PageTransitionsTheme(
+          builders: {
+            TargetPlatform.iOS: _buildPageTransitions(),
+            TargetPlatform.android: _buildPageTransitions(),
+          },
         ),
       ),
       // Define routes, including the updated notification handler
@@ -496,7 +228,7 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
             if (now - lastProcessed < 5000) {
               // If same action was processed within last 5 seconds, ignore it
               print('Ignoring duplicate action: $actionId');
-              return const HomeScreen();
+              return const HomeScreenNew();
             }
           }
 
@@ -514,16 +246,15 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
             // Immediately cancel all notifications for this friend to prevent duplicates
             provider.notificationService.cancelReminder(friendId);
 
-            // For messages, use the original slide-up UI
+            // For messages, navigate to the dedicated message screen
             if (action == 'message') {
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (!isShowingDialog) {
-                  isShowingDialog = true;
-                  _showFullMessageOptionsDialog(ctx, friend).then((_) {
-                    isShowingDialog = false;
-                    Navigator.of(ctx).pop();
-                  });
-                }
+                Navigator.push(
+                  ctx,
+                  CupertinoPageRoute(
+                    builder: (context) => MessageScreenNew(friend: friend),
+                  ),
+                );
               });
             }
             // For calls, use the dedicated screen approach
@@ -537,7 +268,7 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
             }
           }
 
-          return const HomeScreen();
+          return const HomeScreenNew();
         },
         '/call': (ctx) {
           final args = ModalRoute.of(ctx)!.settings.arguments as Map<String, dynamic>;
@@ -546,35 +277,9 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
         },
       },
       home: WithForegroundTask(
-        child: const HomeScreen(),
+        child: const HomeScreenNew(),
       ),
     );
-  }
-
-  // Helper function to create MaterialColor from a single color
-  MaterialColor createMaterialColor(Color color) {
-    List<double> strengths = <double>[.05, .1, .2, .3, .4, .5, .6, .7, .8, .9];
-    final int r = color.red, g = color.green, b = color.blue;
-
-    return MaterialColor(color.value, {
-      for (final strength in strengths)
-        (strength * 1000).round(): Color.fromRGBO(
-          r,
-          g,
-          b,
-          strength,
-        ),
-      50: Color.fromRGBO(r, g, b, .05),
-      100: Color.fromRGBO(r, g, b, .1),
-      200: Color.fromRGBO(r, g, b, .2),
-      300: Color.fromRGBO(r, g, b, .3),
-      400: Color.fromRGBO(r, g, b, .4),
-      500: Color.fromRGBO(r, g, b, .5),
-      600: Color.fromRGBO(r, g, b, .6),
-      700: Color.fromRGBO(r, g, b, .7),
-      800: Color.fromRGBO(r, g, b, .8),
-      900: Color.fromRGBO(r, g, b, .9),
-    });
   }
 }
 
