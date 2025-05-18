@@ -1,9 +1,8 @@
-// lib/screens/home_screen_new.dart - No floating button version
+// lib/screens/home_screen.dart - Fixed imports for FriendsProvider
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-//import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
-import '../main.dart';
+import '../providers/friends_provider.dart'; // Updated import
 import '../widgets/friend_card.dart';
 import '../utils/colors.dart';
 import '../utils/text_styles.dart';
@@ -82,13 +81,13 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: AppColors.secondaryLight,
+                  color: AppColors.primaryLight,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   CupertinoIcons.add,
                   size: 20,
-                  color: AppColors.secondary,
+                  color: AppColors.primary,
                 ),
               ),
               onPressed: () => _navigateToAddFriend(context),
@@ -107,11 +106,17 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
                     radius: 14,
                   ),
                   const SizedBox(height: 16),
-                  Text(
-                    'Loading your friends...',
-                    style: TextStyle(
-                      color: AppColors.secondary,
-                      fontSize: 16,
+                  DefaultTextStyle(
+                    style: const TextStyle(
+                      color: CupertinoColors.label,
+                      fontFamily: '.SF Pro Text',
+                    ),
+                    child: Text(
+                      'Loading your friends...',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
                 ],
@@ -157,18 +162,18 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const SizedBox(width: 4),
-              Text(
-                'Alongside',
-                style: AppTextStyles.navTitle.copyWith(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  foreground: Paint()
-                    ..shader = LinearGradient(
-                      colors: [
-                        AppColors.primary,
-                        AppColors.secondary,
-                      ],
-                    ).createShader(const Rect.fromLTWH(0, 0, 200, 70)),
+              DefaultTextStyle(
+                style: const TextStyle(
+                  color: CupertinoColors.label,
+                  fontFamily: '.SF Pro Text',
+                ),
+                child: Text(
+                  'Alongside',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
                 ),
               ),
               const SizedBox(width: 6),
@@ -184,13 +189,13 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
                       width: 24,
                       height: 24,
                       decoration: BoxDecoration(
-                        color: AppColors.secondaryLight,
+                        color: AppColors.primaryLight,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
                         CupertinoIcons.heart_fill,
                         size: 14,
-                        color: AppColors.secondary,
+                        color: AppColors.primary,
                       ),
                     ),
                   );
@@ -210,7 +215,7 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Greeting with animation
+            // Greeting with animation - Fixed yellow underlines
             TweenAnimationBuilder<double>(
               tween: Tween<double>(begin: 0.0, end: 1.0),
               duration: const Duration(milliseconds: 500),
@@ -226,18 +231,25 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
               },
               child: Padding(
                 padding: const EdgeInsets.only(top: 8, bottom: 2),
-                child: CharacterComponents.personalizedGreeting(
-                  name: "Friend",
-                  style: AppTextStyles.title.copyWith(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                child: DefaultTextStyle(
+                  style: const TextStyle(
+                    color: CupertinoColors.label,
+                    fontFamily: '.SF Pro Text',
+                  ),
+                  child: CharacterComponents.personalizedGreeting(
+                    name: "Friend",
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                      color: CupertinoColors.label,
+                      fontFamily: '.SF Pro Text',
+                    ),
                   ),
                 ),
               ),
             ),
 
-            // Subheader
+            // Subheader - Fixed yellow underlines
             TweenAnimationBuilder<double>(
               tween: Tween<double>(begin: 0.0, end: 1.0),
               duration: const Duration(milliseconds: 500),
@@ -247,19 +259,27 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
                   opacity: value,
                   child: Transform.translate(
                     offset: Offset(0, (1 - value) * 20),
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 4, bottom: 16),
-                      child: Text(
-                        "Here's who you're walking alongside",
-                        style: AppTextStyles.secondary.copyWith(
-                          fontSize: 16,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ),
+                    child: child,
                   ),
                 );
               },
+              child: Padding(
+                padding: const EdgeInsets.only(left: 4, bottom: 16),
+                child: DefaultTextStyle(
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontFamily: '.SF Pro Text',
+                  ),
+                  child: Text(
+                    "Here's who you're walking alongside",
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: AppColors.textSecondary,
+                      fontFamily: '.SF Pro Text',
+                    ),
+                  ),
+                ),
+              ),
             ),
 
             // Friends list with staggered animation
@@ -316,22 +336,19 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
                   child: child,
                 );
               },
-              child: CharacterComponents.floatingElement(
-                yOffset: 8,
-                period: const Duration(seconds: 3),
-                child: Container(
-                  width: 180,
-                  height: 180,
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryLight,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Illustrations.friendsIllustration(size: 180),
+              child: Container(
+                width: 180,
+                height: 180,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight,
+                  shape: BoxShape.circle,
                 ),
+                child: Illustrations.friendsIllustration(size: 180),
               ),
             ),
             const SizedBox(height: 32),
-            // Title with animated gradient
+
+            // Title with fixed yellow underlines
             TweenAnimationBuilder<double>(
               tween: Tween<double>(begin: 0.0, end: 1.0),
               duration: const Duration(milliseconds: 500),
@@ -341,31 +358,30 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
                   opacity: value,
                   child: Transform.translate(
                     offset: Offset(0, (1 - value) * 20),
-                    child: ShaderMask(
-                      shaderCallback: (bounds) => LinearGradient(
-                        colors: [
-                          AppColors.primary,
-                          AppColors.secondary,
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ).createShader(bounds),
-                      child: Text(
-                        'Walk alongside a friend',
-                        style: AppTextStyles.title.copyWith(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white, // Will be masked by gradient
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
+                    child: child,
                   ),
                 );
               },
+              child: DefaultTextStyle(
+                style: const TextStyle(
+                  color: CupertinoColors.label,
+                  fontFamily: '.SF Pro Text',
+                ),
+                child: Text(
+                  'Walk alongside a friend',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    color: CupertinoColors.label,
+                    fontFamily: '.SF Pro Text',
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
             ),
             const SizedBox(height: 16),
-            // Description with animation
+
+            // Description with fixed yellow underlines
             TweenAnimationBuilder<double>(
               tween: Tween<double>(begin: 0.0, end: 1.0),
               duration: const Duration(milliseconds: 700),
@@ -375,21 +391,30 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
                   opacity: value,
                   child: Transform.translate(
                     offset: Offset(0, (1 - value) * 20),
-                    child: Text(
-                      'Add someone to walk with—through setbacks, growth, and everything in between.',
-                      style: AppTextStyles.secondary.copyWith(
-                        fontSize: 17,
-                        color: AppColors.textSecondary,
-                        height: 1.4,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
+                    child: child,
                   ),
                 );
               },
+              child: DefaultTextStyle(
+                style: const TextStyle(
+                  color: CupertinoColors.secondaryLabel,
+                  fontFamily: '.SF Pro Text',
+                ),
+                child: Text(
+                  'Add someone to walk with—through setbacks, growth, and everything in between.',
+                  style: TextStyle(
+                    fontSize: 17,
+                    color: AppColors.textSecondary,
+                    height: 1.4,
+                    fontFamily: '.SF Pro Text',
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
             ),
             const SizedBox(height: 40),
-            // Single prominent button - no need for bottom floating button
+
+            // Single prominent button
             TweenAnimationBuilder<double>(
               tween: Tween<double>(begin: 0.0, end: 1.0),
               duration: const Duration(milliseconds: 900),
@@ -412,16 +437,17 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
                     children: [
                       Icon(
                         CupertinoIcons.person_add_solid,
-                        color: Colors.white,
+                        color: CupertinoColors.white,
                         size: 18,
                       ),
                       const SizedBox(width: 8),
                       Text(
                         'Add Your First Friend',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: CupertinoColors.white,
                           fontWeight: FontWeight.w600,
                           fontSize: 16,
+                          fontFamily: '.SF Pro Text',
                         ),
                       ),
                     ],
@@ -445,31 +471,27 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: ShaderMask(
-          shaderCallback: (bounds) => LinearGradient(
-            colors: [
-              AppColors.primary,
-              AppColors.secondary,
-            ],
-          ).createShader(bounds),
-          child: Text(
-            'About Alongside',
-            style: AppTextStyles.dialogTitle.copyWith(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
+        title: Text(
+          'About Alongside',
+          style: TextStyle(
+            color: AppColors.primary,
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+            fontFamily: '.SF Pro Text',
           ),
         ),
         content: Padding(
           padding: const EdgeInsets.only(top: 16.0, bottom: 8.0),
-          child: Column(
-            children: [
-              // Little illustration
-              Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: CharacterComponents.floatingElement(
-                  yOffset: 4,
+          child: DefaultTextStyle(
+            style: const TextStyle(
+              color: CupertinoColors.label,
+              fontFamily: '.SF Pro Text',
+            ),
+            child: Column(
+              children: [
+                // Little illustration
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
                   child: Container(
                     width: 80,
                     height: 80,
@@ -480,68 +502,67 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
                     child: Illustrations.friendsIllustration(size: 80),
                   ),
                 ),
-              ),
-              Text(
-                'Alongside helps you walk with your friends through the highs and lows of life.',
-                style: AppTextStyles.dialogContent.copyWith(
-                  fontSize: 16,
-                  height: 1.4,
-                  color: AppColors.textPrimary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'As Christians, we\'re called to carry one another\'s burdens—and this app helps you do that with just a few taps.',
-                style: AppTextStyles.dialogContent.copyWith(
-                  fontSize: 16,
-                  height: 1.4,
-                  color: AppColors.textPrimary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                decoration: BoxDecoration(
-                  color: AppColors.tertiaryLight,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppColors.tertiary.withOpacity(0.5),
-                    width: 1.5,
+                Text(
+                  'Alongside helps you walk with your friends through the highs and lows of life.',
+                  style: TextStyle(
+                    fontSize: 16,
+                    height: 1.4,
+                    color: CupertinoColors.label,
+                    fontFamily: '.SF Pro Text',
                   ),
+                  textAlign: TextAlign.center,
                 ),
-                width: double.infinity,
-                child: Row(
-                  children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: AppColors.tertiary.withOpacity(0.3),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        CupertinoIcons.lock_fill,
-                        size: 16,
-                        color: AppColors.tertiary,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Everything stays on your device. It\'s private, secure, and fully in your control.',
-                        style: AppTextStyles.dialogContent.copyWith(
-                          fontSize: 14,
-                          height: 1.4,
-                          color: AppColors.textPrimary,
+                const SizedBox(height: 16),
+                Text(
+                  'As Christians, we\'re called to carry one another\'s burdens—and this app helps you do that with just a few taps.',
+                  style: TextStyle(
+                    fontSize: 16,
+                    height: 1.4,
+                    color: CupertinoColors.label,
+                    fontFamily: '.SF Pro Text',
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: AppColors.tertiaryLight,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  width: double.infinity,
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: AppColors.tertiary.withOpacity(0.3),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          CupertinoIcons.lock_fill,
+                          size: 16,
+                          color: AppColors.tertiary,
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Everything stays on your device. It\'s private, secure, and fully in your control.',
+                          style: TextStyle(
+                            fontSize: 14,
+                            height: 1.4,
+                            color: CupertinoColors.label,
+                            fontFamily: '.SF Pro Text',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         actions: [
@@ -549,9 +570,10 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Close',
-              style: AppTextStyles.button.copyWith(
+              style: TextStyle(
                 color: AppColors.primary,
                 fontWeight: FontWeight.w600,
+                fontFamily: '.SF Pro Text',
               ),
             ),
           ),

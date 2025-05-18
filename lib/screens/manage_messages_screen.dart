@@ -1,8 +1,8 @@
-// Create this file at lib/screens/manage_messages_screen_new.dart
+// lib/screens/manage_messages_screen.dart - Fixed with proper imports
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
-import '../main.dart';
+import '../providers/friends_provider.dart'; // Updated import
 import '../utils/colors.dart';
 import '../utils/text_styles.dart';
 import '../widgets/character_components.dart';

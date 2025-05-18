@@ -1,10 +1,10 @@
-// lib/screens/message_screen_new.dart
+// lib/screens/message_screen.dart - Fixed with proper imports
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/friend.dart';
-import '../main.dart';
+import '../providers/friends_provider.dart'; // Updated import
 import '../utils/text_styles.dart';
 import '../utils/colors.dart';
 import '../widgets/character_components.dart';
