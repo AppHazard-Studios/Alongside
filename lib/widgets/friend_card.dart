@@ -1,4 +1,4 @@
-// lib/widgets/friend_card.dart - Fixed apostrophe issue
+// lib/widgets/friend_card.dart - Streamlined version
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -8,12 +8,10 @@ import '../providers/friends_provider.dart';
 import '../models/friend.dart';
 import '../screens/add_friend_screen.dart';
 import '../screens/message_screen.dart';
-import '../utils/text_styles.dart';
 import '../utils/colors.dart';
 
 class FriendCardNew extends StatefulWidget {
   final Friend friend;
-  final bool isHighlighted;
   final bool isExpanded;
   final Function(String) onExpand;
   final int index;
@@ -22,7 +20,6 @@ class FriendCardNew extends StatefulWidget {
   const FriendCardNew({
     Key? key,
     required this.friend,
-    this.isHighlighted = false,
     this.isExpanded = false,
     required this.onExpand,
     required this.index,
@@ -50,7 +47,6 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
       curve: Curves.easeOutQuart,
     );
 
-    // Initialize animation state based on expanded prop
     if (widget.isExpanded) {
       _controller.value = 1.0;
     }
@@ -59,13 +55,8 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
   @override
   void didUpdateWidget(FriendCardNew oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Update animation when expanded state changes
     if (widget.isExpanded != oldWidget.isExpanded) {
-      if (widget.isExpanded) {
-        _controller.forward();
-      } else {
-        _controller.reverse();
-      }
+      widget.isExpanded ? _controller.forward() : _controller.reverse();
     }
   }
 
@@ -90,12 +81,9 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
       onTapCancel: () => setState(() => _isPressed = false),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        transform: _isPressed
-            ? Matrix4.translationValues(0, 1, 0)
-            : Matrix4.identity(),
+        transform: _isPressed ? Matrix4.translationValues(0, 1, 0) : Matrix4.identity(),
         margin: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
-          // Clean iOS design
           color: CupertinoColors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
@@ -150,19 +138,39 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
                               ),
                           ],
                         ),
-                        const SizedBox(height: 4),
-                        // Alongside them in section
+
+                        // "Alongside them in" info - Always visible now
                         if (widget.friend.helpingWith != null &&
                             widget.friend.helpingWith!.isNotEmpty) ...[
-                          Text(
-                            widget.friend.helpingWith!,
-                            style: const TextStyle(
-                              color: CupertinoColors.secondaryLabel,
-                              fontSize: 15,
-                              fontFamily: '.SF Pro Text',
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: CupertinoColors.systemBlue.withOpacity(0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  CupertinoIcons.heart_fill,
+                                  color: CupertinoColors.systemBlue,
+                                  size: 10,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  "Alongside in: ${widget.friend.helpingWith}",
+                                  style: const TextStyle(
+                                    color: CupertinoColors.secondaryLabel,
+                                    fontSize: 14,
+                                    fontFamily: '.SF Pro Text',
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ],
@@ -178,7 +186,7 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
                     duration: const Duration(milliseconds: 250),
                     builder: (context, value, child) {
                       return Transform.rotate(
-                        angle: value * 3.14, // Multiply by π for half rotation
+                        angle: value * 3.14,
                         child: const Icon(
                           CupertinoIcons.chevron_down,
                           color: CupertinoColors.systemGrey,
@@ -203,90 +211,132 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
                 );
               },
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Separator line - Clean iOS style
+                  // Separator line
                   const Divider(
                     height: 1,
                     thickness: 0.5,
                     color: CupertinoColors.systemGrey5,
                   ),
 
-                  // "They're alongside you in:" section (if available)
-                  if (widget.friend.theyHelpingWith != null &&
-                      widget.friend.theyHelpingWith!.isNotEmpty) ...[
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Fixed: Using double quotes to avoid apostrophe issues
-                          const Text(
-                            "They're alongside you in:",
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: CupertinoColors.systemBlue,
-                              fontFamily: '.SF Pro Text',
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            widget.friend.theyHelpingWith!,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              color: CupertinoColors.label,
-                              fontFamily: '.SF Pro Text',
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Divider(
-                      height: 1,
-                      thickness: 0.5,
-                      color: CupertinoColors.systemGrey5,
-                    ),
-                  ],
-
-                  // Reminder section if reminder is set
-                  if (widget.friend.reminderDays > 0) ...[
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Reminder every ${widget.friend.reminderDays} ${widget.friend.reminderDays == 1 ? 'day' : 'days'}',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: CupertinoColors.systemOrange,
-                              fontFamily: '.SF Pro Text',
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            'Reminders help you stay connected regularly',
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: CupertinoColors.secondaryLabel,
-                              fontFamily: '.SF Pro Text',
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Divider(
-                      height: 1,
-                      thickness: 0.5,
-                      color: CupertinoColors.systemGrey5,
-                    ),
-                  ],
-
-                  // Action buttons section - Clean iOS style
+                  // Integrated info section
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // "They're alongside you in" section
+                        if (widget.friend.theyHelpingWith != null &&
+                            widget.friend.theyHelpingWith!.isNotEmpty) ...[
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: CupertinoColors.systemTeal.withOpacity(0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  CupertinoIcons.person_2_fill,
+                                  color: CupertinoColors.systemTeal,
+                                  size: 12,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      "They're alongside you in:",
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: CupertinoColors.systemTeal,
+                                        fontFamily: '.SF Pro Text',
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      widget.friend.theyHelpingWith!,
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        color: CupertinoColors.label,
+                                        fontFamily: '.SF Pro Text',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+
+                        // Reminder info with icon
+                        if (widget.friend.reminderDays > 0) ...[
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: CupertinoColors.systemOrange.withOpacity(0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  CupertinoIcons.bell_fill,
+                                  color: CupertinoColors.systemOrange,
+                                  size: 12,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Reminder every ${widget.friend.reminderDays} ${widget.friend.reminderDays == 1 ? 'day' : 'days'}',
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: CupertinoColors.systemOrange,
+                                        fontFamily: '.SF Pro Text',
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          CupertinoIcons.time,
+                                          size: 12,
+                                          color: CupertinoColors.secondaryLabel,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          widget.friend.reminderTime,
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            color: CupertinoColors.secondaryLabel,
+                                            fontFamily: '.SF Pro Text',
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+
+                  // Action buttons section - simplified layout
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     child: Row(
                       children: [
                         // Message button
@@ -399,8 +449,8 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
 
   // Call friend
   void _callFriend(BuildContext context) async {
-    // Fixed: Simple string cleaning without regex
-    final phoneNumber = widget.friend.phoneNumber.replaceAll(' ', '').replaceAll('-', '').replaceAll('(', '').replaceAll(')', '');
+    // Simplified phone number cleaning
+    final phoneNumber = widget.friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
     try {
       final telUri = Uri.parse('tel:$phoneNumber');
       await launchUrl(
@@ -428,14 +478,14 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
     }
   }
 
-  // Create profile image - Clean iOS design
+  // Create profile image with fixed background color
   Widget _buildProfileImage() {
     return Container(
       width: 60,
       height: 60,
       decoration: BoxDecoration(
         color: widget.friend.isEmoji
-            ? CupertinoColors.systemGrey6
+            ? CupertinoColors.systemGrey6  // Fixed background for emoji
             : CupertinoColors.white,
         shape: BoxShape.circle,
         border: Border.all(

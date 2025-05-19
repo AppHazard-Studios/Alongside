@@ -1,14 +1,15 @@
-// lib/widgets/character_components.dart - Complete file with fixes
+// lib/widgets/character_components.dart - Fix profile image and simplify components
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import '../utils/colors.dart';
 
-/// A collection of custom UI components with iOS 2025 design principles
+/// A collection of streamlined UI components with iOS design principles
 class CharacterComponents {
   // Personalized greeting with fixed text styling
   static Widget personalizedGreeting({
     required String name,
     TextStyle? style,
+    bool centered = false,
   }) {
     final hour = DateTime.now().hour;
     String greeting;
@@ -29,7 +30,8 @@ class CharacterComponents {
       iconColor = CupertinoColors.systemIndigo;
     }
 
-    return Row(
+    final content = Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Container(
           padding: const EdgeInsets.all(6),
@@ -54,6 +56,10 @@ class CharacterComponents {
         ),
       ],
     );
+
+    return centered
+        ? Center(child: content)
+        : content;
   }
 
   // Clean iOS-style button
@@ -140,7 +146,7 @@ class CharacterComponents {
     );
   }
 
-  // Clean iOS-style profile picture
+  // Fixed profile picture component with proper background color
   static Widget playfulProfilePicture({
     required String imageOrEmoji,
     required bool isEmoji,
@@ -148,7 +154,10 @@ class CharacterComponents {
     Color? backgroundColor,
     VoidCallback? onTap,
   }) {
-    final bgColor = backgroundColor ?? CupertinoColors.systemGrey6;
+    // Default background color that contrasts with both light and dark themes
+    final bgColor = backgroundColor ?? (isEmoji
+        ? CupertinoColors.systemGrey6  // Light gray background for emoji
+        : CupertinoColors.white);      // White background for photos
 
     return GestureDetector(
       onTap: onTap,
@@ -156,7 +165,7 @@ class CharacterComponents {
         width: size,
         height: size,
         decoration: BoxDecoration(
-          color: isEmoji ? bgColor : CupertinoColors.white,
+          color: bgColor,
           shape: BoxShape.circle,
           border: Border.all(
             color: CupertinoColors.systemGrey5,
@@ -175,141 +184,6 @@ class CharacterComponents {
             File(imageOrEmoji),
             fit: BoxFit.cover,
           ),
-        ),
-      ),
-    );
-  }
-
-  // Subtle animation wrapper
-  static Widget floatingElement({
-    required Widget child,
-    Duration period = const Duration(seconds: 2),
-    double yOffset = 4,
-  }) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween<double>(begin: -1, end: 1),
-      duration: period,
-      curve: Curves.easeInOut,
-      builder: (context, value, child) {
-        return Transform.translate(
-          offset: Offset(0, value * yOffset / 2),
-          child: child,
-        );
-      },
-      child: child,
-    );
-  }
-
-  // Simple iOS-style progress indicator
-  static Widget playfulProgressIndicator({
-    required double value,
-    Color? backgroundColor,
-    Color? progressColor,
-    double height = 8,
-    bool animated = true,
-  }) {
-    final bgColor = backgroundColor ?? CupertinoColors.systemGrey5;
-    final pgColor = progressColor ?? CupertinoColors.systemBlue;
-
-    return Container(
-      height: height,
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(height / 2),
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return Stack(
-            children: [
-              AnimatedContainer(
-                duration: animated
-                    ? const Duration(milliseconds: 500)
-                    : Duration.zero,
-                curve: Curves.easeInOut,
-                width: constraints.maxWidth * value.clamp(0.0, 1.0),
-                decoration: BoxDecoration(
-                  color: pgColor,
-                  borderRadius: BorderRadius.circular(height / 2),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  // iOS-style tag/badge
-  static Widget playfulTag({
-    required String label,
-    IconData? icon,
-    Color? backgroundColor,
-    Color? textColor,
-    VoidCallback? onTap,
-    double fontSize = 14,
-  }) {
-    final bgColor = backgroundColor ?? CupertinoColors.systemGrey6;
-    final txtColor = textColor ?? CupertinoColors.systemBlue;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 6,
-        ),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[
-              Icon(
-                icon,
-                color: txtColor,
-                size: fontSize + 2,
-              ),
-              const SizedBox(width: 6),
-            ],
-            Text(
-              label,
-              style: TextStyle(
-                color: txtColor,
-                fontSize: fontSize,
-                fontWeight: FontWeight.w600,
-                fontFamily: '.SF Pro Text',
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // iOS-style bouncingBadge
-  static Widget bouncingBadge({
-    required String text,
-    Color? backgroundColor,
-    Color? textColor,
-  }) {
-    final bgColor = backgroundColor ?? CupertinoColors.systemBlue;
-    final txtColor = textColor ?? CupertinoColors.white;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: txtColor,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          fontFamily: '.SF Pro Text',
         ),
       ),
     );

@@ -1,4 +1,4 @@
-// lib/main.dart - Fixed version with proper imports
+// lib/main.dart - Streamlined version
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -7,8 +7,7 @@ import 'screens/home_screen.dart';
 import 'services/notification_service.dart';
 import 'models/friend.dart';
 import 'services/storage_service.dart';
-import 'providers/friends_provider.dart'; // Import FriendsProvider from separate file
-import 'utils/constants.dart';
+import 'providers/friends_provider.dart';
 import 'utils/text_styles.dart';
 import 'utils/ui_constants.dart';
 import 'utils/colors.dart';
@@ -18,7 +17,6 @@ import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'services/foreground_service.dart';
 import 'screens/call_screen.dart';
 import 'screens/message_screen.dart';
-import 'screens/manage_messages_screen.dart';
 
 // Global key for navigation from notification callbacks
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -30,19 +28,8 @@ void main() async {
   final notificationService = NotificationService();
   await notificationService.initialize();
 
-  // Cold-start & background callback: navigate via named route
-  notificationService.setActionCallback((friendId, action) {
-    // Always return to home first
-    navigatorKey.currentState?.popUntil((route) => route.isFirst);
-
-    // Then deep-link into /notification with arguments
-    Future.delayed(const Duration(milliseconds: 100), () {
-      navigatorKey.currentState?.pushNamed(
-        '/notification',
-        arguments: {'id': friendId, 'action': action},
-      );
-    });
-  });
+  // Setup notification callback
+  notificationService.setActionCallback(_handleNotificationAction);
 
   runApp(
     MultiProvider(
@@ -59,6 +46,20 @@ void main() async {
   );
 }
 
+// Global notification handler function
+void _handleNotificationAction(String friendId, String action) {
+  // Always return to home first to ensure clean navigation
+  navigatorKey.currentState?.popUntil((route) => route.isFirst);
+
+  // Then navigate to the appropriate screen
+  Future.delayed(const Duration(milliseconds: 100), () {
+    navigatorKey.currentState?.pushNamed(
+      '/notification',
+      arguments: {'id': friendId, 'action': action},
+    );
+  });
+}
+
 class AlongsideApp extends StatefulWidget {
   const AlongsideApp({Key? key}) : super(key: key);
 
@@ -67,9 +68,7 @@ class AlongsideApp extends StatefulWidget {
 }
 
 class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver {
-  // Static flag to prevent multiple dialog displays
-  bool _skipNextPersistentRepost = false;
-  static bool isShowingDialog = false;
+  // Tracking for deduplicating actions
   static Map<String, int> processedActions = {};
 
   @override
@@ -77,7 +76,7 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    // After first frame, also register the in-app callback
+    // Setup foreground service after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeApp();
     });
@@ -93,15 +92,15 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.resumed) {
-      // keep the foreground service alive
+      // Restart the foreground service when app is resumed
       ForegroundServiceManager.startForegroundService();
 
-      // restore the persistent notification if needed
+      // Restore persistent notifications
       Future.delayed(const Duration(milliseconds: 500), () {
         final provider = Provider.of<FriendsProvider>(context, listen: false);
-        for (final f in provider.friends) {
-          if (f.hasPersistentNotification) {
-            provider.notificationService.showPersistentNotification(f);
+        for (final friend in provider.friends) {
+          if (friend.hasPersistentNotification) {
+            provider.notificationService.showPersistentNotification(friend);
           }
         }
       });
@@ -109,40 +108,21 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
   }
 
   Future<void> _initializeApp() async {
-    final provider = Provider.of<FriendsProvider>(context, listen: false);
-
-    // In-app callback (when already running)
-    provider.notificationService.setActionCallback(_handleNotificationAction);
-
+    // Initialize and start foreground service
     await ForegroundServiceManager.initForegroundService();
     Future.delayed(const Duration(seconds: 3), () {
       ForegroundServiceManager.startForegroundService();
     });
   }
 
-  void _handleNotificationAction(String friendId, String action) {
-    // Mirror cold-start: navigate via /notification
-    if (action == 'message') {
-      _skipNextPersistentRepost = true;
-    }
-    navigatorKey.currentState?.popUntil((route) => route.isFirst);
-    Future.delayed(const Duration(milliseconds: 100), () {
-      navigatorKey.currentState?.pushNamed(
-        '/notification',
-        arguments: {'id': friendId, 'action': action},
-      );
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    // Use CupertinoApp instead of MaterialApp for pure iOS feel
+    // Use CupertinoApp for pure iOS feel
     return CupertinoApp(
       title: 'Alongside',
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.cupertinoTheme, // Use our custom Cupertino theme
-      // Define routes, including the updated notification handler
+      theme: AppTheme.cupertinoTheme,
       routes: {
         '/': (context) => const WithForegroundTask(child: HomeScreenNew()),
         '/notification': (ctx) {
@@ -150,37 +130,33 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
           final friendId = args['id']!;
           final action = args['action']!;
 
-          // Create a unique action ID that combines friendId and action
+          // Create a unique ID for this action
           final actionId = '$friendId-$action';
-
-          // Get current timestamp to track when this action was processed
           final now = DateTime.now().millisecondsSinceEpoch;
 
-          // Check if we've processed this exact action recently (within 5 seconds)
+          // Check if we've processed this action recently (dedupe protection)
           if (processedActions.containsKey(actionId)) {
             final lastProcessed = processedActions[actionId]!;
             if (now - lastProcessed < 5000) {
-              // If same action was processed within last 5 seconds, ignore it
-              print('Ignoring duplicate action: $actionId');
-              return const HomeScreenNew();
+              return const HomeScreenNew(); // Skip if duplicate
             }
           }
 
-          // Record that we've processed this action
+          // Record this action as processed
           processedActions[actionId] = now;
 
-          // Cleanup old entries in processedActions map (older than 10 seconds)
+          // Clean up old entries (older than 10 seconds)
           processedActions.removeWhere((key, value) => now - value > 10000);
 
+          // Process the action
           final provider = Provider.of<FriendsProvider>(ctx, listen: false);
           final friend = provider.getFriendById(friendId);
 
-          // Ensure we have a valid friend
           if (friend != null) {
-            // Immediately cancel all notifications for this friend to prevent duplicates
+            // Cancel any existing notifications
             provider.notificationService.cancelReminder(friendId);
 
-            // For messages, navigate to the dedicated message screen
+            // Handle message action
             if (action == 'message') {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 Navigator.push(
@@ -191,7 +167,7 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
                 );
               });
             }
-            // For calls, use the dedicated screen approach
+            // Handle call action
             else if (action == 'call') {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 Navigator.of(ctx).pushNamed(

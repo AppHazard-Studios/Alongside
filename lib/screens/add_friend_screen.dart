@@ -1,12 +1,12 @@
-// lib/screens/add_friend_screen.dart - Fixed version with TimeOfDay import
+// lib/screens/add_friend_screen.dart - Improved area selection
 import 'dart:io';
-import 'package:flutter/material.dart'; // Import Material package for TimeOfDay
+import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
-import '../providers/friends_provider.dart'; // Updated import for FriendsProvider
+import '../providers/friends_provider.dart';
 import '../models/friend.dart';
 import '../utils/constants.dart';
 import '../utils/text_styles.dart';
@@ -70,7 +70,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
           withPhoto: false,
         );
 
-        // Show iOS-style contact picker
         showCupertinoModalPopup(
           context: context,
           builder: (context) => CupertinoActionSheet(
@@ -178,7 +177,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   }
 
   void _showProfileOptions() {
-    // Show options for profile picture selection
     showCupertinoModalPopup(
       context: context,
       builder: (context) => CupertinoActionSheet(
@@ -262,11 +260,9 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       );
 
       if (pickedFile != null) {
-        // Get documents directory for storing the file
         final Directory docDir = await getApplicationDocumentsDirectory();
         final String imagePath = '${docDir.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
 
-        // Copy the file to the app's storage
         await File(pickedFile.path).copy(imagePath);
 
         setState(() {
@@ -405,7 +401,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                     });
                     Navigator.pop(context);
 
-                    // If they set a reminder, show the time picker
                     if (selectedOption > 0) {
                       _showTimePicker();
                     }
@@ -511,7 +506,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   }
 
   void _saveFriend() async {
-    // Validate form fields
     if (_nameController.text.trim().isEmpty) {
       _showErrorSnackBar('Please enter a name');
       return;
@@ -559,9 +553,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Wrap in CupertinoApp to fix Material widget error
     return CupertinoApp(
-      // The top-level fix that prevents Material widget errors
       debugShowCheckedModeBanner: false,
       theme: const CupertinoThemeData(
         brightness: Brightness.light,
@@ -580,7 +572,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             ),
           ),
           backgroundColor: CupertinoColors.systemGroupedBackground,
-          // Properly styled back button
           leading: CupertinoButton(
             padding: const EdgeInsets.only(left: 4),
             child: Container(
@@ -601,7 +592,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             ),
             onPressed: () => Navigator.pop(context),
           ),
-          // Fixed "Save" button styling
           trailing: CupertinoButton(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: const Text(
@@ -623,7 +613,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             child: ListView(
               padding: const EdgeInsets.only(top: 16),
               children: [
-
                 // Profile image selection
                 Center(
                   child: Column(
@@ -634,13 +623,13 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                           imageOrEmoji: _profileImage,
                           isEmoji: _isEmoji,
                           size: 100,
+                          backgroundColor: CupertinoColors.systemGrey6, // Explicit background color
                           onTap: _showProfileOptions,
                         ),
                       ),
 
                       const SizedBox(height: 12),
 
-                      // Improved text button styling
                       CupertinoButton(
                         padding: EdgeInsets.zero,
                         onPressed: _showProfileOptions,
@@ -688,7 +677,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center, // Aligned center
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Container(
                               width: 38,
@@ -715,7 +704,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                         ),
                       ),
 
-                      // Divider with consistent styling
                       Container(
                         height: 0.5,
                         color: CupertinoColors.systemGrey5,
@@ -726,7 +714,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center, // Aligned center
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Container(
                               width: 38,
@@ -792,7 +780,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center, // Aligned center
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Container(
                               width: 38,
@@ -820,7 +808,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                         ),
                       ),
 
-                      // Divider with consistent styling
                       Container(
                         height: 0.5,
                         color: CupertinoColors.systemGrey5,
@@ -831,7 +818,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center, // Aligned center
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Container(
                               width: 38,
@@ -890,41 +877,41 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                   ),
                   child: Column(
                     children: [
-                      // Check-in Reminder
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center, // Aligned center
-                          children: [
-                            Container(
-                              width: 38,
-                              height: 38,
-                              decoration: BoxDecoration(
-                                color: CupertinoColors.systemOrange.withOpacity(0.1),
-                                shape: BoxShape.circle,
+                      // Check-in Reminder - Made entire row tappable
+                      GestureDetector(
+                        onTap: _showReminderPicker,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 38,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: CupertinoColors.systemOrange.withOpacity(0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  CupertinoIcons.bell_fill,
+                                  color: CupertinoColors.systemOrange,
+                                  size: 18,
+                                ),
                               ),
-                              child: const Icon(
-                                CupertinoIcons.bell_fill,
-                                color: CupertinoColors.systemOrange,
-                                size: 18,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Check-in Reminder',
-                                    style: TextStyle(
-                                      color: CupertinoColors.secondaryLabel,
-                                      fontSize: 14,
-                                      fontFamily: '.SF Pro Text',
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Check-in Reminder',
+                                      style: TextStyle(
+                                        color: CupertinoColors.secondaryLabel,
+                                        fontSize: 14,
+                                        fontFamily: '.SF Pro Text',
+                                      ),
                                     ),
-                                  ),
-                                  GestureDetector(
-                                    onTap: _showReminderPicker,
-                                    child: Row(
+                                    Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
                                         Text(
@@ -946,73 +933,101 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                                         ),
                                       ],
                                     ),
-                                  ),
-                                ],
+                                    if (_reminderDays > 0) ...[
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        children: [
+                                          const Icon(
+                                            CupertinoIcons.time,
+                                            size: 12,
+                                            color: CupertinoColors.secondaryLabel,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'At ${_reminderTime.format(context)}',
+                                            style: const TextStyle(
+                                              color: CupertinoColors.secondaryLabel,
+                                              fontSize: 13,
+                                              fontFamily: '.SF Pro Text',
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                      // Divider with consistent styling
+
                       Container(
                         height: 0.5,
                         color: CupertinoColors.systemGrey5,
                         margin: const EdgeInsets.only(left: 66),
                       ),
-                      // Show in notification area
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center, // Aligned center
-                          children: [
-                            Container(
-                              width: 38,
-                              height: 38,
-                              decoration: BoxDecoration(
-                                color: CupertinoColors.systemBlue.withOpacity(0.1),
-                                shape: BoxShape.circle,
+
+                      // Show in notification area - Made entire row tappable
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _hasPersistentNotification = !_hasPersistentNotification;
+                          });
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 38,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: CupertinoColors.systemBlue.withOpacity(0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  CupertinoIcons.rectangle_stack_badge_person_crop,
+                                  color: CupertinoColors.systemBlue,
+                                  size: 18,
+                                ),
                               ),
-                              child: const Icon(
-                                CupertinoIcons.rectangle_stack_badge_person_crop,
-                                color: CupertinoColors.systemBlue,
-                                size: 18,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Show in notification area',
-                                    style: TextStyle(
-                                      color: CupertinoColors.label,
-                                      fontSize: 16,
-                                      fontFamily: '.SF Pro Text',
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Show in notification area',
+                                      style: TextStyle(
+                                        color: CupertinoColors.label,
+                                        fontSize: 16,
+                                        fontFamily: '.SF Pro Text',
+                                      ),
                                     ),
-                                  ),
-                                  const Text(
-                                    'Keep a quick access notification for this friend',
-                                    style: TextStyle(
-                                      color: CupertinoColors.secondaryLabel,
-                                      fontSize: 14,
-                                      fontFamily: '.SF Pro Text',
+                                    const Text(
+                                      'Keep a quick access notification for this friend',
+                                      style: TextStyle(
+                                        color: CupertinoColors.secondaryLabel,
+                                        fontSize: 14,
+                                        fontFamily: '.SF Pro Text',
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                            // iOS-style switch
-                            CupertinoSwitch(
-                              value: _hasPersistentNotification,
-                              onChanged: (value) {
-                                setState(() {
-                                  _hasPersistentNotification = value;
-                                });
-                              },
-                              activeColor: CupertinoColors.systemBlue,
-                            ),
-                          ],
+                              CupertinoSwitch(
+                                value: _hasPersistentNotification,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _hasPersistentNotification = value;
+                                  });
+                                },
+                                activeColor: CupertinoColors.systemBlue,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],

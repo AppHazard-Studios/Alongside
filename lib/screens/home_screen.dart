@@ -1,8 +1,8 @@
-// lib/screens/home_screen.dart - Fixed imports for FriendsProvider
+// lib/screens/home_screen.dart - Improved greeting and UI
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
-import '../providers/friends_provider.dart'; // Updated import
+import '../providers/friends_provider.dart';
 import '../widgets/friend_card.dart';
 import '../utils/colors.dart';
 import '../utils/text_styles.dart';
@@ -50,7 +50,7 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
       navigationBar: CupertinoNavigationBar(
         middle: _buildAnimatedLogo(),
         backgroundColor: AppColors.background,
-        border: null, // Remove border for modern look
+        border: null,
         leading: CupertinoButton(
           padding: EdgeInsets.zero,
           child: Container(
@@ -70,9 +70,8 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
         ),
         trailing: Consumer<FriendsProvider>(
           builder: (context, provider, child) {
-            // Only show the add button in the header when we have friends
             if (provider.isLoading || provider.friends.isEmpty) {
-              return const SizedBox.shrink(); // No button when empty or loading
+              return const SizedBox.shrink();
             }
 
             return CupertinoButton(
@@ -130,7 +129,6 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
             return _buildEmptyState(context);
           }
 
-          // Auto-expand the first friend card if none is expanded
           if (_expandedFriendId == null && friends.isNotEmpty) {
             _expandedFriendId = friends[0].id;
           }
@@ -141,7 +139,6 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
     );
   }
 
-  // Navigate to add friend screen
   void _navigateToAddFriend(BuildContext context) {
     Navigator.push(
       context,
@@ -151,7 +148,6 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
     );
   }
 
-  // Animated app logo
   Widget _buildAnimatedLogo() {
     return AnimatedBuilder(
       animation: _animation,
@@ -177,7 +173,6 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
                 ),
               ),
               const SizedBox(width: 6),
-              // Little bouncing heart icon
               TweenAnimationBuilder<double>(
                 tween: Tween<double>(begin: 0.8, end: 1.0),
                 duration: const Duration(milliseconds: 600),
@@ -213,9 +208,9 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center, // Center everything
           children: [
-            // Greeting with animation - Fixed yellow underlines
+            // Centered greeting with animation
             TweenAnimationBuilder<double>(
               tween: Tween<double>(begin: 0.0, end: 1.0),
               duration: const Duration(milliseconds: 500),
@@ -230,7 +225,7 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
                 );
               },
               child: Padding(
-                padding: const EdgeInsets.only(top: 8, bottom: 2),
+                padding: const EdgeInsets.only(top: 16, bottom: 4),
                 child: DefaultTextStyle(
                   style: const TextStyle(
                     color: CupertinoColors.label,
@@ -238,6 +233,7 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
                   ),
                   child: CharacterComponents.personalizedGreeting(
                     name: "Friend",
+                    centered: true, // New parameter to center the greeting
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
@@ -249,7 +245,7 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
               ),
             ),
 
-            // Subheader - Fixed yellow underlines
+            // Centered subheader
             TweenAnimationBuilder<double>(
               tween: Tween<double>(begin: 0.0, end: 1.0),
               duration: const Duration(milliseconds: 500),
@@ -264,7 +260,7 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
                 );
               },
               child: Padding(
-                padding: const EdgeInsets.only(left: 4, bottom: 16),
+                padding: const EdgeInsets.only(bottom: 16),
                 child: DefaultTextStyle(
                   style: TextStyle(
                     color: AppColors.textSecondary,
@@ -272,6 +268,7 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
                   ),
                   child: Text(
                     "Here's who you're walking alongside",
+                    textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 16,
                       color: AppColors.textSecondary,
@@ -288,7 +285,6 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
                 padding: const EdgeInsets.only(bottom: 24),
                 itemCount: friends.length,
                 itemBuilder: (context, index) {
-                  // Staggered animation for each card
                   return TweenAnimationBuilder<double>(
                     tween: Tween<double>(begin: 0.0, end: 1.0),
                     duration: Duration(milliseconds: 500 + (index * 100)),
@@ -348,7 +344,7 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
             ),
             const SizedBox(height: 32),
 
-            // Title with fixed yellow underlines
+            // Title
             TweenAnimationBuilder<double>(
               tween: Tween<double>(begin: 0.0, end: 1.0),
               duration: const Duration(milliseconds: 500),
@@ -381,7 +377,7 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
             ),
             const SizedBox(height: 16),
 
-            // Description with fixed yellow underlines
+            // Description
             TweenAnimationBuilder<double>(
               tween: Tween<double>(begin: 0.0, end: 1.0),
               duration: const Duration(milliseconds: 700),
@@ -426,7 +422,7 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
                 );
               },
               child: SizedBox(
-                width: 240, // Fixed width for better proportion
+                width: 240,
                 child: CupertinoButton(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   color: AppColors.primary,
@@ -468,6 +464,8 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
   }
 
   void _showAboutDialog(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
@@ -480,7 +478,9 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
             fontFamily: '.SF Pro Text',
           ),
         ),
-        content: Padding(
+        content: Container(
+          // Increased width for better text flow
+          width: screenWidth * 0.85,
           padding: const EdgeInsets.only(top: 16.0, bottom: 8.0),
           child: DefaultTextStyle(
             style: const TextStyle(
