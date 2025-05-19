@@ -1,5 +1,5 @@
-// lib/screens/message_screen.dart - Fixed missing File import
-import 'dart:io'; // Added missing import for File class
+// lib/screens/message_screen.dart - Updated with "Alongside them:" and "Alongside you:" terminology
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
@@ -185,12 +185,12 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                           color: themeColor,
                         ),
                       ),
-                      // Show what you're alongside them in
+                      // Show what you're alongside them in - Updated terminology
                       if (widget.friend.helpingWith != null && widget.friend.helpingWith!.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.only(top: 4),
                           child: Text(
-                            'Alongside in: ${widget.friend.helpingWith}',
+                            'Alongside them: ${widget.friend.helpingWith}',
                             style: AppTextStyles.bodyText.copyWith(
                               color: AppColors.textSecondary,
                               fontSize: 14,
@@ -199,12 +199,12 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                      // Show what they're alongside you in
+                      // Show what they're alongside you in - Updated terminology
                       if (widget.friend.theyHelpingWith != null && widget.friend.theyHelpingWith!.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.only(top: 4),
                           child: Text(
-                            'They help with: ${widget.friend.theyHelpingWith}',
+                            'Alongside you: ${widget.friend.theyHelpingWith}',
                             style: AppTextStyles.bodyText.copyWith(
                               color: AppColors.textSecondary,
                               fontSize: 14,

@@ -49,9 +49,6 @@ class Illustrations {
 class _FriendsIllustrationPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppColors.primary
-      ..style = PaintingStyle.fill;
 
     final bgPaint = Paint()
       ..color = AppColors.primaryLight

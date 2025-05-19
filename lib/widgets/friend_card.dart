@@ -1,14 +1,11 @@
-// lib/widgets/friend_card.dart - Reverted profile image background
+// lib/widgets/friend_card.dart - Updated with "Alongside them:" and "Alongside you:" terminology
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../providers/friends_provider.dart';
 import '../models/friend.dart';
 import '../screens/add_friend_screen.dart';
 import '../screens/message_screen.dart';
-import '../utils/colors.dart';
 
 class FriendCardNew extends StatefulWidget {
   final Friend friend;
@@ -139,7 +136,7 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
                           ],
                         ),
 
-                        // "Alongside them in" info - Always visible now
+                        // "Alongside them in" info - Always visible now but with updated text
                         if (widget.friend.helpingWith != null &&
                             widget.friend.helpingWith!.isNotEmpty) ...[
                           const SizedBox(height: 4),
@@ -160,7 +157,7 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
                               const SizedBox(width: 6),
                               Expanded(
                                 child: Text(
-                                  "Alongside in: ${widget.friend.helpingWith}",
+                                  "Alongside them: ${widget.friend.helpingWith}",
                                   style: const TextStyle(
                                     color: CupertinoColors.secondaryLabel,
                                     fontSize: 14,
@@ -225,7 +222,7 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // "They're alongside you in" section
+                        // "They're alongside you in" section - Updated text
                         if (widget.friend.theyHelpingWith != null &&
                             widget.friend.theyHelpingWith!.isNotEmpty) ...[
                           Row(
@@ -249,7 +246,7 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     const Text(
-                                      "They're alongside you in:",
+                                      "Alongside you:",
                                       style: TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w600,

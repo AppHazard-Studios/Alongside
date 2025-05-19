@@ -9,10 +9,7 @@ import 'package:flutter_contacts/flutter_contacts.dart';
 import '../providers/friends_provider.dart';
 import '../models/friend.dart';
 import '../utils/constants.dart';
-import '../utils/text_styles.dart';
-import '../utils/colors.dart';
 import '../widgets/no_underline_field.dart';
-import '../widgets/character_components.dart';
 
 class AddFriendScreen extends StatefulWidget {
   final Friend? friend;
@@ -670,16 +667,16 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                         CupertinoButton(
                           padding: EdgeInsets.zero,
                           onPressed: _showProfileOptions,
-                          child: Row(
+                          child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(
+                              Icon(
                                 CupertinoIcons.camera,
                                 color: CupertinoColors.systemBlue,
                                 size: 16,
                               ),
-                              const SizedBox(width: 6),
-                              const Text(
+                              SizedBox(width: 6),
+                              Text(
                                 'Change Profile',
                                 style: TextStyle(
                                   color: CupertinoColors.systemBlue,
@@ -889,9 +886,9 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                   const SizedBox(height: 24),
 
                   // NOTIFICATION SETTINGS section
-                  Padding(
-                    padding: const EdgeInsets.only(left: 16, bottom: 8),
-                    child: Text(
+                  const Padding(
+                    padding: EdgeInsets.only(left: 16, bottom: 8),
+                    child: const Text(
                       'NOTIFICATION SETTINGS',
                       style: TextStyle(
                         color: CupertinoColors.secondaryLabel,
@@ -1033,11 +1030,11 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                                   ),
                                 ),
                                 const SizedBox(width: 12),
-                                Expanded(
+                                const Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const Text(
+                                      Text(
                                         'Show in notification area',
                                         style: TextStyle(
                                           color: CupertinoColors.label,
@@ -1045,7 +1042,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                                           fontFamily: '.SF Pro Text',
                                         ),
                                       ),
-                                      const Text(
+                                      Text(
                                         'Keep a quick access notification for this friend',
                                         style: TextStyle(
                                           color: CupertinoColors.secondaryLabel,

@@ -87,7 +87,7 @@ class _CallScreenState extends State<CallScreen> {
       body: SafeArea(
         child: Center(
           child: Padding(
-            padding: EdgeInsets.all(UIConstants.screenPadding * 1.5),
+            padding: const EdgeInsets.all(UIConstants.screenPadding * 1.5),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -149,12 +149,12 @@ class _CallScreenState extends State<CallScreen> {
                   const SizedBox(height: 32),
                   CupertinoButton.filled(
                     onPressed: _initiateCall,
-                    child: Row(
+                    child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(CupertinoIcons.phone_fill, size: 16),
-                        const SizedBox(width: 8),
-                        Text(
+                        Icon(CupertinoIcons.phone_fill, size: 16),
+                        SizedBox(width: 8),
+                        const Text(
                           'Call Now',
                           style: AppTextStyles.button,
                         ),

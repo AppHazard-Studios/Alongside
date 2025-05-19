@@ -1,7 +1,6 @@
 // lib/widgets/character_components.dart - Fix profile image and simplify components
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
-import '../utils/colors.dart';
 
 /// A collection of streamlined UI components with iOS design principles
 class CharacterComponents {

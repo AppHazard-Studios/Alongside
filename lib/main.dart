@@ -1,6 +1,5 @@
 // lib/main.dart - Streamlined version
 import 'dart:async';
-import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'screens/home_screen.dart';
@@ -8,11 +7,7 @@ import 'services/notification_service.dart';
 import 'models/friend.dart';
 import 'services/storage_service.dart';
 import 'providers/friends_provider.dart';
-import 'utils/text_styles.dart';
-import 'utils/ui_constants.dart';
-import 'utils/colors.dart';
 import 'theme/app_theme.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'services/foreground_service.dart';
 import 'screens/call_screen.dart';

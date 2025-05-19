@@ -56,7 +56,7 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
               color: AppColors.primaryLight,
               shape: BoxShape.circle,
             ),
-            child: Icon(
+            child: const Icon(
               CupertinoIcons.back,
               color: AppColors.primary,
               size: 18,
@@ -66,7 +66,7 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
         ),
       ),
       body: _isLoading
-          ? Center(child: CupertinoActivityIndicator())
+          ? const Center(child: CupertinoActivityIndicator())
           : _customMessages.isEmpty
           ? _buildEmptyState()
           : _buildMessagesList(),
@@ -86,7 +86,7 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
                 color: AppColors.primary.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
+              child: const Icon(
                 CupertinoIcons.bubble_left,
                 size: 48,
                 color: AppColors.primary,
@@ -102,7 +102,7 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
-            Text(
+            const Text(
               'Add custom messages when sending texts to friends',
               style: AppTextStyles.secondary,
               textAlign: TextAlign.center,
@@ -111,7 +111,7 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
             CupertinoButton(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               color: AppColors.primary,
-              child: Text(
+              child: const Text(
                 'Create Message',
                 style: AppTextStyles.button,
               ),
@@ -149,7 +149,7 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
                   color: AppColors.error.withOpacity(0.2),
                   alignment: Alignment.centerLeft,
                   padding: const EdgeInsets.only(left: 20),
-                  child: Icon(
+                  child: const Icon(
                     CupertinoIcons.delete,
                     color: AppColors.error,
                   ),
@@ -158,7 +158,7 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
                   color: AppColors.error.withOpacity(0.2),
                   alignment: Alignment.centerRight,
                   padding: const EdgeInsets.only(right: 20),
-                  child: Icon(
+                  child: const Icon(
                     CupertinoIcons.delete,
                     color: AppColors.error,
                   ),
@@ -190,7 +190,7 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
                       index: index,
                       child: Container(
                         padding: const EdgeInsets.all(8),
-                        child: Icon(
+                        child: const Icon(
                           CupertinoIcons.line_horizontal_3,
                           color: AppColors.textSecondary,
                           size: 20,
@@ -211,23 +211,23 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
     final shouldDelete = await showCupertinoDialog<bool>(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: Text(
+        title: const Text(
           'Delete Message',
           style: TextStyle(color: AppColors.error),
         ),
-        content: Text(
+        content: const Text(
           'Are you sure you want to delete this custom message?',
         ),
         actions: [
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(context, false),
             isDefaultAction: true,
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
           ),
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(context, true),
             isDestructiveAction: true,
-            child: Text('Delete'),
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -251,7 +251,7 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
 
     // Show toast
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
+      const SnackBar(
         content: Text('Message deleted'),
         duration: Duration(seconds: 2),
         backgroundColor: AppColors.error,
@@ -265,7 +265,7 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: Text(
+        title: const Text(
           'Add Custom Message',
           style: TextStyle(color: AppColors.primary),
         ),
@@ -284,7 +284,7 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(context),
             isDefaultAction: true,
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
           ),
           CupertinoDialogAction(
             onPressed: () async {
@@ -303,7 +303,7 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
 
                 // Show toast
                 ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
+                    const SnackBar(
                       content: Text('Message saved'),
                       duration: Duration(seconds: 2),
                       backgroundColor: AppColors.primary,
@@ -311,7 +311,7 @@ class _ManageMessagesScreenState extends State<ManageMessagesScreen> {
                 );
               }
             },
-            child: Text(
+            child: const Text(
               'Save',
               style: TextStyle(color: AppColors.primary),
             ),

@@ -51,7 +51,7 @@ class AppTheme {
     fontFamily: '.SF Pro Text',
 
     // Text themes with our custom styles
-    textTheme: TextTheme(
+    textTheme: const TextTheme(
       headlineMedium: AppTextStyles.title,
       titleLarge: AppTextStyles.sectionTitle,
       bodyLarge: AppTextStyles.bodyText,
@@ -59,7 +59,7 @@ class AppTheme {
     ),
 
     // AppBar styling (iOS-like)
-    appBarTheme: AppBarTheme(
+    appBarTheme: const AppBarTheme(
       backgroundColor: AppColors.background,
       foregroundColor: AppColors.textPrimary,
       elevation: 0,
@@ -99,7 +99,7 @@ class AppTheme {
     ),
 
     // Icon theme
-    iconTheme: IconThemeData(
+    iconTheme: const IconThemeData(
       color: AppColors.primary,
       size: 22, // Slightly smaller for iOS
     ),
@@ -110,7 +110,7 @@ class AppTheme {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: AppColors.divider, width: 1),
+        side: const BorderSide(color: AppColors.divider, width: 1),
       ),
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
       // Subtle shadow
@@ -128,9 +128,9 @@ class AppTheme {
     ),
 
     // Bottom sheet theme
-    bottomSheetTheme: BottomSheetThemeData(
+    bottomSheetTheme: const BottomSheetThemeData(
       backgroundColor: AppColors.cardBackground,
-      shape: const RoundedRectangleBorder(
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       // Larger modal radius for iOS feel
@@ -142,22 +142,22 @@ class AppTheme {
     inputDecorationTheme: InputDecorationTheme(
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: AppColors.divider),
+        borderSide: const BorderSide(color: AppColors.divider),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: AppColors.divider),
+        borderSide: const BorderSide(color: AppColors.divider),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: AppColors.primary),
+        borderSide: const BorderSide(color: AppColors.primary),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: AppColors.error),
+        borderSide: const BorderSide(color: AppColors.error),
       ),
       // Make labels a bit smaller and lighter - iOS style
-      labelStyle: TextStyle(
+      labelStyle: const TextStyle(
         color: AppColors.textSecondary,
         fontSize: 14,
       ),
@@ -174,14 +174,14 @@ class AppTheme {
 
     // Switch theme
     switchTheme: SwitchThemeData(
-      thumbColor: MaterialStateProperty.resolveWith((states) {
-        if (states.contains(MaterialState.selected)) {
+      thumbColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
           return Colors.white;
         }
         return Colors.white;
       }),
-      trackColor: MaterialStateProperty.resolveWith((states) {
-        if (states.contains(MaterialState.selected)) {
+      trackColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
           return AppColors.primary;
         }
         return Colors.grey.withOpacity(0.3);
@@ -189,15 +189,13 @@ class AppTheme {
     ),
 
     // Color scheme
-    colorScheme: ColorScheme.light(
+    colorScheme: const ColorScheme.light(
       primary: AppColors.primary,
       secondary: AppColors.secondary,
       tertiary: AppColors.tertiary,
-      background: AppColors.background,
       surface: AppColors.cardBackground,
       onPrimary: Colors.white,
       onSecondary: Colors.white,
-      onBackground: AppColors.textPrimary,
       onSurface: AppColors.textPrimary,
       error: AppColors.error,
       onError: Colors.white,
@@ -265,22 +263,22 @@ class AppTheme {
   // Cupertino button styling
   static ButtonStyle get cupertinoButtonStyle {
     return ButtonStyle(
-      backgroundColor: MaterialStateProperty.resolveWith((states) {
-        if (states.contains(MaterialState.pressed)) {
+      backgroundColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.pressed)) {
           return AppColors.primaryButtonPressed;
         }
         return AppColors.primary;
       }),
-      shape: MaterialStateProperty.all(
+      shape: WidgetStateProperty.all(
         RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
       ),
       // No elevation for iOS feel
-      elevation: MaterialStateProperty.all(0),
+      elevation: WidgetStateProperty.all(0),
       // Minimum size
-      minimumSize: MaterialStateProperty.all(const Size(44, 44)),
-      padding: MaterialStateProperty.all(
+      minimumSize: WidgetStateProperty.all(const Size(44, 44)),
+      padding: WidgetStateProperty.all(
         const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
     );
