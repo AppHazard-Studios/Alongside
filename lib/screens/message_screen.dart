@@ -1,10 +1,11 @@
-// lib/screens/message_screen.dart - Fixed with proper imports
+// lib/screens/message_screen.dart - Fixed missing File import
+import 'dart:io'; // Added missing import for File class
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/friend.dart';
-import '../providers/friends_provider.dart'; // Updated import
+import '../providers/friends_provider.dart';
 import '../utils/text_styles.dart';
 import '../utils/colors.dart';
 import '../widgets/character_components.dart';
@@ -42,11 +43,9 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
 
   @override
   Widget build(BuildContext context) {
-    // Get background color based on friend name (for consistency)
-    final nameHash = widget.friend.name.hashCode.abs();
-    final colorIndex = nameHash % AppColors.extendedPalette.length;
-    final themeColor = AppColors.extendedPalette[colorIndex];
-    final lightThemeColor = themeColor.withOpacity(0.15);
+    // Standard blue color for all friends
+    final themeColor = CupertinoColors.systemBlue;
+    final lightThemeColor = themeColor.withOpacity(0.1);
 
     return CupertinoPageScaffold(
       backgroundColor: AppColors.background,
@@ -59,7 +58,7 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
           ),
         ),
         backgroundColor: lightThemeColor,
-        border: null, // Remove border for modern look
+        border: null,
         leading: CupertinoButton(
           padding: EdgeInsets.zero,
           child: Container(
@@ -145,11 +144,33 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
             ),
             child: Row(
               children: [
-                CharacterComponents.playfulProfilePicture(
-                  imageOrEmoji: widget.friend.profileImage,
-                  isEmoji: widget.friend.isEmoji,
-                  size: 60,
-                  backgroundColor: themeColor.withOpacity(0.2),
+                // Use original background for emoji in message screen
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: widget.friend.isEmoji
+                        ? CupertinoColors.systemGrey6
+                        : CupertinoColors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: CupertinoColors.systemGrey5,
+                      width: 0.5,
+                    ),
+                  ),
+                  child: widget.friend.isEmoji
+                      ? Center(
+                    child: Text(
+                      widget.friend.profileImage,
+                      style: const TextStyle(fontSize: 30),
+                    ),
+                  )
+                      : ClipOval(
+                    child: Image.file(
+                      File(widget.friend.profileImage),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -164,11 +185,26 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                           color: themeColor,
                         ),
                       ),
+                      // Show what you're alongside them in
                       if (widget.friend.helpingWith != null && widget.friend.helpingWith!.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.only(top: 4),
                           child: Text(
                             'Alongside in: ${widget.friend.helpingWith}',
+                            style: AppTextStyles.bodyText.copyWith(
+                              color: AppColors.textSecondary,
+                              fontSize: 14,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      // Show what they're alongside you in
+                      if (widget.friend.theyHelpingWith != null && widget.friend.theyHelpingWith!.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            'They help with: ${widget.friend.theyHelpingWith}',
                             style: AppTextStyles.bodyText.copyWith(
                               color: AppColors.textSecondary,
                               fontSize: 14,
@@ -397,7 +433,7 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
     );
   }
 
-  // Show dialog to create a custom message
+  // Show dialog to create a custom message - fixed for cursor position
   void _showCustomMessageDialog(BuildContext context, Color themeColor) {
     final textController = TextEditingController();
 
@@ -423,6 +459,7 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                 height: 60,
                 child: Illustrations.messagingIllustration(size: 60),
               ),
+              // Single line input that expands as needed
               CupertinoTextField(
                 controller: textController,
                 placeholder: 'Type your message...',
@@ -437,9 +474,16 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                 ),
                 style: AppTextStyles.inputText,
                 placeholderStyle: AppTextStyles.placeholder,
-                minLines: 2,
+                // Start with 1 line and expand as needed
+                minLines: 1,
                 maxLines: 5,
                 textCapitalization: TextCapitalization.sentences,
+                // Clear placeholder text on focus
+                onTap: () {
+                  if (textController.text.isEmpty) {
+                    // Keeps placeholder until user starts typing
+                  }
+                },
               ),
             ],
           ),
@@ -500,14 +544,7 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    themeColor,
-                    themeColor.withBlue((themeColor.blue + 40).clamp(0, 255)),
-                  ],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                ),
+                color: themeColor,
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(

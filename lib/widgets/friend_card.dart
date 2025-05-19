@@ -1,4 +1,4 @@
-// lib/widgets/friend_card.dart - Streamlined version
+// lib/widgets/friend_card.dart - Reverted profile image background
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -105,7 +105,7 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Friend name row with reminder badge
+                        // Friend name row with reminder badge (only when collapsed)
                         Row(
                           children: [
                             Expanded(
@@ -119,7 +119,7 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            if (widget.friend.reminderDays > 0)
+                            if (widget.friend.reminderDays > 0 && !widget.isExpanded)
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
@@ -315,7 +315,7 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
                                         ),
                                         const SizedBox(width: 4),
                                         Text(
-                                          widget.friend.reminderTime,
+                                          _formatTimeString(widget.friend.reminderTime),
                                           style: const TextStyle(
                                             fontSize: 13,
                                             color: CupertinoColors.secondaryLabel,
@@ -334,7 +334,7 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
                     ),
                   ),
 
-                  // Action buttons section - simplified layout
+                  // Action buttons section - standardized blue color
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     child: Row(
@@ -343,7 +343,7 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
                         Expanded(
                           child: CupertinoButton(
                             padding: EdgeInsets.zero,
-                            color: CupertinoColors.systemBlue,
+                            color: CupertinoColors.systemBlue, // Standard blue for all friends
                             borderRadius: BorderRadius.circular(12),
                             onPressed: () => _navigateToMessageScreen(context),
                             child: const Row(
@@ -427,6 +427,27 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
     );
   }
 
+  // Convert 24h time format to 12h time format
+  String _formatTimeString(String timeStr) {
+    try {
+      final parts = timeStr.split(':');
+      if (parts.length == 2) {
+        int hour = int.parse(parts[0]);
+        final minute = parts[1];
+        final period = hour >= 12 ? 'PM' : 'AM';
+
+        // Convert to 12-hour format
+        if (hour > 12) hour -= 12;
+        if (hour == 0) hour = 12;
+
+        return '$hour:$minute $period';
+      }
+    } catch (e) {
+      // In case of parsing error, return original string
+    }
+    return timeStr;
+  }
+
   // Navigate to MessageScreen
   void _navigateToMessageScreen(BuildContext context) {
     Navigator.push(
@@ -478,14 +499,14 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
     }
   }
 
-  // Create profile image with fixed background color
+  // Create profile image - Using emoji background from original theme
   Widget _buildProfileImage() {
     return Container(
       width: 60,
       height: 60,
       decoration: BoxDecoration(
         color: widget.friend.isEmoji
-            ? CupertinoColors.systemGrey6  // Fixed background for emoji
+            ? CupertinoColors.systemGrey6  // Original background for emoji
             : CupertinoColors.white,
         shape: BoxShape.circle,
         border: Border.all(

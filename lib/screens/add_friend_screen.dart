@@ -1,4 +1,4 @@
-// lib/screens/add_friend_screen.dart - Improved area selection
+// lib/screens/add_friend_screen.dart - Fixed time format and profile image
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -34,7 +34,25 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   bool _isEmoji = true;
   int _reminderDays = 0;
   bool _hasPersistentNotification = false;
-  TimeOfDay _reminderTime = const TimeOfDay(hour: 9, minute: 0); // Default to 9:00 AM
+
+  // Using a string for reminder time to avoid Material TimeOfDay dependency
+  String _reminderTimeStr = "09:00"; // Default to 9:00 AM
+
+  // Parse time for display in 12-hour format
+  String get _formattedReminderTime {
+    final parts = _reminderTimeStr.split(':');
+    if (parts.length == 2) {
+      int hour = int.tryParse(parts[0]) ?? 9;
+      int minute = int.tryParse(parts[1]) ?? 0;
+
+      final period = hour < 12 ? 'AM' : 'PM';
+      if (hour > 12) hour -= 12;
+      if (hour == 0) hour = 12;
+
+      return '$hour:${minute.toString().padLeft(2, '0')} $period';
+    }
+    return "9:00 AM";
+  }
 
   @override
   void initState() {
@@ -49,15 +67,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       _hasPersistentNotification = widget.friend!.hasPersistentNotification;
       _helpingThemWithController.text = widget.friend!.helpingWith ?? '';
       _helpingYouWithController.text = widget.friend!.theyHelpingWith ?? '';
-
-      // Parse the reminder time from string format "HH:MM"
-      final timeParts = widget.friend!.reminderTime.split(':');
-      if (timeParts.length == 2) {
-        _reminderTime = TimeOfDay(
-          hour: int.tryParse(timeParts[0]) ?? 9,
-          minute: int.tryParse(timeParts[1]) ?? 0,
-        );
-      }
+      _reminderTimeStr = widget.friend!.reminderTime;
     }
   }
 
@@ -445,6 +455,20 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   }
 
   void _showTimePicker() {
+    // Extract current hours and minutes from string
+    final parts = _reminderTimeStr.split(':');
+    int currentHour = int.tryParse(parts[0]) ?? 9;
+    int currentMinute = int.tryParse(parts[1]) ?? 0;
+
+    // Create initial DateTime for the picker
+    final initialDateTime = DateTime(
+      DateTime.now().year,
+      DateTime.now().month,
+      DateTime.now().day,
+      currentHour,
+      currentMinute,
+    );
+
     showCupertinoModalPopup(
       context: context,
       builder: (context) => Container(
@@ -483,17 +507,11 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             Expanded(
               child: CupertinoDatePicker(
                 mode: CupertinoDatePickerMode.time,
-                initialDateTime: DateTime(
-                  2023, 1, 1,
-                  _reminderTime.hour,
-                  _reminderTime.minute,
-                ),
+                initialDateTime: initialDateTime,
                 onDateTimeChanged: (dateTime) {
                   setState(() {
-                    _reminderTime = TimeOfDay(
-                      hour: dateTime.hour,
-                      minute: dateTime.minute,
-                    );
+                    // Update time string in HH:MM format
+                    _reminderTimeStr = '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
                   });
                 },
                 use24hFormat: false,
@@ -526,7 +544,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
         profileImage: _profileImage,
         isEmoji: _isEmoji,
         reminderDays: _reminderDays,
-        reminderTime: '${_reminderTime.hour.toString().padLeft(2, '0')}:${_reminderTime.minute.toString().padLeft(2, '0')}',
+        reminderTime: _reminderTimeStr,
         hasPersistentNotification: _hasPersistentNotification,
         helpingWith: _helpingThemWithController.text.trim(),
         theyHelpingWith: _helpingYouWithController.text.trim(),
@@ -540,7 +558,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
         profileImage: _profileImage,
         isEmoji: _isEmoji,
         reminderDays: _reminderDays,
-        reminderTime: '${_reminderTime.hour.toString().padLeft(2, '0')}:${_reminderTime.minute.toString().padLeft(2, '0')}',
+        reminderTime: _reminderTimeStr,
         hasPersistentNotification: _hasPersistentNotification,
         helpingWith: _helpingThemWithController.text.trim(),
         theyHelpingWith: _helpingYouWithController.text.trim(),
@@ -553,429 +571,147 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoApp(
-      debugShowCheckedModeBanner: false,
-      theme: const CupertinoThemeData(
-        brightness: Brightness.light,
-        primaryColor: CupertinoColors.systemBlue,
-      ),
-      home: CupertinoPageScaffold(
-        backgroundColor: CupertinoColors.systemGroupedBackground,
-        navigationBar: CupertinoNavigationBar(
-          middle: Text(
-            widget.friend == null ? 'Add Friend' : 'Edit Friend',
-            style: const TextStyle(
-              color: CupertinoColors.systemBlue,
-              fontWeight: FontWeight.w700,
-              fontSize: 18,
-              fontFamily: '.SF Pro Text',
-            ),
-          ),
+    return Material(  // Wrap in Material for localizations
+      child: CupertinoApp(
+        debugShowCheckedModeBanner: false,
+        theme: const CupertinoThemeData(
+          brightness: Brightness.light,
+          primaryColor: CupertinoColors.systemBlue,
+        ),
+        home: CupertinoPageScaffold(
           backgroundColor: CupertinoColors.systemGroupedBackground,
-          leading: CupertinoButton(
-            padding: const EdgeInsets.only(left: 4),
-            child: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: CupertinoColors.systemGroupedBackground,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: CupertinoColors.systemBlue.withOpacity(0.3),
-                  width: 1,
-                ),
-              ),
-              child: const Icon(
-                CupertinoIcons.chevron_left,
-                size: 16,
+          navigationBar: CupertinoNavigationBar(
+            middle: Text(
+              widget.friend == null ? 'Add Friend' : 'Edit Friend',
+              style: const TextStyle(
                 color: CupertinoColors.systemBlue,
-              ),
-            ),
-            onPressed: () => Navigator.pop(context),
-          ),
-          trailing: CupertinoButton(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: const Text(
-              'Save',
-              style: TextStyle(
-                color: CupertinoColors.systemBlue,
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
                 fontFamily: '.SF Pro Text',
               ),
             ),
-            onPressed: _saveFriend,
+            backgroundColor: CupertinoColors.systemGroupedBackground,
+            leading: CupertinoButton(
+              padding: const EdgeInsets.only(left: 4),
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: CupertinoColors.systemGroupedBackground,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: CupertinoColors.systemBlue.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: const Icon(
+                  CupertinoIcons.chevron_left,
+                  size: 16,
+                  color: CupertinoColors.systemBlue,
+                ),
+              ),
+              onPressed: () => Navigator.pop(context),
+            ),
+            trailing: CupertinoButton(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: const Text(
+                'Save',
+                style: TextStyle(
+                  color: CupertinoColors.systemBlue,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                  fontFamily: '.SF Pro Text',
+                ),
+              ),
+              onPressed: _saveFriend,
+            ),
+            border: null,
           ),
-          border: null,
-        ),
-        child: SafeArea(
-          child: Form(
-            key: _formKey,
-            child: ListView(
-              padding: const EdgeInsets.only(top: 16),
-              children: [
-                // Profile image selection
-                Center(
-                  child: Column(
-                    children: [
-                      GestureDetector(
-                        onTap: _showProfileOptions,
-                        child: CharacterComponents.playfulProfilePicture(
-                          imageOrEmoji: _profileImage,
-                          isEmoji: _isEmoji,
-                          size: 100,
-                          backgroundColor: CupertinoColors.systemGrey6, // Explicit background color
+          child: SafeArea(
+            child: Form(
+              key: _formKey,
+              child: ListView(
+                padding: const EdgeInsets.only(top: 16),
+                children: [
+                  // Profile image selection - with white background for emoji
+                  Center(
+                    child: Column(
+                      children: [
+                        GestureDetector(
                           onTap: _showProfileOptions,
+                          child: Container(
+                            width: 100,
+                            height: 100,
+                            decoration: BoxDecoration(
+                              color: CupertinoColors.white, // White background for all profile images
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: CupertinoColors.systemGrey5,
+                                width: 0.5,
+                              ),
+                            ),
+                            child: _isEmoji
+                                ? Center(
+                              child: Text(
+                                _profileImage,
+                                style: const TextStyle(fontSize: 50),
+                              ),
+                            )
+                                : ClipOval(
+                              child: Image.file(
+                                File(_profileImage),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
 
-                      const SizedBox(height: 12),
+                        const SizedBox(height: 12),
 
-                      CupertinoButton(
-                        padding: EdgeInsets.zero,
-                        onPressed: _showProfileOptions,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              CupertinoIcons.camera,
-                              color: CupertinoColors.systemBlue,
-                              size: 16,
-                            ),
-                            const SizedBox(width: 6),
-                            const Text(
-                              'Change Profile',
-                              style: TextStyle(
-                                color: CupertinoColors.systemBlue,
-                                fontWeight: FontWeight.w500,
-                                fontFamily: '.SF Pro Text',
-                                fontSize: 15,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Basic info section
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: CupertinoColors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: CupertinoColors.systemGrey5,
-                      width: 0.5,
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      // Name field
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 38,
-                              height: 38,
-                              decoration: BoxDecoration(
-                                color: CupertinoColors.systemBlue.withOpacity(0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                CupertinoIcons.person_fill,
-                                color: CupertinoColors.systemBlue,
-                                size: 18,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: NoUnderlineField(
-                                controller: _nameController,
-                                label: 'Name',
-                                placeholder: 'Enter name',
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      Container(
-                        height: 0.5,
-                        color: CupertinoColors.systemGrey5,
-                        margin: const EdgeInsets.only(left: 66),
-                      ),
-
-                      // Phone Number field
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 38,
-                              height: 38,
-                              decoration: BoxDecoration(
-                                color: CupertinoColors.systemGreen.withOpacity(0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                CupertinoIcons.phone_fill,
-                                color: CupertinoColors.systemGreen,
-                                size: 18,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: NoUnderlineField(
-                                controller: _phoneController,
-                                label: 'Phone Number',
-                                placeholder: 'Enter phone number',
-                                keyboardType: TextInputType.phone,
-                                suffixIcon: GestureDetector(
-                                  onTap: _pickContact,
-                                  child: Container(
-                                    width: 36,
-                                    height: 36,
-                                    decoration: BoxDecoration(
-                                      color: CupertinoColors.systemGreen.withOpacity(0.1),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      CupertinoIcons.book_fill,
-                                      size: 16,
-                                      color: CupertinoColors.systemGreen,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // "Alongside" information section
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: CupertinoColors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: CupertinoColors.systemGrey5,
-                      width: 0.5,
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      // What are you alongside them in?
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 38,
-                              height: 38,
-                              decoration: BoxDecoration(
-                                color: CupertinoColors.systemBlue.withOpacity(0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                CupertinoIcons.heart_fill,
-                                color: CupertinoColors.systemBlue,
-                                size: 18,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: NoUnderlineField(
-                                controller: _helpingThemWithController,
-                                label: 'What are you alongside them in?',
-                                placeholder: 'e.g., "Accountability for exercise"',
-                                textCapitalization: TextCapitalization.sentences,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      Container(
-                        height: 0.5,
-                        color: CupertinoColors.systemGrey5,
-                        margin: const EdgeInsets.only(left: 66),
-                      ),
-
-                      // What are they alongside you in?
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 38,
-                              height: 38,
-                              decoration: BoxDecoration(
-                                color: CupertinoColors.systemBlue.withOpacity(0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                CupertinoIcons.person_2_fill,
-                                color: CupertinoColors.systemBlue,
-                                size: 18,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: NoUnderlineField(
-                                controller: _helpingYouWithController,
-                                label: 'What are they alongside you in?',
-                                placeholder: 'e.g., "Prayer for family issues"',
-                                textCapitalization: TextCapitalization.sentences,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // NOTIFICATION SETTINGS section
-                Padding(
-                  padding: const EdgeInsets.only(left: 16, bottom: 8),
-                  child: Text(
-                    'NOTIFICATION SETTINGS',
-                    style: TextStyle(
-                      color: CupertinoColors.secondaryLabel,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
-                      fontFamily: '.SF Pro Text',
-                    ),
-                  ),
-                ),
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: CupertinoColors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: CupertinoColors.systemGrey5,
-                      width: 0.5,
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      // Check-in Reminder - Made entire row tappable
-                      GestureDetector(
-                        onTap: _showReminderPicker,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        CupertinoButton(
+                          padding: EdgeInsets.zero,
+                          onPressed: _showProfileOptions,
                           child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Container(
-                                width: 38,
-                                height: 38,
-                                decoration: BoxDecoration(
-                                  color: CupertinoColors.systemOrange.withOpacity(0.1),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  CupertinoIcons.bell_fill,
-                                  color: CupertinoColors.systemOrange,
-                                  size: 18,
-                                ),
+                              const Icon(
+                                CupertinoIcons.camera,
+                                color: CupertinoColors.systemBlue,
+                                size: 16,
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Check-in Reminder',
-                                      style: TextStyle(
-                                        color: CupertinoColors.secondaryLabel,
-                                        fontSize: 14,
-                                        fontFamily: '.SF Pro Text',
-                                      ),
-                                    ),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          _reminderDays == 0
-                                              ? 'No reminder'
-                                              : _reminderDays == 1
-                                              ? 'Every day'
-                                              : 'Every $_reminderDays days',
-                                          style: const TextStyle(
-                                            color: CupertinoColors.label,
-                                            fontSize: 16,
-                                            fontFamily: '.SF Pro Text',
-                                          ),
-                                        ),
-                                        const Icon(
-                                          CupertinoIcons.chevron_down,
-                                          size: 14,
-                                          color: CupertinoColors.secondaryLabel,
-                                        ),
-                                      ],
-                                    ),
-                                    if (_reminderDays > 0) ...[
-                                      const SizedBox(height: 4),
-                                      Row(
-                                        children: [
-                                          const Icon(
-                                            CupertinoIcons.time,
-                                            size: 12,
-                                            color: CupertinoColors.secondaryLabel,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            'At ${_reminderTime.format(context)}',
-                                            style: const TextStyle(
-                                              color: CupertinoColors.secondaryLabel,
-                                              fontSize: 13,
-                                              fontFamily: '.SF Pro Text',
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ],
+                              const SizedBox(width: 6),
+                              const Text(
+                                'Change Profile',
+                                style: TextStyle(
+                                  color: CupertinoColors.systemBlue,
+                                  fontWeight: FontWeight.w500,
+                                  fontFamily: '.SF Pro Text',
+                                  fontSize: 15,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                      ),
+                      ],
+                    ),
+                  ),
 
-                      Container(
-                        height: 0.5,
+                  const SizedBox(height: 24),
+
+                  // Basic info section
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: CupertinoColors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
                         color: CupertinoColors.systemGrey5,
-                        margin: const EdgeInsets.only(left: 66),
+                        width: 0.5,
                       ),
-
-                      // Show in notification area - Made entire row tappable
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _hasPersistentNotification = !_hasPersistentNotification;
-                          });
-                        },
-                        child: Padding(
+                    ),
+                    child: Column(
+                      children: [
+                        // Name field
+                        Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
@@ -988,54 +724,358 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
-                                  CupertinoIcons.rectangle_stack_badge_person_crop,
+                                  CupertinoIcons.person_fill,
                                   color: CupertinoColors.systemBlue,
                                   size: 18,
                                 ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Show in notification area',
-                                      style: TextStyle(
-                                        color: CupertinoColors.label,
-                                        fontSize: 16,
-                                        fontFamily: '.SF Pro Text',
-                                      ),
-                                    ),
-                                    const Text(
-                                      'Keep a quick access notification for this friend',
-                                      style: TextStyle(
-                                        color: CupertinoColors.secondaryLabel,
-                                        fontSize: 14,
-                                        fontFamily: '.SF Pro Text',
-                                      ),
-                                    ),
-                                  ],
+                                child: NoUnderlineField(
+                                  controller: _nameController,
+                                  label: 'Name',
+                                  placeholder: 'Enter name',
                                 ),
-                              ),
-                              CupertinoSwitch(
-                                value: _hasPersistentNotification,
-                                onChanged: (value) {
-                                  setState(() {
-                                    _hasPersistentNotification = value;
-                                  });
-                                },
-                                activeColor: CupertinoColors.systemBlue,
                               ),
                             ],
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
 
-                const SizedBox(height: 32),
-              ],
+                        Container(
+                          height: 0.5,
+                          color: CupertinoColors.systemGrey5,
+                          margin: const EdgeInsets.only(left: 66),
+                        ),
+
+                        // Phone Number field
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 38,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: CupertinoColors.systemGreen.withOpacity(0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  CupertinoIcons.phone_fill,
+                                  color: CupertinoColors.systemGreen,
+                                  size: 18,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: NoUnderlineField(
+                                  controller: _phoneController,
+                                  label: 'Phone Number',
+                                  placeholder: 'Enter phone number',
+                                  keyboardType: TextInputType.phone,
+                                  suffixIcon: GestureDetector(
+                                    onTap: _pickContact,
+                                    child: Container(
+                                      width: 36,
+                                      height: 36,
+                                      decoration: BoxDecoration(
+                                        color: CupertinoColors.systemGreen.withOpacity(0.1),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        CupertinoIcons.book_fill,
+                                        size: 16,
+                                        color: CupertinoColors.systemGreen,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // "Alongside" information section
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: CupertinoColors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: CupertinoColors.systemGrey5,
+                        width: 0.5,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        // What are you alongside them in?
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 38,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: CupertinoColors.systemBlue.withOpacity(0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  CupertinoIcons.heart_fill,
+                                  color: CupertinoColors.systemBlue,
+                                  size: 18,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: NoUnderlineField(
+                                  controller: _helpingThemWithController,
+                                  label: 'What are you alongside them in?',
+                                  placeholder: 'e.g., "Accountability for exercise"',
+                                  textCapitalization: TextCapitalization.sentences,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        Container(
+                          height: 0.5,
+                          color: CupertinoColors.systemGrey5,
+                          margin: const EdgeInsets.only(left: 66),
+                        ),
+
+                        // What are they alongside you in?
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 38,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: CupertinoColors.systemBlue.withOpacity(0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  CupertinoIcons.person_2_fill,
+                                  color: CupertinoColors.systemBlue,
+                                  size: 18,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: NoUnderlineField(
+                                  controller: _helpingYouWithController,
+                                  label: 'What are they alongside you in?',
+                                  placeholder: 'e.g., "Prayer for family issues"',
+                                  textCapitalization: TextCapitalization.sentences,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // NOTIFICATION SETTINGS section
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16, bottom: 8),
+                    child: Text(
+                      'NOTIFICATION SETTINGS',
+                      style: TextStyle(
+                        color: CupertinoColors.secondaryLabel,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                        fontFamily: '.SF Pro Text',
+                      ),
+                    ),
+                  ),
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: CupertinoColors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: CupertinoColors.systemGrey5,
+                        width: 0.5,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        // Check-in Reminder - Made entire row tappable with GestureDetector
+                        GestureDetector(
+                          onTap: _showReminderPicker,
+                          behavior: HitTestBehavior.opaque, // Important: Makes entire area tappable
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Container(
+                                  width: 38,
+                                  height: 38,
+                                  decoration: BoxDecoration(
+                                    color: CupertinoColors.systemOrange.withOpacity(0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    CupertinoIcons.bell_fill,
+                                    color: CupertinoColors.systemOrange,
+                                    size: 18,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Check-in Reminder',
+                                        style: TextStyle(
+                                          color: CupertinoColors.secondaryLabel,
+                                          fontSize: 14,
+                                          fontFamily: '.SF Pro Text',
+                                        ),
+                                      ),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            _reminderDays == 0
+                                                ? 'No reminder'
+                                                : _reminderDays == 1
+                                                ? 'Every day'
+                                                : 'Every $_reminderDays days',
+                                            style: const TextStyle(
+                                              color: CupertinoColors.label,
+                                              fontSize: 16,
+                                              fontFamily: '.SF Pro Text',
+                                            ),
+                                          ),
+                                          const Icon(
+                                            CupertinoIcons.chevron_down,
+                                            size: 14,
+                                            color: CupertinoColors.secondaryLabel,
+                                          ),
+                                        ],
+                                      ),
+                                      if (_reminderDays > 0) ...[
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            const Icon(
+                                              CupertinoIcons.time,
+                                              size: 12,
+                                              color: CupertinoColors.secondaryLabel,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              'At $_formattedReminderTime',
+                                              style: const TextStyle(
+                                                color: CupertinoColors.secondaryLabel,
+                                                fontSize: 13,
+                                                fontFamily: '.SF Pro Text',
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        Container(
+                          height: 0.5,
+                          color: CupertinoColors.systemGrey5,
+                          margin: const EdgeInsets.only(left: 66),
+                        ),
+
+                        // Show in notification area - Made entire row tappable
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _hasPersistentNotification = !_hasPersistentNotification;
+                            });
+                          },
+                          behavior: HitTestBehavior.opaque, // Important: Makes entire area tappable
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Container(
+                                  width: 38,
+                                  height: 38,
+                                  decoration: BoxDecoration(
+                                    color: CupertinoColors.systemBlue.withOpacity(0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    CupertinoIcons.rectangle_stack_badge_person_crop,
+                                    color: CupertinoColors.systemBlue,
+                                    size: 18,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Show in notification area',
+                                        style: TextStyle(
+                                          color: CupertinoColors.label,
+                                          fontSize: 16,
+                                          fontFamily: '.SF Pro Text',
+                                        ),
+                                      ),
+                                      const Text(
+                                        'Keep a quick access notification for this friend',
+                                        style: TextStyle(
+                                          color: CupertinoColors.secondaryLabel,
+                                          fontSize: 14,
+                                          fontFamily: '.SF Pro Text',
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                CupertinoSwitch(
+                                  value: _hasPersistentNotification,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _hasPersistentNotification = value;
+                                    });
+                                  },
+                                  activeColor: CupertinoColors.systemBlue,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+                ],
+              ),
             ),
           ),
         ),
