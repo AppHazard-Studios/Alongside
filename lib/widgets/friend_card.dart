@@ -1,4 +1,4 @@
-// lib/widgets/friend_card.dart - Updated with "Alongside them:" and "Alongside you:" terminology
+// lib/widgets/friend_card.dart - Fixed text wrapping and consistent colors
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/friend.dart';
 import '../screens/add_friend_screen.dart';
 import '../screens/message_screen.dart';
+import '../utils/colors.dart';
 
 class FriendCardNew extends StatefulWidget {
   final Friend friend;
@@ -95,10 +96,11 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
             Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start, // Align to top for proper wrapping
                 children: [
                   _buildProfileImage(),
                   const SizedBox(width: 16),
-                  Expanded(
+                  Expanded( // Important: This allows text to wrap properly
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -113,14 +115,16 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
                                   fontWeight: FontWeight.w600,
                                   fontFamily: '.SF Pro Text',
                                 ),
+                                maxLines: 2, // Allow name to wrap if very long
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            if (widget.friend.reminderDays > 0 && !widget.isExpanded)
+                            if (widget.friend.reminderDays > 0 && !widget.isExpanded) ...[
+                              const SizedBox(width: 8),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: CupertinoColors.systemBlue.withOpacity(0.1),
+                                  color: AppColors.primaryLight, // Use consistent primary color
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
@@ -128,42 +132,45 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
                                   style: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
-                                    color: CupertinoColors.systemBlue,
+                                    color: AppColors.primary, // Use consistent primary color
                                     fontFamily: '.SF Pro Text',
                                   ),
                                 ),
                               ),
+                            ],
                           ],
                         ),
 
-                        // "Alongside them in" info - Always visible now but with updated text
+                        // "Alongside them in" info - Always visible with proper wrapping
                         if (widget.friend.helpingWith != null &&
                             widget.friend.helpingWith!.isNotEmpty) ...[
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 8),
                           Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Container(
                                 padding: const EdgeInsets.all(4),
                                 decoration: BoxDecoration(
-                                  color: CupertinoColors.systemBlue.withOpacity(0.1),
+                                  color: AppColors.primaryLight, // Use consistent primary color
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
                                   CupertinoIcons.heart_fill,
-                                  color: CupertinoColors.systemBlue,
+                                  color: AppColors.primary, // Use consistent primary color
                                   size: 10,
                                 ),
                               ),
-                              const SizedBox(width: 6),
-                              Expanded(
+                              const SizedBox(width: 8),
+                              Expanded( // Critical: This allows text to wrap properly
                                 child: Text(
                                   "Alongside them: ${widget.friend.helpingWith}",
                                   style: const TextStyle(
-                                    color: CupertinoColors.secondaryLabel,
+                                    color: AppColors.textSecondary,
                                     fontSize: 14,
                                     fontFamily: '.SF Pro Text',
+                                    height: 1.3, // Better line height for readability
                                   ),
-                                  maxLines: 1,
+                                  maxLines: 3, // Allow multiple lines
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -222,7 +229,7 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // "They're alongside you in" section - Updated text
+                        // "They're alongside you in" section with proper wrapping
                         if (widget.friend.theyHelpingWith != null &&
                             widget.friend.theyHelpingWith!.isNotEmpty) ...[
                           Row(
@@ -231,17 +238,17 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
                               Container(
                                 padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
-                                  color: CupertinoColors.systemTeal.withOpacity(0.1),
+                                  color: AppColors.tertiaryLight,
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
                                   CupertinoIcons.person_2_fill,
-                                  color: CupertinoColors.systemTeal,
+                                  color: AppColors.tertiary,
                                   size: 12,
                                 ),
                               ),
-                              const SizedBox(width: 10),
-                              Expanded(
+                              const SizedBox(width: 12),
+                              Expanded( // Critical: This allows text to wrap properly
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -250,7 +257,7 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
                                       style: TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w600,
-                                        color: CupertinoColors.systemTeal,
+                                        color: AppColors.tertiary,
                                         fontFamily: '.SF Pro Text',
                                       ),
                                     ),
@@ -261,7 +268,10 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
                                         fontSize: 15,
                                         color: CupertinoColors.label,
                                         fontFamily: '.SF Pro Text',
+                                        height: 1.3, // Better line height
                                       ),
+                                      maxLines: 5, // Allow multiple lines
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ],
                                 ),
@@ -279,16 +289,16 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
                               Container(
                                 padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
-                                  color: CupertinoColors.systemOrange.withOpacity(0.1),
+                                  color: AppColors.warning.withOpacity(0.1),
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
                                   CupertinoIcons.bell_fill,
-                                  color: CupertinoColors.systemOrange,
+                                  color: AppColors.warning,
                                   size: 12,
                                 ),
                               ),
-                              const SizedBox(width: 10),
+                              const SizedBox(width: 12),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -298,7 +308,7 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
                                       style: const TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w600,
-                                        color: CupertinoColors.systemOrange,
+                                        color: AppColors.warning,
                                         fontFamily: '.SF Pro Text',
                                       ),
                                     ),
@@ -331,16 +341,16 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
                     ),
                   ),
 
-                  // Action buttons section - standardized blue color
+                  // Action buttons section with consistent primary color
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     child: Row(
                       children: [
-                        // Message button
+                        // Message button with consistent primary color
                         Expanded(
                           child: CupertinoButton(
                             padding: EdgeInsets.zero,
-                            color: CupertinoColors.systemBlue, // Standard blue for all friends
+                            color: AppColors.primary, // Consistent primary color for all friends
                             borderRadius: BorderRadius.circular(12),
                             onPressed: () => _navigateToMessageScreen(context),
                             child: const Row(
@@ -378,14 +388,14 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
                               children: [
                                 Icon(
                                   CupertinoIcons.phone_fill,
-                                  color: CupertinoColors.systemBlue,
+                                  color: AppColors.primary, // Consistent primary color
                                   size: 16,
                                 ),
                                 SizedBox(width: 6),
                                 Text(
                                   'Call',
                                   style: TextStyle(
-                                    color: CupertinoColors.systemBlue,
+                                    color: AppColors.primary, // Consistent primary color
                                     fontWeight: FontWeight.w600,
                                     fontSize: 15,
                                     fontFamily: '.SF Pro Text',
@@ -408,7 +418,7 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
                             child: Icon(
                               CupertinoIcons.pencil,
                               size: 18,
-                              color: CupertinoColors.systemBlue,
+                              color: AppColors.primary, // Consistent primary color
                             ),
                           ),
                         ),
@@ -496,14 +506,14 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
     }
   }
 
-  // Create profile image - Using emoji background from original theme
+  // Create profile image with consistent background
   Widget _buildProfileImage() {
     return Container(
       width: 60,
       height: 60,
       decoration: BoxDecoration(
         color: widget.friend.isEmoji
-            ? CupertinoColors.systemGrey6  // Original background for emoji
+            ? CupertinoColors.systemGrey6  // Consistent emoji background
             : CupertinoColors.white,
         shape: BoxShape.circle,
         border: Border.all(

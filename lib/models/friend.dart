@@ -1,4 +1,4 @@
-// models/friend.dart
+// models/friend.dart - Added favorite field
 class Friend {
   final String id;
   final String name;
@@ -8,6 +8,7 @@ class Friend {
   final int reminderDays; // Reminder frequency in days (0 = no reminder)
   final String reminderTime; // Format: "HH:MM" (24-hour)
   final bool hasPersistentNotification;
+  final bool isFavorite; // NEW: For favorites/stories section
   final String? helpingWith; // What you're helping them with
   final String? theyHelpingWith; // What they're helping you with
 
@@ -20,6 +21,7 @@ class Friend {
     this.reminderDays = 0,
     this.reminderTime = "09:00", // Default to 9:00 AM
     this.hasPersistentNotification = false,
+    this.isFavorite = false, // NEW: Default to false
     this.helpingWith = '',
     this.theyHelpingWith = '',
   });
@@ -35,6 +37,7 @@ class Friend {
       'reminderDays': reminderDays,
       'reminderTime': reminderTime,
       'hasPersistentNotification': hasPersistentNotification,
+      'isFavorite': isFavorite, // NEW: Include in JSON
       'helpingWith': helpingWith,
       'theyHelpingWith': theyHelpingWith,
     };
@@ -50,6 +53,7 @@ class Friend {
       reminderDays: json['reminderDays'] ?? 0,
       reminderTime: json['reminderTime'] ?? "09:00",
       hasPersistentNotification: json['hasPersistentNotification'] ?? false,
+      isFavorite: json['isFavorite'] ?? false, // NEW: Handle existing data
       helpingWith: json['helpingWith'] ?? '',
       theyHelpingWith: json['theyHelpingWith'] ?? '',
     );
@@ -63,6 +67,7 @@ class Friend {
     int? reminderDays,
     String? reminderTime,
     bool? hasPersistentNotification,
+    bool? isFavorite, // NEW: Include in copyWith
     String? helpingWith,
     String? theyHelpingWith,
   }) {
@@ -75,6 +80,7 @@ class Friend {
       reminderDays: reminderDays ?? this.reminderDays,
       reminderTime: reminderTime ?? this.reminderTime,
       hasPersistentNotification: hasPersistentNotification ?? this.hasPersistentNotification,
+      isFavorite: isFavorite ?? this.isFavorite, // NEW: Include in copyWith
       helpingWith: helpingWith ?? this.helpingWith,
       theyHelpingWith: theyHelpingWith ?? this.theyHelpingWith,
     );
