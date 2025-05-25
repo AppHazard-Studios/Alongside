@@ -1,4 +1,4 @@
-// lib/screens/add_friend_screen.dart - Fixed time format and profile image
+// lib/screens/add_friend_screen.dart - Complete file with delete friend functionality
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -66,6 +66,15 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       _helpingYouWithController.text = widget.friend!.theyHelpingWith ?? '';
       _reminderTimeStr = widget.friend!.reminderTime;
     }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    _helpingThemWithController.dispose();
+    _helpingYouWithController.dispose();
+    super.dispose();
   }
 
   // Method to pick a contact
@@ -566,6 +575,71 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     if (mounted) Navigator.pop(context);
   }
 
+  // Show delete confirmation dialog
+  void _showDeleteConfirmation(BuildContext context) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text(
+          'Remove Friend',
+          style: TextStyle(
+            color: CupertinoColors.destructiveRed,
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+            fontFamily: '.SF Pro Text',
+          ),
+        ),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(
+            'Are you sure you want to remove ${widget.friend!.name}? This action cannot be undone.',
+            style: const TextStyle(
+              fontSize: 16,
+              height: 1.3,
+              fontFamily: '.SF Pro Text',
+            ),
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            isDefaultAction: true,
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                color: CupertinoColors.systemBlue,
+                fontWeight: FontWeight.w600,
+                fontFamily: '.SF Pro Text',
+              ),
+            ),
+          ),
+          CupertinoDialogAction(
+            onPressed: () async {
+              Navigator.pop(context); // Close dialog
+
+              final provider = Provider.of<FriendsProvider>(context, listen: false);
+              await provider.removeFriend(widget.friend!.id);
+
+              // Navigate back to home screen
+              if (mounted) {
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              }
+            },
+            isDestructiveAction: true,
+            child: const Text(
+              'Remove',
+              style: TextStyle(
+                color: CupertinoColors.destructiveRed,
+                fontWeight: FontWeight.w600,
+                fontFamily: '.SF Pro Text',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Material(  // Wrap in Material for localizations
@@ -888,7 +962,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                   // NOTIFICATION SETTINGS section
                   const Padding(
                     padding: EdgeInsets.only(left: 16, bottom: 8),
-                    child: const Text(
+                    child: Text(
                       'NOTIFICATION SETTINGS',
                       style: TextStyle(
                         color: CupertinoColors.secondaryLabel,
@@ -1069,6 +1143,40 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                       ],
                     ),
                   ),
+
+                  const SizedBox(height: 32),
+
+                  // Delete friend button (only when editing)
+                  if (widget.friend != null)
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 16),
+                      child: CupertinoButton(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        color: CupertinoColors.destructiveRed.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(16),
+                        onPressed: () => _showDeleteConfirmation(context),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              CupertinoIcons.delete,
+                              color: CupertinoColors.destructiveRed,
+                              size: 18,
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              'Remove Friend',
+                              style: TextStyle(
+                                color: CupertinoColors.destructiveRed,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                                fontFamily: '.SF Pro Text',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
 
                   const SizedBox(height: 32),
                 ],

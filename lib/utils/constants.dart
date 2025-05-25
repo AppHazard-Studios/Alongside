@@ -1,23 +1,38 @@
-// utils/constants.dart - iOS-styled version
+// utils/constants.dart - Restructured with categorized messages
 
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 
 class AppConstants {
-  // Preset messages for check-ins (unchanged)
-  static const List<String> presetMessages = [
-    // ✅ Check-ins
-    "Just checking in. How are you doing today?",
-    "Thinking of you today — how's everything going?",
+  // Categorized preset messages for better organization
+  static const Map<String, List<String>> categorizedMessages = {
+    'Check-ins': [
+      "How’s today going?",
+      "Hey, just checking in.",
+      "You doing okay this week?",
+      "Got a second to catch up?",
+      "Still on track with your stuff?",
+    ],
+    'Support & Struggle': [
+      "Bit of a rough one today.",
+      "Having a hard time staying focused.",
+      "Could use some support today.",
+      "Today’s been harder than usual.",
+      "Not at my best right now.",
+    ],
+    'Confession': [
+      "Messed up today.",
+      "Wasn’t a great day for me.",
+      "Didn’t stay on track.",
+      "Not where I wanted to be today.",
+      "Slipped. Can you check in later?",
+    ],
+  };
 
-    // 🟡 Struggle
-    "Feeling tempted and didn't want to keep it to myself.",
-    "Struggling a bit right now. Just wanted to reach out.",
-
-    // 🔴 Confession
-    "Hey — I slipped up. Trying to stay honest with you.",
-    "Not proud of today. Thanks for walking with me anyway.",
-  ];
+  // Get all preset messages as a flat list (for backward compatibility)
+  static List<String> get presetMessages {
+    return categorizedMessages.values.expand((messages) => messages).toList();
+  }
 
   // Emoji options for profile pictures (unchanged)
   static const List<String> profileEmojis = [

@@ -1,4 +1,4 @@
-// lib/screens/message_screen.dart - Fixed navbar, removed duplicate name, fixed wrapping
+// lib/screens/message_screen.dart - Fixed overflow and layout issues
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -45,19 +45,17 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
     return CupertinoPageScaffold(
       backgroundColor: AppColors.background,
       navigationBar: CupertinoNavigationBar(
-        // Removed friend name - just "Send Message" to avoid duplication
         middle: const Text(
           'Send Message',
           style: TextStyle(
             fontWeight: FontWeight.w700,
-            color: AppColors.primary, // Consistent primary color
+            color: AppColors.primary,
             fontSize: 18,
             fontFamily: '.SF Pro Text',
           ),
         ),
-        backgroundColor: AppColors.primaryLight, // Light background with primary color
+        backgroundColor: AppColors.primaryLight,
         border: null,
-        // Consistent outline button style (matching home screen)
         leading: CupertinoButton(
           padding: EdgeInsets.zero,
           child: Container(
@@ -79,7 +77,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        // Consistent outline button style for settings
         trailing: CupertinoButton(
           padding: EdgeInsets.zero,
           child: Container(
@@ -129,155 +126,161 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
 
   Widget _buildMessageList() {
     final provider = Provider.of<FriendsProvider>(context, listen: false);
-    final allMessages = [...provider.storageService.getDefaultMessages(), ..._customMessages];
+    final categorizedMessages = provider.storageService.getCategorizedMessages();
 
     return SafeArea(
-      child: Column(
+      child: Stack(
         children: [
-          // Friend profile at top - with proper text wrapping
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.primaryLight,
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(30),
-                bottomRight: Radius.circular(30),
-              ),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start, // Align to top for wrapping
-              children: [
-                // Profile image
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: widget.friend.isEmoji
-                        ? CupertinoColors.systemGrey6
-                        : CupertinoColors.white,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: CupertinoColors.systemGrey5,
-                      width: 0.5,
-                    ),
-                  ),
-                  child: widget.friend.isEmoji
-                      ? Center(
-                    child: Text(
-                      widget.friend.profileImage,
-                      style: const TextStyle(fontSize: 30),
-                    ),
-                  )
-                      : ClipOval(
-                    child: Image.file(
-                      File(widget.friend.profileImage),
-                      fit: BoxFit.cover,
-                    ),
+          // Main content
+          Column(
+            children: [
+              // Friend profile at top
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight,
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(30),
+                    bottomRight: Radius.circular(30),
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded( // Critical: This allows text to wrap properly
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: widget.friend.isEmoji
+                            ? CupertinoColors.systemGrey6
+                            : CupertinoColors.white,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: CupertinoColors.systemGrey5,
+                          width: 0.5,
+                        ),
+                      ),
+                      child: widget.friend.isEmoji
+                          ? Center(
+                        child: Text(
+                          widget.friend.profileImage,
+                          style: const TextStyle(fontSize: 30),
+                        ),
+                      )
+                          : ClipOval(
+                        child: Image.file(
+                          File(widget.friend.profileImage),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.friend.name,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primary,
+                              fontFamily: '.SF Pro Text',
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (widget.friend.helpingWith != null && widget.friend.helpingWith!.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Text(
+                              'Alongside them: ${widget.friend.helpingWith}',
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 14,
+                                fontFamily: '.SF Pro Text',
+                                height: 1.3,
+                              ),
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                          if (widget.friend.theyHelpingWith != null && widget.friend.theyHelpingWith!.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Text(
+                              'Alongside you: ${widget.friend.theyHelpingWith}',
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 14,
+                                fontFamily: '.SF Pro Text',
+                                height: 1.3,
+                              ),
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Illustrations.messagingIllustration(size: 60),
+                  ],
+                ),
+              ),
+
+              // Message sections - Now using properly categorized messages
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 100), // Bottom padding for floating button
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        widget.friend.name,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
-                          fontFamily: '.SF Pro Text',
-                        ),
-                        maxLines: 2, // Allow name wrapping
-                        overflow: TextOverflow.ellipsis,
+                      // Build sections from categorized messages
+                      _buildCleanMessageSection(
+                        title: 'Check-ins',
+                        color: AppColors.success,
+                        messages: categorizedMessages['Check-ins'] ?? [],
                       ),
-                      // Show what you're alongside them in with proper wrapping
-                      if (widget.friend.helpingWith != null && widget.friend.helpingWith!.isNotEmpty) ...[
-                        const SizedBox(height: 6),
-                        Text(
-                          'Alongside them: ${widget.friend.helpingWith}',
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 14,
-                            fontFamily: '.SF Pro Text',
-                            height: 1.3,
-                          ),
-                          maxLines: 3, // Allow multiple lines
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                      // Show what they're alongside you in with proper wrapping
-                      if (widget.friend.theyHelpingWith != null && widget.friend.theyHelpingWith!.isNotEmpty) ...[
-                        const SizedBox(height: 6),
-                        Text(
-                          'Alongside you: ${widget.friend.theyHelpingWith}',
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 14,
-                            fontFamily: '.SF Pro Text',
-                            height: 1.3,
-                          ),
-                          maxLines: 3, // Allow multiple lines
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+
+                      _buildCleanMessageSection(
+                        title: 'Support & Struggle',
+                        color: AppColors.warning,
+                        messages: categorizedMessages['Support & Struggle'] ?? [],
+                      ),
+
+                      _buildCleanMessageSection(
+                        title: 'Confession',
+                        color: AppColors.error,
+                        messages: categorizedMessages['Confession'] ?? [],
+                      ),
+
+                      _buildCleanMessageSection(
+                        title: 'Celebration',
+                        color: AppColors.tertiary,
+                        messages: categorizedMessages['Celebration'] ?? [],
+                      ),
+
+                      _buildCleanMessageSection(
+                        title: 'Prayer Requests',
+                        color: AppColors.accent,
+                        messages: categorizedMessages['Prayer Requests'] ?? [],
+                      ),
+
+                      _buildCleanMessageSection(
+                        title: 'Your Custom Messages',
+                        color: AppColors.primary,
+                        messages: _customMessages,
+                        isEmpty: _customMessages.isEmpty,
+                        emptyStateMessage: 'No custom messages yet. Create your first one!',
+                        isCustom: true,
+                      ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 12),
-                Illustrations.messagingIllustration(size: 60),
-              ],
-            ),
-          ),
-
-          // Message list with categories
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Clean, simplified message sections
-                  _buildCleanMessageSection(
-                    title: 'Check-ins',
-                    color: AppColors.success,
-                    messages: allMessages.where((msg) =>
-                    msg.contains('checking in') ||
-                        msg.contains('Thinking of you')
-                    ).toList(),
-                  ),
-
-                  _buildCleanMessageSection(
-                    title: 'Support & Struggle',
-                    color: AppColors.warning,
-                    messages: allMessages.where((msg) =>
-                    msg.contains('Feeling tempted') ||
-                        msg.contains('Struggling')
-                    ).toList(),
-                  ),
-
-                  _buildCleanMessageSection(
-                    title: 'Confession',
-                    color: AppColors.error,
-                    messages: allMessages.where((msg) =>
-                    msg.contains('slipped up') ||
-                        msg.contains('Not proud')
-                    ).toList(),
-                  ),
-
-                  _buildCleanMessageSection(
-                    title: 'Your Custom Messages',
-                    color: AppColors.primary,
-                    messages: _customMessages,
-                    isEmpty: _customMessages.isEmpty,
-                    emptyStateMessage: 'No custom messages yet. Create your first one!',
-                  ),
-                ],
               ),
-            ),
+            ],
           ),
 
-          // Narrower floating button (matching home screen style)
+          // Floating button positioned properly
           Positioned(
             right: 20,
             bottom: 20,
@@ -305,14 +308,13 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
     );
   }
 
-  // NEW: Clean message section without kitschy elements
   Widget _buildCleanMessageSection({
     required String title,
     required Color color,
     required List<String> messages,
     bool isEmpty = false,
     String emptyStateMessage = '',
-    bool isCustom = false, // NEW: Flag for custom messages
+    bool isCustom = false,
   }) {
     if (messages.isEmpty && !isEmpty) return const SizedBox.shrink();
 
@@ -321,7 +323,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Clean section title
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(
@@ -335,7 +336,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
             ),
           ),
 
-          // Empty state if needed
           if (isEmpty && messages.isEmpty)
             Container(
               padding: const EdgeInsets.all(20),
@@ -361,7 +361,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               ),
             ),
 
-          // Clean message list
           ...messages.asMap().entries.map((entry) {
             final index = entry.key;
             final message = entry.value;
@@ -370,7 +369,7 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               padding: const EdgeInsets.only(bottom: 12),
               child: GestureDetector(
                 onTap: () => _sendMessage(context, message),
-                onLongPress: isCustom ? () => _showCustomMessageOptions(context, message, index) : null, // NEW: Long press for custom messages
+                onLongPress: isCustom ? () => _showCustomMessageOptions(context, message, index) : null,
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -390,7 +389,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                   ),
                   child: Row(
                     children: [
-                      // Small colored indicator
                       Container(
                         width: 4,
                         height: 20,
@@ -400,7 +398,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      // Message text
                       Expanded(
                         child: Text(
                           message,
@@ -414,7 +411,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      // Send arrow or options for custom messages
                       if (isCustom) ...[
                         GestureDetector(
                           onTap: () => _showCustomMessageOptions(context, message, index),
@@ -445,155 +441,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
     );
   }
 
-  // Message section with title and colored accent - DEPRECATED, keeping for reference
-  Widget _buildMessageSection({
-    required String title,
-    required Color color,
-    required List<String> messages,
-    bool isEmpty = false,
-    String emptyStateMessage = '',
-  }) {
-    if (messages.isEmpty && !isEmpty) return const SizedBox.shrink();
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Section title with animated appearance
-          TweenAnimationBuilder<double>(
-            tween: Tween<double>(begin: 0.0, end: 1.0),
-            duration: const Duration(milliseconds: 500),
-            curve: Curves.easeOutQuint,
-            builder: (context, value, child) {
-              return Opacity(
-                opacity: value,
-                child: Transform.translate(
-                  offset: Offset(0, (1 - value) * 10),
-                  child: child,
-                ),
-              );
-            },
-            child: Padding(
-              padding: const EdgeInsets.only(left: 4, bottom: 12),
-              child: Row(
-                children: [
-                  Container(
-                    width: 4,
-                    height: 20,
-                    decoration: BoxDecoration(
-                      color: color,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: color,
-                      fontFamily: '.SF Pro Text',
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Empty state if needed
-          if (isEmpty && messages.isEmpty)
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: color.withOpacity(0.3),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      CupertinoIcons.chat_bubble,
-                      size: 20,
-                      color: color,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded( // Allow text to wrap
-                    child: Text(
-                      emptyStateMessage,
-                      style: TextStyle(
-                        color: color,
-                        fontSize: 14,
-                        fontFamily: '.SF Pro Text',
-                        height: 1.3,
-                      ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-          // Message list with staggered animation
-          ...messages.asMap().entries.map((entry) {
-            final index = entry.key;
-            final message = entry.value;
-
-            return TweenAnimationBuilder<double>(
-              tween: Tween<double>(begin: 0.0, end: 1.0),
-              duration: Duration(milliseconds: 300 + (index * 50)),
-              curve: Curves.easeOutQuint,
-              builder: (context, value, child) {
-                return Opacity(
-                  opacity: value,
-                  child: Transform.translate(
-                    offset: Offset(0, (1 - value) * 20),
-                    child: child,
-                  ),
-                );
-              },
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: CharacterComponents.playfulCard(
-                  backgroundColor: Colors.white,
-                  borderColor: color.withOpacity(0.3),
-                  padding: const EdgeInsets.all(16),
-                  borderRadius: 12,
-                  onTap: () => _sendMessage(context, message),
-                  child: Text(
-                    message,
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 16,
-                      fontFamily: '.SF Pro Text',
-                      height: 1.4, // Better line height
-                    ),
-                    maxLines: 10, // Allow long messages to wrap
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-        ],
-      ),
-    );
-  }
-
-  // Show dialog to create a custom message
   void _showCustomMessageDialog(BuildContext context) {
     final textController = TextEditingController();
 
@@ -613,14 +460,12 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
           padding: const EdgeInsets.only(top: 16),
           child: Column(
             children: [
-              // Little message illustration
               Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 width: 60,
                 height: 60,
                 child: Illustrations.messagingIllustration(size: 60),
               ),
-              // Text input with proper styling
               CupertinoTextField(
                 controller: textController,
                 placeholder: 'Type your message...',
@@ -668,7 +513,7 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                 Navigator.pop(context);
                 final storageService = Provider.of<FriendsProvider>(context, listen: false).storageService;
                 await storageService.addCustomMessage(textController.text);
-                _loadMessages(); // Reload messages
+                _loadMessages();
                 _showSuccessToast(context, 'Message saved! ✨');
               }
             },
@@ -686,7 +531,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
     );
   }
 
-  // Show success toast with animation
   void _showSuccessToast(BuildContext context, String message) {
     final overlay = Overlay.of(context);
     final overlayEntry = OverlayEntry(
@@ -711,18 +555,18 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: AppColors.primaryShadow,
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
+                  const Icon(
                     CupertinoIcons.checkmark_circle_fill,
                     color: Colors.white,
                     size: 20,
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Text(
-                    'Message saved! ✨',
-                    style: TextStyle(
+                    message,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -743,11 +587,9 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
     });
   }
 
-  // Send a message with an animated confirmation
   void _sendMessage(BuildContext context, String message) async {
     final phoneNumber = widget.friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
     try {
-      // Show sending animation
       showCupertinoDialog(
         context: context,
         barrierDismissible: false,
@@ -781,7 +623,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
         ),
       );
 
-      // Slight delay for UX
       await Future.delayed(const Duration(milliseconds: 300));
 
       final smsUri = Uri.parse('sms:$phoneNumber?body=${Uri.encodeComponent(message)}');
@@ -790,17 +631,14 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
         mode: LaunchMode.externalApplication,
       );
 
-      // Pop the sending dialog
       if (context.mounted) {
         Navigator.pop(context);
       }
 
-      // Navigate back to home screen
       if (context.mounted) {
         Navigator.of(context).popUntil((route) => route.isFirst);
       }
     } catch (e) {
-      // Pop the sending dialog
       if (context.mounted) {
         Navigator.pop(context);
       }
@@ -846,7 +684,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
     }
   }
 
-  // NEW: Show message options (replaces manage messages screen)
   void _showMessageOptions(BuildContext context) {
     showCupertinoModalPopup(
       context: context,
@@ -903,7 +740,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
     );
   }
 
-  // NEW: Show custom message options (edit/delete)
   void _showCustomMessageOptions(BuildContext context, String message, int index) {
     showCupertinoModalPopup(
       context: context,
@@ -958,7 +794,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
     );
   }
 
-  // NEW: Edit custom message
   void _editCustomMessage(BuildContext context, String message, int index) {
     final textController = TextEditingController(text: message);
 
@@ -1015,12 +850,10 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               if (textController.text.isNotEmpty && textController.text != message) {
                 Navigator.pop(context);
 
-                // Update the message
                 setState(() {
                   _customMessages[index] = textController.text;
                 });
 
-                // Save to storage
                 final storageService = Provider.of<FriendsProvider>(context, listen: false).storageService;
                 await storageService.saveCustomMessages(_customMessages);
 
@@ -1041,7 +874,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
     );
   }
 
-  // NEW: Delete custom message
   void _deleteCustomMessage(BuildContext context, String message, int index) {
     showCupertinoDialog(
       context: context,
@@ -1083,19 +915,18 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
             onPressed: () async {
               Navigator.pop(context);
 
-              // Remove the message
               setState(() {
                 _customMessages.removeAt(index);
               });
 
-              // Save to storage
               final storageService = Provider.of<FriendsProvider>(context, listen: false).storageService;
               await storageService.saveCustomMessages(_customMessages);
 
-              // Close any open modals to refresh the view
-              Navigator.of(context).popUntil((route) => route.isFirst || route.settings.name == null);
+              if (mounted) {
+                setState(() {});
+              }
 
-              _showSuccessToast(context, 'Message deleted! 🗑️'); // FIXED: Correct message
+              _showSuccessToast(context, 'Message deleted! 🗑️');
             },
             isDestructiveAction: true,
             child: const Text(
@@ -1112,7 +943,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
     );
   }
 
-  // NEW: Show all custom messages for bulk management
   void _showAllCustomMessages(BuildContext context) {
     showCupertinoModalPopup(
       context: context,
@@ -1124,7 +954,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
         ),
         child: Column(
           children: [
-            // Handle bar
             Container(
               margin: const EdgeInsets.only(top: 8),
               width: 40,
@@ -1134,7 +963,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            // Title
             const Padding(
               padding: EdgeInsets.all(16),
               child: Text(
@@ -1147,7 +975,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                 ),
               ),
             ),
-            // Messages list
             Expanded(
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 16),

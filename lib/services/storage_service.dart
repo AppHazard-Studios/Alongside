@@ -52,7 +52,12 @@ class StorageService {
     await saveCustomMessages(messages);
   }
 
-  // Get default messages
+  // Get categorized default messages
+  Map<String, List<String>> getCategorizedMessages() {
+    return AppConstants.categorizedMessages;
+  }
+
+  // Get default messages as flat list (for backward compatibility)
   List<String> getDefaultMessages() {
     return AppConstants.presetMessages;
   }
