@@ -1,6 +1,7 @@
-// lib/screens/home_screen.dart - Integrated favorites into greeting card, improved typography
+// lib/screens/home_screen.dart - Enhanced version with search, better visual hierarchy, and animations
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/friends_provider.dart';
 import '../widgets/friend_card.dart';
@@ -10,6 +11,7 @@ import 'add_friend_screen.dart';
 import 'settings_screen.dart';
 import 'message_screen.dart';
 import '../models/friend.dart';
+import 'onboarding_screen.dart';
 
 class HomeScreenNew extends StatefulWidget {
   const HomeScreenNew({Key? key}) : super(key: key);
@@ -18,11 +20,20 @@ class HomeScreenNew extends StatefulWidget {
   State<HomeScreenNew> createState() => _HomeScreenNewState();
 }
 
-class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProviderStateMixin {
-  String? _expandedFriendId; // No card expanded by default
+class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateMixin {
+  String? _expandedFriendId;
   late AnimationController _animationController;
+  late AnimationController _searchAnimationController;
   late Animation<double> _animation;
+  late Animation<double> _searchAnimation;
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
+
+  bool _isSearching = false;
+  String _searchQuery = '';
+
+  // Track if this is the first launch for onboarding
+  bool _shouldShowOnboarding = false;
 
   @override
   void initState() {
@@ -31,69 +42,169 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
+    _searchAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
     _animation = CurvedAnimation(
       parent: _animationController,
       curve: Curves.elasticOut,
     );
+    _searchAnimation = CurvedAnimation(
+      parent: _searchAnimationController,
+      curve: Curves.easeOutCubic,
+    );
+
     _animationController.forward();
+    _checkFirstLaunch();
+  }
+
+  Future<void> _checkFirstLaunch() async {
+    // Check if user has any friends - if not, show onboarding
+    final provider = Provider.of<FriendsProvider>(context, listen: false);
+    await Future.delayed(const Duration(milliseconds: 500)); // Wait for provider to load
+    if (provider.friends.isEmpty && mounted) {
+      setState(() {
+        _shouldShowOnboarding = true;
+      });
+    }
   }
 
   @override
   void dispose() {
     _animationController.dispose();
+    _searchAnimationController.dispose();
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
+  }
+
+  void _toggleSearch() {
+    setState(() {
+      _isSearching = !_isSearching;
+      if (_isSearching) {
+        _searchAnimationController.forward();
+      } else {
+        _searchAnimationController.reverse();
+        _searchController.clear();
+        _searchQuery = '';
+      }
+    });
+
+    // Haptic feedback
+    HapticFeedback.lightImpact();
   }
 
   @override
   Widget build(BuildContext context) {
+    // Show onboarding if needed
+    if (_shouldShowOnboarding) {
+      return OnboardingScreen(
+        onComplete: () {
+          setState(() {
+            _shouldShowOnboarding = false;
+          });
+        },
+      );
+    }
+
     return CupertinoPageScaffold(
       backgroundColor: AppColors.background,
       navigationBar: CupertinoNavigationBar(
         middle: AnimatedBuilder(
-          animation: _animation,
+          animation: _searchAnimation,
           builder: (context, child) {
-            return Transform.scale(
-              scale: _animation.value,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    'Alongside',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
-                      fontFamily: '.SF Pro Text',
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  TweenAnimationBuilder<double>(
-                    tween: Tween<double>(begin: 0.8, end: 1.0),
-                    duration: const Duration(milliseconds: 600),
-                    curve: Curves.elasticOut,
-                    builder: (context, value, child) {
+            return Stack(
+              children: [
+                // Title (fades out when searching)
+                Opacity(
+                  opacity: 1 - _searchAnimation.value,
+                  child: AnimatedBuilder(
+                    animation: _animation,
+                    builder: (context, child) {
                       return Transform.scale(
-                        scale: value,
-                        child: Container(
-                          width: 24,
-                          height: 24,
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryLight,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            CupertinoIcons.heart_fill,
-                            size: 14,
-                            color: AppColors.primary,
-                          ),
+                        scale: _animation.value,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              'Alongside',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primary,
+                                fontFamily: '.SF Pro Text',
+                              ),
+                              semanticsLabel: 'Alongside App',
+                            ),
+                            const SizedBox(width: 6),
+                            TweenAnimationBuilder<double>(
+                              tween: Tween<double>(begin: 0.8, end: 1.0),
+                              duration: const Duration(milliseconds: 600),
+                              curve: Curves.elasticOut,
+                              builder: (context, value, child) {
+                                return Transform.scale(
+                                  scale: value,
+                                  child: Container(
+                                    width: 24,
+                                    height: 24,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primaryLight,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      CupertinoIcons.heart_fill,
+                                      size: 14,
+                                      color: AppColors.primary,
+                                      semanticLabel: 'Heart icon',
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
                         ),
                       );
                     },
                   ),
-                ],
-              ),
+                ),
+
+                // Search field (fades in when searching)
+                Opacity(
+                  opacity: _searchAnimation.value,
+                  child: Transform.translate(
+                    offset: Offset(0, 20 * (1 - _searchAnimation.value)),
+                    child: CupertinoTextField(
+                      controller: _searchController,
+                      placeholder: 'Search friends...',
+                      prefix: const Padding(
+                        padding: EdgeInsets.only(left: 8),
+                        child: Icon(
+                          CupertinoIcons.search,
+                          color: AppColors.textSecondary,
+                          size: 18,
+                        ),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          _searchQuery = value.toLowerCase();
+                        });
+                      },
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontFamily: '.SF Pro Text',
+                      ),
+                      decoration: BoxDecoration(
+                        color: CupertinoColors.systemGrey6,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                    ),
+                  ),
+                ),
+              ],
             );
           },
         ),
@@ -112,10 +223,33 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
                 width: 1,
               ),
             ),
+            child: Icon(
+              _isSearching ? CupertinoIcons.xmark : CupertinoIcons.search,
+              size: 16,
+              color: AppColors.primary,
+              semanticLabel: _isSearching ? 'Close search' : 'Search friends',
+            ),
+          ),
+          onPressed: _toggleSearch,
+        ),
+        trailing: CupertinoButton(
+          padding: EdgeInsets.zero,
+          child: Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppColors.primary.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
             child: const Icon(
               CupertinoIcons.gear,
               size: 16,
               color: AppColors.primary,
+              semanticLabel: 'Settings',
             ),
           ),
           onPressed: () => _navigateToSettings(context),
@@ -139,25 +273,36 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
                       fontSize: 16,
                       fontFamily: '.SF Pro Text',
                     ),
+                    semanticsLabel: 'Loading your friends',
                   ),
                 ],
               ),
             );
           }
 
-          final friends = friendsProvider.friends;
+          final allFriends = friendsProvider.friends;
 
-          if (friends.isEmpty) {
+          // Filter friends based on search query
+          final friends = _searchQuery.isEmpty
+              ? allFriends
+              : allFriends.where((friend) {
+            return friend.name.toLowerCase().contains(_searchQuery) ||
+                (friend.helpingWith?.toLowerCase().contains(_searchQuery) ?? false) ||
+                (friend.theyHelpingWith?.toLowerCase().contains(_searchQuery) ?? false);
+          }).toList();
+
+          if (allFriends.isEmpty) {
             return _buildEmptyState(context);
           }
 
-          return _buildFriendsListWithIntegratedGreeting(context, friends);
+          return _buildFriendsListWithIntegratedGreeting(context, friends, allFriends);
         },
       ),
     );
   }
 
   void _navigateToSettings(BuildContext context) {
+    HapticFeedback.lightImpact();
     Navigator.push(
       context,
       CupertinoPageRoute(
@@ -167,6 +312,7 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
   }
 
   void _navigateToAddFriend(BuildContext context) {
+    HapticFeedback.mediumImpact();
     Navigator.push(
       context,
       CupertinoPageRoute(
@@ -175,8 +321,7 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
     );
   }
 
-  Widget _buildFriendsListWithIntegratedGreeting(BuildContext context, List<Friend> friends) {
-    // Get time-based greeting with appropriate colors
+  Widget _buildFriendsListWithIntegratedGreeting(BuildContext context, List<Friend> filteredFriends, List<Friend> allFriends) {
     final hour = DateTime.now().hour;
     String greeting;
     IconData iconData;
@@ -196,8 +341,48 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
       greetingColor = AppColors.eveningColor;
     }
 
-    // Get favorite friends
-    final favoriteFriends = friends.where((friend) => friend.isFavorite).toList();
+    final favoriteFriends = allFriends.where((friend) => friend.isFavorite).toList();
+
+    // Show message if searching but no results
+    if (_searchQuery.isNotEmpty && filteredFriends.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              CupertinoIcons.search,
+              size: 48,
+              color: AppColors.textSecondary.withOpacity(0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No friends found for "$_searchQuery"',
+              style: const TextStyle(
+                fontSize: 18,
+                color: AppColors.textSecondary,
+                fontFamily: '.SF Pro Text',
+              ),
+            ),
+            const SizedBox(height: 8),
+            CupertinoButton(
+              onPressed: () {
+                _searchController.clear();
+                setState(() {
+                  _searchQuery = '';
+                });
+              },
+              child: const Text(
+                'Clear search',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontFamily: '.SF Pro Text',
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Stack(
       children: [
@@ -207,154 +392,146 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
             slivers: [
               const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
-              // Integrated greeting card with favorites
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 24),
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: CupertinoColors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: AppColors.subtleShadow,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Greeting section with improved typography
-                        Row(
-                          children: [
-                            Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    greetingColor.withOpacity(0.7),
-                                    greetingColor,
+              // Only show greeting card when not searching
+              if (!_isSearching) ...[
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 24),
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: CupertinoColors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: AppColors.subtleShadow,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Greeting section
+                          Row(
+                            children: [
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      greetingColor.withOpacity(0.7),
+                                      greetingColor,
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: greetingColor.withOpacity(0.3),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 3),
+                                    ),
                                   ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
                                 ),
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: greetingColor.withOpacity(0.3),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 3),
-                                  ),
-                                ],
+                                child: Icon(
+                                  iconData,
+                                  color: CupertinoColors.white,
+                                  size: 22,
+                                  semanticLabel: greeting,
+                                ),
                               ),
-                              child: Icon(
-                                iconData,
-                                color: CupertinoColors.white,
-                                size: 22,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    greeting,
-                                    style: const TextStyle(
-                                      fontSize: 20, // Reduced from 24 for better hierarchy
-                                      fontWeight: FontWeight.w700,
-                                      color: CupertinoColors.label,
-                                      fontFamily: '.SF Pro Text',
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      greeting,
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w700,
+                                        color: CupertinoColors.label,
+                                        fontFamily: '.SF Pro Text',
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    "Here's who you're walking alongside",
-                                    style: const TextStyle(
-                                      fontSize: 14, // Reduced from 16 for better hierarchy
-                                      color: AppColors.textSecondary,
-                                      fontFamily: '.SF Pro Text',
-                                      height: 1.3,
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      "Here's who you're walking alongside",
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: AppColors.textSecondary,
+                                        fontFamily: '.SF Pro Text',
+                                        height: 1.3,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.visible,
                                     ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.visible,
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
+                            ],
+                          ),
 
-                        // Favorites section integrated into the card
-                        if (friends.isNotEmpty) ...[
+                          // Quick stats
                           const SizedBox(height: 20),
                           Row(
                             children: [
-                              const Text(
-                                'Favorites',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.primary,
-                                  fontFamily: '.SF Pro Text',
-                                ),
+                              _buildQuickStat(
+                                icon: CupertinoIcons.person_2_fill,
+                                value: allFriends.length.toString(),
+                                label: 'Friends',
+                                color: AppColors.primary,
                               ),
-                              const Spacer(),
-                              if (favoriteFriends.length < friends.length)
-                                GestureDetector(
-                                  onTap: () => _showAddFavoriteDialog(context, friends),
-                                  child: const Text(
-                                    'Add',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                      color: AppColors.primary,
-                                      fontFamily: '.SF Pro Text',
-                                    ),
-                                  ),
-                                ),
+                              const SizedBox(width: 12),
+                              _buildQuickStat(
+                                icon: CupertinoIcons.heart_fill,
+                                value: favoriteFriends.length.toString(),
+                                label: 'Favorites',
+                                color: AppColors.accent,
+                              ),
+                              const SizedBox(width: 12),
+                              _buildQuickStat(
+                                icon: CupertinoIcons.bell_fill,
+                                value: allFriends.where((f) => f.reminderDays > 0).length.toString(),
+                                label: 'Reminders',
+                                color: AppColors.warning,
+                              ),
                             ],
                           ),
-                          const SizedBox(height: 12),
 
-                          // Favorites display
-                          if (favoriteFriends.isEmpty)
-                            Container(
-                              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                              decoration: BoxDecoration(
-                                color: AppColors.primaryLight,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 36,
-                                    height: 36,
-                                    decoration: BoxDecoration(
-                                      color: AppColors.primary.withOpacity(0.2),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      CupertinoIcons.add,
-                                      color: AppColors.primary,
-                                      size: 18,
-                                    ),
+                          // Favorites section
+                          if (favoriteFriends.isNotEmpty) ...[
+                            const SizedBox(height: 20),
+                            Row(
+                              children: [
+                                const Text(
+                                  'Favorites',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.primary,
+                                    fontFamily: '.SF Pro Text',
                                   ),
-                                  const SizedBox(width: 12),
-                                  const Expanded(
-                                    child: Text(
-                                      'Add friends here for quick access',
+                                ),
+                                const Spacer(),
+                                if (favoriteFriends.length < allFriends.length)
+                                  GestureDetector(
+                                    onTap: () {
+                                      HapticFeedback.lightImpact();
+                                      _showAddFavoriteDialog(context, allFriends);
+                                    },
+                                    child: const Text(
+                                      'Add',
                                       style: TextStyle(
                                         fontSize: 14,
+                                        fontWeight: FontWeight.w500,
                                         color: AppColors.primary,
                                         fontFamily: '.SF Pro Text',
-                                        fontWeight: FontWeight.w500,
                                       ),
                                     ),
                                   ),
-                                ],
-                              ),
-                            )
-                          else
+                              ],
+                            ),
+                            const SizedBox(height: 12),
                             SizedBox(
                               height: 70,
                               child: ListView.builder(
@@ -372,52 +549,82 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
                                 },
                               ),
                             ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   ),
                 ),
-              ),
+              ],
 
               // Friends list
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
-                    children: friends.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final friend = entry.value;
-
-                      return TweenAnimationBuilder<double>(
-                        key: ValueKey(friend.id),
-                        tween: Tween<double>(begin: 0.0, end: 1.0),
-                        duration: Duration(milliseconds: 500 + (index * 100)),
-                        curve: Curves.easeOutQuint,
-                        builder: (context, value, child) {
-                          return Opacity(
-                            opacity: value,
-                            child: Transform.translate(
-                              offset: Offset(0, (1 - value) * 50),
-                              child: child,
-                            ),
-                          );
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom: 4),
-                          child: GestureDetector(
-                            onLongPress: () {
-                              _showReorderOptions(context, friend, friends);
-                            },
-                            child: FriendCardNew(
-                              friend: friend,
-                              index: index,
-                              isExpanded: friend.id == _expandedFriendId,
-                              onExpand: _handleCardExpanded,
-                            ),
+                    children: [
+                      // Search results header
+                      if (_searchQuery.isNotEmpty) ...[
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: Row(
+                            children: [
+                              Icon(
+                                CupertinoIcons.search,
+                                size: 16,
+                                color: AppColors.textSecondary,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '${filteredFriends.length} result${filteredFriends.length == 1 ? '' : 's'}',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: AppColors.textSecondary,
+                                  fontFamily: '.SF Pro Text',
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      );
-                    }).toList(),
+                      ],
+
+                      // Friends cards
+                      ...filteredFriends.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final friend = entry.value;
+
+                        return TweenAnimationBuilder<double>(
+                          key: ValueKey(friend.id),
+                          tween: Tween<double>(begin: 0.0, end: 1.0),
+                          duration: Duration(milliseconds: 300 + (index * 50)),
+                          curve: Curves.easeOutQuint,
+                          builder: (context, value, child) {
+                            return Opacity(
+                              opacity: value,
+                              child: Transform.translate(
+                                offset: Offset(0, (1 - value) * 20),
+                                child: child,
+                              ),
+                            );
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: GestureDetector(
+                              onLongPress: () {
+                                HapticFeedback.mediumImpact();
+                                _showFriendActions(context, friend, allFriends);
+                              },
+                              child: FriendCardNew(
+                                friend: friend,
+                                index: index,
+                                isExpanded: friend.id == _expandedFriendId,
+                                onExpand: _handleCardExpanded,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ],
                   ),
                 ),
               ),
@@ -456,6 +663,7 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
                   CupertinoIcons.add,
                   size: 28,
                   color: CupertinoColors.white,
+                  semanticLabel: 'Add new friend',
                 ),
               ),
             ),
@@ -465,9 +673,54 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
     );
   }
 
+  Widget _buildQuickStat({
+    required IconData icon,
+    required String value,
+    required String label,
+    required Color color,
+  }) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              color: color,
+              size: 20,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: color,
+                fontFamily: '.SF Pro Text',
+              ),
+            ),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: color.withOpacity(0.8),
+                fontFamily: '.SF Pro Text',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildFavoriteStory(Friend friend) {
     return GestureDetector(
       onTap: () {
+        HapticFeedback.lightImpact();
         Navigator.push(
           context,
           CupertinoPageRoute(
@@ -476,6 +729,7 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
         );
       },
       onLongPress: () {
+        HapticFeedback.mediumImpact();
         _showFavoriteOptions(context, friend);
       },
       child: Column(
@@ -503,12 +757,14 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
                 child: Text(
                   friend.profileImage,
                   style: const TextStyle(fontSize: 20),
+                  semanticsLabel: 'Profile emoji',
                 ),
               )
                   : ClipOval(
                 child: Image.file(
                   File(friend.profileImage),
                   fit: BoxFit.cover,
+                  semanticLabel: 'Profile picture',
                 ),
               ),
             ),
@@ -527,6 +783,7 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
+              semanticsLabel: 'Friend name: ${friend.name}',
             ),
           ),
         ],
@@ -730,9 +987,11 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
   }
 
   void _addFavorite(BuildContext context, Friend friend) {
+    HapticFeedback.lightImpact();
     final provider = Provider.of<FriendsProvider>(context, listen: false);
     final updatedFriend = friend.copyWith(isFavorite: true);
     provider.updateFriend(updatedFriend);
+    _showSuccessToast(context, '${friend.name} added to favorites');
   }
 
   void _removeFavorite(BuildContext context, Friend friend) {
@@ -775,9 +1034,11 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
           CupertinoDialogAction(
             onPressed: () {
               Navigator.pop(context);
+              HapticFeedback.lightImpact();
               final provider = Provider.of<FriendsProvider>(context, listen: false);
               final updatedFriend = friend.copyWith(isFavorite: false);
               provider.updateFriend(updatedFriend);
+              _showSuccessToast(context, '${friend.name} removed from favorites');
             },
             child: const Text(
               'Remove',
@@ -791,6 +1052,62 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
         ],
       ),
     );
+  }
+
+  void _showSuccessToast(BuildContext context, String message) {
+    final overlay = Overlay.of(context);
+    final overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        bottom: 100,
+        width: MediaQuery.of(context).size.width,
+        child: Center(
+          child: TweenAnimationBuilder<double>(
+            tween: Tween<double>(begin: 0.0, end: 1.0),
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.elasticOut,
+            builder: (context, value, child) {
+              return Transform.scale(
+                scale: value,
+                child: child,
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: AppColors.primaryShadow,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    CupertinoIcons.checkmark_circle_fill,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    message,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: '.SF Pro Text',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(overlayEntry);
+    Future.delayed(const Duration(seconds: 2), () {
+      overlayEntry.remove();
+    });
   }
 
   Widget _buildEmptyState(BuildContext context) {
@@ -821,7 +1138,6 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
               ),
             ),
             const SizedBox(height: 32),
-
             TweenAnimationBuilder<double>(
               tween: Tween<double>(begin: 0.0, end: 1.0),
               duration: const Duration(milliseconds: 500),
@@ -847,7 +1163,6 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
               ),
             ),
             const SizedBox(height: 16),
-
             TweenAnimationBuilder<double>(
               tween: Tween<double>(begin: 0.0, end: 1.0),
               duration: const Duration(milliseconds: 700),
@@ -875,7 +1190,6 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
               ),
             ),
             const SizedBox(height: 40),
-
             TweenAnimationBuilder<double>(
               tween: Tween<double>(begin: 0.0, end: 1.0),
               duration: const Duration(milliseconds: 900),
@@ -921,22 +1235,120 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
 
   void _handleCardExpanded(String friendId) {
     setState(() {
-      // Toggle expansion - allow collapsing by clicking the same card
       _expandedFriendId = _expandedFriendId == friendId ? null : friendId;
     });
+    HapticFeedback.lightImpact();
   }
 
-  void _reorderFriends(BuildContext context, int oldIndex, int newIndex, List<Friend> friends) {
-    if (newIndex > oldIndex) {
-      newIndex -= 1;
-    }
+  void _showFriendActions(BuildContext context, Friend friend, List<Friend> friends) {
+    final currentIndex = friends.indexOf(friend);
 
-    final provider = Provider.of<FriendsProvider>(context, listen: false);
-    final reorderedFriends = List<Friend>.from(friends);
-    final Friend friend = reorderedFriends.removeAt(oldIndex);
-    reorderedFriends.insert(newIndex, friend);
-
-    provider.reorderFriends(reorderedFriends);
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: Text(
+          friend.name,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            fontFamily: '.SF Pro Text',
+          ),
+        ),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                CupertinoPageRoute(
+                  builder: (context) => MessageScreenNew(friend: friend),
+                ),
+              );
+            },
+            child: const Text(
+              'Send Message',
+              style: TextStyle(
+                fontSize: 16,
+                fontFamily: '.SF Pro Text',
+              ),
+            ),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(
+                context,
+                '/call',
+                arguments: {'friend': friend},
+              );
+            },
+            child: const Text(
+              'Call',
+              style: TextStyle(
+                fontSize: 16,
+                fontFamily: '.SF Pro Text',
+              ),
+            ),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                CupertinoPageRoute(
+                  builder: (context) => AddFriendScreen(friend: friend),
+                ),
+              );
+            },
+            child: const Text(
+              'Edit',
+              style: TextStyle(
+                fontSize: 16,
+                fontFamily: '.SF Pro Text',
+              ),
+            ),
+          ),
+          if (!friend.isFavorite)
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(context);
+                _addFavorite(context, friend);
+              },
+              child: const Text(
+                'Add to Favorites',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontFamily: '.SF Pro Text',
+                ),
+              ),
+            ),
+          if (friends.length > 1)
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(context);
+                _showReorderOptions(context, friend, friends);
+              },
+              child: const Text(
+                'Reorder',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontFamily: '.SF Pro Text',
+                ),
+              ),
+            ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.pop(context),
+          child: const Text(
+            'Cancel',
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontFamily: '.SF Pro Text',
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   void _showReorderOptions(BuildContext context, Friend friend, List<Friend> friends) {
@@ -1024,5 +1436,19 @@ class _HomeScreenNewState extends State<HomeScreenNew> with SingleTickerProvider
         ),
       ),
     );
+  }
+
+  void _reorderFriends(BuildContext context, int oldIndex, int newIndex, List<Friend> friends) {
+    if (newIndex > oldIndex) {
+      newIndex -= 1;
+    }
+
+    final provider = Provider.of<FriendsProvider>(context, listen: false);
+    final reorderedFriends = List<Friend>.from(friends);
+    final Friend friend = reorderedFriends.removeAt(oldIndex);
+    reorderedFriends.insert(newIndex, friend);
+
+    provider.reorderFriends(reorderedFriends);
+    HapticFeedback.lightImpact();
   }
 }
