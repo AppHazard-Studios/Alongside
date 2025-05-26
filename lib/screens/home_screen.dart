@@ -1083,14 +1083,14 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
                 children: [
                   const Icon(
                     CupertinoIcons.checkmark_circle_fill,
-                    color: Colors.white,
+                    color: CupertinoColors.white,
                     size: 20,
                   ),
                   const SizedBox(width: 8),
                   Text(
                     message,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: CupertinoColors.white,
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       fontFamily: '.SF Pro Text',

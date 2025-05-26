@@ -105,7 +105,7 @@ class AppTheme {
     ),
 
     // Card theme - rounded corners
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       color: AppColors.cardBackground,
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -118,7 +118,7 @@ class AppTheme {
     ),
 
     // Dialog theme - rounded corners
-    dialogTheme: DialogTheme(
+    dialogTheme: DialogThemeData(
       backgroundColor: AppColors.cardBackground,
       elevation: 0, // No elevation - will use shadow
       shape: RoundedRectangleBorder(
