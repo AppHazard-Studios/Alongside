@@ -228,7 +228,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             child: const Text(
               'Take Photo',
               style: TextStyle(
-                color: CupertinoColors.systemTeal,
+                color: CupertinoColors.systemBlue,
                 fontSize: 16,
                 fontFamily: '.SF Pro Text',
               ),
@@ -242,7 +242,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             child: const Text(
               'Choose from Library',
               style: TextStyle(
-                color: CupertinoColors.systemIndigo,
+                color: CupertinoColors.systemBlue,
                 fontSize: 16,
                 fontFamily: '.SF Pro Text',
               ),

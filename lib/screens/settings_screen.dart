@@ -212,7 +212,8 @@ class SettingsScreen extends StatelessWidget {
       builder: (BuildContext context) {
         return Center(
           child: Container(
-            width: screenWidth * 0.92,
+            width: screenWidth * 0.95, // Increased from 0.92 to make it much wider
+            constraints: const BoxConstraints(maxWidth: 400), // Added max width constraint
             child: CupertinoAlertDialog(
               title: const Text(
                 'About Alongside',
@@ -323,45 +324,53 @@ class SettingsScreen extends StatelessWidget {
   }
 
   void _showPrivacyInfo(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     showCupertinoDialog(
       context: context,
       builder: (BuildContext context) {
-        return CupertinoAlertDialog(
-          title: const Text(
-            'Privacy & Security',
-            style: TextStyle(
-              color: AppColors.primary,
-              fontWeight: FontWeight.w700,
-              fontSize: 18,
-              fontFamily: '.SF Pro Text',
-            ),
-          ),
-          content: const Padding(
-            padding: EdgeInsets.only(top: 16.0),
-            child: Text(
-              'Alongside is designed with privacy in mind. All your data is stored locally on your device and never shared with third parties. Your conversations and friend information remain completely private.',
-              style: TextStyle(
-                fontSize: 16,
-                height: 1.4,
-                color: CupertinoColors.label,
-                fontFamily: '.SF Pro Text',
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          actions: [
-            CupertinoDialogAction(
-              onPressed: () => Navigator.pop(context),
-              child: const Text(
-                'Got it',
+        return Center(
+          child: Container(
+            width: screenWidth * 0.95, // Made consistent with about dialog
+            constraints: const BoxConstraints(maxWidth: 400), // Added max width constraint
+            child: CupertinoAlertDialog(
+              title: const Text(
+                'Privacy & Security',
                 style: TextStyle(
                   color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 18,
                   fontFamily: '.SF Pro Text',
                 ),
               ),
+              content: const Padding(
+                padding: EdgeInsets.only(top: 16.0),
+                child: Text(
+                  'Alongside is designed with privacy in mind. All your data is stored locally on your device and never shared with third parties. Your conversations and friend information remain completely private.',
+                  style: TextStyle(
+                    fontSize: 16,
+                    height: 1.4,
+                    color: CupertinoColors.label,
+                    fontFamily: '.SF Pro Text',
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              actions: [
+                CupertinoDialogAction(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    'Got it',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: '.SF Pro Text',
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         );
       },
     );

@@ -394,6 +394,9 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
 
               // Only show greeting card when not searching
               if (!_isSearching) ...[
+                // REPLACE THE ENTIRE GREETING CARD SECTION in home_screen.dart (around line 220-350)
+// This is the SliverToBoxAdapter that contains the greeting card
+
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -483,17 +486,17 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
                               ),
                               const SizedBox(width: 12),
                               _buildQuickStat(
-                                icon: CupertinoIcons.heart_fill,
-                                value: favoriteFriends.length.toString(),
-                                label: 'Favorites',
-                                color: AppColors.accent,
+                                icon: CupertinoIcons.calendar,
+                                value: _getDaysConnected().toString(),
+                                label: 'Days',
+                                color: AppColors.secondary,
                               ),
                               const SizedBox(width: 12),
                               _buildQuickStat(
-                                icon: CupertinoIcons.bell_fill,
-                                value: allFriends.where((f) => f.reminderDays > 0).length.toString(),
-                                label: 'Reminders',
-                                color: AppColors.warning,
+                                icon: CupertinoIcons.bubble_left_bubble_right_fill,
+                                value: _getActiveConnections().toString(),
+                                label: 'Active',
+                                color: AppColors.tertiary,
                               ),
                             ],
                           ),
@@ -533,7 +536,7 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
                             ),
                             const SizedBox(height: 12),
                             SizedBox(
-                              height: 70,
+                              height: 90,
                               child: ListView.builder(
                                 scrollDirection: Axis.horizontal,
                                 itemCount: favoriteFriends.length,
@@ -721,27 +724,18 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
     return GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
-        Navigator.push(
-          context,
-          CupertinoPageRoute(
-            builder: (context) => MessageScreenNew(friend: friend),
-          ),
-        );
-      },
-      onLongPress: () {
-        HapticFeedback.mediumImpact();
-        _showFavoriteOptions(context, friend);
+        _showFavoriteOptions(context, friend); // Changed to show menu instead of direct message
       },
       child: Column(
         children: [
           Container(
-            width: 50,
-            height: 50,
+            width: 64, // Increased from 50
+            height: 64, // Increased from 50
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
                 color: AppColors.primary,
-                width: 2,
+                width: 2.5, // Slightly thicker border
               ),
             ),
             child: Container(
@@ -756,7 +750,7 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
                   ? Center(
                 child: Text(
                   friend.profileImage,
-                  style: const TextStyle(fontSize: 20),
+                  style: const TextStyle(fontSize: 28), // Increased from 20
                   semanticsLabel: 'Profile emoji',
                 ),
               )
@@ -769,14 +763,14 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
               ),
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8), // Increased spacing
           SizedBox(
-            width: 60,
+            width: 72, // Increased width for name
             child: Text(
               friend.name,
               style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
+                fontSize: 13, // Increased from 11
+                fontWeight: FontWeight.w600, // Increased font weight
                 color: AppColors.textPrimary,
                 fontFamily: '.SF Pro Text',
               ),
@@ -784,6 +778,54 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               semanticsLabel: 'Friend name: ${friend.name}',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddFavoriteButton() {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        final provider = Provider.of<FriendsProvider>(context, listen: false);
+        _showAddFavoriteDialog(context, provider.friends);
+      },
+      child: Column(
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppColors.primary.withOpacity(0.5),
+                width: 2.5,
+                style: BorderStyle.solid,
+              ),
+              color: AppColors.primaryLight,
+            ),
+            child: const Icon(
+              CupertinoIcons.add,
+              color: AppColors.primary,
+              size: 28,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const SizedBox(
+            width: 72,
+            child: Text(
+              'Add',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primary,
+                fontFamily: '.SF Pro Text',
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -1238,6 +1280,22 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
       _expandedFriendId = _expandedFriendId == friendId ? null : friendId;
     });
     HapticFeedback.lightImpact();
+  }
+
+  // NEW HELPER METHODS GO HERE:
+  int _getDaysConnected() {
+    // Simple calculation - could be made more sophisticated
+    final provider = Provider.of<FriendsProvider>(context, listen: false);
+    if (provider.friends.isEmpty) return 0;
+    return DateTime.now().difference(DateTime(2025, 05, 1)).inDays.clamp(0, 999);
+  }
+
+  int _getActiveConnections() {
+    final provider = Provider.of<FriendsProvider>(context, listen: false);
+    return provider.friends.where((f) =>
+    f.reminderDays > 0 || f.hasPersistentNotification ||
+        (f.helpingWith?.isNotEmpty ?? false) || (f.theyHelpingWith?.isNotEmpty ?? false)
+    ).length;
   }
 
   void _showFriendActions(BuildContext context, Friend friend, List<Friend> friends) {
