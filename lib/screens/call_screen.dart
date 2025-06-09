@@ -3,10 +3,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:provider/provider.dart';
 import '../models/friend.dart';
 import '../utils/constants.dart';
 import '../utils/text_styles.dart';
 import '../utils/ui_constants.dart';
+import '../providers/friends_provider.dart';
 
 class CallScreen extends StatefulWidget {
   final Friend friend;
@@ -49,6 +51,10 @@ class _CallScreenState extends State<CallScreen> {
       if (!launched) {
         throw Exception('Could not launch phone app');
       }
+
+      // Track the call made
+      final storageService = Provider.of<FriendsProvider>(context, listen: false).storageService;
+      await storageService.incrementCallsMade();
 
       // Return to home screen after initiating call
       if (mounted) {

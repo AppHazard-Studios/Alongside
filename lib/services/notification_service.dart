@@ -378,6 +378,7 @@ class NotificationService {
   }
 
   // Schedule a future reminder - Updated with cancelNotification parameter
+// Schedule a future reminder - Updated with cancelNotification parameter
   Future<void> scheduleReminder(Friend friend) async {
     if (friend.reminderDays <= 0) {
       await cancelReminder(friend.id);
@@ -415,7 +416,7 @@ class NotificationService {
       next = DateTime(
         baseTime.year,
         baseTime.month,
-        baseTime.day + cycles * friend.reminderDays,
+        baseTime.day + (cycles * friend.reminderDays),
         hour,
         minute,
       );
@@ -453,7 +454,7 @@ class NotificationService {
       tz.TZDateTime.from(next, tz.local),
       NotificationDetails(android: androidDetails),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      matchDateTimeComponents: DateTimeComponents.time,
+      //uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
       payload: '${friend.id};${friend.phoneNumber}',
     );
 
@@ -463,8 +464,9 @@ class NotificationService {
       TimeOfDay(hour: next.hour, minute: next.minute),
     )}';
     await prefs.setString('next_notification_${friend.id}', nextString);
-  }
 
+    print("Scheduled reminder for ${friend.name} at $nextString");
+  }
   // Cancel all notifications (for testing)
   Future<void> cancelAllNotifications() async {
     await flutterLocalNotificationsPlugin.cancelAll();

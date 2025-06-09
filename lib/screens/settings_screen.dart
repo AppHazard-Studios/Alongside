@@ -212,7 +212,7 @@ class SettingsScreen extends StatelessWidget {
       builder: (BuildContext context) {
         return Center(
           child: Container(
-            width: screenWidth * 0.95, // Increased from 0.92 to make it much wider
+            width: screenWidth * 0.98, // Increased from 0.92 to make it much wider
             constraints: const BoxConstraints(maxWidth: 400), // Added max width constraint
             child: CupertinoAlertDialog(
               title: const Text(
@@ -263,43 +263,7 @@ class SettingsScreen extends StatelessWidget {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                      decoration: BoxDecoration(
-                        color: AppColors.tertiaryLight,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      width: double.infinity,
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: AppColors.tertiary.withOpacity(0.3),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              CupertinoIcons.lock_fill,
-                              size: 16,
-                              color: AppColors.tertiary,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          const Expanded(
-                            child: Text(
-                              'Everything stays on your device. It\'s private, secure, and fully in your control.',
-                              style: TextStyle(
-                                fontSize: 14,
-                                height: 1.4,
-                                color: CupertinoColors.label,
-                                fontFamily: '.SF Pro Text',
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+
                   ],
                 ),
               ),
@@ -331,8 +295,8 @@ class SettingsScreen extends StatelessWidget {
       builder: (BuildContext context) {
         return Center(
           child: Container(
-            width: screenWidth * 0.95, // Made consistent with about dialog
-            constraints: const BoxConstraints(maxWidth: 400), // Added max width constraint
+            width: screenWidth * 1.1, // Made consistent with about dialog
+            //constraints: const BoxConstraints(maxWidth: 600), // Added max width constraint
             child: CupertinoAlertDialog(
               title: const Text(
                 'Privacy & Security',

@@ -7,25 +7,25 @@ class AppConstants {
   // Categorized preset messages for better organization
   static const Map<String, List<String>> categorizedMessages = {
     'Check-ins': [
-      "How’s today going?",
-      "Hey, just checking in.",
-      "You doing okay this week?",
-      "Got a second to catch up?",
-      "Still on track with your stuff?",
+      "Hey, how’s your week going so far?",
+      "How are you doing today?",
+      "Hey, how are you holding up this week?",
+      "Hope this week’s been going okay. How are you feeling?",
+      "Just checking in, how are things on your end?",
     ],
     'Support & Struggle': [
-      "Bit of a rough one today.",
-      "Having a hard time staying focused.",
-      "Could use some support today.",
-      "Today’s been harder than usual.",
-      "Not at my best right now.",
+      "Hey, it’s been a bit of a tough week. How’s your week going?.",
+      "Been finding today a bit harder than usual. How’s yours been?",
+      "Not been the easiest few days. How’s everything going for you?",
+      "I’m struggling right now. How you’re going?",
+      "Trying my best today, but it’s been hard. How about you?",
     ],
     'Confession': [
-      "Messed up today.",
-      "Wasn’t a great day for me.",
-      "Didn’t stay on track.",
-      "Not where I wanted to be today.",
-      "Slipped. Can you check in later?",
+      "I didn’t stay on track today. How’s your day going?",
+      "I struggled to follow through today. How have you been going?",
+      "I slipped up today. How’s everything going on your side?",
+      "I didn’t stay on track this week. How have you been going?",
+      "This week didn’t go how I’d hoped. How’s everything going for you?",
     ],
   };
 

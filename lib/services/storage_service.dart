@@ -7,6 +7,8 @@ import '../utils/constants.dart';
 class StorageService {
   static const String _friendsKey = 'friends';
   static const String _messagesKey = 'custom_messages';
+  static const String _messageCountKey = 'messages_sent_count';
+  static const String _callCountKey = 'calls_made_count';
 
   // Save friends list
   Future<void> saveFriends(List<Friend> friends) async {
@@ -60,5 +62,29 @@ class StorageService {
   // Get default messages as flat list (for backward compatibility)
   List<String> getDefaultMessages() {
     return AppConstants.presetMessages;
+  }
+
+  // Message count tracking
+  Future<int> getMessagesSentCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_messageCountKey) ?? 0;
+  }
+
+  Future<void> incrementMessagesSent() async {
+    final prefs = await SharedPreferences.getInstance();
+    final current = await getMessagesSentCount();
+    await prefs.setInt(_messageCountKey, current + 1);
+  }
+
+  // Call count tracking
+  Future<int> getCallsMadeCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_callCountKey) ?? 0;
+  }
+
+  Future<void> incrementCallsMade() async {
+    final prefs = await SharedPreferences.getInstance();
+    final current = await getCallsMadeCount();
+    await prefs.setInt(_callCountKey, current + 1);
   }
 }

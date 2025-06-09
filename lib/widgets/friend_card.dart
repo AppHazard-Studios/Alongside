@@ -3,10 +3,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:provider/provider.dart';
 import '../models/friend.dart';
 import '../screens/add_friend_screen.dart';
 import '../screens/message_screen.dart';
 import '../utils/colors.dart';
+import '../providers/friends_provider.dart';
 
 class FriendCardNew extends StatefulWidget {
   final Friend friend;
@@ -476,6 +478,7 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
   }
 
   // Call friend
+// Call friend
   void _callFriend(BuildContext context) async {
     // Simplified phone number cleaning
     final phoneNumber = widget.friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
@@ -485,6 +488,10 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
         telUri,
         mode: LaunchMode.externalApplication,
       );
+
+      // Track the call made
+      final storageService = Provider.of<FriendsProvider>(context, listen: false).storageService;
+      await storageService.incrementCallsMade();
     } catch (e) {
       if (context.mounted) {
         showCupertinoDialog(

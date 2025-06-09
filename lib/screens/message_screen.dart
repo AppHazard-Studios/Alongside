@@ -6,9 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/friend.dart';
 import '../providers/friends_provider.dart';
-import '../utils/text_styles.dart';
 import '../utils/colors.dart';
-import '../widgets/character_components.dart';
 import '../widgets/illustrations.dart';
 
 class MessageScreenNew extends StatefulWidget {
@@ -630,6 +628,10 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
         smsUri,
         mode: LaunchMode.externalApplication,
       );
+
+      // Track the message sent
+      final storageService = Provider.of<FriendsProvider>(context, listen: false).storageService;
+      await storageService.incrementMessagesSent();
 
       if (context.mounted) {
         Navigator.pop(context);

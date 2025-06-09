@@ -59,23 +59,39 @@ class AlongsideTaskHandler extends TaskHandler {
     try {
       final friends = await _storageService.getFriends();
       final prefs = await SharedPreferences.getInstance();
-      final now = DateTime.now().millisecondsSinceEpoch;
+      final now = DateTime.now();
 
       for (final friend in friends) {
         if (friend.hasPersistentNotification) {
           await _notificationService.showPersistentNotification(friend);
         }
+
         if (friend.reminderDays > 0) {
           final lastKey = 'last_notification_${friend.id}';
           final lastTime = prefs.getInt(lastKey);
-          final interval = Duration(days: friend.reminderDays).inMilliseconds;
 
-          if (lastTime != null && now - lastTime >= interval) {
-            await _notificationService.showReminderNotification(friend);
-            await prefs.setInt(lastKey, now);
-          } else if (lastTime == null) {
-            // Use correct _notificationService instance
+          if (lastTime != null) {
+            final lastNotification = DateTime.fromMillisecondsSinceEpoch(lastTime);
+            final daysSince = now.difference(lastNotification).inDays;
+
+            // Check if it's time for the reminder
+            if (daysSince >= friend.reminderDays) {
+              // Parse reminder time
+              final parts = friend.reminderTime.split(':');
+              final hour = int.tryParse(parts[0]) ?? 9;
+              final minute = int.tryParse(parts[1]) ?? 0;
+
+              // Check if we're past the reminder time today
+              final reminderTimeToday = DateTime(now.year, now.month, now.day, hour, minute);
+              if (now.isAfter(reminderTimeToday)) {
+                await _notificationService.showReminderNotification(friend);
+                await prefs.setInt(lastKey, now.millisecondsSinceEpoch);
+              }
+            }
+          } else {
+            // First time scheduling
             await _notificationService.scheduleReminder(friend);
+            await prefs.setInt(lastKey, now.millisecondsSinceEpoch);
           }
         }
       }

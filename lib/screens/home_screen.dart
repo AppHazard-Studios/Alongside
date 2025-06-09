@@ -12,6 +12,7 @@ import 'settings_screen.dart';
 import 'message_screen.dart';
 import '../models/friend.dart';
 import 'onboarding_screen.dart';
+import '../services/storage_service.dart';
 
 class HomeScreenNew extends StatefulWidget {
   const HomeScreenNew({Key? key}) : super(key: key);
@@ -20,7 +21,7 @@ class HomeScreenNew extends StatefulWidget {
   State<HomeScreenNew> createState() => _HomeScreenNewState();
 }
 
-class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateMixin {
+class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateMixin, WidgetsBindingObserver {
   String? _expandedFriendId;
   late AnimationController _animationController;
   late AnimationController _searchAnimationController;
@@ -35,9 +36,14 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
   // Track if this is the first launch for onboarding
   bool _shouldShowOnboarding = false;
 
+  // Track stats
+  int _messagesSent = 0;
+  int _callsMade = 0;
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -58,6 +64,36 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
 
     _animationController.forward();
     _checkFirstLaunch();
+    _loadStats();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _animationController.dispose();
+    _searchAnimationController.dispose();
+    _scrollController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _loadStats(); // Refresh stats when app resumes
+    }
+  }
+
+  Future<void> _loadStats() async {
+    final storageService = StorageService();
+    final messages = await storageService.getMessagesSentCount();
+    final calls = await storageService.getCallsMadeCount();
+    if (mounted) {
+      setState(() {
+        _messagesSent = messages;
+        _callsMade = calls;
+      });
+    }
   }
 
   Future<void> _checkFirstLaunch() async {
@@ -69,15 +105,6 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
         _shouldShowOnboarding = true;
       });
     }
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    _searchAnimationController.dispose();
-    _scrollController.dispose();
-    _searchController.dispose();
-    super.dispose();
   }
 
   void _toggleSearch() {
@@ -116,6 +143,7 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
           animation: _searchAnimation,
           builder: (context, child) {
             return Stack(
+              alignment: Alignment.center,
               children: [
                 // Title (fades out when searching)
                 Opacity(
@@ -394,9 +422,6 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
 
               // Only show greeting card when not searching
               if (!_isSearching) ...[
-                // REPLACE THE ENTIRE GREETING CARD SECTION in home_screen.dart (around line 220-350)
-// This is the SliverToBoxAdapter that contains the greeting card
-
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -486,61 +511,61 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
                               ),
                               const SizedBox(width: 12),
                               _buildQuickStat(
-                                icon: CupertinoIcons.calendar,
-                                value: _getDaysConnected().toString(),
-                                label: 'Days',
+                                icon: CupertinoIcons.bubble_left_bubble_right_fill,
+                                value: _messagesSent.toString(),
+                                label: 'Messages',
                                 color: AppColors.secondary,
                               ),
                               const SizedBox(width: 12),
                               _buildQuickStat(
-                                icon: CupertinoIcons.bubble_left_bubble_right_fill,
-                                value: _getActiveConnections().toString(),
-                                label: 'Active',
+                                icon: CupertinoIcons.phone_fill,
+                                value: _callsMade.toString(),
+                                label: 'Calls',
                                 color: AppColors.tertiary,
                               ),
                             ],
                           ),
 
-                          // Favorites section
-                          if (favoriteFriends.isNotEmpty) ...[
-                            const SizedBox(height: 20),
-                            Row(
-                              children: [
-                                const Text(
-                                  'Favorites',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.primary,
-                                    fontFamily: '.SF Pro Text',
-                                  ),
+                          // Favorites section - Always show to allow adding favorites
+                          const SizedBox(height: 20),
+                          Row(
+                            children: [
+                              const Text(
+                                'Favorites',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primary,
+                                  fontFamily: '.SF Pro Text',
                                 ),
-                                const Spacer(),
-                                if (favoriteFriends.length < allFriends.length)
-                                  GestureDetector(
-                                    onTap: () {
-                                      HapticFeedback.lightImpact();
-                                      _showAddFavoriteDialog(context, allFriends);
-                                    },
-                                    child: const Text(
-                                      'Add',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                        color: AppColors.primary,
-                                        fontFamily: '.SF Pro Text',
-                                      ),
+                              ),
+                              const Spacer(),
+                              if (favoriteFriends.isNotEmpty && favoriteFriends.length < allFriends.length)
+                                GestureDetector(
+                                  onTap: () {
+                                    HapticFeedback.lightImpact();
+                                    _showAddFavoriteDialog(context, allFriends);
+                                  },
+                                  child: const Text(
+                                    'Add',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.primary,
+                                      fontFamily: '.SF Pro Text',
                                     ),
                                   ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            SizedBox(
-                              height: 90,
-                              child: ListView.builder(
-                                scrollDirection: Axis.horizontal,
-                                itemCount: favoriteFriends.length,
-                                itemBuilder: (context, index) {
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            height: 90,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: favoriteFriends.length + 1, // +1 for the Add button
+                              itemBuilder: (context, index) {
+                                if (index < favoriteFriends.length) {
                                   final friend = favoriteFriends[index];
                                   return Padding(
                                     padding: EdgeInsets.only(
@@ -549,10 +574,16 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
                                     ),
                                     child: _buildFavoriteStory(friend),
                                   );
-                                },
-                              ),
+                                } else {
+                                  // Add button at the end
+                                  return Padding(
+                                    padding: const EdgeInsets.only(right: 16),
+                                    child: _buildAddFavoriteButton(),
+                                  );
+                                }
+                              },
                             ),
-                          ],
+                          ),
                         ],
                       ),
                     ),
@@ -800,11 +831,11 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: AppColors.primary.withOpacity(0.5),
+                color: AppColors.primary.withOpacity(0.3),
                 width: 2.5,
                 style: BorderStyle.solid,
               ),
-              color: AppColors.primaryLight,
+              color: CupertinoColors.systemGrey6,
             ),
             child: const Icon(
               CupertinoIcons.add,
@@ -1282,24 +1313,8 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
     HapticFeedback.lightImpact();
   }
 
-  // NEW HELPER METHODS GO HERE:
-  int _getDaysConnected() {
-    // Simple calculation - could be made more sophisticated
-    final provider = Provider.of<FriendsProvider>(context, listen: false);
-    if (provider.friends.isEmpty) return 0;
-    return DateTime.now().difference(DateTime(2025, 05, 1)).inDays.clamp(0, 999);
-  }
-
-  int _getActiveConnections() {
-    final provider = Provider.of<FriendsProvider>(context, listen: false);
-    return provider.friends.where((f) =>
-    f.reminderDays > 0 || f.hasPersistentNotification ||
-        (f.helpingWith?.isNotEmpty ?? false) || (f.theyHelpingWith?.isNotEmpty ?? false)
-    ).length;
-  }
-
   void _showFriendActions(BuildContext context, Friend friend, List<Friend> friends) {
-    final currentIndex = friends.indexOf(friend);
+    friends.indexOf(friend);
 
     showCupertinoModalPopup(
       context: context,
@@ -1497,13 +1512,13 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
   }
 
   void _reorderFriends(BuildContext context, int oldIndex, int newIndex, List<Friend> friends) {
-    if (newIndex > oldIndex) {
-      newIndex -= 1;
-    }
-
     final provider = Provider.of<FriendsProvider>(context, listen: false);
     final reorderedFriends = List<Friend>.from(friends);
+
+    // Remove the friend from old position
     final Friend friend = reorderedFriends.removeAt(oldIndex);
+
+    // Insert at new position
     reorderedFriends.insert(newIndex, friend);
 
     provider.reorderFriends(reorderedFriends);
