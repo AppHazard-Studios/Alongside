@@ -352,6 +352,7 @@ class NotificationService {
   }
 
   // Cancel a scheduled reminder
+// Cancel a scheduled reminder - Enhanced cleanup
   Future<void> cancelReminder(String friendId) async {
     final int id = _getNotificationId(friendId);
     await flutterLocalNotificationsPlugin.cancel(id);
@@ -360,6 +361,9 @@ class NotificationService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('last_notification_$friendId');
     await prefs.remove('next_notification_$friendId');
+    await prefs.remove('scheduled_$friendId'); // Clean up scheduling tracking
+
+    print("Cancelled reminder for friend ID: $friendId");
   }
 
   // Generate unique IDs
@@ -379,18 +383,37 @@ class NotificationService {
 
   // Schedule a future reminder - Updated with cancelNotification parameter
 // Schedule a future reminder - Updated with cancelNotification parameter
+// Schedule a future reminder - Simplified to prevent duplicates
   Future<void> scheduleReminder(Friend friend) async {
     if (friend.reminderDays <= 0) {
       await cancelReminder(friend.id);
       return;
     }
 
+    // Always cancel any existing reminder first to prevent duplicates
+    await cancelReminder(friend.id);
+
     final int id = _getNotificationId(friend.id);
     final prefs = await SharedPreferences.getInstance();
     final String lastKey = 'last_notification_${friend.id}';
-    int? lastTime = prefs.getInt(lastKey);
+    final String nextKey = 'next_notification_${friend.id}';
+    final String scheduledKey = 'scheduled_${friend.id}';
 
+    // Check if we recently scheduled this reminder (within last 5 minutes)
+    // This prevents duplicate scheduling on rapid app restarts
+    final int? lastScheduled = prefs.getInt(scheduledKey);
+    if (lastScheduled != null) {
+      final DateTime lastScheduledTime = DateTime.fromMillisecondsSinceEpoch(lastScheduled);
+      final DateTime now = DateTime.now();
+      if (now.difference(lastScheduledTime).inMinutes < 5) {
+        print("Reminder recently scheduled for ${friend.name}, skipping duplicate");
+        return;
+      }
+    }
+
+    int? lastTime = prefs.getInt(lastKey);
     DateTime baseTime;
+
     if (lastTime != null) {
       baseTime = DateTime.fromMillisecondsSinceEpoch(lastTime);
     } else {
@@ -409,6 +432,7 @@ class NotificationService {
       hour,
       minute,
     );
+
     final DateTime now = DateTime.now();
     if (next.isBefore(now)) {
       final int daysPassed = now.difference(baseTime).inDays;
@@ -436,13 +460,13 @@ class NotificationService {
           'message',
           'Message',
           showsUserInterface: true,
-          cancelNotification: true, // Add this to cancel notification on tap
+          cancelNotification: true,
         ),
         const AndroidNotificationAction(
           'call',
           'Call',
           showsUserInterface: true,
-          cancelNotification: true, // Add this to cancel notification on tap
+          cancelNotification: true,
         ),
       ],
     );
@@ -454,19 +478,23 @@ class NotificationService {
       tz.TZDateTime.from(next, tz.local),
       NotificationDetails(android: androidDetails),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      //uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
       payload: '${friend.id};${friend.phoneNumber}',
     );
 
     _friendNotificationIds[friend.id] = id;
+
+    // Record that we scheduled this reminder
+    await prefs.setInt(scheduledKey, DateTime.now().millisecondsSinceEpoch);
+
     final String nextString =
         '${next.month}/${next.day}/${next.year} at ${_formatTimeOfDay(
       TimeOfDay(hour: next.hour, minute: next.minute),
     )}';
-    await prefs.setString('next_notification_${friend.id}', nextString);
+    await prefs.setString(nextKey, nextString);
 
     print("Scheduled reminder for ${friend.name} at $nextString");
   }
+
   // Cancel all notifications (for testing)
   Future<void> cancelAllNotifications() async {
     await flutterLocalNotificationsPlugin.cancelAll();

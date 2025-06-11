@@ -10,6 +10,7 @@ import '../providers/friends_provider.dart';
 import '../models/friend.dart';
 import '../utils/constants.dart';
 import '../widgets/no_underline_field.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class AddFriendScreen extends StatefulWidget {
   final Friend? friend;
@@ -78,6 +79,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   }
 
   // Method to pick a contact
+// Enhanced method to pick a contact with search and multiple number handling
   Future<void> _pickContact() async {
     if (await FlutterContacts.requestPermission()) {
       try {
@@ -86,72 +88,151 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
           withPhoto: false,
         );
 
+        if (!mounted) return;
+
+        // Show the enhanced contact picker with search
         showCupertinoModalPopup(
           context: context,
-          builder: (context) => CupertinoActionSheet(
-            title: const Text(
-              'Select a Contact',
-              style: TextStyle(
-                color: CupertinoColors.systemBlue,
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                fontFamily: '.SF Pro Text',
-              ),
-            ),
-            actions: [
-              SizedBox(
-                height: 300,
-                child: CupertinoScrollbar(
-                  child: ListView.builder(
-                    itemCount: contacts.length,
-                    itemBuilder: (context, index) {
-                      return CupertinoActionSheetAction(
-                        onPressed: () {
-                          Navigator.pop(context, contacts[index]);
-                        },
-                        child: Text(
-                          contacts[index].displayName,
-                          style: const TextStyle(
-                            color: CupertinoColors.label,
-                            fontSize: 16,
-                            fontFamily: '.SF Pro Text',
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ],
-            cancelButton: CupertinoActionSheetAction(
-              onPressed: () => Navigator.pop(context),
-              isDestructiveAction: true,
-              child: const Text(
-                'Cancel',
-                style: TextStyle(
-                  color: CupertinoColors.destructiveRed,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: '.SF Pro Text',
-                ),
-              ),
-            ),
+          builder: (context) => _ContactPickerWithSearch(
+            contacts: contacts,
+            onContactSelected: (contact) async {
+              if (contact.phones.isEmpty) {
+                _showErrorSnackBar('Selected contact has no phone number');
+                return;
+              }
+
+              // Set the name immediately
+              setState(() {
+                _nameController.text = contact.displayName;
+              });
+
+              // Handle multiple phone numbers
+              if (contact.phones.length == 1) {
+                // Single number - use it directly
+                setState(() {
+                  _phoneController.text = contact.phones.first.number;
+                });
+              } else {
+                // Multiple numbers - let user choose
+                _showPhoneNumberSelector(contact);
+              }
+            },
           ),
-        ).then((contact) {
-          if (contact != null && contact.phones.isNotEmpty) {
-            setState(() {
-              _nameController.text = contact.displayName;
-              _phoneController.text = contact.phones.first.number;
-            });
-          } else if (contact != null) {
-            _showErrorSnackBar('Selected contact has no phone number');
-          }
-        });
+        );
       } catch (e) {
         _showErrorSnackBar('Error accessing contacts: $e');
       }
     } else {
       _showErrorSnackBar('Permission to access contacts was denied');
     }
+  }
+
+  // Show phone number selector for contacts with multiple numbers
+// Show phone number selector for contacts with multiple numbers - Fixed PhoneLabel handling
+// Show phone number selector for contacts with multiple numbers - Fixed warnings
+  void _showPhoneNumberSelector(Contact contact) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: Text(
+          'Choose Phone Number for ${contact.displayName}',
+          style: const TextStyle(
+            color: CupertinoColors.systemBlue,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            fontFamily: '.SF Pro Text',
+          ),
+        ),
+        message: const Text(
+          'This contact has multiple phone numbers. Which one would you like to use?',
+          style: TextStyle(
+            fontSize: 14,
+            color: CupertinoColors.secondaryLabel,
+            fontFamily: '.SF Pro Text',
+          ),
+        ),
+        actions: contact.phones.map((phone) {
+          String labelText = '';
+
+          // Properly handle PhoneLabel type
+          switch (phone.label) {
+            case PhoneLabel.mobile:
+              labelText = 'Mobile';
+              break;
+            case PhoneLabel.home:
+              labelText = 'Home';
+              break;
+            case PhoneLabel.work:
+              labelText = 'Work';
+              break;
+            case PhoneLabel.main:
+              labelText = 'Main';
+              break;
+            case PhoneLabel.faxWork:
+              labelText = 'Work Fax';
+              break;
+            case PhoneLabel.faxHome:
+              labelText = 'Home Fax';
+              break;
+            case PhoneLabel.pager:
+              labelText = 'Pager';
+              break;
+            case PhoneLabel.other:
+              labelText = 'Other';
+              break;
+            case PhoneLabel.custom:
+              labelText = phone.customLabel.isNotEmpty ? phone.customLabel : 'Custom';
+              break;
+            default:
+              labelText = '';
+              break;
+          }
+
+          return CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() {
+                _phoneController.text = phone.number;
+              });
+            },
+            child: Column(
+              children: [
+                Text(
+                  phone.number,
+                  style: const TextStyle(
+                    color: CupertinoColors.label,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: '.SF Pro Text',
+                  ),
+                ),
+                if (labelText.isNotEmpty)
+                  Text(
+                    labelText,
+                    style: const TextStyle(
+                      color: CupertinoColors.secondaryLabel,
+                      fontSize: 13,
+                      fontFamily: '.SF Pro Text',
+                    ),
+                  ),
+              ],
+            ),
+          );
+        }).toList(),
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.pop(context),
+          isDestructiveAction: true,
+          child: const Text(
+            'Cancel',
+            style: TextStyle(
+              color: CupertinoColors.destructiveRed,
+              fontWeight: FontWeight.w600,
+              fontFamily: '.SF Pro Text',
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   void _showErrorSnackBar(String message) {
@@ -267,6 +348,74 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
 
   Future<void> _pickImage(ImageSource source) async {
     try {
+      // Request camera permission if taking a photo
+      if (source == ImageSource.camera) {
+        final cameraStatus = await Permission.camera.status;
+
+        if (cameraStatus.isDenied) {
+          final result = await Permission.camera.request();
+          if (result.isDenied) {
+            _showErrorSnackBar('Camera permission is required to take photos');
+            return;
+          }
+        }
+
+        if (cameraStatus.isPermanentlyDenied) {
+          showCupertinoDialog(
+            context: context,
+            builder: (context) => CupertinoAlertDialog(
+              title: const Text(
+                'Camera Permission Required',
+                style: TextStyle(
+                  color: CupertinoColors.systemBlue,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 18,
+                  fontFamily: '.SF Pro Text',
+                ),
+              ),
+              content: const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Text(
+                  'Camera access is permanently denied. Please enable it in Settings to take photos.',
+                  style: TextStyle(
+                    fontSize: 16,
+                    height: 1.3,
+                    fontFamily: '.SF Pro Text',
+                  ),
+                ),
+              ),
+              actions: [
+                CupertinoDialogAction(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(
+                      color: CupertinoColors.systemBlue,
+                      fontFamily: '.SF Pro Text',
+                    ),
+                  ),
+                ),
+                CupertinoDialogAction(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    openAppSettings();
+                  },
+                  child: const Text(
+                    'Open Settings',
+                    style: TextStyle(
+                      color: CupertinoColors.systemBlue,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: '.SF Pro Text',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+          return;
+        }
+      }
+
       final ImagePicker picker = ImagePicker();
       final XFile? pickedFile = await picker.pickImage(
         source: source,
@@ -1184,6 +1333,275 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+// Contact picker widget with search functionality
+// Contact picker widget with search functionality - Fixed PhoneLabel handling
+class _ContactPickerWithSearch extends StatefulWidget {
+  final List<Contact> contacts;
+  final Function(Contact) onContactSelected;
+
+  const _ContactPickerWithSearch({
+    required this.contacts,
+    required this.onContactSelected,
+  });
+
+  @override
+  State<_ContactPickerWithSearch> createState() => _ContactPickerWithSearchState();
+}
+
+class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
+  final TextEditingController _searchController = TextEditingController();
+  List<Contact> _filteredContacts = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _filteredContacts = widget.contacts;
+    _searchController.addListener(_filterContacts);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _filterContacts() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      if (query.isEmpty) {
+        _filteredContacts = widget.contacts;
+      } else {
+        _filteredContacts = widget.contacts.where((contact) {
+          return contact.displayName.toLowerCase().contains(query);
+        }).toList();
+      }
+    });
+  }
+
+  String _getPhoneLabel(Phone phone) {
+    switch (phone.label) {
+      case PhoneLabel.mobile:
+        return 'Mobile';
+      case PhoneLabel.home:
+        return 'Home';
+      case PhoneLabel.work:
+        return 'Work';
+      case PhoneLabel.main:
+        return 'Main';
+      case PhoneLabel.faxWork:
+        return 'Work Fax';
+      case PhoneLabel.faxHome:
+        return 'Home Fax';
+      case PhoneLabel.pager:
+        return 'Pager';
+      case PhoneLabel.other:
+        return 'Other';
+      case PhoneLabel.custom:
+        return phone.customLabel.isNotEmpty ? phone.customLabel : 'Custom';
+      default:
+        return '';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.8,
+      decoration: const BoxDecoration(
+        color: CupertinoColors.systemBackground,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        children: [
+          // Handle
+          Container(
+            margin: const EdgeInsets.only(top: 8),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: CupertinoColors.systemGrey3,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(
+                      color: CupertinoColors.systemBlue,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: '.SF Pro Text',
+                    ),
+                  ),
+                ),
+                const Expanded(
+                  child: Text(
+                    'Select Contact',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: CupertinoColors.label,
+                      fontFamily: '.SF Pro Text',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 60), // Balance the cancel button
+              ],
+            ),
+          ),
+
+          // Search field
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: CupertinoTextField(
+              controller: _searchController,
+              placeholder: 'Search contacts...',
+              prefix: const Padding(
+                padding: EdgeInsets.only(left: 8),
+                child: Icon(
+                  CupertinoIcons.search,
+                  color: CupertinoColors.systemGrey,
+                  size: 18,
+                ),
+              ),
+              suffix: _searchController.text.isNotEmpty
+                  ? CupertinoButton(
+                padding: EdgeInsets.zero,
+                minSize: 0,
+                onPressed: () {
+                  _searchController.clear();
+                },
+                child: const Icon(
+                  CupertinoIcons.clear_circled,
+                  color: CupertinoColors.systemGrey,
+                  size: 18,
+                ),
+              )
+                  : null,
+              style: const TextStyle(
+                fontSize: 16,
+                fontFamily: '.SF Pro Text',
+              ),
+              decoration: BoxDecoration(
+                color: CupertinoColors.systemGrey6,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Contact list
+          Expanded(
+            child: _filteredContacts.isEmpty
+                ? const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    CupertinoIcons.person_3,
+                    size: 48,
+                    color: CupertinoColors.systemGrey,
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'No contacts found',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: CupertinoColors.systemGrey,
+                      fontFamily: '.SF Pro Text',
+                    ),
+                  ),
+                ],
+              ),
+            )
+                : CupertinoScrollbar(
+              child: ListView.builder(
+                itemCount: _filteredContacts.length,
+                itemBuilder: (context, index) {
+                  final contact = _filteredContacts[index];
+                  return Container(
+                    decoration: const BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: CupertinoColors.separator,
+                          width: 0.5,
+                        ),
+                      ),
+                    ),
+                    child: CupertinoListTile(
+                      title: Text(
+                        contact.displayName,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontFamily: '.SF Pro Text',
+                        ),
+                      ),
+                      subtitle: contact.phones.isNotEmpty
+                          ? Text(
+                        contact.phones.length == 1
+                            ? '${contact.phones.first.number}${_getPhoneLabel(contact.phones.first).isNotEmpty ? ' (${_getPhoneLabel(contact.phones.first)})' : ''}'
+                            : '${contact.phones.length} phone numbers',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: CupertinoColors.secondaryLabel,
+                          fontFamily: '.SF Pro Text',
+                        ),
+                      )
+                          : const Text(
+                        'No phone number',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: CupertinoColors.systemGrey,
+                          fontFamily: '.SF Pro Text',
+                        ),
+                      ),
+                      leading: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: CupertinoColors.systemBlue.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          CupertinoIcons.person,
+                          color: CupertinoColors.systemBlue,
+                          size: 20,
+                        ),
+                      ),
+                      trailing: contact.phones.isNotEmpty
+                          ? const Icon(
+                        CupertinoIcons.chevron_right,
+                        color: CupertinoColors.systemGrey,
+                        size: 16,
+                      )
+                          : null,
+                      onTap: contact.phones.isNotEmpty
+                          ? () {
+                        Navigator.pop(context);
+                        widget.onContactSelected(contact);
+                      }
+                          : null,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
