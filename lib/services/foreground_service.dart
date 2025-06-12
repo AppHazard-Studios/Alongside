@@ -14,42 +14,43 @@ void startCallback() {
 }
 
 class AlongsideTaskHandler extends TaskHandler {
-  Timer? _timer;
+  // REMOVED the duplicate timer - we only use onRepeatEvent
   final StorageService _storageService = StorageService();
   final NotificationService _notificationService = NotificationService();
   bool _initialized = false;
+  DateTime? _lastCheckTime;
 
   @override
   Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
     await _notificationService.initialize();
-    _timer = Timer.periodic(const Duration(minutes: 15), (_) async {
-      await _checkAndUpdateNotifications();
-    });
-    await _checkAndUpdateNotifications();
     _initialized = true;
+    // Only check once on start, don't start a timer
+    await _checkAndUpdateNotifications();
   }
 
   Future<void> onEvent(DateTime timestamp, SendPort? sendPort) async {
-    if (_initialized) {
-      await _checkAndUpdateNotifications();
-    }
+    // Don't check on every event - only on repeat events
   }
 
   @override
   Future<void> onDestroy(DateTime timestamp, bool wasRunning) async {
-    _timer?.cancel();
     await FlutterForegroundTask.clearAllData();
   }
 
   @override
   void onRepeatEvent(DateTime timestamp) async {
     if (_initialized) {
+      // Prevent checking too frequently (minimum 5 minutes between checks)
+      if (_lastCheckTime != null &&
+          DateTime.now().difference(_lastCheckTime!).inMinutes < 5) {
+        return;
+      }
+      _lastCheckTime = DateTime.now();
       await _checkAndUpdateNotifications();
     }
   }
 
   void onButtonPressed(String id) {
-    // Use named parameter `key` here instead of positional
     FlutterForegroundTask.getData<String>(key: id).then((message) {
       print('Button pressed: $id, Message: $message');
     });
@@ -62,36 +63,66 @@ class AlongsideTaskHandler extends TaskHandler {
       final now = DateTime.now();
 
       for (final friend in friends) {
+        // Handle persistent notifications
         if (friend.hasPersistentNotification) {
           await _notificationService.showPersistentNotification(friend);
         }
 
+        // Handle scheduled reminders - FIXED LOGIC
         if (friend.reminderDays > 0) {
-          final lastKey = 'last_notification_${friend.id}';
-          final lastTime = prefs.getInt(lastKey);
+          final lastActionKey = 'last_action_${friend.id}';
+          final nextReminderKey = 'next_reminder_${friend.id}';
+          final activeReminderKey = 'active_reminder_${friend.id}';
 
-          if (lastTime != null) {
-            final lastNotification = DateTime.fromMillisecondsSinceEpoch(lastTime);
-            final daysSince = now.difference(lastNotification).inDays;
+          // Get the last time user interacted with this friend
+          final lastActionTime = prefs.getInt(lastActionKey);
+          final nextReminderTime = prefs.getInt(nextReminderKey);
+          final activeReminder = prefs.getInt(activeReminderKey);
 
-            // Check if it's time for the reminder
-            if (daysSince >= friend.reminderDays) {
-              // Parse reminder time
-              final parts = friend.reminderTime.split(':');
-              final hour = int.tryParse(parts[0]) ?? 9;
-              final minute = int.tryParse(parts[1]) ?? 0;
+          // Check if we need to schedule a new reminder
+          bool shouldSchedule = false;
 
-              // Check if we're past the reminder time today
-              final reminderTimeToday = DateTime(now.year, now.month, now.day, hour, minute);
-              if (now.isAfter(reminderTimeToday)) {
-                await _notificationService.showReminderNotification(friend);
-                await prefs.setInt(lastKey, now.millisecondsSinceEpoch);
-              }
+          if (activeReminder == null) {
+            // No active reminder scheduled
+            shouldSchedule = true;
+          } else if (nextReminderTime != null) {
+            final nextTime = DateTime.fromMillisecondsSinceEpoch(nextReminderTime);
+            // If we're past the scheduled time + buffer, schedule next one
+            if (now.isAfter(nextTime.add(Duration(hours: 1)))) {
+              shouldSchedule = true;
             }
-          } else {
-            // First time scheduling
+          }
+
+          if (shouldSchedule) {
+            // Cancel any existing reminder first
+            await _notificationService.cancelReminder(friend.id);
+
+            // Schedule the next reminder
             await _notificationService.scheduleReminder(friend);
-            await prefs.setInt(lastKey, now.millisecondsSinceEpoch);
+
+            // Calculate next reminder time
+            final parts = friend.reminderTime.split(':');
+            final hour = int.tryParse(parts[0]) ?? 9;
+            final minute = int.tryParse(parts[1]) ?? 0;
+
+            DateTime baseTime = lastActionTime != null
+                ? DateTime.fromMillisecondsSinceEpoch(lastActionTime)
+                : now;
+
+            DateTime nextTime = DateTime(
+                baseTime.year,
+                baseTime.month,
+                baseTime.day + friend.reminderDays,
+                hour,
+                minute
+            );
+
+            // Make sure it's in the future
+            while (nextTime.isBefore(now)) {
+              nextTime = nextTime.add(Duration(days: friend.reminderDays));
+            }
+
+            await prefs.setInt(nextReminderKey, nextTime.millisecondsSinceEpoch);
           }
         }
       }
@@ -116,7 +147,6 @@ class ForegroundServiceManager {
         showNotification: true,
         playSound: false,
       ),
-      // Include the required eventAction parameter
       foregroundTaskOptions: ForegroundTaskOptions(
         eventAction: ForegroundTaskEventAction.repeat(
           Duration(minutes: 15).inMilliseconds,
@@ -136,7 +166,6 @@ class ForegroundServiceManager {
       notificationTitle: 'Alongside Friends',
       notificationText: 'Running in background to keep your connections active',
       callback: startCallback,
-      // `eventAction` is no longer a parameter here, so it has been removed
     );
 
     return result == true;

@@ -37,15 +37,12 @@ class FriendsProvider with ChangeNotifier {
     _isLoading = false;
     notifyListeners();
 
-    // Ensure all notifications are scheduled correctly
-    for (final friend in _friends) {
-      if (friend.reminderDays > 0) {
-        await notificationService.scheduleReminder(friend);
-      }
-      if (friend.hasPersistentNotification) {
-        await notificationService.showPersistentNotification(friend);
-      }
-    }
+    // REMOVED: The automatic notification scheduling on load
+    // This was causing duplicate notifications every time the provider loaded
+    // Notifications should only be scheduled when:
+    // 1. A friend is first added
+    // 2. A friend's reminder settings are updated
+    // 3. The foreground service checks and reschedules as needed
   }
 
   Future<void> reorderFriends(List<Friend> reorderedFriends) async {
@@ -71,19 +68,31 @@ class FriendsProvider with ChangeNotifier {
   Future<void> updateFriend(Friend updatedFriend) async {
     final index = _friends.indexWhere((f) => f.id == updatedFriend.id);
     if (index != -1) {
+      final oldFriend = _friends[index];
       _friends[index] = updatedFriend;
       await storageService.saveFriends(_friends);
 
-      if (updatedFriend.reminderDays > 0) {
-        await notificationService.scheduleReminder(updatedFriend);
-      } else {
+      // Only handle notification changes if settings actually changed
+
+      // Handle reminder changes
+      if (oldFriend.reminderDays != updatedFriend.reminderDays ||
+          oldFriend.reminderTime != updatedFriend.reminderTime) {
+        // Cancel old reminder first
         await notificationService.cancelReminder(updatedFriend.id);
+
+        // Schedule new reminder if enabled
+        if (updatedFriend.reminderDays > 0) {
+          await notificationService.scheduleReminder(updatedFriend);
+        }
       }
 
-      if (updatedFriend.hasPersistentNotification) {
-        await notificationService.showPersistentNotification(updatedFriend);
-      } else {
-        await notificationService.removePersistentNotification(updatedFriend.id);
+      // Handle persistent notification changes
+      if (oldFriend.hasPersistentNotification != updatedFriend.hasPersistentNotification) {
+        if (updatedFriend.hasPersistentNotification) {
+          await notificationService.showPersistentNotification(updatedFriend);
+        } else {
+          await notificationService.removePersistentNotification(updatedFriend.id);
+        }
       }
 
       notifyListeners();

@@ -87,18 +87,12 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.resumed) {
-      // Restart the foreground service when app is resumed
+      // Only restart the foreground service if it's not already running
       ForegroundServiceManager.startForegroundService();
 
-      // Restore persistent notifications
-      Future.delayed(const Duration(milliseconds: 500), () {
-        final provider = Provider.of<FriendsProvider>(context, listen: false);
-        for (final friend in provider.friends) {
-          if (friend.hasPersistentNotification) {
-            provider.notificationService.showPersistentNotification(friend);
-          }
-        }
-      });
+      // REMOVED: The code that was recreating persistent notifications
+      // This was causing duplicate notifications every time the app resumed
+      // The foreground service already handles persistent notifications
     }
   }
 

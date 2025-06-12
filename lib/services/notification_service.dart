@@ -21,13 +21,16 @@ class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
-  /// Remember when we last tapped “message”
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
   FlutterLocalNotificationsPlugin();
 
   // Track notification IDs per friend
   final Map<String, int> _friendNotificationIds = {};
+
+  // Track last shown times to prevent flooding
+  final Map<String, DateTime> _lastNotificationTimes = {};
+  static const Duration _notificationCooldown = Duration(minutes: 30);
 
   // App callback when an action fires
   NotificationActionCallback? _actionCallback;
@@ -58,7 +61,6 @@ class NotificationService {
 
   // Request notification permission for Android 13+
   Future<void> _requestNotificationPermission() async {
-    // For Android 13+ (API level 33+), request POST_NOTIFICATIONS permission
     if (Platform.isAndroid) {
       if (await Permission.notification.isDenied) {
         await Permission.notification.request();
@@ -66,7 +68,7 @@ class NotificationService {
     }
   }
 
-  // Handle notification actions - Updated
+  // Handle notification actions
   void _handleNotificationAction(NotificationResponse response) {
     final String actionId = response.actionId ?? "";
     final String payload = response.payload ?? "";
@@ -81,10 +83,13 @@ class NotificationService {
 
     // Cancel the notification to avoid repeated triggers
     if (friendId.isNotEmpty) {
-      // Cancel both reminder and persistent notifications to be safe
       _lastPersistentCancelTime = DateTime.now();
       flutterLocalNotificationsPlugin.cancel(_getNotificationId(friendId));
-      //flutterLocalNotificationsPlugin.cancel(_getNotificationId(friendId, isPersistent: true));
+
+      // Update last action time in preferences
+      SharedPreferences.getInstance().then((prefs) {
+        prefs.setInt('last_action_$friendId', DateTime.now().millisecondsSinceEpoch);
+      });
     }
 
     if (actionId.isEmpty) {
@@ -97,7 +102,7 @@ class NotificationService {
     }
   }
 
-  // Create Android notification channels - Updated
+  // Create Android notification channels
   Future<void> _createNotificationChannel() async {
     try {
       const AndroidNotificationChannel reminderChannel = AndroidNotificationChannel(
@@ -112,14 +117,13 @@ class NotificationService {
           AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(reminderChannel);
 
-      // Change the persistent channel to low importance to reduce intrusiveness
       const AndroidNotificationChannel persistentChannel = AndroidNotificationChannel(
         'alongside_persistent',
         'Quick Access Notifications',
         description: 'Persistent notifications for quick access to friends',
-        importance: Importance.low, // Changed from high to low
-        playSound: false, // No sound
-        enableVibration: false, // No vibration
+        importance: Importance.low,
+        playSound: false,
+        enableVibration: false,
       );
 
       await flutterLocalNotificationsPlugin
@@ -133,63 +137,15 @@ class NotificationService {
     }
   }
 
-  // Show an immediate reminder notification - Updated
-  Future<void> showReminderNotification(Friend friend) async {
-    try {
-      final int id = _getNotificationId(friend.id);
-
-      final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-        'alongside_reminders',
-        'Friend Reminders',
-        importance: Importance.high,
-        priority: Priority.high,
-        styleInformation: BigTextStyleInformation(
-          'It\'s been ${friend.reminderDays} ${friend.reminderDays == 1 ? 'day' : 'days'} since your last check-in',
-        ),
-        actions: [
-          const AndroidNotificationAction(
-            'message',
-            'Message',
-            showsUserInterface: true,
-            cancelNotification: true, // Add this to cancel notification on tap
-          ),
-          const AndroidNotificationAction(
-            'call',
-            'Call',
-            showsUserInterface: true,
-            cancelNotification: true, // Add this to cancel notification on tap
-          ),
-        ],
-      );
-
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt(
-        'last_notification_${friend.id}',
-        DateTime.now().millisecondsSinceEpoch,
-      );
-
-      await flutterLocalNotificationsPlugin.show(
-        id,
-        'Check in with ${friend.name}',
-        'It\'s been ${friend.reminderDays} ${friend.reminderDays == 1 ? 'day' : 'days'} since your last check-in',
-        NotificationDetails(android: androidDetails),
-        payload: '${friend.id};${friend.phoneNumber}',
-      );
-
-      print("Reminder notification shown for ${friend.name}");
-    } catch (e) {
-      print("Error showing reminder notification: $e");
-    }
-  }
-
-  // Show a persistent notification - Updated for silent operation
+  // Show a persistent notification
   Future<void> showPersistentNotification(Friend friend) async {
     try {
       if (_lastPersistentCancelTime != null &&
-                  DateTime.now().difference(_lastPersistentCancelTime!).inSeconds < 30) {
-              print("⏱  Skipping persistent notification (cooldown)");
-          return;
-        }
+          DateTime.now().difference(_lastPersistentCancelTime!).inSeconds < 30) {
+        print("⏱  Skipping persistent notification (cooldown)");
+        return;
+      }
+
       if (!friend.hasPersistentNotification) {
         await removePersistentNotification(friend.id);
         return;
@@ -197,14 +153,13 @@ class NotificationService {
 
       final int id = _getNotificationId(friend.id, isPersistent: true);
 
-      // Check if the notification already exists to avoid recreating it
+      // Check if the notification already exists
       final List<ActiveNotification>? activeNotifications =
       await flutterLocalNotificationsPlugin
           .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>()
           ?.getActiveNotifications();
 
-      // If the notification is already active, don't recreate it
       if (activeNotifications != null) {
         for (var notification in activeNotifications) {
           if (notification.id == id) {
@@ -218,12 +173,11 @@ class NotificationService {
         'alongside_persistent',
         'Quick Access Notifications',
         channelDescription: 'Persistent notifications for quick access to friends',
-        importance: Importance.low, // Use low importance for persistent notifications
+        importance: Importance.low,
         priority: Priority.low,
         ongoing: true,
         autoCancel: false,
         category: AndroidNotificationCategory.service,
-        // Disable sound and vibration for persistent notifications
         playSound: false,
         enableVibration: false,
         enableLights: false,
@@ -237,13 +191,13 @@ class NotificationService {
             'message',
             'Message',
             showsUserInterface: true,
-            cancelNotification: false, // Keep persistent notification
+            cancelNotification: false,
           ),
           const AndroidNotificationAction(
             'call',
             'Call',
             showsUserInterface: true,
-            cancelNotification: false, // Keep persistent notification
+            cancelNotification: false,
           ),
         ],
       );
@@ -262,84 +216,6 @@ class NotificationService {
     }
   }
 
-  // Remove actions from persistent notification to prevent repeated triggers
-  Future<void> removePersistentNotificationActions(String friendId) async {
-    try {
-      final int id = _getNotificationId(friendId, isPersistent: true);
-
-      // Get active notifications
-      final List<ActiveNotification>? activeNotifications =
-      await flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>()
-          ?.getActiveNotifications();
-
-      // Check if this notification is active
-      bool isActive = false;
-      if (activeNotifications != null) {
-        for (var notification in activeNotifications) {
-          if (notification.id == id) {
-            isActive = true;
-            break;
-          }
-        }
-      }
-
-      // If active, replace it with a version without actions
-      if (isActive) {
-        final friend = await _getFriendFromId(friendId);
-        if (friend != null && friend.hasPersistentNotification) {
-          // Create a notification without action buttons
-          final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-            'alongside_persistent',
-            'Quick Access Notifications',
-            channelDescription: 'Persistent notifications for quick access to friends',
-            importance: Importance.low,
-            priority: Priority.low,
-            ongoing: true,
-            autoCancel: false,
-            category: AndroidNotificationCategory.service,
-            playSound: false,
-            enableVibration: false,
-            enableLights: false,
-            styleInformation: BigTextStyleInformation(
-              'Check in with them, or reach out for support.',
-              contentTitle: 'You\'re Alongside, ${friend.name}.',
-              summaryText: friend.name,
-            ),
-            // No actions here - this prevents further clicks
-          );
-
-          await flutterLocalNotificationsPlugin.show(
-            id,
-            'Alongside',
-            'Check in with ${friend.name}, or reach out for support.',
-            NotificationDetails(android: androidDetails),
-            payload: '${friend.id};${friend.phoneNumber}',
-          );
-        }
-      }
-    } catch (e) {
-      print("Error removing actions from notification: $e");
-    }
-  }
-
-  // Helper method to get a Friend from an ID
-  Future<Friend?> _getFriendFromId(String friendId) async {
-    try {
-      final StorageService storageService = StorageService();
-      final friends = await storageService.getFriends();
-      for (final friend in friends) {
-        if (friend.id == friendId) {
-          return friend;
-        }
-      }
-    } catch (e) {
-      print("Error getting friend: $e");
-    }
-    return null;
-  }
-
   // Remove a persistent notification
   Future<void> removePersistentNotification(String friendId) async {
     try {
@@ -351,81 +227,45 @@ class NotificationService {
     }
   }
 
-  // Cancel a scheduled reminder
-// Cancel a scheduled reminder - Enhanced cleanup
-  Future<void> cancelReminder(String friendId) async {
-    final int id = _getNotificationId(friendId);
-    await flutterLocalNotificationsPlugin.cancel(id);
-    _friendNotificationIds.remove(friendId);
-
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('last_notification_$friendId');
-    await prefs.remove('next_notification_$friendId');
-    await prefs.remove('scheduled_$friendId'); // Clean up scheduling tracking
-
-    print("Cancelled reminder for friend ID: $friendId");
-  }
-
-  // Generate unique IDs
-  int _getNotificationId(String friendId, {bool isPersistent = false}) {
-    if (isPersistent) return (friendId.hashCode.abs() % 100000) + 200000;
-    return _friendNotificationIds[friendId] ?? (friendId.hashCode.abs() % 100000);
-  }
-
-  // Format a TimeOfDay into 12h
-  String _formatTimeOfDay(TimeOfDay time) {
-    final int hour =
-    time.hour == 0 ? 12 : (time.hour > 12 ? time.hour - 12 : time.hour);
-    final String minuteStr = time.minute.toString().padLeft(2, '0');
-    final String period = time.hour < 12 ? 'AM' : 'PM';
-    return '$hour:$minuteStr $period';
-  }
-
-  // Schedule a future reminder - Updated with cancelNotification parameter
-// Schedule a future reminder - Updated with cancelNotification parameter
-// Schedule a future reminder - Simplified to prevent duplicates
+  // Schedule a future reminder - Enhanced with better deduplication
   Future<void> scheduleReminder(Friend friend) async {
     if (friend.reminderDays <= 0) {
       await cancelReminder(friend.id);
       return;
     }
 
-    // Always cancel any existing reminder first to prevent duplicates
-    await cancelReminder(friend.id);
-
     final int id = _getNotificationId(friend.id);
     final prefs = await SharedPreferences.getInstance();
-    final String lastKey = 'last_notification_${friend.id}';
-    final String nextKey = 'next_notification_${friend.id}';
-    final String scheduledKey = 'scheduled_${friend.id}';
 
-    // Check if we recently scheduled this reminder (within last 5 minutes)
-    // This prevents duplicate scheduling on rapid app restarts
-    final int? lastScheduled = prefs.getInt(scheduledKey);
-    if (lastScheduled != null) {
-      final DateTime lastScheduledTime = DateTime.fromMillisecondsSinceEpoch(lastScheduled);
-      final DateTime now = DateTime.now();
-      if (now.difference(lastScheduledTime).inMinutes < 5) {
-        print("Reminder recently scheduled for ${friend.name}, skipping duplicate");
+    // Check if we already have an active scheduled reminder
+    final pendingNotifications = await flutterLocalNotificationsPlugin.pendingNotificationRequests();
+    for (var notification in pendingNotifications) {
+      if (notification.id == id) {
+        print("Reminder already scheduled for ${friend.name}, skipping duplicate");
         return;
       }
     }
 
-    int? lastTime = prefs.getInt(lastKey);
-    DateTime baseTime;
+    // Always cancel any existing reminder first
+    await cancelReminder(friend.id);
 
-    if (lastTime != null) {
-      baseTime = DateTime.fromMillisecondsSinceEpoch(lastTime);
-    } else {
-      baseTime = DateTime.now();
-      await prefs.setInt(lastKey, baseTime.millisecondsSinceEpoch);
-    }
+    // Keys for tracking
+    final String lastActionKey = 'last_action_${friend.id}';
+    final String activeReminderKey = 'active_reminder_${friend.id}';
 
+    // Get last action time or use current time
+    final lastActionTime = prefs.getInt(lastActionKey);
+    final DateTime baseTime = lastActionTime != null
+        ? DateTime.fromMillisecondsSinceEpoch(lastActionTime)
+        : DateTime.now();
+
+    // Parse reminder time
     final parts = friend.reminderTime.split(':');
     final int hour = int.tryParse(parts[0]) ?? 9;
     final int minute = int.tryParse(parts[1]) ?? 0;
 
-    DateTime next = DateTime(
+    // Calculate next reminder time
+    DateTime nextReminder = DateTime(
       baseTime.year,
       baseTime.month,
       baseTime.day + friend.reminderDays,
@@ -433,20 +273,13 @@ class NotificationService {
       minute,
     );
 
+    // Ensure it's in the future
     final DateTime now = DateTime.now();
-    if (next.isBefore(now)) {
-      final int daysPassed = now.difference(baseTime).inDays;
-      final int cycles = (daysPassed / friend.reminderDays).ceil();
-      next = DateTime(
-        baseTime.year,
-        baseTime.month,
-        baseTime.day + (cycles * friend.reminderDays),
-        hour,
-        minute,
-      );
-      if (next.isBefore(now)) next = next.add(Duration(days: friend.reminderDays));
+    while (nextReminder.isBefore(now)) {
+      nextReminder = nextReminder.add(Duration(days: friend.reminderDays));
     }
 
+    // Create notification details
     final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       'alongside_reminders',
       'Friend Reminders',
@@ -471,11 +304,12 @@ class NotificationService {
       ],
     );
 
+    // Schedule the notification
     await flutterLocalNotificationsPlugin.zonedSchedule(
       id,
       'Check in with ${friend.name}',
       'It\'s been ${friend.reminderDays} ${friend.reminderDays == 1 ? 'day' : 'days'} since your last check-in',
-      tz.TZDateTime.from(next, tz.local),
+      tz.TZDateTime.from(nextReminder, tz.local),
       NotificationDetails(android: androidDetails),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       payload: '${friend.id};${friend.phoneNumber}',
@@ -483,16 +317,60 @@ class NotificationService {
 
     _friendNotificationIds[friend.id] = id;
 
-    // Record that we scheduled this reminder
-    await prefs.setInt(scheduledKey, DateTime.now().millisecondsSinceEpoch);
+    // Store the active reminder time
+    await prefs.setInt(activeReminderKey, nextReminder.millisecondsSinceEpoch);
 
-    final String nextString =
-        '${next.month}/${next.day}/${next.year} at ${_formatTimeOfDay(
-      TimeOfDay(hour: next.hour, minute: next.minute),
-    )}';
-    await prefs.setString(nextKey, nextString);
+    print("Scheduled single reminder for ${friend.name} at $nextReminder");
+  }
 
-    print("Scheduled reminder for ${friend.name} at $nextString");
+  // Cancel a scheduled reminder - Enhanced cleanup
+  Future<void> cancelReminder(String friendId) async {
+    final int id = _getNotificationId(friendId);
+    await flutterLocalNotificationsPlugin.cancel(id);
+
+    final prefs = await SharedPreferences.getInstance();
+    // Clean up all related keys
+    await prefs.remove('last_notification_$friendId');
+    await prefs.remove('next_notification_$friendId');
+    await prefs.remove('scheduled_$friendId');
+    await prefs.remove('active_reminder_$friendId');
+    await prefs.remove('next_reminder_$friendId');
+
+    _friendNotificationIds.remove(friendId);
+    _lastNotificationTimes.remove('reminder_$friendId');
+
+    print("Cancelled reminder and cleaned up for friend ID: $friendId");
+  }
+
+  // Generate unique IDs
+  int _getNotificationId(String friendId, {bool isPersistent = false}) {
+    if (isPersistent) return (friendId.hashCode.abs() % 100000) + 200000;
+    return _friendNotificationIds[friendId] ?? (friendId.hashCode.abs() % 100000);
+  }
+
+  // Helper method to get a Friend from an ID
+  Future<Friend?> _getFriendFromId(String friendId) async {
+    try {
+      final StorageService storageService = StorageService();
+      final friends = await storageService.getFriends();
+      for (final friend in friends) {
+        if (friend.id == friendId) {
+          return friend;
+        }
+      }
+    } catch (e) {
+      print("Error getting friend: $e");
+    }
+    return null;
+  }
+
+  // Format a TimeOfDay into 12h
+  String _formatTimeOfDay(TimeOfDay time) {
+    final int hour =
+    time.hour == 0 ? 12 : (time.hour > 12 ? time.hour - 12 : time.hour);
+    final String minuteStr = time.minute.toString().padLeft(2, '0');
+    final String period = time.hour < 12 ? 'AM' : 'PM';
+    return '$hour:$minuteStr $period';
   }
 
   // Cancel all notifications (for testing)
@@ -519,8 +397,12 @@ class NotificationService {
       when,
       details,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      matchDateTimeComponents: DateTimeComponents.time,
       payload: 'test',
     );
   }
+
+// Remove these methods as they're causing flooding:
+
+// REMOVED: showReminderNotification - we should never show immediate reminders
+// This was the main cause of flooding - the foreground service was calling this
 }
