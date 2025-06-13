@@ -13,6 +13,7 @@ import 'message_screen.dart';
 import '../models/friend.dart';
 import 'onboarding_screen.dart';
 import '../services/storage_service.dart';
+import '../services/battery_optimization_service.dart';
 
 class HomeScreenNew extends StatefulWidget {
   const HomeScreenNew({Key? key}) : super(key: key);
@@ -124,6 +125,7 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
     // Show onboarding if needed
     if (_shouldShowOnboarding) {
@@ -146,92 +148,98 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
               alignment: Alignment.center,
               children: [
                 // Title (fades out when searching)
-                Opacity(
-                  opacity: 1 - _searchAnimation.value,
-                  child: AnimatedBuilder(
-                    animation: _animation,
-                    builder: (context, child) {
-                      return Transform.scale(
-                        scale: _animation.value,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text(
-                              'Alongside',
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.primary,
-                                fontFamily: '.SF Pro Text',
+                IgnorePointer( // Add this to prevent touches on the title
+                  child: Opacity(
+                    opacity: 1 - _searchAnimation.value,
+                    child: AnimatedBuilder(
+                      animation: _animation,
+                      builder: (context, child) {
+                        return Transform.scale(
+                          scale: _animation.value,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text(
+                                'Alongside',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.primary,
+                                  fontFamily: '.SF Pro Text',
+                                ),
+                                semanticsLabel: 'Alongside App',
                               ),
-                              semanticsLabel: 'Alongside App',
-                            ),
-                            const SizedBox(width: 6),
-                            TweenAnimationBuilder<double>(
-                              tween: Tween<double>(begin: 0.8, end: 1.0),
-                              duration: const Duration(milliseconds: 600),
-                              curve: Curves.elasticOut,
-                              builder: (context, value, child) {
-                                return Transform.scale(
-                                  scale: value,
-                                  child: Container(
-                                    width: 24,
-                                    height: 24,
-                                    decoration: BoxDecoration(
-                                      color: AppColors.primaryLight,
-                                      shape: BoxShape.circle,
+                              const SizedBox(width: 6),
+                              TweenAnimationBuilder<double>(
+                                tween: Tween<double>(begin: 0.8, end: 1.0),
+                                duration: const Duration(milliseconds: 600),
+                                curve: Curves.elasticOut,
+                                builder: (context, value, child) {
+                                  return Transform.scale(
+                                    scale: value,
+                                    child: Container(
+                                      width: 24,
+                                      height: 24,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primaryLight,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        CupertinoIcons.heart_fill,
+                                        size: 14,
+                                        color: AppColors.primary,
+                                        semanticLabel: 'Heart icon',
+                                      ),
                                     ),
-                                    child: const Icon(
-                                      CupertinoIcons.heart_fill,
-                                      size: 14,
-                                      color: AppColors.primary,
-                                      semanticLabel: 'Heart icon',
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                      );
-                    },
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
 
                 // Search field (fades in when searching)
-                Opacity(
-                  opacity: _searchAnimation.value,
-                  child: Transform.translate(
-                    offset: Offset(0, 20 * (1 - _searchAnimation.value)),
-                    child: CupertinoTextField(
-                      controller: _searchController,
-                      placeholder: 'Search friends...',
-                      prefix: const Padding(
-                        padding: EdgeInsets.only(left: 8),
-                        child: Icon(
-                          CupertinoIcons.search,
-                          color: AppColors.textSecondary,
-                          size: 18,
+                if (_isSearching) // Only show when actively searching
+                  Opacity(
+                    opacity: _searchAnimation.value,
+                    child: Transform.translate(
+                      offset: Offset(0, 20 * (1 - _searchAnimation.value)),
+                      child: Container(
+                        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.6), // Constrain width
+                        child: CupertinoTextField(
+                          controller: _searchController,
+                          placeholder: 'Search friends...',
+                          prefix: const Padding(
+                            padding: EdgeInsets.only(left: 8),
+                            child: Icon(
+                              CupertinoIcons.search,
+                              color: AppColors.textSecondary,
+                              size: 18,
+                            ),
+                          ),
+                          onChanged: (value) {
+                            setState(() {
+                              _searchQuery = value.toLowerCase();
+                            });
+                          },
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontFamily: '.SF Pro Text',
+                          ),
+                          decoration: BoxDecoration(
+                            color: CupertinoColors.systemGrey6,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
                         ),
                       ),
-                      onChanged: (value) {
-                        setState(() {
-                          _searchQuery = value.toLowerCase();
-                        });
-                      },
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontFamily: '.SF Pro Text',
-                      ),
-                      decoration: BoxDecoration(
-                        color: CupertinoColors.systemGrey6,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
                     ),
                   ),
-                ),
               ],
             );
           },
@@ -526,7 +534,7 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
                             ],
                           ),
 
-                          // Favorites section - Always show to allow adding favorites
+                          // Favorites section - FIXED: Removed duplicate Add text
                           const SizedBox(height: 20),
                           Row(
                             children: [
@@ -540,22 +548,7 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
                                 ),
                               ),
                               const Spacer(),
-                              if (favoriteFriends.isNotEmpty && favoriteFriends.length < allFriends.length)
-                                GestureDetector(
-                                  onTap: () {
-                                    HapticFeedback.lightImpact();
-                                    _showAddFavoriteDialog(context, allFriends);
-                                  },
-                                  child: const Text(
-                                    'Add',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                      color: AppColors.primary,
-                                      fontFamily: '.SF Pro Text',
-                                    ),
-                                  ),
-                                ),
+                              // REMOVED the duplicate Add text link here
                             ],
                           ),
                           const SizedBox(height: 12),

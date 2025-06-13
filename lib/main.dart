@@ -12,6 +12,7 @@ import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'services/foreground_service.dart';
 import 'screens/call_screen.dart';
 import 'screens/message_screen.dart';
+import 'services/battery_optimization_service.dart';
 
 // Global key for navigation from notification callbacks
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -101,6 +102,13 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
     await ForegroundServiceManager.initForegroundService();
     Future.delayed(const Duration(seconds: 3), () {
       ForegroundServiceManager.startForegroundService();
+    });
+
+    // Check battery optimization after a delay to not interfere with startup
+    Future.delayed(const Duration(seconds: 5), () {
+      if (mounted) {
+        BatteryOptimizationService.requestBatteryOptimization(context);
+      }
     });
   }
 

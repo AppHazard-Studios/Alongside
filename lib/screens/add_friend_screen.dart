@@ -85,7 +85,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       try {
         final contacts = await FlutterContacts.getContacts(
           withProperties: true,
-          withPhoto: false,
+          withPhoto: true, // CHANGED: Enable photo fetching
         );
 
         if (!mounted) return;
@@ -105,6 +105,25 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               setState(() {
                 _nameController.text = contact.displayName;
               });
+
+              // Handle contact photo if available
+              if (contact.photo != null && contact.photo!.isNotEmpty) {
+                try {
+                  // Save the photo to app's document directory
+                  final Directory docDir = await getApplicationDocumentsDirectory();
+                  final String imagePath = '${docDir.path}/contact_${DateTime.now().millisecondsSinceEpoch}.jpg';
+                  final File imageFile = File(imagePath);
+                  await imageFile.writeAsBytes(contact.photo!);
+
+                  setState(() {
+                    _profileImage = imagePath;
+                    _isEmoji = false;
+                  });
+                } catch (e) {
+                  // If photo saving fails, keep the default emoji
+                  print('Error saving contact photo: $e');
+                }
+              }
 
               // Handle multiple phone numbers
               if (contact.phones.length == 1) {
@@ -528,7 +547,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   }
 
   void _showReminderPicker() {
-    const reminderOptions = [0, 1, 3, 7, 14, 30];
+    final reminderOptions = AppConstants.reminderOptions;
     int selectedOption = _reminderDays;
 
     showCupertinoModalPopup(
@@ -588,11 +607,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                 children: reminderOptions.map((days) {
                   return Center(
                     child: Text(
-                      days == 0
-                          ? 'No reminder'
-                          : days == 1
-                          ? 'Every day'
-                          : 'Every $days days',
+                      AppConstants.formatReminderOption(days),
                       style: const TextStyle(
                         fontSize: 16,
                         color: CupertinoColors.label,
@@ -1573,10 +1588,27 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: CupertinoColors.systemBlue.withOpacity(0.1),
+                          color: contact.photo != null && contact.photo!.isNotEmpty
+                              ? null
+                              : CupertinoColors.systemBlue.withOpacity(0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
+                        child: contact.photo != null && contact.photo!.isNotEmpty
+                            ? ClipOval(
+                          child: Image.memory(
+                            contact.photo!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              // Fallback if photo fails to load
+                              return const Icon(
+                                CupertinoIcons.person,
+                                color: CupertinoColors.systemBlue,
+                                size: 20,
+                              );
+                            },
+                          ),
+                        )
+                            : const Icon(
                           CupertinoIcons.person,
                           color: CupertinoColors.systemBlue,
                           size: 20,

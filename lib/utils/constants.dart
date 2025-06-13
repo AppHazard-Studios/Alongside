@@ -1,4 +1,4 @@
-// utils/constants.dart - Restructured with categorized messages
+// utils/constants.dart - Updated with extended reminder options
 
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -7,25 +7,39 @@ class AppConstants {
   // Categorized preset messages for better organization
   static const Map<String, List<String>> categorizedMessages = {
     'Check-ins': [
-      "Hey, how’s your week going so far?",
+      "Hey, how's your week going so far?",
       "How are you doing today?",
       "Hey, how are you holding up this week?",
-      "Hope this week’s been going okay. How are you feeling?",
+      "Hope this week's been going okay. How are you feeling?",
       "Just checking in, how are things on your end?",
     ],
     'Support & Struggle': [
-      "Hey, it’s been a bit of a tough week. How’s your week going?.",
-      "Been finding today a bit harder than usual. How’s yours been?",
-      "Not been the easiest few days. How’s everything going for you?",
-      "I’m struggling right now. How you’re going?",
-      "Trying my best today, but it’s been hard. How about you?",
+      "Hey, it's been a bit of a tough week. How's your week going?.",
+      "Been finding today a bit harder than usual. How's yours been?",
+      "Not been the easiest few days. How's everything going for you?",
+      "I'm struggling right now. How you're going?",
+      "Trying my best today, but it's been hard. How about you?",
     ],
     'Confession': [
-      "I didn’t stay on track today. How’s your day going?",
+      "I didn't stay on track today. How's your day going?",
       "I struggled to follow through today. How have you been going?",
-      "I slipped up today. How’s everything going on your side?",
-      "I didn’t stay on track this week. How have you been going?",
-      "This week didn’t go how I’d hoped. How’s everything going for you?",
+      "I slipped up today. How's everything going on your side?",
+      "I didn't stay on track this week. How have you been going?",
+      "This week didn't go how I'd hoped. How's everything going for you?",
+    ],
+    'Celebration': [
+      "Had a really good day today! How's yours been?",
+      "Feeling grateful today. What's been good in your world?",
+      "God's been really good this week. How have things been for you?",
+      "Celebrating a small win today! What's new with you?",
+      "Feeling encouraged today. How are you doing?",
+    ],
+    'Prayer Requests': [
+      "Could use some prayer this week. How can I be praying for you?",
+      "Been praying for you. Any specific requests this week?",
+      "How can I be praying for you this week?",
+      "Any prayer requests on your heart today?",
+      "Would love to pray for you. What's on your mind?",
     ],
   };
 
@@ -40,8 +54,19 @@ class AppConstants {
     "❤️", "🤍", "🔥", "⚓", "🛡️", "👊", "💪", "🤝", "🙌", "🕊️",
   ];
 
-  // Reminder options in days (unchanged)
-  static const List<int> reminderOptions = [0, 1, 3, 7, 14, 30];
+  // Extended reminder options - now includes months
+  static const List<int> reminderOptions = [0, 1, 3, 7, 14, 30, 60, 90, 180];
+
+  // Helper method to format reminder option display
+  static String formatReminderOption(int days) {
+    if (days == 0) return 'No reminder';
+    if (days == 1) return 'Every day';
+    if (days < 30) return 'Every $days days';
+    if (days == 60) return 'Every 2 months';
+    if (days == 90) return 'Every 3 months';
+    if (days == 180) return 'Every 6 months';
+    return 'Every $days days';
+  }
 
   // App theme colors - modernized for iOS feel
   static const int primaryColorValue = 0xFF007AFF; // iOS blue

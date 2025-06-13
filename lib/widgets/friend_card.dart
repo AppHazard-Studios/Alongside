@@ -9,6 +9,7 @@ import '../screens/add_friend_screen.dart';
 import '../screens/message_screen.dart';
 import '../utils/colors.dart';
 import '../providers/friends_provider.dart';
+import '../utils/constants.dart';
 
 class FriendCardNew extends StatefulWidget {
   final Friend friend;
@@ -107,41 +108,48 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Friend name row with reminder badge (only when collapsed)
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                widget.friend.name,
-                                style: const TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: '.SF Pro Text',
-                                ),
-                                maxLines: 2, // Allow name to wrap if very long
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            if (widget.friend.reminderDays > 0 && !widget.isExpanded) ...[
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primaryLight, // Use consistent primary color
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  '${widget.friend.reminderDays}d',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.primary, // Use consistent primary color
-                                    fontFamily: '.SF Pro Text',
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
+// Friend name row with reminder badge (only when collapsed)
+                    Row(
+                    children: [
+                    Expanded(
+                    child: Text(
+                      widget.friend.name,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: '.SF Pro Text',
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (widget.friend.reminderDays > 0 && !widget.isExpanded) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryLight,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        widget.friend.reminderDays <= 30
+                            ? '${widget.friend.reminderDays}d'
+                            : widget.friend.reminderDays == 60
+                            ? '2mo'
+                            : widget.friend.reminderDays == 90
+                            ? '3mo'
+                            : '6mo',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
+                          fontFamily: '.SF Pro Text',
                         ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
 
                         // "Alongside them in" info - Always visible with proper wrapping
                         if (widget.friend.helpingWith != null &&
@@ -284,61 +292,62 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
                         ],
 
                         // Reminder info with icon
-                        if (widget.friend.reminderDays > 0) ...[
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: AppColors.warning.withOpacity(0.1),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  CupertinoIcons.bell_fill,
-                                  color: AppColors.warning,
-                                  size: 12,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Reminder every ${widget.friend.reminderDays} ${widget.friend.reminderDays == 1 ? 'day' : 'days'}',
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.warning,
-                                        fontFamily: '.SF Pro Text',
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Row(
-                                      children: [
-                                        const Icon(
-                                          CupertinoIcons.time,
-                                          size: 12,
-                                          color: CupertinoColors.secondaryLabel,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          _formatTimeString(widget.friend.reminderTime),
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            color: CupertinoColors.secondaryLabel,
-                                            fontFamily: '.SF Pro Text',
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+// Reminder info with icon
+                  if (widget.friend.reminderDays > 0) ...[
+              Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: AppColors.warning.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    CupertinoIcons.bell_fill,
+                    color: AppColors.warning,
+                    size: 12,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Reminder ${AppConstants.formatReminderOption(widget.friend.reminderDays).toLowerCase()}',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.warning,
+                          fontFamily: '.SF Pro Text',
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(
+                            CupertinoIcons.time,
+                            size: 12,
+                            color: CupertinoColors.secondaryLabel,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _formatTimeString(widget.friend.reminderTime),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: CupertinoColors.secondaryLabel,
+                              fontFamily: '.SF Pro Text',
+                            ),
                           ),
                         ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
                       ],
                     ),
                   ),
