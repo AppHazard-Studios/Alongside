@@ -29,20 +29,33 @@ class NotificationService {
     // Initialize timezone data
     tz_data.initializeTimeZones();
 
-    // Create channels FIRST before any initialization
-    await _createNotificationChannels();
-
+    // Android initialization settings
     const AndroidInitializationSettings androidSettings =
     AndroidInitializationSettings('@mipmap/ic_launcher');
-    const InitializationSettings initSettings =
-    InitializationSettings(android: androidSettings);
 
+    // iOS initialization settings
+    const DarwinInitializationSettings iosSettings = DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
+
+    // Combined initialization settings
+    const InitializationSettings initSettings = InitializationSettings(
+      android: androidSettings,
+      iOS: iosSettings,
+    );
+
+    // Initialize the plugin
     await flutterLocalNotificationsPlugin.initialize(
       initSettings,
       onDidReceiveNotificationResponse: _handleNotificationAction,
     );
 
-    // Request permissions after initialization
+    // Create channels AFTER initialization
+    await _createNotificationChannels();
+
+    // Request permissions
     await _requestNotificationPermission();
   }
 

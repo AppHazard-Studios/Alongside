@@ -214,6 +214,7 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
                         child: CupertinoTextField(
                           controller: _searchController,
                           placeholder: 'Search friends...',
+                          autofocus: true,  // ADD THIS LINE
                           prefix: const Padding(
                             padding: EdgeInsets.only(left: 8),
                             child: Icon(

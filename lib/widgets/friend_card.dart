@@ -83,7 +83,7 @@ class _FriendCardNewState extends State<FriendCardNew> with SingleTickerProvider
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         transform: _isPressed ? Matrix4.translationValues(0, 1, 0) : Matrix4.identity(),
-        margin: const EdgeInsets.symmetric(vertical: 8),
+        margin: const EdgeInsets.symmetric(vertical: 4),
         decoration: BoxDecoration(
           color: CupertinoColors.white,
           borderRadius: BorderRadius.circular(16),

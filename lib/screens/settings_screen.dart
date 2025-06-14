@@ -9,6 +9,7 @@ import '../services/battery_optimization_service.dart';
 import '../services/backup_service.dart';
 import '../services/notification_service.dart';
 import '../providers/friends_provider.dart';
+import '../models/friend.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -534,51 +535,198 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  void _importData(BuildContext context) {
-    // For now, show a message about manual import
-    showCupertinoDialog(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text(
-          'Import Data',
-          style: TextStyle(
-            color: AppColors.primary,
-            fontWeight: FontWeight.w700,
-            fontSize: 18,
-            fontFamily: '.SF Pro Text',
-          ),
-        ),
-        content: const Padding(
-          padding: EdgeInsets.only(top: 16),
-          child: Text(
-            'To import data:\n\n'
-                '1. Locate your backup file (alongside_backup_*.json)\n'
-                '2. Share it with Alongside app\n'
-                '3. Your data will be restored',
-            style: TextStyle(
-              fontSize: 16,
-              height: 1.4,
-              color: CupertinoColors.label,
-              fontFamily: '.SF Pro Text',
+  void _importData(BuildContext context) async {
+    try {
+      // Pick a file
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+      );
+
+      if (result != null && result.files.single.path != null) {
+        // Read the file
+        final file = File(result.files.single.path!);
+        final jsonString = await file.readAsString();
+
+        // Parse the backup data
+        final Map<String, dynamic> backupData = jsonDecode(jsonString);
+
+        // Validate version
+        final version = backupData['version'] as String?;
+        if (version != '1.0') {
+          throw Exception('Incompatible backup version');
+        }
+
+        // Show confirmation dialog
+        if (context.mounted) {
+          final shouldImport = await showCupertinoDialog<bool>(
+            context: context,
+            builder: (context) => CupertinoAlertDialog(
+              title: const Text(
+                'Import Data',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 18,
+                  fontFamily: '.SF Pro Text',
+                ),
+              ),
+              content: const Padding(
+                padding: EdgeInsets.only(top: 16),
+                child: Text(
+                  'This will replace all your current friends and messages. Are you sure you want to continue?',
+                  style: TextStyle(
+                    fontSize: 16,
+                    height: 1.4,
+                    color: CupertinoColors.label,
+                    fontFamily: '.SF Pro Text',
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              actions: [
+                CupertinoDialogAction(
+                  onPressed: () => Navigator.pop(context, false),
+                  isDefaultAction: true,
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(
+                      color: AppColors.secondary,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: '.SF Pro Text',
+                    ),
+                  ),
+                ),
+                CupertinoDialogAction(
+                  onPressed: () => Navigator.pop(context, true),
+                  isDestructiveAction: true,
+                  child: const Text(
+                    'Import',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: '.SF Pro Text',
+                    ),
+                  ),
+                ),
+              ],
             ),
-            textAlign: TextAlign.left,
-          ),
-        ),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'OK',
+          );
+
+          if (shouldImport == true && context.mounted) {
+            // Import the data
+            final provider = Provider.of<FriendsProvider>(context, listen: false);
+            final storageService = provider.storageService;
+
+            // Import friends
+            final friendsList = (backupData['friends'] as List?)?.map((f) => Friend.fromJson(f)).toList() ?? [];
+            await storageService.saveFriends(friendsList);
+
+            // Import custom messages
+            final customMessages = (backupData['customMessages'] as List?)?.cast<String>() ?? [];
+            await storageService.saveCustomMessages(customMessages);
+
+            // Import stats if available
+            if (backupData['stats'] != null) {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setInt('messages_sent_count', backupData['stats']['messagesSent'] ?? 0);
+              await prefs.setInt('calls_made_count', backupData['stats']['callsMade'] ?? 0);
+            }
+
+            // Show success
+            if (context.mounted) {
+              showCupertinoDialog(
+                context: context,
+                builder: (context) => CupertinoAlertDialog(
+                  title: const Text(
+                    'Import Successful',
+                    style: TextStyle(
+                      color: AppColors.success,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 18,
+                      fontFamily: '.SF Pro Text',
+                    ),
+                  ),
+                  content: const Padding(
+                    padding: EdgeInsets.only(top: 16),
+                    child: Text(
+                      'Your data has been imported successfully!',
+                      style: TextStyle(
+                        fontSize: 16,
+                        height: 1.4,
+                        color: CupertinoColors.label,
+                        fontFamily: '.SF Pro Text',
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  actions: [
+                    CupertinoDialogAction(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        // Reload the app
+                        Navigator.of(context).popUntil((route) => route.isFirst);
+                      },
+                      child: const Text(
+                        'OK',
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: '.SF Pro Text',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+          }
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        showCupertinoDialog(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: const Text(
+              'Import Error',
               style: TextStyle(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w600,
+                color: AppColors.error,
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
                 fontFamily: '.SF Pro Text',
               ),
             ),
+            content: Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Text(
+                'Unable to import data: ${e.toString()}',
+                style: const TextStyle(
+                  fontSize: 16,
+                  height: 1.4,
+                  color: CupertinoColors.label,
+                  fontFamily: '.SF Pro Text',
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            actions: [
+              CupertinoDialogAction(
+                onPressed: () => Navigator.pop(context),
+                child: const Text(
+                  'OK',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: '.SF Pro Text',
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
+        );
+      }
+    }
   }
 
   void _showBatteryOptimization(BuildContext context) {
