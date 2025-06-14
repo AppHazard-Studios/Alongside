@@ -1,7 +1,8 @@
-// lib/main.dart - Streamlined version
+// lib/main.dart - Complete file with fixed navigation
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/home_screen.dart';
 import 'services/notification_service.dart';
 import 'models/friend.dart';
@@ -43,17 +44,28 @@ void main() async {
 }
 
 // Global notification handler function
-void _handleNotificationAction(String friendId, String action) {
-  // Always return to home first to ensure clean navigation
-  navigatorKey.currentState?.popUntil((route) => route.isFirst);
+void _handleNotificationAction(String friendId, String action) async {
+  // Wait for navigator to be ready (max 5 seconds)
+  int attempts = 0;
+  while (navigatorKey.currentState == null && attempts < 50) {
+    await Future.delayed(const Duration(milliseconds: 100));
+    attempts++;
+  }
 
-  // Then navigate to the appropriate screen
-  Future.delayed(const Duration(milliseconds: 100), () {
-    navigatorKey.currentState?.pushNamed(
-      '/notification',
-      arguments: {'id': friendId, 'action': action},
-    );
-  });
+  if (navigatorKey.currentState == null) {
+    print("Navigator not ready after 5 seconds");
+    return;
+  }
+
+  // Store the action to process
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString('pending_notification_action', '$friendId|$action');
+
+  // Navigate to home first
+  navigatorKey.currentState!.popUntil((route) => route.isFirst);
+
+  // Then navigate to notification handler
+  navigatorKey.currentState!.pushNamed('/notification');
 }
 
 class AlongsideApp extends StatefulWidget {
@@ -64,9 +76,6 @@ class AlongsideApp extends StatefulWidget {
 }
 
 class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver {
-  // Tracking for deduplicating actions
-  static Map<String, int> processedActions = {};
-
   @override
   void initState() {
     super.initState();
@@ -90,10 +99,6 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
     if (state == AppLifecycleState.resumed) {
       // Only restart the foreground service if it's not already running
       ForegroundServiceManager.startForegroundService();
-
-      // REMOVED: The code that was recreating persistent notifications
-      // This was causing duplicate notifications every time the app resumed
-      // The foreground service already handles persistent notifications
     }
   }
 
@@ -122,67 +127,85 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
       theme: AppTheme.cupertinoTheme,
       routes: {
         '/': (context) => const WithForegroundTask(child: HomeScreenNew()),
-        '/notification': (ctx) {
-          final args = ModalRoute.of(ctx)!.settings.arguments as Map<String, String>;
-          final friendId = args['id']!;
-          final action = args['action']!;
-
-          // Create a unique ID for this action
-          final actionId = '$friendId-$action';
-          final now = DateTime.now().millisecondsSinceEpoch;
-
-          // Check if we've processed this action recently (dedupe protection)
-          if (processedActions.containsKey(actionId)) {
-            final lastProcessed = processedActions[actionId]!;
-            if (now - lastProcessed < 5000) {
-              return const HomeScreenNew(); // Skip if duplicate
-            }
-          }
-
-          // Record this action as processed
-          processedActions[actionId] = now;
-
-          // Clean up old entries (older than 10 seconds)
-          processedActions.removeWhere((key, value) => now - value > 10000);
-
-          // Process the action
-          final provider = Provider.of<FriendsProvider>(ctx, listen: false);
-          final friend = provider.getFriendById(friendId);
-
-          if (friend != null) {
-            // Cancel any existing notifications
-            provider.notificationService.cancelReminder(friendId);
-
-            // Handle message action
-            if (action == 'message') {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                Navigator.push(
-                  ctx,
-                  CupertinoPageRoute(
-                    builder: (context) => MessageScreenNew(friend: friend),
-                  ),
-                );
-              });
-            }
-            // Handle call action
-            else if (action == 'call') {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                Navigator.of(ctx).pushNamed(
-                  '/call',
-                  arguments: {'friend': friend},
-                );
-              });
-            }
-          }
-
-          return const HomeScreenNew();
-        },
+        '/notification': (context) => const NotificationRouterScreen(),
         '/call': (ctx) {
           final args = ModalRoute.of(ctx)!.settings.arguments as Map<String, dynamic>;
           final friend = args['friend'] as Friend;
           return CallScreen(friend: friend);
         },
       },
+    );
+  }
+}
+
+// New screen to handle notification routing
+class NotificationRouterScreen extends StatefulWidget {
+  const NotificationRouterScreen({Key? key}) : super(key: key);
+
+  @override
+  State<NotificationRouterScreen> createState() => _NotificationRouterScreenState();
+}
+
+class _NotificationRouterScreenState extends State<NotificationRouterScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _processNotification();
+  }
+
+  Future<void> _processNotification() async {
+    final prefs = await SharedPreferences.getInstance();
+    final pendingAction = prefs.getString('pending_notification_action');
+
+    if (pendingAction != null) {
+      await prefs.remove('pending_notification_action');
+      final parts = pendingAction.split('|');
+
+      if (parts.length == 2 && mounted) {
+        final friendId = parts[0];
+        final action = parts[1];
+
+        final provider = Provider.of<FriendsProvider>(context, listen: false);
+        final friend = provider.getFriendById(friendId);
+
+        if (friend != null) {
+          // Update last action time
+          await prefs.setInt('last_action_$friendId', DateTime.now().millisecondsSinceEpoch);
+
+          if (mounted) {
+            if (action == 'message') {
+              Navigator.pushReplacement(
+                context,
+                CupertinoPageRoute(
+                  builder: (context) => MessageScreenNew(friend: friend),
+                ),
+              );
+              return;
+            } else if (action == 'call') {
+              Navigator.pushReplacementNamed(
+                context,
+                '/call',
+                arguments: {'friend': friend},
+              );
+              return;
+            }
+          }
+        }
+      }
+    }
+
+    // Default: go to home
+    if (mounted) {
+      Navigator.pushReplacementNamed(context, '/');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const CupertinoPageScaffold(
+      child: Center(
+        child: CupertinoActivityIndicator(),
+      ),
     );
   }
 }

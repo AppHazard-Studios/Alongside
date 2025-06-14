@@ -9,6 +9,9 @@ import '../services/battery_optimization_service.dart';
 import '../services/backup_service.dart';
 import '../services/notification_service.dart';
 import '../providers/friends_provider.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:convert';
+import 'dart:io';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);

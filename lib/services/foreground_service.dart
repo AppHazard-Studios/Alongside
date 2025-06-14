@@ -40,12 +40,19 @@ class AlongsideTaskHandler extends TaskHandler {
   @override
   void onRepeatEvent(DateTime timestamp) async {
     if (_initialized) {
-      // Prevent checking too frequently (minimum 5 minutes between checks)
+      // Check every 15 minutes minimum (was 5)
       if (_lastCheckTime != null &&
-          DateTime.now().difference(_lastCheckTime!).inMinutes < 5) {
+          DateTime.now().difference(_lastCheckTime!).inMinutes < 15) {
         return;
       }
       _lastCheckTime = DateTime.now();
+
+      // Only check during reasonable hours (8 AM - 10 PM)
+      final hour = DateTime.now().hour;
+      if (hour < 8 || hour > 22) {
+        return;
+      }
+
       await _checkAndUpdateNotifications();
     }
   }
