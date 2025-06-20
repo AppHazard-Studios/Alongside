@@ -1,4 +1,4 @@
-// lib/screens/message_screen.dart - Redesigned with favorites and cleaner UI
+// lib/screens/message_screen.dart - Fixed with CupertinoSegmentedControl
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -19,12 +19,11 @@ class MessageScreenNew extends StatefulWidget {
   State<MessageScreenNew> createState() => _MessageScreenNewState();
 }
 
-class _MessageScreenNewState extends State<MessageScreenNew> with SingleTickerProviderStateMixin {
+class _MessageScreenNewState extends State<MessageScreenNew> {
   List<String> _customMessages = [];
   List<String> _favoriteMessages = [];
   bool _isLoading = true;
-  String _selectedCategory = 'Favorites';
-  late TabController _tabController;
+  int _selectedCategoryIndex = 0;
 
   final List<String> _categories = [
     'Favorites',
@@ -39,14 +38,7 @@ class _MessageScreenNewState extends State<MessageScreenNew> with SingleTickerPr
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: _categories.length, vsync: this);
     _loadMessages();
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
   }
 
   Future<void> _loadMessages() async {
@@ -122,100 +114,116 @@ class _MessageScreenNewState extends State<MessageScreenNew> with SingleTickerPr
           ? const Center(
         child: CupertinoActivityIndicator(radius: 14),
       )
-          : _buildContent(),
+          : SafeArea(
+        child: Column(
+          children: [
+            // Friend info header
+            Container(
+              padding: const EdgeInsets.all(16),
+              color: CupertinoColors.white,
+              child: Row(
+                children: [
+                  _buildProfileImage(),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.friend.name,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                            fontFamily: '.SF Pro Text',
+                          ),
+                        ),
+                        if (widget.friend.helpingWith != null && widget.friend.helpingWith!.isNotEmpty)
+                          Text(
+                            'Alongside: ${widget.friend.helpingWith}',
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 14,
+                              fontFamily: '.SF Pro Text',
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Category segmented control
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              color: CupertinoColors.systemGrey6,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: CupertinoSegmentedControl<int>(
+                  children: {
+                    for (int i = 0; i < _categories.length; i++)
+                      i: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: Text(
+                          _categories[i],
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: '.SF Pro Text',
+                          ),
+                        ),
+                      ),
+                  },
+                  onValueChanged: (value) {
+                    setState(() {
+                      _selectedCategoryIndex = value;
+                    });
+                  },
+                  groupValue: _selectedCategoryIndex,
+                  unselectedColor: CupertinoColors.white,
+                  selectedColor: AppColors.primary,
+                  borderColor: AppColors.primary,
+                  pressedColor: AppColors.primaryLight,
+                ),
+              ),
+            ),
+
+            // Messages content
+            Expanded(
+              child: _buildCategoryContent(),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildCategoryContent() {
     final provider = Provider.of<FriendsProvider>(context, listen: false);
     final categorizedMessages = provider.storageService.getCategorizedMessages();
 
-    return Column(
-      children: [
-        // Friend info header
-        Container(
-          padding: const EdgeInsets.all(16),
-          color: CupertinoColors.white,
-          child: Row(
-            children: [
-              _buildProfileImage(),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.friend.name,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                        fontFamily: '.SF Pro Text',
-                      ),
-                    ),
-                    if (widget.friend.helpingWith != null && widget.friend.helpingWith!.isNotEmpty)
-                      Text(
-                        'Alongside: ${widget.friend.helpingWith}',
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 14,
-                          fontFamily: '.SF Pro Text',
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // Category tabs
-        Container(
-          height: 44,
-          color: CupertinoColors.white,
-          child: TabBar(
-            controller: _tabController,
-            isScrollable: true,
-            labelColor: AppColors.primary,
-            unselectedLabelColor: AppColors.textSecondary,
-            indicatorColor: AppColors.primary,
-            indicatorWeight: 2,
-            labelStyle: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              fontFamily: '.SF Pro Text',
-            ),
-            tabs: _categories.map((category) => Tab(text: category)).toList(),
-            onTap: (index) {
-              setState(() {
-                _selectedCategory = _categories[index];
-              });
-            },
-          ),
-        ),
-
-        // Messages content
-        Expanded(
-          child: TabBarView(
-            controller: _tabController,
-            children: [
-              // Favorites tab
-              _buildMessagesList(_favoriteMessages, isSpecial: true),
-
-              // Category tabs
-              ...['Check-ins', 'Support & Struggle', 'Confession', 'Celebration', 'Prayer Requests'].map(
-                    (category) => _buildMessagesList(categorizedMessages[category] ?? []),
-              ),
-
-              // Custom messages tab
-              _buildCustomMessagesList(),
-            ],
-          ),
-        ),
-      ],
-    );
+    switch (_selectedCategoryIndex) {
+      case 0: // Favorites
+        return _buildMessagesList(_favoriteMessages, isSpecial: true);
+      case 1: // Check-ins
+        return _buildMessagesList(categorizedMessages['Check-ins'] ?? []);
+      case 2: // Support & Struggle
+        return _buildMessagesList(categorizedMessages['Support & Struggle'] ?? []);
+      case 3: // Confession
+        return _buildMessagesList(categorizedMessages['Confession'] ?? []);
+      case 4: // Celebration
+        return _buildMessagesList(categorizedMessages['Celebration'] ?? []);
+      case 5: // Prayer Requests
+        return _buildMessagesList(categorizedMessages['Prayer Requests'] ?? []);
+      case 6: // Custom
+        return _buildCustomMessagesList();
+      default:
+        return const SizedBox.shrink();
+    }
   }
 
   Widget _buildMessagesList(List<String> messages, {bool isSpecial = false}) {

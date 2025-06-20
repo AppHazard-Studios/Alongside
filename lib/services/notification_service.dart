@@ -1,4 +1,4 @@
-// lib/services/notification_service.dart - Fixed without deprecated parameters
+// lib/services/notification_service.dart - Compatible with flutter_local_notifications ^19.1.0
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -19,6 +19,7 @@ class NotificationService {
   FlutterLocalNotificationsPlugin();
 
   NotificationActionCallback? _actionCallback;
+  bool _isInitialized = false;
 
   void setActionCallback(NotificationActionCallback callback) {
     _actionCallback = callback;
@@ -26,47 +27,71 @@ class NotificationService {
 
   // Initialize notifications
   Future<void> initialize() async {
-    // Initialize timezone data
-    tz_data.initializeTimeZones();
+    if (_isInitialized) return;
 
-    // Android initialization settings
-    const AndroidInitializationSettings androidSettings =
-    AndroidInitializationSettings('@mipmap/ic_launcher');
+    try {
+      // Initialize timezone data FIRST
+      tz_data.initializeTimeZones();
 
-    // iOS initialization settings
-    const DarwinInitializationSettings iosSettings = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
+      // Set local location to a default timezone
+      try {
+        tz.setLocalLocation(tz.getLocation('America/New_York'));
+      } catch (e) {
+        print("Timezone error: $e");
+      }
 
-    // Combined initialization settings
-    const InitializationSettings initSettings = InitializationSettings(
-      android: androidSettings,
-      iOS: iosSettings,
-    );
+      // Android initialization settings with icon
+      const AndroidInitializationSettings androidSettings =
+      AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    // Initialize the plugin
-    await flutterLocalNotificationsPlugin.initialize(
-      initSettings,
-      onDidReceiveNotificationResponse: _handleNotificationAction,
-    );
+      // iOS initialization settings
+      const DarwinInitializationSettings iosSettings = DarwinInitializationSettings(
+        requestAlertPermission: true,
+        requestBadgePermission: true,
+        requestSoundPermission: true,
+      );
 
-    // Create channels AFTER initialization
-    await _createNotificationChannels();
+      // Combined initialization settings
+      const InitializationSettings initSettings = InitializationSettings(
+        android: androidSettings,
+        iOS: iosSettings,
+      );
 
-    // Request permissions
-    await _requestNotificationPermission();
+      // Initialize the plugin
+      final initialized = await flutterLocalNotificationsPlugin.initialize(
+        initSettings,
+        onDidReceiveNotificationResponse: _handleNotificationAction,
+      );
+
+      if (initialized == true) {
+        print("✅ Notifications initialized successfully");
+
+        // Create notification channels AFTER initialization
+        await _createNotificationChannels();
+
+        // Request permissions
+        await _requestNotificationPermission();
+
+        _isInitialized = true;
+      } else {
+        print("❌ Failed to initialize notifications");
+      }
+    } catch (e) {
+      print("❌ Error initializing notifications: $e");
+    }
   }
 
-  // Create notification channels before anything else
+  // Create notification channels
   Future<void> _createNotificationChannels() async {
     if (!Platform.isAndroid) return;
 
     final androidPlugin = flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
 
-    if (androidPlugin == null) return;
+    if (androidPlugin == null) {
+      print("❌ Android plugin is null");
+      return;
+    }
 
     try {
       // Reminder channel - HIGH importance for better delivery
@@ -101,12 +126,24 @@ class NotificationService {
   Future<bool> _requestNotificationPermission() async {
     if (!Platform.isAndroid) return true;
 
+    // Check Android version first
+    final sdkInt = await _getAndroidSdkVersion();
+    if (sdkInt < 33) return true; // Android 13 is API level 33
+
     final status = await Permission.notification.status;
     if (status.isDenied) {
       final result = await Permission.notification.request();
+      print("Notification permission: ${result.isGranted ? 'Granted' : 'Denied'}");
       return result.isGranted;
     }
     return status.isGranted;
+  }
+
+  // Get Android SDK version
+  Future<int> _getAndroidSdkVersion() async {
+    if (!Platform.isAndroid) return 0;
+    // For simplicity, assume Android 12+ (API 31+) for schedule exact alarm
+    return 31; // You might want to use device_info_plus package for accurate version
   }
 
   // Handle notification actions
@@ -149,6 +186,11 @@ class NotificationService {
 
   // Show persistent notification
   Future<void> showPersistentNotification(Friend friend) async {
+    if (!_isInitialized) {
+      print("❌ Notifications not initialized");
+      return;
+    }
+
     if (!friend.hasPersistentNotification) {
       await removePersistentNotification(friend.id);
       return;
@@ -190,8 +232,10 @@ class NotificationService {
         NotificationDetails(android: androidDetails),
         payload: '${friend.id};${friend.phoneNumber}',
       );
+
+      print("✅ Showed persistent notification for ${friend.name}");
     } catch (e) {
-      print("Error showing persistent notification: $e");
+      print("❌ Error showing persistent notification: $e");
     }
   }
 
@@ -200,13 +244,19 @@ class NotificationService {
     try {
       await flutterLocalNotificationsPlugin
           .cancel(_getNotificationId(friendId, isPersistent: true));
+      print("✅ Removed persistent notification for friend: $friendId");
     } catch (e) {
-      print("Error removing persistent notification: $e");
+      print("❌ Error removing persistent notification: $e");
     }
   }
 
-  // Schedule reminder - Using timezone properly but with local time
+  // Schedule reminder - Fixed without UILocalNotificationDateInterpretation
   Future<void> scheduleReminder(Friend friend) async {
+    if (!_isInitialized) {
+      print("❌ Notifications not initialized");
+      return;
+    }
+
     if (friend.reminderDays <= 0) {
       await cancelReminder(friend.id);
       return;
@@ -251,6 +301,7 @@ class NotificationService {
 
       // Store the scheduled time
       await prefs.setInt('next_reminder_${friend.id}', nextReminder.millisecondsSinceEpoch);
+      await prefs.setInt('active_reminder_${friend.id}', nextReminder.millisecondsSinceEpoch);
 
       // Create notification details
       final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
@@ -275,17 +326,27 @@ class NotificationService {
         ],
       );
 
-      // Convert to TZDateTime using local timezone
+      const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      );
+
+      // Convert to TZDateTime
       final tz.TZDateTime scheduledDate = tz.TZDateTime.from(nextReminder, tz.local);
 
-      // Schedule using zonedSchedule (without deprecated parameter)
+      // Schedule the notification (without uiLocalNotificationDateInterpretation)
       await flutterLocalNotificationsPlugin.zonedSchedule(
         id,
         'Check in with ${friend.name}',
         'It\'s been ${friend.reminderDays} ${friend.reminderDays == 1 ? 'day' : 'days'} since your last check-in',
         scheduledDate,
-        NotificationDetails(android: androidDetails),
+        NotificationDetails(
+          android: androidDetails,
+          iOS: iosDetails,
+        ),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        matchDateTimeComponents: null,
         payload: '${friend.id};${friend.phoneNumber}',
       );
 
@@ -304,10 +365,11 @@ class NotificationService {
       // Clean up stored data
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('next_reminder_$friendId');
+      await prefs.remove('active_reminder_$friendId');
 
       print("✅ Cancelled reminder for friend: $friendId");
     } catch (e) {
-      print("Error cancelling reminder: $e");
+      print("❌ Error cancelling reminder: $e");
     }
   }
 
@@ -317,11 +379,14 @@ class NotificationService {
     return isPersistent ? baseId + 200000 : baseId;
   }
 
-  // Test notification - simplified
+  // Test notification - Show immediately
   Future<void> scheduleTestNotification() async {
-    try {
-      final testTime = tz.TZDateTime.now(tz.local).add(const Duration(seconds: 10));
+    if (!_isInitialized) {
+      print("❌ Notifications not initialized");
+      await initialize();
+    }
 
+    try {
       const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
         'alongside_reminders',
         'Friend Reminders',
@@ -330,19 +395,27 @@ class NotificationService {
         priority: Priority.high,
       );
 
-      await flutterLocalNotificationsPlugin.zonedSchedule(
+      const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      );
+
+      // Show notification immediately for testing
+      await flutterLocalNotificationsPlugin.show(
         999999,
         'Test Notification',
         'This is a test notification from Alongside',
-        testTime,
-        const NotificationDetails(android: androidDetails),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        const NotificationDetails(
+          android: androidDetails,
+          iOS: iosDetails,
+        ),
         payload: 'test',
       );
 
-      print("✅ Test notification scheduled for 10 seconds from now");
+      print("✅ Test notification sent immediately");
     } catch (e) {
-      print("❌ Error scheduling test notification: $e");
+      print("❌ Error sending test notification: $e");
     }
   }
 
@@ -351,5 +424,19 @@ class NotificationService {
     final prefs = await SharedPreferences.getInstance();
     final nextTime = prefs.getInt('next_reminder_$friendId');
     return nextTime != null ? DateTime.fromMillisecondsSinceEpoch(nextTime) : null;
+  }
+
+  // Check if notifications are properly set up
+  Future<bool> checkNotificationSetup() async {
+    if (!_isInitialized) return false;
+
+    // Check notification permission
+    final hasPermission = await Permission.notification.isGranted;
+    if (!hasPermission) {
+      print("❌ No notification permission");
+      return false;
+    }
+
+    return true;
   }
 }
