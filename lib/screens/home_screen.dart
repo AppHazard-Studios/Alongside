@@ -427,7 +427,7 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
           child: CustomScrollView(
             controller: _scrollController,
             slivers: [
-              const SliverToBoxAdapter(child: SizedBox(height: 20)),
+              const SliverToBoxAdapter(child: SizedBox(height: 12)), // Reduced from 20
 
               // Only show greeting card when not searching
               if (!_isSearching) ...[
@@ -435,8 +435,8 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Container(
-                      margin: const EdgeInsets.only(bottom: 24),
-                      padding: const EdgeInsets.all(20),
+                      margin: const EdgeInsets.only(bottom: 16), // Reduced from 24
+                      padding: const EdgeInsets.all(16), // Reduced from 20
                       decoration: BoxDecoration(
                         color: CupertinoColors.white,
                         borderRadius: BorderRadius.circular(20),
@@ -445,139 +445,144 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Greeting section
+                          // Greeting and stats in same row
                           Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Container(
-                                width: 44,
-                                height: 44,
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      greetingColor.withOpacity(0.7),
-                                      greetingColor,
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
-                                  borderRadius: BorderRadius.circular(12),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: greetingColor.withOpacity(0.3),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 3),
-                                    ),
-                                  ],
-                                ),
-                                child: Icon(
-                                  iconData,
-                                  color: CupertinoColors.white,
-                                  size: 22,
-                                  semanticLabel: greeting,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
+                              // Left side - Greeting
                               Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                flex: 5,
+                                child: Row(
                                   children: [
-                                    Text(
-                                      greeting,
-                                      style: const TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w700,
-                                        color: CupertinoColors.label,
-                                        fontFamily: '.SF Pro Text',
+                                    Container(
+                                      width: 40, // Reduced from 44
+                                      height: 40,
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            greetingColor.withOpacity(0.7),
+                                            greetingColor,
+                                          ],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ),
+                                        borderRadius: BorderRadius.circular(12),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: greetingColor.withOpacity(0.3),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 3),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Icon(
+                                        iconData,
+                                        color: CupertinoColors.white,
+                                        size: 20, // Reduced from 22
+                                        semanticLabel: greeting,
                                       ),
                                     ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      "Here's who you're walking alongside",
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        color: AppColors.textSecondary,
-                                        fontFamily: '.SF Pro Text',
-                                        height: 1.3,
+                                    const SizedBox(width: 12), // Reduced from 16
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            greeting,
+                                            style: const TextStyle(
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.w700,
+                                              color: CupertinoColors.label,
+                                              fontFamily: '.SF Pro Text',
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            "Walking alongside",
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              color: AppColors.textSecondary,
+                                              fontFamily: '.SF Pro Text',
+                                              height: 1.2,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
                                       ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.visible,
                                     ),
                                   ],
                                 ),
                               ),
-                            ],
-                          ),
 
-                          // Quick stats
-                          const SizedBox(height: 20),
-                          Row(
-                            children: [
-                              _buildQuickStat(
-                                icon: CupertinoIcons.person_2_fill,
-                                value: allFriends.length.toString(),
-                                label: 'Friends',
-                                color: AppColors.primary,
-                              ),
-                              const SizedBox(width: 12),
-                              _buildQuickStat(
-                                icon: CupertinoIcons.bubble_left_bubble_right_fill,
-                                value: _messagesSent.toString(),
-                                label: 'Messages',
-                                color: AppColors.secondary,
-                              ),
-                              const SizedBox(width: 12),
-                              _buildQuickStat(
-                                icon: CupertinoIcons.phone_fill,
-                                value: _callsMade.toString(),
-                                label: 'Calls',
-                                color: AppColors.tertiary,
+                              // Right side - Compact stats
+                              Row(
+                                children: [
+                                  _buildCompactStat(
+                                    icon: CupertinoIcons.person_2_fill,
+                                    value: allFriends.length.toString(),
+                                    color: AppColors.primary,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _buildCompactStat(
+                                    icon: CupertinoIcons.bubble_left_bubble_right_fill,
+                                    value: _messagesSent.toString(),
+                                    color: AppColors.secondary,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _buildCompactStat(
+                                    icon: CupertinoIcons.phone_fill,
+                                    value: _callsMade.toString(),
+                                    color: AppColors.tertiary,
+                                  ),
+                                ],
                               ),
                             ],
                           ),
 
-                          // Favorites section - FIXED: Removed duplicate Add text
-                          const SizedBox(height: 20),
-                          Row(
-                            children: [
-                              const Text(
-                                'Favorites',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.primary,
-                                  fontFamily: '.SF Pro Text',
+                          // Favorites section - more compact
+                          if (favoriteFriends.isNotEmpty || true) ...[
+                            const SizedBox(height: 16), // Reduced from 20
+                            Row(
+                              children: [
+                                const Text(
+                                  'Favorites',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.primary,
+                                    fontFamily: '.SF Pro Text',
+                                  ),
                                 ),
-                              ),
-                              const Spacer(),
-                              // REMOVED the duplicate Add text link here
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          SizedBox(
-                            height: 90,
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: favoriteFriends.length + 1, // +1 for the Add button
-                              itemBuilder: (context, index) {
-                                if (index < favoriteFriends.length) {
-                                  final friend = favoriteFriends[index];
-                                  return Padding(
-                                    padding: EdgeInsets.only(
-                                      right: 16,
-                                      left: index == 0 ? 0 : 0,
-                                    ),
-                                    child: _buildFavoriteStory(friend),
-                                  );
-                                } else {
-                                  // Add button at the end
-                                  return Padding(
-                                    padding: const EdgeInsets.only(right: 16),
-                                    child: _buildAddFavoriteButton(),
-                                  );
-                                }
-                              },
+                                const Spacer(),
+                              ],
                             ),
-                          ),
+                            const SizedBox(height: 10), // Reduced from 12
+                            SizedBox(
+                              height: 80, // Reduced from 90
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: favoriteFriends.length + 1,
+                                itemBuilder: (context, index) {
+                                  if (index < favoriteFriends.length) {
+                                    final friend = favoriteFriends[index];
+                                    return Padding(
+                                      padding: EdgeInsets.only(
+                                        right: 12, // Reduced from 16
+                                        left: index == 0 ? 0 : 0,
+                                      ),
+                                      child: _buildCompactFavoriteStory(friend),
+                                    );
+                                  } else {
+                                    return Padding(
+                                      padding: const EdgeInsets.only(right: 12),
+                                      child: _buildCompactAddFavoriteButton(),
+                                    );
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -698,6 +703,154 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
           ),
         ),
       ],
+    );
+  }
+
+// Add these new compact widget methods to home_screen.dart
+  Widget _buildCompactStat({
+    required IconData icon,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            color: color,
+            size: 16,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: color,
+              fontFamily: '.SF Pro Text',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompactFavoriteStory(Friend friend) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        _showFavoriteOptions(context, friend);
+      },
+      child: Column(
+        children: [
+          Container(
+            width: 56, // Reduced from 64
+            height: 56,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppColors.primary,
+                width: 2,
+              ),
+            ),
+            child: Container(
+              margin: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                color: friend.isEmoji
+                    ? CupertinoColors.systemGrey6
+                    : CupertinoColors.white,
+                shape: BoxShape.circle,
+              ),
+              child: friend.isEmoji
+                  ? Center(
+                child: Text(
+                  friend.profileImage,
+                  style: const TextStyle(fontSize: 24), // Reduced from 28
+                  semanticsLabel: 'Profile emoji',
+                ),
+              )
+                  : ClipOval(
+                child: Image.file(
+                  File(friend.profileImage),
+                  fit: BoxFit.cover,
+                  semanticLabel: 'Profile picture',
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 6), // Reduced from 8
+          SizedBox(
+            width: 64, // Reduced from 72
+            child: Text(
+              friend.name,
+              style: const TextStyle(
+                fontSize: 12, // Reduced from 13
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+                fontFamily: '.SF Pro Text',
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              semanticsLabel: 'Friend name: ${friend.name}',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompactAddFavoriteButton() {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        final provider = Provider.of<FriendsProvider>(context, listen: false);
+        _showAddFavoriteDialog(context, provider.friends);
+      },
+      child: Column(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppColors.primary.withOpacity(0.3),
+                width: 2,
+                style: BorderStyle.solid,
+              ),
+              color: CupertinoColors.systemGrey6,
+            ),
+            child: const Icon(
+              CupertinoIcons.add,
+              color: AppColors.primary,
+              size: 24,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const SizedBox(
+            width: 64,
+            child: Text(
+              'Add',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primary,
+                fontFamily: '.SF Pro Text',
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

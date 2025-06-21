@@ -65,6 +65,13 @@ class FriendsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // Add this method to FriendsProvider class
+  Future<void> reloadFriends() async {
+    _friends = [];
+    notifyListeners();
+    await _loadFriends();
+  }
+
   Future<void> updateFriend(Friend updatedFriend) async {
     final index = _friends.indexWhere((f) => f.id == updatedFriend.id);
     if (index != -1) {

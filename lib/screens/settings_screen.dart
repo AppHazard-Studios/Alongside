@@ -104,7 +104,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         icon: CupertinoIcons.bell,
                         iconColor: AppColors.accent,
                         title: 'Test Notifications',
-                        subtitle: 'Send a test notification in 10 seconds',
+                        subtitle: 'Send a test notification',
                         onTap: () => _testNotifications(context),
                         showChevron: false,
                       ),
@@ -633,9 +633,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onPressed: () async {
               Navigator.pop(context);
 
+              // Show loading dialog
+              showCupertinoDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (ctx) => Center(
+                  child: Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: CupertinoColors.black.withOpacity(0.8),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CupertinoActivityIndicator(
+                          color: CupertinoColors.white,
+                          radius: 14,
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          'Clearing...',
+                          style: TextStyle(
+                            color: CupertinoColors.white,
+                            fontSize: 16,
+                            fontFamily: '.SF Pro Text',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+
               // Clear all data
               final provider = Provider.of<FriendsProvider>(context, listen: false);
               final storageService = provider.storageService;
+
+              // Clear friends - this will trigger provider to reload
               await storageService.saveFriends([]);
               await storageService.saveCustomMessages([]);
 
@@ -643,8 +679,65 @@ class _SettingsScreenState extends State<SettingsScreen> {
               final prefs = await SharedPreferences.getInstance();
               await prefs.clear();
 
+              // Cancel all notifications
+              final notificationService = NotificationService();
+              for (final friend in provider.friends) {
+                await notificationService.cancelReminder(friend.id);
+                await notificationService.removePersistentNotification(friend.id);
+              }
+
+              // Force reload the provider
+              await provider.reloadFriends();
+
+              // Close loading dialog
               if (mounted) {
-                Navigator.of(context).popUntil((route) => route.isFirst);
+                Navigator.pop(context);
+
+                // Show success message
+                showCupertinoDialog(
+                  context: context,
+                  builder: (context) => CupertinoAlertDialog(
+                    title: const Text(
+                      'Data Cleared',
+                      style: TextStyle(
+                        color: AppColors.success,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 18,
+                        fontFamily: '.SF Pro Text',
+                      ),
+                    ),
+                    content: const Padding(
+                      padding: EdgeInsets.only(top: 16),
+                      child: Text(
+                        'All app data has been cleared successfully.',
+                        style: TextStyle(
+                          fontSize: 16,
+                          height: 1.4,
+                          color: CupertinoColors.label,
+                          fontFamily: '.SF Pro Text',
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    actions: [
+                      CupertinoDialogAction(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          // Go back to home
+                          Navigator.of(context).popUntil((route) => route.isFirst);
+                        },
+                        child: const Text(
+                          'OK',
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: '.SF Pro Text',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
               }
             },
             isDestructiveAction: true,

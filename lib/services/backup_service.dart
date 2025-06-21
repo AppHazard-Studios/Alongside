@@ -200,22 +200,29 @@ class BackupService {
     );
   }
 
-  // Save file directly to device storage
+  // Save file directly to device storage - FIXED VERSION
   static Future<String?> _saveToDevice(BuildContext context, String jsonString) async {
     try {
-      // Let user choose location
+      // Create a temporary file first
+      final tempDir = await getTemporaryDirectory();
+      final tempFile = File('${tempDir.path}/alongside_backup_${DateTime.now().millisecondsSinceEpoch}.json');
+
+      // Write as bytes to avoid encoding issues
+      await tempFile.writeAsBytes(utf8.encode(jsonString));
+
+      // Let user choose location using the temporary file
       String? outputFile = await FilePicker.platform.saveFile(
         dialogTitle: 'Save Alongside Backup',
         fileName: 'alongside_backup_${DateTime.now().millisecondsSinceEpoch}.json',
         type: FileType.custom,
         allowedExtensions: ['json'],
+        bytes: await tempFile.readAsBytes(), // Pass bytes directly
       );
 
-      if (outputFile != null) {
-        // Write the file
-        final file = File(outputFile);
-        await file.writeAsString(jsonString);
+      // Clean up temp file
+      await tempFile.delete();
 
+      if (outputFile != null) {
         // Update last backup date
         final prefs = await SharedPreferences.getInstance();
         final now = DateTime.now();
