@@ -1,2 +1,1 @@
-Coming soon™
 Alpha testing.
