@@ -1,5 +1,6 @@
 // lib/utils/text_styles.dart - Complete file with ALL required styles
 import 'package:flutter/material.dart';
+import 'responsive_utils.dart';
 
 class AppTextStyles {
   // Base font family
@@ -158,4 +159,16 @@ class AppTextStyles {
     fontFamily: _fontFamily,
     color: _secondaryColor,
   );
+
+  static TextStyle scaledTextStyle(
+      BuildContext context,
+      TextStyle baseStyle,
+      ) {
+    return baseStyle.copyWith(
+      fontSize: ResponsiveUtils.scaledFontSize(
+        context,
+        baseStyle.fontSize ?? 16,
+      ),
+    );
+  }
 }

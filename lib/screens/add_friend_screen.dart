@@ -6,9 +6,11 @@ import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/friends_provider.dart';
 import '../models/friend.dart';
 import '../utils/constants.dart';
+import '../utils/colors.dart';
 import '../widgets/no_underline_field.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -66,7 +68,71 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       _helpingThemWithController.text = widget.friend!.helpingWith ?? '';
       _helpingYouWithController.text = widget.friend!.theyHelpingWith ?? '';
       _reminderTimeStr = widget.friend!.reminderTime;
+    } else {
+      // Show contact picker prompt for new friends
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showContactPickerPrompt();
+      });
     }
+  }
+
+// Add this method
+  void _showContactPickerPrompt() {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text(
+          'Add from Contacts?',
+          style: TextStyle(
+            color: AppColors.primary,
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+            fontFamily: '.SF Pro Text',
+          ),
+        ),
+        content: const Padding(
+          padding: EdgeInsets.only(top: 16),
+          child: Text(
+            'Would you like to select a friend from your contacts?',
+            style: TextStyle(
+              fontSize: 16,
+              height: 1.4,
+              color: CupertinoColors.label,
+              fontFamily: '.SF Pro Text',
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'No',
+              style: TextStyle(
+                color: AppColors.secondary,
+                fontWeight: FontWeight.w600,
+                fontFamily: '.SF Pro Text',
+              ),
+            ),
+          ),
+          CupertinoDialogAction(
+            onPressed: () {
+              Navigator.pop(context);
+              _pickContact();
+            },
+            isDefaultAction: true,
+            child: const Text(
+              'Yes',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600,
+                fontFamily: '.SF Pro Text',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -704,8 +770,9 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     }
 
     final provider = Provider.of<FriendsProvider>(context, listen: false);
+    final isNewFriend = widget.friend == null;
 
-    if (widget.friend == null) {
+    if (isNewFriend) {
       // Create a new friend
       final newFriend = Friend(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -720,6 +787,13 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
         theyHelpingWith: _helpingYouWithController.text.trim(),
       );
       await provider.addFriend(newFriend);
+
+      if (mounted) {
+        Navigator.pop(context);
+
+        // Show invite dialog for new friends
+        _showInviteDialog(context, newFriend);
+      }
     } else {
       // Update existing friend
       final updatedFriend = widget.friend!.copyWith(
@@ -734,9 +808,81 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
         theyHelpingWith: _helpingYouWithController.text.trim(),
       );
       await provider.updateFriend(updatedFriend);
-    }
 
-    if (mounted) Navigator.pop(context);
+      if (mounted) Navigator.pop(context);
+    }
+  }
+
+// Add this new method
+  void _showInviteDialog(BuildContext context, Friend friend) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text(
+          'Invite Friend',
+          style: TextStyle(
+            color: AppColors.primary,
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+            fontFamily: '.SF Pro Text',
+          ),
+        ),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: Text(
+            'Would you like to invite ${friend.name} to use Alongside with you?',
+            style: const TextStyle(
+              fontSize: 16,
+              height: 1.4,
+              color: CupertinoColors.label,
+              fontFamily: '.SF Pro Text',
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'Not Now',
+              style: TextStyle(
+                color: AppColors.secondary,
+                fontWeight: FontWeight.w600,
+                fontFamily: '.SF Pro Text',
+              ),
+            ),
+          ),
+          CupertinoDialogAction(
+            onPressed: () async {
+              Navigator.pop(context);
+
+              final message = 'Hey ${friend.name.split(' ')[0]}! I just added you to Alongside - '
+                  'an app that helps us stay connected. '
+                  'It reminds me to check in with you and makes it easy to send quick messages. '
+                  'Would love if you joined too! Download at: alongside.app';
+
+              final smsUri = Uri.parse(
+                  'sms:${friend.phoneNumber}?body=${Uri.encodeComponent(message)}'
+              );
+
+              try {
+                await launchUrl(smsUri, mode: LaunchMode.externalApplication);
+              } catch (e) {
+                // Handle error silently
+              }
+            },
+            child: const Text(
+              'Send Invite',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600,
+                fontFamily: '.SF Pro Text',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   // Show delete confirmation dialog
@@ -970,6 +1116,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                                   controller: _nameController,
                                   label: 'Name',
                                   placeholder: 'Enter name',
+                                  textCapitalization: TextCapitalization.words,
                                 ),
                               ),
                             ],
@@ -983,52 +1130,37 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                         ),
 
                         // Phone Number field
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Container(
-                                width: 38,
-                                height: 38,
-                                decoration: BoxDecoration(
-                                  color: CupertinoColors.systemGreen.withOpacity(0.1),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  CupertinoIcons.phone_fill,
-                                  color: CupertinoColors.systemGreen,
-                                  size: 18,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: NoUnderlineField(
-                                  controller: _phoneController,
-                                  label: 'Phone Number',
-                                  placeholder: 'Enter phone number',
-                                  keyboardType: TextInputType.phone,
-                                  suffixIcon: GestureDetector(
-                                    onTap: _pickContact,
-                                    child: Container(
-                                      width: 36,
-                                      height: 36,
-                                      decoration: BoxDecoration(
-                                        color: CupertinoColors.systemGreen.withOpacity(0.1),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        CupertinoIcons.book_fill,
-                                        size: 16,
-                                        color: CupertinoColors.systemGreen,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.systemGreen.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    CupertinoIcons.phone_fill,
+                    color: CupertinoColors.systemGreen,
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: NoUnderlineField(
+                    controller: _phoneController,
+                    label: 'Phone Number',
+                    placeholder: 'Enter phone number',
+                    keyboardType: TextInputType.phone,
+                    textCapitalization: TextCapitalization.words, // Auto-capitalize for names
+                  ),
+                ),
+              ],
+            ),
+          ),
                       ],
                     ),
                   ),
@@ -1308,9 +1440,13 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 32),
+
 
                   // Delete friend button (only when editing)
+// Replace the delete friend button section (around line 1240)
+                  const SizedBox(height: 16), // Changed from 32 to 16
+
+// Delete friend button (only when editing)
                   if (widget.friend != null)
                     Container(
                       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -1342,7 +1478,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                       ),
                     ),
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24), // Changed from 32 to 24
                 ],
               ),
             ),

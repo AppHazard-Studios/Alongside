@@ -1,9 +1,11 @@
 // lib/screens/home_screen.dart - Enhanced version with search, better visual hierarchy, and animations
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/friends_provider.dart';
+import '../utils/responsive_utils.dart';
 import '../widgets/friend_card.dart';
 import '../utils/colors.dart';
 import '../widgets/illustrations.dart';
@@ -22,7 +24,8 @@ class HomeScreenNew extends StatefulWidget {
   State<HomeScreenNew> createState() => _HomeScreenNewState();
 }
 
-class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateMixin, WidgetsBindingObserver {
+class _HomeScreenNewState extends State<HomeScreenNew>
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   String? _expandedFriendId;
   late AnimationController _animationController;
   late AnimationController _searchAnimationController;
@@ -100,7 +103,8 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
   Future<void> _checkFirstLaunch() async {
     // Check if user has any friends - if not, show onboarding
     final provider = Provider.of<FriendsProvider>(context, listen: false);
-    await Future.delayed(const Duration(milliseconds: 500)); // Wait for provider to load
+    await Future.delayed(
+        const Duration(milliseconds: 500)); // Wait for provider to load
     if (provider.friends.isEmpty && mounted) {
       setState(() {
         _shouldShowOnboarding = true;
@@ -125,6 +129,24 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // Set first friend as expanded on first load
+    if (_expandedFriendId == null) {
+      final provider = Provider.of<FriendsProvider>(context, listen: false);
+      if (!provider.isLoading && provider.friends.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && _expandedFriendId == null) {
+            setState(() {
+              _expandedFriendId = provider.friends.first.id;
+            });
+          }
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Show onboarding if needed
@@ -148,7 +170,8 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
               alignment: Alignment.center,
               children: [
                 // Title (fades out when searching)
-                IgnorePointer( // Add this to prevent touches on the title
+                IgnorePointer(
+                  // Add this to prevent touches on the title
                   child: Opacity(
                     opacity: 1 - _searchAnimation.value,
                     child: AnimatedBuilder(
@@ -210,11 +233,13 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
                     child: Transform.translate(
                       offset: Offset(0, 20 * (1 - _searchAnimation.value)),
                       child: Container(
-                        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.6), // Constrain width
+                        constraints: BoxConstraints(
+                            maxWidth: MediaQuery.of(context).size.width *
+                                0.6), // Constrain width
                         child: CupertinoTextField(
                           controller: _searchController,
                           placeholder: 'Search friends...',
-                          autofocus: true,  // ADD THIS LINE
+                          autofocus: true, // ADD THIS LINE
                           prefix: const Padding(
                             padding: EdgeInsets.only(left: 8),
                             child: Icon(
@@ -236,7 +261,8 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
                             color: CupertinoColors.systemGrey6,
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 8, horizontal: 8),
                         ),
                       ),
                     ),
@@ -323,16 +349,23 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
           final friends = _searchQuery.isEmpty
               ? allFriends
               : allFriends.where((friend) {
-            return friend.name.toLowerCase().contains(_searchQuery) ||
-                (friend.helpingWith?.toLowerCase().contains(_searchQuery) ?? false) ||
-                (friend.theyHelpingWith?.toLowerCase().contains(_searchQuery) ?? false);
-          }).toList();
+                  return friend.name.toLowerCase().contains(_searchQuery) ||
+                      (friend.helpingWith
+                              ?.toLowerCase()
+                              .contains(_searchQuery) ??
+                          false) ||
+                      (friend.theyHelpingWith
+                              ?.toLowerCase()
+                              .contains(_searchQuery) ??
+                          false);
+                }).toList();
 
           if (allFriends.isEmpty) {
             return _buildEmptyState(context);
           }
 
-          return _buildFriendsListWithIntegratedGreeting(context, friends, allFriends);
+          return _buildFriendsListWithIntegratedGreeting(
+              context, friends, allFriends);
         },
       ),
     );
@@ -358,7 +391,8 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
     );
   }
 
-  Widget _buildFriendsListWithIntegratedGreeting(BuildContext context, List<Friend> filteredFriends, List<Friend> allFriends) {
+  Widget _buildFriendsListWithIntegratedGreeting(BuildContext context,
+      List<Friend> filteredFriends, List<Friend> allFriends) {
     final hour = DateTime.now().hour;
     String greeting;
     IconData iconData;
@@ -378,7 +412,8 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
       greetingColor = AppColors.eveningColor;
     }
 
-    final favoriteFriends = allFriends.where((friend) => friend.isFavorite).toList();
+    final favoriteFriends =
+        allFriends.where((friend) => friend.isFavorite).toList();
 
     // Show message if searching but no results
     if (_searchQuery.isNotEmpty && filteredFriends.isEmpty) {
@@ -427,7 +462,8 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
           child: CustomScrollView(
             controller: _scrollController,
             slivers: [
-              const SliverToBoxAdapter(child: SizedBox(height: 12)), // Reduced from 20
+              const SliverToBoxAdapter(
+                  child: SizedBox(height: 12)), // Reduced from 20
 
               // Only show greeting card when not searching
               if (!_isSearching) ...[
@@ -435,8 +471,8 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Container(
-                      margin: const EdgeInsets.only(bottom: 16), // Reduced from 24
-                      padding: const EdgeInsets.all(16), // Reduced from 20
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: CupertinoColors.white,
                         borderRadius: BorderRadius.circular(20),
@@ -445,18 +481,23 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Greeting and stats in same row
+                          // Greeting and stats row - with constrained text scaling
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Left side - Greeting
+                              // Left side - Greeting with better wrapping
                               Expanded(
-                                flex: 5,
+                                flex: 3,
                                 child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Container(
-                                      width: 40, // Reduced from 44
-                                      height: 40,
+                                      width:
+                                          ResponsiveUtils.scaledContainerSize(
+                                              context, 40),
+                                      height:
+                                          ResponsiveUtils.scaledContainerSize(
+                                              context, 40),
                                       decoration: BoxDecoration(
                                         gradient: LinearGradient(
                                           colors: [
@@ -469,7 +510,8 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
                                         borderRadius: BorderRadius.circular(12),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: greetingColor.withOpacity(0.3),
+                                            color:
+                                                greetingColor.withOpacity(0.3),
                                             blurRadius: 8,
                                             offset: const Offset(0, 3),
                                           ),
@@ -478,35 +520,53 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
                                       child: Icon(
                                         iconData,
                                         color: CupertinoColors.white,
-                                        size: 20, // Reduced from 22
+                                        size: ResponsiveUtils.scaledIconSize(
+                                            context, 20),
                                         semanticLabel: greeting,
                                       ),
                                     ),
-                                    const SizedBox(width: 12), // Reduced from 16
+                                    const SizedBox(width: 12),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          Text(
-                                            greeting,
-                                            style: const TextStyle(
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.w700,
-                                              color: CupertinoColors.label,
-                                              fontFamily: '.SF Pro Text',
+                                          MediaQuery(
+                                            data:
+                                                MediaQuery.of(context).copyWith(
+                                              textScaleFactor: ResponsiveUtils.scaledFontSize(context, 1.1, maxScale: 1),
+                                            ),
+                                            child: Text(
+                                              greeting,
+                                              style: const TextStyle(
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.w700,
+                                                color: CupertinoColors.label,
+                                                fontFamily: '.SF Pro Text',
+                                              ),
                                             ),
                                           ),
                                           const SizedBox(height: 2),
-                                          Text(
-                                            "Walking alongside",
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              color: AppColors.textSecondary,
-                                              fontFamily: '.SF Pro Text',
-                                              height: 1.2,
+                                          MediaQuery(
+                                            data:
+                                                MediaQuery.of(context).copyWith(
+                                              textScaleFactor: ResponsiveUtils.scaledFontSize(context, 1, maxScale: 1.3),
                                             ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
+                                            child: Text(
+                                              allFriends.isEmpty
+                                                  ? "Ready to walk alongside"
+                                                  : allFriends.length == 1
+                                                      ? "Walking alongside 1 friend"
+                                                      : "Walking alongside ${allFriends.length} friends",
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                color: AppColors.textSecondary,
+                                                fontFamily: '.SF Pro Text',
+                                                height: 1.2,
+                                              ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
                                           ),
                                         ],
                                       ),
@@ -515,7 +575,7 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
                                 ),
                               ),
 
-                              // Right side - Compact stats
+                              // Right side - Compact stats with fixed icon sizes
                               Row(
                                 children: [
                                   _buildCompactStat(
@@ -525,7 +585,8 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
                                   ),
                                   const SizedBox(width: 8),
                                   _buildCompactStat(
-                                    icon: CupertinoIcons.bubble_left_bubble_right_fill,
+                                    icon: CupertinoIcons
+                                        .bubble_left_bubble_right_fill,
                                     value: _messagesSent.toString(),
                                     color: AppColors.secondary,
                                   ),
@@ -541,45 +602,68 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
                           ),
 
                           // Favorites section - more compact
+// Replace the favorites section container (around line 300)
+// Favorites section with proper card-bounded scrolling
                           if (favoriteFriends.isNotEmpty || true) ...[
-                            const SizedBox(height: 16), // Reduced from 20
-                            Row(
-                              children: [
-                                const Text(
-                                  'Favorites',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.primary,
-                                    fontFamily: '.SF Pro Text',
+                            const SizedBox(height: 16),
+                            const Text(
+                              'Favorites',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primary,
+                                fontFamily: '.SF Pro Text',
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(
+                                  12), // Match card radius
+                              child: SizedBox(
+                                height: 80,
+                                child: ShaderMask(
+                                  shaderCallback: (Rect bounds) {
+                                    return LinearGradient(
+                                      begin: Alignment.centerLeft,
+                                      end: Alignment.centerRight,
+                                      colors: const [
+                                        Colors.transparent,
+                                        Colors.white,
+                                        Colors.white,
+                                        Colors.transparent,
+                                      ],
+                                      stops: const [0.0, 0.05, 0.95, 1.0],
+                                    ).createShader(bounds);
+                                  },
+                                  blendMode: BlendMode.dstIn,
+                                  child: ListView.builder(
+                                    scrollDirection: Axis.horizontal,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 4),
+                                    physics: const BouncingScrollPhysics(),
+                                    itemCount: favoriteFriends.length + 1,
+                                    itemBuilder: (context, index) {
+                                      if (index < favoriteFriends.length) {
+                                        final friend = favoriteFriends[index];
+                                        return Padding(
+                                          padding: EdgeInsets.only(
+                                            right: 8,
+                                            left: index == 0 ? 4 : 0,
+                                          ),
+                                          child: _buildCompactFavoriteStory(
+                                              friend),
+                                        );
+                                      } else {
+                                        return Padding(
+                                          padding: const EdgeInsets.only(
+                                              right: 4, left: 0),
+                                          child:
+                                              _buildCompactAddFavoriteButton(),
+                                        );
+                                      }
+                                    },
                                   ),
                                 ),
-                                const Spacer(),
-                              ],
-                            ),
-                            const SizedBox(height: 10), // Reduced from 12
-                            SizedBox(
-                              height: 80, // Reduced from 90
-                              child: ListView.builder(
-                                scrollDirection: Axis.horizontal,
-                                itemCount: favoriteFriends.length + 1,
-                                itemBuilder: (context, index) {
-                                  if (index < favoriteFriends.length) {
-                                    final friend = favoriteFriends[index];
-                                    return Padding(
-                                      padding: EdgeInsets.only(
-                                        right: 12, // Reduced from 16
-                                        left: index == 0 ? 0 : 0,
-                                      ),
-                                      child: _buildCompactFavoriteStory(friend),
-                                    );
-                                  } else {
-                                    return Padding(
-                                      padding: const EdgeInsets.only(right: 12),
-                                      child: _buildCompactAddFavoriteButton(),
-                                    );
-                                  }
-                                },
                               ),
                             ),
                           ],
@@ -712,8 +796,15 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
     required String value,
     required Color color,
   }) {
+    final iconSize = ResponsiveUtils.scaledIconSize(context, 16);
+    final fontSize = ResponsiveUtils.scaledFontSize(context, 16, maxScale: 1.3);
+    final padding = ResponsiveUtils.scaledPadding(
+      context,
+      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+    );
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: padding,
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(10),
@@ -724,13 +815,13 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
           Icon(
             icon,
             color: color,
-            size: 16,
+            size: iconSize,
           ),
-          const SizedBox(height: 2),
+          SizedBox(height: ResponsiveUtils.scaledSpacing(context, 2)),
           Text(
             value,
             style: TextStyle(
-              fontSize: 16,
+              fontSize: fontSize,
               fontWeight: FontWeight.w700,
               color: color,
               fontFamily: '.SF Pro Text',
@@ -742,154 +833,131 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
   }
 
   Widget _buildCompactFavoriteStory(Friend friend) {
+    final firstName = friend.name.split(' ').first;
+    final containerSize = ResponsiveUtils.scaledContainerSize(context, 56);
+    final iconSize = ResponsiveUtils.scaledIconSize(context, 24);
+
     return GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
         _showFavoriteOptions(context, friend);
       },
-      child: Column(
-        children: [
-          Container(
-            width: 56, // Reduced from 64
-            height: 56,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.primary,
-                width: 2,
-              ),
-            ),
-            child: Container(
-              margin: const EdgeInsets.all(2),
+      child: SizedBox(
+        width: containerSize + 8, // Add some buffer
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: containerSize,
+              height: containerSize,
               decoration: BoxDecoration(
-                color: friend.isEmoji
-                    ? CupertinoColors.systemGrey6
-                    : CupertinoColors.white,
                 shape: BoxShape.circle,
-              ),
-              child: friend.isEmoji
-                  ? Center(
-                child: Text(
-                  friend.profileImage,
-                  style: const TextStyle(fontSize: 24), // Reduced from 28
-                  semanticsLabel: 'Profile emoji',
+                border: Border.all(
+                  color: AppColors.primary,
+                  width: 2,
                 ),
-              )
-                  : ClipOval(
-                child: Image.file(
-                  File(friend.profileImage),
-                  fit: BoxFit.cover,
-                  semanticLabel: 'Profile picture',
+              ),
+              child: Container(
+                margin: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  color: friend.isEmoji
+                      ? CupertinoColors.systemGrey6
+                      : CupertinoColors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: ClipOval(
+                  child: friend.isEmoji
+                      ? Center(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Padding(
+                              padding: const EdgeInsets.all(4),
+                              child: Text(
+                                friend.profileImage,
+                                style: TextStyle(fontSize: iconSize),
+                                semanticsLabel: 'Profile emoji',
+                              ),
+                            ),
+                          ),
+                        )
+                      : Image.file(
+                          File(friend.profileImage),
+                          fit: BoxFit.cover,
+                          semanticLabel: 'Profile picture',
+                        ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 6), // Reduced from 8
-          SizedBox(
-            width: 64, // Reduced from 72
-            child: Text(
-              friend.name,
-              style: const TextStyle(
-                fontSize: 12, // Reduced from 13
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-                fontFamily: '.SF Pro Text',
+            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 6)),
+            Flexible(
+              child: Text(
+                firstName,
+                style: TextStyle(
+                  fontSize: ResponsiveUtils.scaledFontSize(context, 12,
+                      maxScale: 1.2),
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                  fontFamily: '.SF Pro Text',
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                semanticsLabel: 'Friend name: ${friend.name}',
               ),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              semanticsLabel: 'Friend name: ${friend.name}',
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildCompactAddFavoriteButton() {
+    final containerSize = ResponsiveUtils.scaledContainerSize(context, 56);
+    final iconSize = ResponsiveUtils.scaledIconSize(context, 24);
+
     return GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
         final provider = Provider.of<FriendsProvider>(context, listen: false);
         _showAddFavoriteDialog(context, provider.friends);
       },
-      child: Column(
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.primary.withOpacity(0.3),
-                width: 2,
-                style: BorderStyle.solid,
-              ),
-              color: CupertinoColors.systemGrey6,
-            ),
-            child: const Icon(
-              CupertinoIcons.add,
-              color: AppColors.primary,
-              size: 24,
-            ),
-          ),
-          const SizedBox(height: 6),
-          const SizedBox(
-            width: 64,
-            child: Text(
-              'Add',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: AppColors.primary,
-                fontFamily: '.SF Pro Text',
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickStat({
-    required IconData icon,
-    required String value,
-    required String label,
-    required Color color,
-  }) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-        ),
+      child: SizedBox(
+        width: containerSize + 8,
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              color: color,
-              size: 20,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: color,
-                fontFamily: '.SF Pro Text',
+            Container(
+              width: containerSize,
+              height: containerSize,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.primary.withOpacity(0.3),
+                  width: 2,
+                  style: BorderStyle.solid,
+                ),
+                color: CupertinoColors.systemGrey6,
+              ),
+              child: Icon(
+                CupertinoIcons.add,
+                color: AppColors.primary,
+                size: iconSize,
               ),
             ),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                color: color.withOpacity(0.8),
-                fontFamily: '.SF Pro Text',
+            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 6)),
+            Flexible(
+              child: Text(
+                'Add',
+                style: TextStyle(
+                  fontSize: ResponsiveUtils.scaledFontSize(context, 12,
+                      maxScale: 1.2),
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                  fontFamily: '.SF Pro Text',
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -902,7 +970,8 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
     return GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
-        _showFavoriteOptions(context, friend); // Changed to show menu instead of direct message
+        _showFavoriteOptions(
+            context, friend); // Changed to show menu instead of direct message
       },
       child: Column(
         children: [
@@ -926,19 +995,20 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
               ),
               child: friend.isEmoji
                   ? Center(
-                child: Text(
-                  friend.profileImage,
-                  style: const TextStyle(fontSize: 28), // Increased from 20
-                  semanticsLabel: 'Profile emoji',
-                ),
-              )
+                      child: Text(
+                        friend.profileImage,
+                        style:
+                            const TextStyle(fontSize: 28), // Increased from 20
+                        semanticsLabel: 'Profile emoji',
+                      ),
+                    )
                   : ClipOval(
-                child: Image.file(
-                  File(friend.profileImage),
-                  fit: BoxFit.cover,
-                  semanticLabel: 'Profile picture',
-                ),
-              ),
+                      child: Image.file(
+                        File(friend.profileImage),
+                        fit: BoxFit.cover,
+                        semanticLabel: 'Profile picture',
+                      ),
+                    ),
             ),
           ),
           const SizedBox(height: 8), // Increased spacing
@@ -1089,7 +1159,8 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
   }
 
   void _showAddFavoriteDialog(BuildContext context, List<Friend> allFriends) {
-    final nonFavoriteFriends = allFriends.where((friend) => !friend.isFavorite).toList();
+    final nonFavoriteFriends =
+        allFriends.where((friend) => !friend.isFavorite).toList();
 
     if (nonFavoriteFriends.isEmpty) {
       showCupertinoDialog(
@@ -1167,17 +1238,17 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
                   ),
                   child: friend.isEmoji
                       ? Center(
-                    child: Text(
-                      friend.profileImage,
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                  )
+                          child: Text(
+                            friend.profileImage,
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        )
                       : ClipOval(
-                    child: Image.file(
-                      File(friend.profileImage),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
+                          child: Image.file(
+                            File(friend.profileImage),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
                 ),
                 const SizedBox(width: 12),
                 Text(
@@ -1255,10 +1326,12 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
             onPressed: () {
               Navigator.pop(context);
               HapticFeedback.lightImpact();
-              final provider = Provider.of<FriendsProvider>(context, listen: false);
+              final provider =
+                  Provider.of<FriendsProvider>(context, listen: false);
               final updatedFriend = friend.copyWith(isFavorite: false);
               provider.updateFriend(updatedFriend);
-              _showSuccessToast(context, '${friend.name} removed from favorites');
+              _showSuccessToast(
+                  context, '${friend.name} removed from favorites');
             },
             child: const Text(
               'Remove',
@@ -1421,7 +1494,8 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
                 );
               },
               child: CupertinoButton(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 color: AppColors.primary,
                 borderRadius: BorderRadius.circular(16),
                 onPressed: () => _navigateToAddFriend(context),
@@ -1460,7 +1534,8 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
     HapticFeedback.lightImpact();
   }
 
-  void _showFriendActions(BuildContext context, Friend friend, List<Friend> friends) {
+  void _showFriendActions(
+      BuildContext context, Friend friend, List<Friend> friends) {
     friends.indexOf(friend);
 
     showCupertinoModalPopup(
@@ -1571,7 +1646,8 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
     );
   }
 
-  void _showReorderOptions(BuildContext context, Friend friend, List<Friend> friends) {
+  void _showReorderOptions(
+      BuildContext context, Friend friend, List<Friend> friends) {
     final currentIndex = friends.indexOf(friend);
 
     showCupertinoModalPopup(
@@ -1604,7 +1680,8 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
             CupertinoActionSheetAction(
               onPressed: () {
                 Navigator.pop(context);
-                _reorderFriends(context, currentIndex, currentIndex - 1, friends);
+                _reorderFriends(
+                    context, currentIndex, currentIndex - 1, friends);
               },
               child: const Text(
                 'Move Up',
@@ -1618,7 +1695,8 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
             CupertinoActionSheetAction(
               onPressed: () {
                 Navigator.pop(context);
-                _reorderFriends(context, currentIndex, currentIndex + 1, friends);
+                _reorderFriends(
+                    context, currentIndex, currentIndex + 1, friends);
               },
               child: const Text(
                 'Move Down',
@@ -1632,7 +1710,8 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
             CupertinoActionSheetAction(
               onPressed: () {
                 Navigator.pop(context);
-                _reorderFriends(context, currentIndex, friends.length - 1, friends);
+                _reorderFriends(
+                    context, currentIndex, friends.length - 1, friends);
               },
               child: const Text(
                 'Move to Bottom',
@@ -1658,7 +1737,8 @@ class _HomeScreenNewState extends State<HomeScreenNew> with TickerProviderStateM
     );
   }
 
-  void _reorderFriends(BuildContext context, int oldIndex, int newIndex, List<Friend> friends) {
+  void _reorderFriends(
+      BuildContext context, int oldIndex, int newIndex, List<Friend> friends) {
     final provider = Provider.of<FriendsProvider>(context, listen: false);
     final reorderedFriends = List<Friend>.from(friends);
 

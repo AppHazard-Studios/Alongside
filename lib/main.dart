@@ -1,5 +1,8 @@
 // lib/main.dart - Complete file with fixed navigation
 import 'dart:async';
+import 'package:alongside/screens/lock_screen.dart';
+import 'package:alongside/services/lock_service.dart';
+import 'package:alongside/utils/colors.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -76,10 +79,17 @@ class AlongsideApp extends StatefulWidget {
 }
 
 class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver {
+  bool _isLocked = true;
+  bool _lockChecked = false;
+  final LockService _lockService = LockService();
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    // Check lock status immediately
+    _checkLockStatus();
 
     // Setup foreground service after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -97,8 +107,31 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.resumed) {
+      // Check if we should show lock screen when app resumes
+      _checkIfShouldLock();
+
       // Only restart the foreground service if it's not already running
       ForegroundServiceManager.startForegroundService();
+    }
+  }
+
+  Future<void> _checkLockStatus() async {
+    final isEnabled = await _lockService.isLockEnabled();
+
+    if (mounted) {
+      setState(() {
+        _isLocked = isEnabled;
+        _lockChecked = true;
+      });
+    }
+  }
+
+  Future<void> _checkIfShouldLock() async {
+    final isEnabled = await _lockService.isLockEnabled();
+    if (isEnabled && !_isLocked && mounted) {
+      setState(() {
+        _isLocked = true;
+      });
     }
   }
 
@@ -119,7 +152,37 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
 
   @override
   Widget build(BuildContext context) {
-    // Use CupertinoApp for pure iOS feel
+    // Show loading while checking lock status
+    if (!_lockChecked) {
+      return CupertinoApp(
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.cupertinoTheme,
+        home: const CupertinoPageScaffold(
+          backgroundColor: AppColors.background,
+          child: Center(
+            child: CupertinoActivityIndicator(),
+          ),
+        ),
+      );
+    }
+
+    // Show lock screen if needed
+    if (_isLocked) {
+      return CupertinoApp(
+        title: 'Alongside',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.cupertinoTheme,
+        home: LockScreen(
+          onUnlocked: () {
+            setState(() {
+              _isLocked = false;
+            });
+          },
+        ),
+      );
+    }
+
+    // Main app
     return CupertinoApp(
       title: 'Alongside',
       navigatorKey: navigatorKey,

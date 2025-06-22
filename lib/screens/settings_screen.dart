@@ -13,6 +13,7 @@ import '../models/friend.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:convert';
 import 'dart:io';
+import '../services/lock_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -24,6 +25,9 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   String? _lastBackupDate;
   bool _notificationSounds = true;
+  bool _lockEnabled = false;
+  String? _lockType;
+  final LockService _lockService = LockService();
 
   @override
   void initState() {
@@ -33,9 +37,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
+    final lockEnabled = await _lockService.isLockEnabled();
+    final lockType = await _lockService.getLockType();
+
     setState(() {
       _lastBackupDate = prefs.getString('last_backup_date');
       _notificationSounds = prefs.getBool('notification_sounds') ?? true;
+      _lockEnabled = lockEnabled;
+      _lockType = lockType;
     });
   }
 
@@ -85,6 +94,47 @@ class _SettingsScreenState extends State<SettingsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 16),
+
+                // Security section - NEW
+                _buildSectionTitle('SECURITY'),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: CupertinoColors.systemGrey5,
+                      width: 0.5,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      _buildToggleItem(
+                        context,
+                        icon: CupertinoIcons.lock_shield_fill,
+                        iconColor: AppColors.primary,
+                        title: 'App Lock',
+                        subtitle: _lockEnabled
+                            ? 'Protected with ${_lockType == 'biometric' ? 'biometrics' : 'PIN'}'
+                            : 'Secure app with lock screen',
+                        value: _lockEnabled,
+                        onChanged: (value) => _toggleAppLock(value),
+                      ),
+                      if (_lockEnabled) ...[
+                        _buildDivider(),
+                        _buildSettingsItem(
+                          context,
+                          icon: CupertinoIcons.lock_rotation,
+                          iconColor: AppColors.secondary,
+                          title: 'Change Lock Method',
+                          subtitle: 'Switch between PIN and biometrics',
+                          onTap: () => _changeLockMethod(),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
 
                 // Notifications section
                 _buildSectionTitle('NOTIFICATIONS'),
@@ -311,6 +361,296 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  // Add these new methods for lock functionality
+  Future<void> _toggleAppLock(bool enable) async {
+    if (enable) {
+      // Show lock method picker
+      _showLockMethodPicker();
+    } else {
+      // Confirm disable
+      showCupertinoDialog(
+        context: context,
+        builder: (context) => CupertinoAlertDialog(
+          title: const Text(
+            'Disable App Lock',
+            style: TextStyle(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w700,
+              fontSize: 18,
+              fontFamily: '.SF Pro Text',
+            ),
+          ),
+          content: const Padding(
+            padding: EdgeInsets.only(top: 16),
+            child: Text(
+              'Are you sure you want to disable app lock?',
+              style: TextStyle(
+                fontSize: 16,
+                height: 1.4,
+                color: CupertinoColors.label,
+                fontFamily: '.SF Pro Text',
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(
+                  color: AppColors.secondary,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: '.SF Pro Text',
+                ),
+              ),
+            ),
+            CupertinoDialogAction(
+              onPressed: () async {
+                Navigator.pop(context);
+                await _lockService.disableLock();
+                await _loadSettings();
+              },
+              isDestructiveAction: true,
+              child: const Text(
+                'Disable',
+                style: TextStyle(
+                  color: AppColors.error,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: '.SF Pro Text',
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  void _showLockMethodPicker() async {
+    final biometricAvailable = await _lockService.isBiometricAvailable();
+
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: const Text(
+          'Choose Lock Method',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            fontFamily: '.SF Pro Text',
+          ),
+        ),
+        actions: [
+          if (biometricAvailable)
+            CupertinoActionSheetAction(
+              onPressed: () async {
+                Navigator.pop(context);
+                final success = await _lockService.enableBiometricLock();
+                if (success) {
+                  await _loadSettings();
+                } else {
+                  _showErrorSnackBar('Failed to enable biometric lock');
+                }
+              },
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    CupertinoIcons.lock_shield_fill,
+                    color: CupertinoColors.systemBlue,
+                    size: 20,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Biometric Lock',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontFamily: '.SF Pro Text',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              _showPinSetup();
+            },
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  CupertinoIcons.number,
+                  color: CupertinoColors.systemBlue,
+                  size: 20,
+                ),
+                SizedBox(width: 8),
+                Text(
+                  'PIN Lock',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontFamily: '.SF Pro Text',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.pop(context),
+          isDestructiveAction: true,
+          child: const Text(
+            'Cancel',
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontFamily: '.SF Pro Text',
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showPinSetup() {
+    final pinController = TextEditingController();
+    final confirmController = TextEditingController();
+
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text(
+          'Set PIN',
+          style: TextStyle(
+            color: AppColors.primary,
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+            fontFamily: '.SF Pro Text',
+          ),
+        ),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: Column(
+            children: [
+              CupertinoTextField(
+                controller: pinController,
+                placeholder: 'Enter PIN (min 4 digits)',
+                keyboardType: TextInputType.number,
+                obscureText: true,
+                maxLength: 8,
+                decoration: BoxDecoration(
+                  color: CupertinoColors.systemGrey6,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              const SizedBox(height: 12),
+              CupertinoTextField(
+                controller: confirmController,
+                placeholder: 'Confirm PIN',
+                keyboardType: TextInputType.number,
+                obscureText: true,
+                maxLength: 8,
+                decoration: BoxDecoration(
+                  color: CupertinoColors.systemGrey6,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                color: AppColors.secondary,
+                fontWeight: FontWeight.w600,
+                fontFamily: '.SF Pro Text',
+              ),
+            ),
+          ),
+          CupertinoDialogAction(
+            onPressed: () async {
+              if (pinController.text.length < 4) {
+                _showErrorSnackBar('PIN must be at least 4 digits');
+                return;
+              }
+              if (pinController.text != confirmController.text) {
+                _showErrorSnackBar('PINs do not match');
+                return;
+              }
+
+              Navigator.pop(context);
+              final success = await _lockService.enablePinLock(pinController.text);
+              if (success) {
+                await _loadSettings();
+              } else {
+                _showErrorSnackBar('Failed to set PIN');
+              }
+            },
+            child: const Text(
+              'Set PIN',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600,
+                fontFamily: '.SF Pro Text',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _changeLockMethod() {
+    _showLockMethodPicker();
+  }
+
+  void _showErrorSnackBar(String message) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text(
+          'Error',
+          style: TextStyle(
+            color: AppColors.error,
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+            fontFamily: '.SF Pro Text',
+          ),
+        ),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: Text(
+            message,
+            style: const TextStyle(
+              fontSize: 16,
+              height: 1.4,
+              color: CupertinoColors.label,
+              fontFamily: '.SF Pro Text',
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'OK',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600,
+                fontFamily: '.SF Pro Text',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Keep all your existing helper methods below...
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.only(left: 8, bottom: 8),
@@ -465,7 +805,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // Settings actions
+  // Keep all the existing action methods...
   void _testNotifications(BuildContext context) async {
     final notificationService = NotificationService();
     await notificationService.scheduleTestNotification();
@@ -522,8 +862,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await prefs.setBool('notification_sounds', value);
   }
 
-  // Replace these two methods in settings_screen.dart
-
   void _exportData(BuildContext context) async {
     final filePath = await BackupService.exportData(context);
     if (filePath != null) {
@@ -539,7 +877,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   void _importData(BuildContext context) async {
     await BackupService.importData(context);
-    // Reload stats after import
     _loadSettings();
   }
 
@@ -633,7 +970,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onPressed: () async {
               Navigator.pop(context);
 
-              // Show loading dialog
               showCupertinoDialog(
                 context: context,
                 barrierDismissible: false,
@@ -667,33 +1003,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               );
 
-              // Clear all data
               final provider = Provider.of<FriendsProvider>(context, listen: false);
               final storageService = provider.storageService;
 
-              // Clear friends - this will trigger provider to reload
               await storageService.saveFriends([]);
               await storageService.saveCustomMessages([]);
 
-              // Clear preferences
               final prefs = await SharedPreferences.getInstance();
               await prefs.clear();
 
-              // Cancel all notifications
               final notificationService = NotificationService();
               for (final friend in provider.friends) {
                 await notificationService.cancelReminder(friend.id);
                 await notificationService.removePersistentNotification(friend.id);
               }
 
-              // Force reload the provider
               await provider.reloadFriends();
 
-              // Close loading dialog
               if (mounted) {
                 Navigator.pop(context);
 
-                // Show success message
                 showCupertinoDialog(
                   context: context,
                   builder: (context) => CupertinoAlertDialog(
@@ -723,7 +1052,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       CupertinoDialogAction(
                         onPressed: () {
                           Navigator.pop(context);
-                          // Go back to home
                           Navigator.of(context).popUntil((route) => route.isFirst);
                         },
                         child: const Text(
@@ -949,51 +1277,51 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final screenWidth = MediaQuery.of(context).size.width;
 
     showCupertinoDialog(
-        context: context,
-        builder: (BuildContext context) {
-      return Center(
+      context: context,
+      builder: (BuildContext context) {
+        return Center(
           child: Container(
-          width: screenWidth * 1.1,
-          child: CupertinoAlertDialog(
-          title: const Text(
-          'Privacy & Security',
-          style: TextStyle(
-          color: AppColors.primary,
-          fontWeight: FontWeight.w700,
-          fontSize: 18,
-          fontFamily: '.SF Pro Text',
-      ),
-    ),
-    content: const Padding(
-      padding: EdgeInsets.only(top: 16.0),
-      child: Text(
-        'Alongside is designed with privacy in mind. All your data is stored locally on your device and never shared with third parties. Your conversations and friend information remain completely private.',
-        style: TextStyle(
-          fontSize: 16,
-          height: 1.4,
-          color: CupertinoColors.label,
-          fontFamily: '.SF Pro Text',
-        ),
-        textAlign: TextAlign.center,
-      ),
-    ),
-            actions: [
-              CupertinoDialogAction(
-                onPressed: () => Navigator.pop(context),
-                child: const Text(
-                  'Got it',
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: '.SF Pro Text',
-                  ),
+            width: screenWidth * 1.1,
+            child: CupertinoAlertDialog(
+              title: const Text(
+                'Privacy & Security',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 18,
+                  fontFamily: '.SF Pro Text',
                 ),
               ),
-            ],
+              content: const Padding(
+                padding: EdgeInsets.only(top: 16.0),
+                child: Text(
+                  'Alongside is designed with privacy in mind. All your data is stored locally on your device and never shared with third parties. Your conversations and friend information remain completely private.',
+                  style: TextStyle(
+                    fontSize: 16,
+                    height: 1.4,
+                    color: CupertinoColors.label,
+                    fontFamily: '.SF Pro Text',
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              actions: [
+                CupertinoDialogAction(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    'Got it',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: '.SF Pro Text',
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          ),
-      );
-        },
+        );
+      },
     );
   }
 }

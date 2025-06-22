@@ -454,37 +454,54 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
       );
     }
 
-    return Stack(
+    return Column(
       children: [
-        ListView.builder(
-          padding: const EdgeInsets.only(bottom: 80),
-          itemCount: _favoriteMessages.length,
-          itemBuilder: (context, index) {
-            final message = _favoriteMessages[index];
-            return _buildMessageCard(message, isFavorite: true);
-          },
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.only(bottom: 16),
+            itemCount: _favoriteMessages.length,
+            itemBuilder: (context, index) {
+              final message = _favoriteMessages[index];
+              return _buildMessageCard(message, isFavorite: true);
+            },
+          ),
         ),
-
-        // Add more favorites button
-        Positioned(
-          right: 16,
-          bottom: 16,
+        // Fixed bottom button
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: CupertinoColors.systemBackground,
+            border: Border(
+              top: BorderSide(
+                color: CupertinoColors.systemGrey5,
+                width: 0.5,
+              ),
+            ),
+          ),
           child: CupertinoButton(
-            padding: EdgeInsets.zero,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            color: AppColors.primary,
+            borderRadius: BorderRadius.circular(12),
             onPressed: () => _showFavoritePicker(),
-            child: Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                shape: BoxShape.circle,
-                boxShadow: AppColors.primaryShadow,
-              ),
-              child: const Icon(
-                CupertinoIcons.star_fill,
-                size: 24,
-                color: CupertinoColors.white,
-              ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  CupertinoIcons.star_fill,
+                  color: CupertinoColors.white,
+                  size: 18,
+                ),
+                SizedBox(width: 8),
+                Text(
+                  'Edit Favorites',
+                  style: TextStyle(
+                    color: CupertinoColors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    fontFamily: '.SF Pro Text',
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -530,7 +547,7 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               borderRadius: BorderRadius.circular(12),
               onPressed: () => _showCustomMessageDialog(context),
               child: const Text(
-                'Create First Message',
+                'Add your first message',
                 style: TextStyle(
                   color: CupertinoColors.white,
                   fontWeight: FontWeight.w600,
@@ -543,42 +560,65 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
       );
     }
 
-    return Stack(
+    return Column(
       children: [
-        ListView.builder(
-          padding: const EdgeInsets.only(bottom: 80),
-          itemCount: _customMessages.length,
-          itemBuilder: (context, index) {
-            final message = _customMessages[index];
-            final isFavorite = _favoriteMessages.contains(message);
-            return _buildMessageCard(
-              message,
-              isFavorite: isFavorite,
-              isCustom: true,
-              customIndex: index,
-            );
-          },
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.only(bottom: 16),
+            itemCount: _customMessages.length,
+            itemBuilder: (context, index) {
+              final message = _customMessages[index];
+              final isFavorite = _favoriteMessages.contains(message);
+              return _buildMessageCard(
+                message,
+                isFavorite: isFavorite,
+                isCustom: true,
+                customIndex: index,
+              );
+            },
+          ),
         ),
-
-        // Floating action button - only show if there are messages
-        Positioned(
-          right: 16,
-          bottom: 16,
-          child: CupertinoButton(
-            padding: EdgeInsets.zero,
-            onPressed: () => _showCustomMessageDialog(context),
-            child: Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                shape: BoxShape.circle,
-                boxShadow: AppColors.primaryShadow,
+        // Fixed bottom button
+        // Fixed bottom button container
+        Container(
+          decoration: BoxDecoration(
+            color: CupertinoColors.systemBackground,
+            border: Border(
+              top: BorderSide(
+                color: CupertinoColors.systemGrey5,
+                width: 0.5,
               ),
-              child: const Icon(
-                CupertinoIcons.add,
-                size: 24,
-                color: CupertinoColors.white,
+            ),
+          ),
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: CupertinoButton(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(12),
+                onPressed: () => _showCustomMessageDialog(context),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      CupertinoIcons.add,
+                      color: CupertinoColors.white,
+                      size: 18,
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'Add Custom Message',
+                      style: TextStyle(
+                        color: CupertinoColors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                        fontFamily: '.SF Pro Text',
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

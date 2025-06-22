@@ -472,7 +472,42 @@ class BackupService {
             ),
           );
 
+// Replace the import success section in importData method (around line 360-395)
           if (shouldImport == true && context.mounted) {
+            // Show importing dialog
+            showCupertinoDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (ctx) => Center(
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.black.withOpacity(0.8),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CupertinoActivityIndicator(
+                        color: CupertinoColors.white,
+                        radius: 14,
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        'Importing...',
+                        style: TextStyle(
+                          color: CupertinoColors.white,
+                          fontSize: 16,
+                          fontFamily: '.SF Pro Text',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+
             // Import the data
             final provider = Provider.of<FriendsProvider>(context, listen: false);
             final storageService = provider.storageService;
@@ -490,6 +525,14 @@ class BackupService {
               final prefs = await SharedPreferences.getInstance();
               await prefs.setInt('messages_sent_count', backupData['stats']['messagesSent'] ?? 0);
               await prefs.setInt('calls_made_count', backupData['stats']['callsMade'] ?? 0);
+            }
+
+            // Force reload the provider - THIS IS THE KEY CHANGE
+            await provider.reloadFriends();
+
+            // Close importing dialog
+            if (context.mounted) {
+              Navigator.pop(context);
             }
 
             // Show success
@@ -523,8 +566,8 @@ class BackupService {
                     CupertinoDialogAction(
                       onPressed: () {
                         Navigator.pop(context);
-                        // Reload the app
-                        Navigator.of(context).popUntil((route) => route.isFirst);
+                        // Just pop to go back, no need to reload entire app
+                        Navigator.pop(context);
                       },
                       child: const Text(
                         'OK',

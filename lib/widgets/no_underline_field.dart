@@ -43,24 +43,23 @@ class NoUnderlineField extends StatelessWidget {
         const SizedBox(height: 6),
 
         // Using CupertinoTextField instead of Material TextField
+        // In the CupertinoTextField widget, ensure textCapitalization is passed through:
         CupertinoTextField(
           controller: controller,
           placeholder: placeholder,
           keyboardType: keyboardType,
-          textCapitalization: textCapitalization,
+          textCapitalization: textCapitalization, // Make sure this is here
           obscureText: obscureText,
           maxLines: maxLines,
           minLines: minLines,
           style: AppTextStyles.inputText,
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 0),
-          // Clean decoration with no borders to prevent yellow lines
           decoration: null,
           suffix: suffixIcon,
           placeholderStyle: AppTextStyles.placeholder,
-          // Important: Set these to prevent yellow accessibility highlights
           autofocus: false,
           cursorColor: AppColors.primary,
-        ),
+        )
       ],
     );
   }
