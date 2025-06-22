@@ -49,7 +49,6 @@ class Illustrations {
 class _FriendsIllustrationPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-
     final bgPaint = Paint()
       ..color = AppColors.primaryLight
       ..style = PaintingStyle.fill;
@@ -117,16 +116,22 @@ class _FriendsIllustrationPainter extends CustomPainter {
 
     // Left curve
     heartPath.cubicTo(
-      centerX - heartSize * 0.9, centerY - heartSize * 0.2,
-      centerX - heartSize * 0.6, centerY - heartSize * 0.8,
-      centerX, centerY - heartSize * 0.2,
+      centerX - heartSize * 0.9,
+      centerY - heartSize * 0.2,
+      centerX - heartSize * 0.6,
+      centerY - heartSize * 0.8,
+      centerX,
+      centerY - heartSize * 0.2,
     );
 
     // Right curve
     heartPath.cubicTo(
-      centerX + heartSize * 0.6, centerY - heartSize * 0.8,
-      centerX + heartSize * 0.9, centerY - heartSize * 0.2,
-      centerX, centerY + heartSize * 0.3,
+      centerX + heartSize * 0.6,
+      centerY - heartSize * 0.8,
+      centerX + heartSize * 0.9,
+      centerY - heartSize * 0.2,
+      centerX,
+      centerY + heartSize * 0.3,
     );
 
     canvas.drawPath(heartPath, heartPaint);

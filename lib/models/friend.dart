@@ -79,7 +79,8 @@ class Friend {
       isEmoji: isEmoji ?? this.isEmoji,
       reminderDays: reminderDays ?? this.reminderDays,
       reminderTime: reminderTime ?? this.reminderTime,
-      hasPersistentNotification: hasPersistentNotification ?? this.hasPersistentNotification,
+      hasPersistentNotification:
+          hasPersistentNotification ?? this.hasPersistentNotification,
       isFavorite: isFavorite ?? this.isFavorite, // NEW: Include in copyWith
       helpingWith: helpingWith ?? this.helpingWith,
       theyHelpingWith: theyHelpingWith ?? this.theyHelpingWith,

@@ -94,11 +94,13 @@ class FriendsProvider with ChangeNotifier {
       }
 
       // Handle persistent notification changes
-      if (oldFriend.hasPersistentNotification != updatedFriend.hasPersistentNotification) {
+      if (oldFriend.hasPersistentNotification !=
+          updatedFriend.hasPersistentNotification) {
         if (updatedFriend.hasPersistentNotification) {
           await notificationService.showPersistentNotification(updatedFriend);
         } else {
-          await notificationService.removePersistentNotification(updatedFriend.id);
+          await notificationService
+              .removePersistentNotification(updatedFriend.id);
         }
       }
 

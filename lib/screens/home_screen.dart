@@ -534,7 +534,9 @@ class _HomeScreenNewState extends State<HomeScreenNew>
                                           MediaQuery(
                                             data:
                                                 MediaQuery.of(context).copyWith(
-                                              textScaleFactor: ResponsiveUtils.scaledFontSize(context, 1.1, maxScale: 1),
+                                              textScaleFactor: ResponsiveUtils
+                                                  .scaledFontSize(context, 1.1,
+                                                      maxScale: 1),
                                             ),
                                             child: Text(
                                               greeting,
@@ -550,7 +552,9 @@ class _HomeScreenNewState extends State<HomeScreenNew>
                                           MediaQuery(
                                             data:
                                                 MediaQuery.of(context).copyWith(
-                                              textScaleFactor: ResponsiveUtils.scaledFontSize(context, 1, maxScale: 1.3),
+                                              textScaleFactor: ResponsiveUtils
+                                                  .scaledFontSize(context, 1,
+                                                      maxScale: 1.3),
                                             ),
                                             child: Text(
                                               allFriends.isEmpty

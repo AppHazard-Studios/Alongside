@@ -176,10 +176,10 @@ class BatteryOptimizationService {
           const SizedBox(height: 12),
           const Text(
             'If you\'re not receiving notifications:\n'
-                '\n1. Go to Settings > Apps > Alongside'
-                '\n2. Tap "Battery"'
-                '\n3. Select "Unrestricted"'
-                '\n4. Also disable "Remove permissions if app is unused"',
+            '\n1. Go to Settings > Apps > Alongside'
+            '\n2. Tap "Battery"'
+            '\n3. Select "Unrestricted"'
+            '\n4. Also disable "Remove permissions if app is unused"',
             style: TextStyle(
               fontSize: 14,
               height: 1.4,

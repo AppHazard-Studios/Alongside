@@ -17,7 +17,8 @@ class OnboardingScreen extends StatefulWidget {
   State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> with TickerProviderStateMixin {
+class _OnboardingScreenState extends State<OnboardingScreen>
+    with TickerProviderStateMixin {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
@@ -131,19 +132,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                   _buildPage(
                     illustration: Illustrations.friendsIllustration(size: 200),
                     title: 'Welcome to Alongside',
-                    description: 'A simple way to walk alongside your friends through life\'s ups and downs.',
+                    description:
+                        'A simple way to walk alongside your friends through life\'s ups and downs.',
                     color: AppColors.primary,
                   ),
                   _buildPage(
-                    illustration: Illustrations.messagingIllustration(size: 200),
+                    illustration:
+                        Illustrations.messagingIllustration(size: 200),
                     title: 'Stay Connected',
-                    description: 'Send thoughtful messages and check in with reminders that help you be present when it matters most.',
+                    description:
+                        'Send thoughtful messages and check in with reminders that help you be present when it matters most.',
                     color: AppColors.secondary,
                   ),
                   _buildPage(
                     illustration: Illustrations.reminderIllustration(size: 200),
                     title: 'Never Forget',
-                    description: 'Set gentle reminders to reach out, because the best friendships are built one conversation at a time.',
+                    description:
+                        'Set gentle reminders to reach out, because the best friendships are built one conversation at a time.',
                     color: AppColors.accent,
                     showAddFriendButton: true,
                   ),
@@ -184,7 +189,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                       return Transform.scale(
                         scale: _scaleAnimation.value,
                         child: CupertinoButton(
-                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 32, vertical: 16),
                           color: AppColors.primary,
                           borderRadius: BorderRadius.circular(16),
                           onPressed: _nextPage,
@@ -290,7 +296,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                 if (showAddFriendButton) ...[
                   const SizedBox(height: 32),
                   CupertinoButton(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
                     color: color,
                     borderRadius: BorderRadius.circular(12),
                     onPressed: _addFirstFriend,

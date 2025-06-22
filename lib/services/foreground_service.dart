@@ -93,7 +93,8 @@ class AlongsideTaskHandler extends TaskHandler {
             // No active reminder scheduled
             shouldSchedule = true;
           } else if (nextReminderTime != null) {
-            final nextTime = DateTime.fromMillisecondsSinceEpoch(nextReminderTime);
+            final nextTime =
+                DateTime.fromMillisecondsSinceEpoch(nextReminderTime);
             // If we're past the scheduled time + buffer, schedule next one
             if (now.isAfter(nextTime.add(Duration(hours: 1)))) {
               shouldSchedule = true;
@@ -116,20 +117,16 @@ class AlongsideTaskHandler extends TaskHandler {
                 ? DateTime.fromMillisecondsSinceEpoch(lastActionTime)
                 : now;
 
-            DateTime nextTime = DateTime(
-                baseTime.year,
-                baseTime.month,
-                baseTime.day + friend.reminderDays,
-                hour,
-                minute
-            );
+            DateTime nextTime = DateTime(baseTime.year, baseTime.month,
+                baseTime.day + friend.reminderDays, hour, minute);
 
             // Make sure it's in the future
             while (nextTime.isBefore(now)) {
               nextTime = nextTime.add(Duration(days: friend.reminderDays));
             }
 
-            await prefs.setInt(nextReminderKey, nextTime.millisecondsSinceEpoch);
+            await prefs.setInt(
+                nextReminderKey, nextTime.millisecondsSinceEpoch);
           }
         }
       }

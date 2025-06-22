@@ -64,7 +64,8 @@ class BackupService {
       final reminderData = <String, dynamic>{};
       for (final friend in friends) {
         if (friend.reminderDays > 0) {
-          final nextReminderTime = await notificationService.getNextReminderTime(friend.id);
+          final nextReminderTime =
+              await notificationService.getNextReminderTime(friend.id);
           final lastActionTime = prefs.getInt('last_action_${friend.id}');
 
           reminderData[friend.id] = {
@@ -117,10 +118,10 @@ class BackupService {
 
   // Android-specific export options
   static Future<String?> _showAndroidExportOptions(
-      BuildContext context,
-      String jsonString,
-      Map<String, dynamic> backupData,
-      ) async {
+    BuildContext context,
+    String jsonString,
+    Map<String, dynamic> backupData,
+  ) async {
     return showCupertinoModalPopup<String?>(
       context: context,
       builder: (context) => CupertinoActionSheet(
@@ -138,7 +139,8 @@ class BackupService {
               Navigator.pop(context);
               final path = await _saveToDevice(context, jsonString);
               if (path != null && context.mounted) {
-                _showExportSuccessDialog(context, savedToDevice: true, path: path);
+                _showExportSuccessDialog(context,
+                    savedToDevice: true, path: path);
               }
             },
             child: const Row(
@@ -201,11 +203,13 @@ class BackupService {
   }
 
   // Save file directly to device storage - FIXED VERSION
-  static Future<String?> _saveToDevice(BuildContext context, String jsonString) async {
+  static Future<String?> _saveToDevice(
+      BuildContext context, String jsonString) async {
     try {
       // Create a temporary file first
       final tempDir = await getTemporaryDirectory();
-      final tempFile = File('${tempDir.path}/alongside_backup_${DateTime.now().millisecondsSinceEpoch}.json');
+      final tempFile = File(
+          '${tempDir.path}/alongside_backup_${DateTime.now().millisecondsSinceEpoch}.json');
 
       // Write as bytes to avoid encoding issues
       await tempFile.writeAsBytes(utf8.encode(jsonString));
@@ -213,7 +217,8 @@ class BackupService {
       // Let user choose location using the temporary file
       String? outputFile = await FilePicker.platform.saveFile(
         dialogTitle: 'Save Alongside Backup',
-        fileName: 'alongside_backup_${DateTime.now().millisecondsSinceEpoch}.json',
+        fileName:
+            'alongside_backup_${DateTime.now().millisecondsSinceEpoch}.json',
         type: FileType.custom,
         allowedExtensions: ['json'],
         bytes: await tempFile.readAsBytes(), // Pass bytes directly
@@ -240,7 +245,8 @@ class BackupService {
   }
 
   // Share file using share sheet
-  static Future<String?> _shareFile(BuildContext context, String jsonString) async {
+  static Future<String?> _shareFile(
+      BuildContext context, String jsonString) async {
     try {
       // Create temporary file
       final tempDir = await getTemporaryDirectory();
@@ -255,9 +261,8 @@ class BackupService {
           [XFile(tempFile.path, mimeType: 'application/json')],
           text: 'Alongside Backup - ${DateTime.now().toString().split(' ')[0]}',
           subject: 'Alongside App Backup',
-          sharePositionOrigin: box != null
-              ? box.localToGlobal(Offset.zero) & box.size
-              : null,
+          sharePositionOrigin:
+              box != null ? box.localToGlobal(Offset.zero) & box.size : null,
         );
 
         // Update last backup date
@@ -284,7 +289,8 @@ class BackupService {
   }
 
   // Show export success dialog
-  static void _showExportSuccessDialog(BuildContext context, {bool savedToDevice = false, String? path}) {
+  static void _showExportSuccessDialog(BuildContext context,
+      {bool savedToDevice = false, String? path}) {
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
@@ -509,22 +515,29 @@ class BackupService {
             );
 
             // Import the data
-            final provider = Provider.of<FriendsProvider>(context, listen: false);
+            final provider =
+                Provider.of<FriendsProvider>(context, listen: false);
             final storageService = provider.storageService;
 
             // Import friends
-            final friendsList = (backupData['friends'] as List?)?.map((f) => Friend.fromJson(f)).toList() ?? [];
+            final friendsList = (backupData['friends'] as List?)
+                    ?.map((f) => Friend.fromJson(f))
+                    .toList() ??
+                [];
             await storageService.saveFriends(friendsList);
 
             // Import custom messages
-            final customMessages = (backupData['customMessages'] as List?)?.cast<String>() ?? [];
+            final customMessages =
+                (backupData['customMessages'] as List?)?.cast<String>() ?? [];
             await storageService.saveCustomMessages(customMessages);
 
             // Import stats if available
             if (backupData['stats'] != null) {
               final prefs = await SharedPreferences.getInstance();
-              await prefs.setInt('messages_sent_count', backupData['stats']['messagesSent'] ?? 0);
-              await prefs.setInt('calls_made_count', backupData['stats']['callsMade'] ?? 0);
+              await prefs.setInt('messages_sent_count',
+                  backupData['stats']['messagesSent'] ?? 0);
+              await prefs.setInt(
+                  'calls_made_count', backupData['stats']['callsMade'] ?? 0);
             }
 
             // Force reload the provider - THIS IS THE KEY CHANGE

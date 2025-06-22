@@ -113,235 +113,240 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
       ),
       child: _isLoading
           ? const Center(
-        child: CupertinoActivityIndicator(radius: 14),
-      )
+              child: CupertinoActivityIndicator(radius: 14),
+            )
           : SafeArea(
-        child: Column(
-          children: [
-            // Friend info header with alongside details
-            Container(
-              margin: const EdgeInsets.all(16),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: CupertinoColors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: CupertinoColors.systemGrey5,
-                  width: 0.5,
-                ),
-              ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Friend basic info
-                  Row(
-                    children: [
-                      _buildProfileImage(),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                  // Friend info header with alongside details
+                  Container(
+                    margin: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: CupertinoColors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: CupertinoColors.systemGrey5,
+                        width: 0.5,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Friend basic info
+                        Row(
                           children: [
-                            Text(
-                              widget.friend.name,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
-                                fontFamily: '.SF Pro Text',
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              widget.friend.phoneNumber,
-                              style: const TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 14,
-                                fontFamily: '.SF Pro Text',
+                            _buildProfileImage(),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    widget.friend.name,
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimary,
+                                      fontFamily: '.SF Pro Text',
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    widget.friend.phoneNumber,
+                                    style: const TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 14,
+                                      fontFamily: '.SF Pro Text',
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
-                      ),
-                    ],
-                  ),
 
-                  // Alongside information
-                  if ((widget.friend.helpingWith != null && widget.friend.helpingWith!.isNotEmpty) ||
-                      (widget.friend.theyHelpingWith != null && widget.friend.theyHelpingWith!.isNotEmpty)) ...[
-                    const SizedBox(height: 16),
-                    Container(
-                      height: 0.5,
-                      color: CupertinoColors.systemGrey5,
-                    ),
-                    const SizedBox(height: 16),
-                  ],
+                        // Alongside information
+                        if ((widget.friend.helpingWith != null &&
+                                widget.friend.helpingWith!.isNotEmpty) ||
+                            (widget.friend.theyHelpingWith != null &&
+                                widget.friend.theyHelpingWith!.isNotEmpty)) ...[
+                          const SizedBox(height: 16),
+                          Container(
+                            height: 0.5,
+                            color: CupertinoColors.systemGrey5,
+                          ),
+                          const SizedBox(height: 16),
+                        ],
 
-                  // What you're alongside them in
-                  if (widget.friend.helpingWith != null && widget.friend.helpingWith!.isNotEmpty) ...[
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryLight,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            CupertinoIcons.heart_fill,
-                            color: AppColors.primary,
-                            size: 12,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
+                        // What you're alongside them in
+                        if (widget.friend.helpingWith != null &&
+                            widget.friend.helpingWith!.isNotEmpty) ...[
+                          Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Alongside them in:',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryLight,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  CupertinoIcons.heart_fill,
                                   color: AppColors.primary,
-                                  fontFamily: '.SF Pro Text',
+                                  size: 12,
                                 ),
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                widget.friend.helpingWith!,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: AppColors.textPrimary,
-                                  fontFamily: '.SF Pro Text',
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Alongside them in:',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.primary,
+                                        fontFamily: '.SF Pro Text',
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      widget.friend.helpingWith!,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: AppColors.textPrimary,
+                                        fontFamily: '.SF Pro Text',
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                      ],
-                    ),
-                    if (widget.friend.theyHelpingWith != null && widget.friend.theyHelpingWith!.isNotEmpty)
-                      const SizedBox(height: 12),
-                  ],
+                          if (widget.friend.theyHelpingWith != null &&
+                              widget.friend.theyHelpingWith!.isNotEmpty)
+                            const SizedBox(height: 12),
+                        ],
 
-                  // What they're alongside you in
-                  if (widget.friend.theyHelpingWith != null && widget.friend.theyHelpingWith!.isNotEmpty) ...[
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: AppColors.tertiaryLight,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            CupertinoIcons.person_2_fill,
-                            color: AppColors.tertiary,
-                            size: 12,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
+                        // What they're alongside you in
+                        if (widget.friend.theyHelpingWith != null &&
+                            widget.friend.theyHelpingWith!.isNotEmpty) ...[
+                          Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Alongside you in:',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: AppColors.tertiaryLight,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  CupertinoIcons.person_2_fill,
                                   color: AppColors.tertiary,
-                                  fontFamily: '.SF Pro Text',
+                                  size: 12,
                                 ),
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                widget.friend.theyHelpingWith!,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: AppColors.textPrimary,
-                                  fontFamily: '.SF Pro Text',
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Alongside you in:',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.tertiary,
+                                        fontFamily: '.SF Pro Text',
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      widget.friend.theyHelpingWith!,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: AppColors.textPrimary,
+                                        fontFamily: '.SF Pro Text',
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
+                        ],
+                      ],
+                    ),
+                  ),
+
+                  // Help text for interactions
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.touch_app,
+                          size: 14,
+                          color: AppColors.textSecondary.withOpacity(0.6),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Tap to send • Hold for options',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary.withOpacity(0.6),
+                            fontFamily: '.SF Pro Text',
+                          ),
                         ),
                       ],
                     ),
-                  ],
-                ],
-              ),
-            ),
-
-            // Help text for interactions
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.touch_app,
-                    size: 14,
-                    color: AppColors.textSecondary.withOpacity(0.6),
                   ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Tap to send • Hold for options',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary.withOpacity(0.6),
-                      fontFamily: '.SF Pro Text',
+
+                  // Category indicator dots
+                  Container(
+                    height: 40,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(_categories.length, (index) {
+                        return AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          height: 8,
+                          width: _currentPage == index ? 24 : 8,
+                          decoration: BoxDecoration(
+                            color: _currentPage == index
+                                ? AppColors.primary
+                                : AppColors.primary.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+
+                  // Swipeable message pages
+                  Expanded(
+                    child: PageView.builder(
+                      controller: _pageController,
+                      onPageChanged: (index) {
+                        setState(() {
+                          _currentPage = index;
+                        });
+                        HapticFeedback.lightImpact();
+                      },
+                      itemCount: _categories.length,
+                      itemBuilder: (context, index) {
+                        return _buildCategoryPage(index);
+                      },
                     ),
                   ),
                 ],
               ),
             ),
-
-            // Category indicator dots
-            Container(
-              height: 40,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(_categories.length, (index) {
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    height: 8,
-                    width: _currentPage == index ? 24 : 8,
-                    decoration: BoxDecoration(
-                      color: _currentPage == index
-                          ? AppColors.primary
-                          : AppColors.primary.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  );
-                }),
-              ),
-            ),
-
-            // Swipeable message pages
-            Expanded(
-              child: PageView.builder(
-                controller: _pageController,
-                onPageChanged: (index) {
-                  setState(() {
-                    _currentPage = index;
-                  });
-                  HapticFeedback.lightImpact();
-                },
-                itemCount: _categories.length,
-                itemBuilder: (context, index) {
-                  return _buildCategoryPage(index);
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -382,7 +387,8 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
 
   Widget _buildCategoryContent(int categoryIndex) {
     final provider = Provider.of<FriendsProvider>(context, listen: false);
-    final categorizedMessages = provider.storageService.getCategorizedMessages();
+    final categorizedMessages =
+        provider.storageService.getCategorizedMessages();
 
     switch (categoryIndex) {
       case 0: // Favorites
@@ -390,7 +396,8 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
       case 1: // Check-ins
         return _buildMessagesList(categorizedMessages['Check-ins'] ?? []);
       case 2: // Support & Struggle
-        return _buildMessagesList(categorizedMessages['Support & Struggle'] ?? []);
+        return _buildMessagesList(
+            categorizedMessages['Support & Struggle'] ?? []);
       case 3: // Confession
         return _buildMessagesList(categorizedMessages['Confession'] ?? []);
       case 4: // Celebration
@@ -628,14 +635,15 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
   }
 
   Widget _buildMessageCard(
-      String message, {
-        required bool isFavorite,
-        bool isCustom = false,
-        int? customIndex,
-      }) {
+    String message, {
+    required bool isFavorite,
+    bool isCustom = false,
+    int? customIndex,
+  }) {
     return GestureDetector(
       onTap: () => _sendMessage(context, message),
-      onLongPress: () => _showMessageOptions(context, message, isCustom: isCustom, customIndex: customIndex),
+      onLongPress: () => _showMessageOptions(context, message,
+          isCustom: isCustom, customIndex: customIndex),
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(16),
@@ -671,7 +679,8 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
             const SizedBox(width: 12),
             if (isCustom) ...[
               GestureDetector(
-                onTap: () => _showCustomMessageOptions(context, message, customIndex!),
+                onTap: () =>
+                    _showCustomMessageOptions(context, message, customIndex!),
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   child: Icon(
@@ -694,7 +703,8 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
     );
   }
 
-  void _showMessageOptions(BuildContext context, String message, {bool isCustom = false, int? customIndex}) {
+  void _showMessageOptions(BuildContext context, String message,
+      {bool isCustom = false, int? customIndex}) {
     final isFavorite = _favoriteMessages.contains(message);
 
     showCupertinoModalPopup(
@@ -804,7 +814,8 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
     );
   }
 
-  void _showCustomMessageOptions(BuildContext context, String message, int index) {
+  void _showCustomMessageOptions(
+      BuildContext context, String message, int index) {
     showCupertinoModalPopup(
       context: context,
       builder: (context) => CupertinoActionSheet(
@@ -872,7 +883,8 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
   void _showFavoritePicker() {
     final provider = Provider.of<FriendsProvider>(context, listen: false);
     final allMessages = <String>[];
-    final categorizedMessages = provider.storageService.getCategorizedMessages();
+    final categorizedMessages =
+        provider.storageService.getCategorizedMessages();
 
     // Add all categorized messages
     categorizedMessages.forEach((category, messages) {
@@ -904,9 +916,8 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
       await Share.share(
         message,
         subject: 'Message for ${widget.friend.name}',
-        sharePositionOrigin: box != null
-            ? box.localToGlobal(Offset.zero) & box.size
-            : null,
+        sharePositionOrigin:
+            box != null ? box.localToGlobal(Offset.zero) & box.size : null,
       );
     } catch (e) {
       _showToast('Unable to share message');
@@ -1018,7 +1029,9 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
             onPressed: () async {
               if (textController.text.isNotEmpty) {
                 Navigator.pop(context);
-                final storageService = Provider.of<FriendsProvider>(context, listen: false).storageService;
+                final storageService =
+                    Provider.of<FriendsProvider>(context, listen: false)
+                        .storageService;
                 await storageService.addCustomMessage(textController.text);
                 _loadMessages();
                 _showToast('Message saved! ✨');
@@ -1091,14 +1104,17 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
           ),
           CupertinoDialogAction(
             onPressed: () async {
-              if (textController.text.isNotEmpty && textController.text != message) {
+              if (textController.text.isNotEmpty &&
+                  textController.text != message) {
                 Navigator.pop(context);
 
                 setState(() {
                   _customMessages[index] = textController.text;
                 });
 
-                final storageService = Provider.of<FriendsProvider>(context, listen: false).storageService;
+                final storageService =
+                    Provider.of<FriendsProvider>(context, listen: false)
+                        .storageService;
                 await storageService.saveCustomMessages(_customMessages);
 
                 _showToast('Message updated! ✨');
@@ -1118,7 +1134,8 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
     );
   }
 
-  void _deleteCustomMessage(BuildContext context, String message, int index) async {
+  void _deleteCustomMessage(
+      BuildContext context, String message, int index) async {
     final shouldDelete = await showCupertinoDialog<bool>(
       context: context,
       builder: (context) => CupertinoAlertDialog(
@@ -1177,7 +1194,8 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
         _favoriteMessages.remove(message);
       });
 
-      final storageService = Provider.of<FriendsProvider>(context, listen: false).storageService;
+      final storageService =
+          Provider.of<FriendsProvider>(context, listen: false).storageService;
       await storageService.saveCustomMessages(_customMessages);
       await _updateFavorites(_favoriteMessages);
 
@@ -1201,22 +1219,23 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
       ),
       child: widget.friend.isEmoji
           ? Center(
-        child: Text(
-          widget.friend.profileImage,
-          style: const TextStyle(fontSize: 24),
-        ),
-      )
+              child: Text(
+                widget.friend.profileImage,
+                style: const TextStyle(fontSize: 24),
+              ),
+            )
           : ClipOval(
-        child: Image.file(
-          File(widget.friend.profileImage),
-          fit: BoxFit.cover,
-        ),
-      ),
+              child: Image.file(
+                File(widget.friend.profileImage),
+                fit: BoxFit.cover,
+              ),
+            ),
     );
   }
 
   void _sendMessage(BuildContext context, String message) async {
-    final phoneNumber = widget.friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+    final phoneNumber =
+        widget.friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
     try {
       showCupertinoDialog(
         context: context,
@@ -1253,14 +1272,16 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
 
       await Future.delayed(const Duration(milliseconds: 300));
 
-      final smsUri = Uri.parse('sms:$phoneNumber?body=${Uri.encodeComponent(message)}');
+      final smsUri =
+          Uri.parse('sms:$phoneNumber?body=${Uri.encodeComponent(message)}');
       await launchUrl(
         smsUri,
         mode: LaunchMode.externalApplication,
       );
 
       // Track the message sent
-      final storageService = Provider.of<FriendsProvider>(context, listen: false).storageService;
+      final storageService =
+          Provider.of<FriendsProvider>(context, listen: false).storageService;
       await storageService.incrementMessagesSent();
 
       if (context.mounted) {
@@ -1461,10 +1482,10 @@ class _FavoritePickerModalState extends State<_FavoritePickerModal> {
                           ),
                           child: isSelected
                               ? const Icon(
-                            CupertinoIcons.checkmark,
-                            color: CupertinoColors.white,
-                            size: 14,
-                          )
+                                  CupertinoIcons.checkmark,
+                                  color: CupertinoColors.white,
+                                  size: 14,
+                                )
                               : null,
                         ),
                         const SizedBox(width: 12),

@@ -35,13 +35,15 @@ class MessageBubble extends StatelessWidget {
                     horizontal: 16,
                   ),
                   decoration: BoxDecoration(
-                    color: isSelectable ? Colors.white : const Color(0xFF007AFF).withOpacity(0.08),
+                    color: isSelectable
+                        ? Colors.white
+                        : const Color(0xFF007AFF).withOpacity(0.08),
                     borderRadius: BorderRadius.circular(16),
                     border: isSelectable
                         ? Border.all(
-                      color: const Color(0xFFE5E5EA),
-                      width: 1,
-                    )
+                            color: const Color(0xFFE5E5EA),
+                            width: 1,
+                          )
                         : null,
                   ),
                   child: Text(

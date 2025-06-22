@@ -3,7 +3,9 @@ import 'dart:math';
 
 class ResponsiveUtils {
   // Intelligent text scaling that respects accessibility
-  static double scaledFontSize(BuildContext context, double baseSize, {
+  static double scaledFontSize(
+    BuildContext context,
+    double baseSize, {
     double minScale = 0.85,
     double maxScale = 1.5,
     double scaleFactor = 1.0,
@@ -16,7 +18,9 @@ class ResponsiveUtils {
   }
 
   // Intelligent spacing that scales proportionally
-  static double scaledSpacing(BuildContext context, double baseSpacing, {
+  static double scaledSpacing(
+    BuildContext context,
+    double baseSpacing, {
     double scaleFactor = 0.3, // How much spacing responds to text scale
   }) {
     final textScaleFactor = MediaQuery.of(context).textScaleFactor;
@@ -26,7 +30,9 @@ class ResponsiveUtils {
   }
 
   // Smart icon scaling - scales but within reason
-  static double scaledIconSize(BuildContext context, double baseSize, {
+  static double scaledIconSize(
+    BuildContext context,
+    double baseSize, {
     double minScale = 0.9,
     double maxScale = 1.3,
     double scaleFactor = 0.5, // Icons scale less than text
@@ -39,7 +45,9 @@ class ResponsiveUtils {
   }
 
   // Container scaling for things like profile circles
-  static double scaledContainerSize(BuildContext context, double baseSize, {
+  static double scaledContainerSize(
+    BuildContext context,
+    double baseSize, {
     double scaleFactor = 0.3, // Containers scale conservatively
   }) {
     final textScaleFactor = MediaQuery.of(context).textScaleFactor;
@@ -55,7 +63,8 @@ class ResponsiveUtils {
   }
 
   // Get padding that scales intelligently
-  static EdgeInsets scaledPadding(BuildContext context, EdgeInsets basePadding) {
+  static EdgeInsets scaledPadding(
+      BuildContext context, EdgeInsets basePadding) {
     final scale = scaledSpacing(context, 1.0);
     return EdgeInsets.only(
       left: basePadding.left * scale,
@@ -66,7 +75,8 @@ class ResponsiveUtils {
   }
 
   // Button height that scales appropriately
-  static double scaledButtonHeight(BuildContext context, {double baseHeight = 44}) {
+  static double scaledButtonHeight(BuildContext context,
+      {double baseHeight = 44}) {
     final textScaleFactor = MediaQuery.of(context).textScaleFactor;
     // Buttons need to grow for accessibility but not too much
     final buttonScale = 1.0 + ((textScaleFactor - 1.0) * 0.4);

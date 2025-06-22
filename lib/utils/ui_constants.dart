@@ -23,10 +23,12 @@ class UIConstants {
   static const EdgeInsets standardPadding = EdgeInsets.all(16.0);
 
   // Input field padding
-  static const EdgeInsets inputPadding = EdgeInsets.symmetric(vertical: 12.0, horizontal: 0);
+  static const EdgeInsets inputPadding =
+      EdgeInsets.symmetric(vertical: 12.0, horizontal: 0);
 
   // List item padding
-  static const EdgeInsets listItemPadding = EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0);
+  static const EdgeInsets listItemPadding =
+      EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0);
 
   // BORDER RADIUS
 

@@ -47,18 +47,17 @@ class CharacterComponents {
         const SizedBox(width: 8),
         Text(
           "$greeting, $name!",
-          style: style ?? const TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-            fontFamily: '.SF Pro Text',
-          ),
+          style: style ??
+              const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                fontFamily: '.SF Pro Text',
+              ),
         ),
       ],
     );
 
-    return centered
-        ? Center(child: content)
-        : content;
+    return centered ? Center(child: content) : content;
   }
 
   // Clean iOS-style button
@@ -154,9 +153,10 @@ class CharacterComponents {
     VoidCallback? onTap,
   }) {
     // Default background color that contrasts with both light and dark themes
-    final bgColor = backgroundColor ?? (isEmoji
-        ? CupertinoColors.systemGrey6  // Light gray background for emoji
-        : CupertinoColors.white);      // White background for photos
+    final bgColor = backgroundColor ??
+        (isEmoji
+            ? CupertinoColors.systemGrey6 // Light gray background for emoji
+            : CupertinoColors.white); // White background for photos
 
     return GestureDetector(
       onTap: onTap,
@@ -173,17 +173,17 @@ class CharacterComponents {
         ),
         child: isEmoji
             ? Center(
-          child: Text(
-            imageOrEmoji,
-            style: TextStyle(fontSize: size * 0.5),
-          ),
-        )
+                child: Text(
+                  imageOrEmoji,
+                  style: TextStyle(fontSize: size * 0.5),
+                ),
+              )
             : ClipOval(
-          child: Image.file(
-            File(imageOrEmoji),
-            fit: BoxFit.cover,
-          ),
-        ),
+                child: Image.file(
+                  File(imageOrEmoji),
+                  fit: BoxFit.cover,
+                ),
+              ),
       ),
     );
   }

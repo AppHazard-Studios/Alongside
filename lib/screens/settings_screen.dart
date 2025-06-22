@@ -582,7 +582,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               }
 
               Navigator.pop(context);
-              final success = await _lockService.enablePinLock(pinController.text);
+              final success =
+                  await _lockService.enablePinLock(pinController.text);
               if (success) {
                 await _loadSettings();
               } else {
@@ -676,15 +677,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildSettingsItem(
-      BuildContext context, {
-        required IconData icon,
-        required Color iconColor,
-        required String title,
-        required String subtitle,
-        required VoidCallback onTap,
-        bool showChevron = true,
-        bool isDestructive = false,
-      }) {
+    BuildContext context, {
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+    bool showChevron = true,
+    bool isDestructive = false,
+  }) {
     return CupertinoButton(
       padding: EdgeInsets.zero,
       onPressed: onTap,
@@ -713,7 +714,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Text(
                     title,
                     style: TextStyle(
-                      color: isDestructive ? AppColors.error : CupertinoColors.label,
+                      color: isDestructive
+                          ? AppColors.error
+                          : CupertinoColors.label,
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                       fontFamily: '.SF Pro Text',
@@ -744,14 +747,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildToggleItem(
-      BuildContext context, {
-        required IconData icon,
-        required Color iconColor,
-        required String title,
-        required String subtitle,
-        required bool value,
-        required Function(bool) onChanged,
-      }) {
+    BuildContext context, {
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    required bool value,
+    required Function(bool) onChanged,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
@@ -908,7 +911,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               borderRadius: BorderRadius.circular(12),
               onPressed: () async {
                 Navigator.pop(context);
-                await BatteryOptimizationService.requestBatteryOptimization(context);
+                await BatteryOptimizationService.requestBatteryOptimization(
+                    context);
               },
               child: const Text(
                 'Enable Battery Optimization Exemption',
@@ -1003,7 +1007,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               );
 
-              final provider = Provider.of<FriendsProvider>(context, listen: false);
+              final provider =
+                  Provider.of<FriendsProvider>(context, listen: false);
               final storageService = provider.storageService;
 
               await storageService.saveFriends([]);
@@ -1015,7 +1020,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               final notificationService = NotificationService();
               for (final friend in provider.friends) {
                 await notificationService.cancelReminder(friend.id);
-                await notificationService.removePersistentNotification(friend.id);
+                await notificationService
+                    .removePersistentNotification(friend.id);
               }
 
               await provider.reloadFriends();
@@ -1052,7 +1058,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       CupertinoDialogAction(
                         onPressed: () {
                           Navigator.pop(context);
-                          Navigator.of(context).popUntil((route) => route.isFirst);
+                          Navigator.of(context)
+                              .popUntil((route) => route.isFirst);
                         },
                         child: const Text(
                           'OK',
@@ -1175,18 +1182,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          ...steps.map((step) => Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Text(
-              step,
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondary,
-                fontFamily: '.SF Pro Text',
-                height: 1.4,
-              ),
-            ),
-          )).toList(),
+          ...steps
+              .map((step) => Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text(
+                      step,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
+                        fontFamily: '.SF Pro Text',
+                        height: 1.4,
+                      ),
+                    ),
+                  ))
+              .toList(),
         ],
       ),
     );

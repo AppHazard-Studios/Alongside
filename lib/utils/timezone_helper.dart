@@ -18,7 +18,6 @@ class TimezoneHelper {
     try {
       // Set to a default timezone
       tz.setLocalLocation(tz.getLocation('America/New_York'));
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 }

@@ -8,7 +8,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/friend.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-typedef NotificationActionCallback = void Function(String friendId, String action);
+typedef NotificationActionCallback = void Function(
+    String friendId, String action);
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -16,7 +17,7 @@ class NotificationService {
   NotificationService._internal();
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-  FlutterLocalNotificationsPlugin();
+      FlutterLocalNotificationsPlugin();
 
   NotificationActionCallback? _actionCallback;
   bool _isInitialized = false;
@@ -42,10 +43,11 @@ class NotificationService {
 
       // Android initialization settings with icon
       const AndroidInitializationSettings androidSettings =
-      AndroidInitializationSettings('@mipmap/ic_launcher');
+          AndroidInitializationSettings('@mipmap/ic_launcher');
 
       // iOS initialization settings
-      const DarwinInitializationSettings iosSettings = DarwinInitializationSettings(
+      const DarwinInitializationSettings iosSettings =
+          DarwinInitializationSettings(
         requestAlertPermission: true,
         requestBadgePermission: true,
         requestSoundPermission: true,
@@ -85,8 +87,9 @@ class NotificationService {
   Future<void> _createNotificationChannels() async {
     if (!Platform.isAndroid) return;
 
-    final androidPlugin = flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    final androidPlugin =
+        flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
 
     if (androidPlugin == null) {
       print("❌ Android plugin is null");
@@ -133,7 +136,8 @@ class NotificationService {
     final status = await Permission.notification.status;
     if (status.isDenied) {
       final result = await Permission.notification.request();
-      print("Notification permission: ${result.isGranted ? 'Granted' : 'Denied'}");
+      print(
+          "Notification permission: ${result.isGranted ? 'Granted' : 'Denied'}");
       return result.isGranted;
     }
     return status.isGranted;
@@ -169,7 +173,8 @@ class NotificationService {
 
         // Update last action time
         SharedPreferences.getInstance().then((prefs) {
-          prefs.setInt('last_action_$friendId', DateTime.now().millisecondsSinceEpoch);
+          prefs.setInt(
+              'last_action_$friendId', DateTime.now().millisecondsSinceEpoch);
         });
       }
 
@@ -199,10 +204,12 @@ class NotificationService {
     try {
       final int id = _getNotificationId(friend.id, isPersistent: true);
 
-      final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      final AndroidNotificationDetails androidDetails =
+          AndroidNotificationDetails(
         'alongside_persistent',
         'Quick Access Notifications',
-        channelDescription: 'Persistent notifications for quick access to friends',
+        channelDescription:
+            'Persistent notifications for quick access to friends',
         importance: Importance.low,
         priority: Priority.low,
         ongoing: true,
@@ -300,11 +307,14 @@ class NotificationService {
       }
 
       // Store the scheduled time
-      await prefs.setInt('next_reminder_${friend.id}', nextReminder.millisecondsSinceEpoch);
-      await prefs.setInt('active_reminder_${friend.id}', nextReminder.millisecondsSinceEpoch);
+      await prefs.setInt(
+          'next_reminder_${friend.id}', nextReminder.millisecondsSinceEpoch);
+      await prefs.setInt(
+          'active_reminder_${friend.id}', nextReminder.millisecondsSinceEpoch);
 
       // Create notification details
-      final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      final AndroidNotificationDetails androidDetails =
+          AndroidNotificationDetails(
         'alongside_reminders',
         'Friend Reminders',
         channelDescription: 'Notifications for friend check-in reminders',
@@ -333,7 +343,8 @@ class NotificationService {
       );
 
       // Convert to TZDateTime
-      final tz.TZDateTime scheduledDate = tz.TZDateTime.from(nextReminder, tz.local);
+      final tz.TZDateTime scheduledDate =
+          tz.TZDateTime.from(nextReminder, tz.local);
 
       // Schedule the notification (without uiLocalNotificationDateInterpretation)
       await flutterLocalNotificationsPlugin.zonedSchedule(
@@ -387,7 +398,8 @@ class NotificationService {
     }
 
     try {
-      const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      const AndroidNotificationDetails androidDetails =
+          AndroidNotificationDetails(
         'alongside_reminders',
         'Friend Reminders',
         channelDescription: 'Test notification',
@@ -423,7 +435,9 @@ class NotificationService {
   Future<DateTime?> getNextReminderTime(String friendId) async {
     final prefs = await SharedPreferences.getInstance();
     final nextTime = prefs.getInt('next_reminder_$friendId');
-    return nextTime != null ? DateTime.fromMillisecondsSinceEpoch(nextTime) : null;
+    return nextTime != null
+        ? DateTime.fromMillisecondsSinceEpoch(nextTime)
+        : null;
   }
 
   // Check if notifications are properly set up

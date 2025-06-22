@@ -78,7 +78,8 @@ class AlongsideApp extends StatefulWidget {
   State<AlongsideApp> createState() => _AlongsideAppState();
 }
 
-class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver {
+class _AlongsideAppState extends State<AlongsideApp>
+    with WidgetsBindingObserver {
   bool _isLocked = true;
   bool _lockChecked = false;
   final LockService _lockService = LockService();
@@ -192,7 +193,8 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
         '/': (context) => const WithForegroundTask(child: HomeScreenNew()),
         '/notification': (context) => const NotificationRouterScreen(),
         '/call': (ctx) {
-          final args = ModalRoute.of(ctx)!.settings.arguments as Map<String, dynamic>;
+          final args =
+              ModalRoute.of(ctx)!.settings.arguments as Map<String, dynamic>;
           final friend = args['friend'] as Friend;
           return CallScreen(friend: friend);
         },
@@ -206,7 +208,8 @@ class NotificationRouterScreen extends StatefulWidget {
   const NotificationRouterScreen({Key? key}) : super(key: key);
 
   @override
-  State<NotificationRouterScreen> createState() => _NotificationRouterScreenState();
+  State<NotificationRouterScreen> createState() =>
+      _NotificationRouterScreenState();
 }
 
 class _NotificationRouterScreenState extends State<NotificationRouterScreen> {
@@ -233,7 +236,8 @@ class _NotificationRouterScreenState extends State<NotificationRouterScreen> {
 
         if (friend != null) {
           // Update last action time
-          await prefs.setInt('last_action_$friendId', DateTime.now().millisecondsSinceEpoch);
+          await prefs.setInt(
+              'last_action_$friendId', DateTime.now().millisecondsSinceEpoch);
 
           if (mounted) {
             if (action == 'message') {

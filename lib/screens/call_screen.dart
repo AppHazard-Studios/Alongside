@@ -40,7 +40,8 @@ class _CallScreenState extends State<CallScreen> {
     });
 
     try {
-      final phoneNumber = widget.friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+      final phoneNumber =
+          widget.friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
       final telUri = Uri.parse('tel:$phoneNumber');
 
       final launched = await launchUrl(
@@ -53,7 +54,8 @@ class _CallScreenState extends State<CallScreen> {
       }
 
       // Track the call made
-      final storageService = Provider.of<FriendsProvider>(context, listen: false).storageService;
+      final storageService =
+          Provider.of<FriendsProvider>(context, listen: false).storageService;
       await storageService.incrementCallsMade();
 
       // Return to home screen after initiating call

@@ -50,8 +50,26 @@ class AppConstants {
 
   // Emoji options for profile pictures (unchanged)
   static const List<String> profileEmojis = [
-    "😊", "🙂", "😇", "😎", "😅", "😉", "😐", "😶", "🙏", "✝️",
-    "❤️", "🤍", "🔥", "⚓", "🛡️", "👊", "💪", "🤝", "🙌", "🕊️",
+    "😊",
+    "🙂",
+    "😇",
+    "😎",
+    "😅",
+    "😉",
+    "😐",
+    "😶",
+    "🙏",
+    "✝️",
+    "❤️",
+    "🤍",
+    "🔥",
+    "⚓",
+    "🛡️",
+    "👊",
+    "💪",
+    "🤝",
+    "🙌",
+    "🕊️",
   ];
 
   // Extended reminder options - now includes months
@@ -80,9 +98,12 @@ class AppConstants {
   static const int secondaryTextColorValue = 0xFF8E8E93; // iOS gray
 
   // UI Element colors - iOS style
-  static const int profileCircleColorValue = 0xFFE1E6EB; // Light gray for profile circles
-  static const int emojiPickerColorValue = 0xFFF2F2F7; // Light background for emoji picker
-  static const int notificationSettingsColorValue = 0xFFF9F9FB; // Very light for settings
+  static const int profileCircleColorValue =
+      0xFFE1E6EB; // Light gray for profile circles
+  static const int emojiPickerColorValue =
+      0xFFF2F2F7; // Light background for emoji picker
+  static const int notificationSettingsColorValue =
+      0xFFF9F9FB; // Very light for settings
   static const int dialogBackgroundColorValue = 0xFFFFFFFF; // White for dialogs
   static const int bottomSheetHandleColorValue = 0xFFDCDCDD; // iOS-style handle
   static const int deleteColorValue = 0xFFFF3B30; // iOS red
@@ -107,9 +128,12 @@ class AppConstants {
   static Color get secondaryTextColor => const Color(secondaryTextColorValue);
   static Color get profileCircleColor => const Color(profileCircleColorValue);
   static Color get emojiPickerColor => const Color(emojiPickerColorValue);
-  static Color get notificationSettingsColor => const Color(notificationSettingsColorValue);
-  static Color get dialogBackgroundColor => const Color(dialogBackgroundColorValue);
-  static Color get bottomSheetHandleColor => const Color(bottomSheetHandleColorValue);
+  static Color get notificationSettingsColor =>
+      const Color(notificationSettingsColorValue);
+  static Color get dialogBackgroundColor =>
+      const Color(dialogBackgroundColorValue);
+  static Color get bottomSheetHandleColor =>
+      const Color(bottomSheetHandleColorValue);
   static Color get deleteColor => const Color(deleteColorValue);
   static Color get borderColor => const Color(borderColorValue);
 
@@ -120,65 +144,65 @@ class AppConstants {
 
   // Common text styles
   static TextStyle get title1 => const TextStyle(
-    fontSize: 28,
-    fontWeight: FontWeight.bold,
-    letterSpacing: 0.35,
-    color: Color(primaryTextColorValue),
-  );
+        fontSize: 28,
+        fontWeight: FontWeight.bold,
+        letterSpacing: 0.35,
+        color: Color(primaryTextColorValue),
+      );
 
   static TextStyle get title2 => const TextStyle(
-    fontSize: 22,
-    fontWeight: FontWeight.bold,
-    letterSpacing: 0.35,
-    color: Color(primaryTextColorValue),
-  );
+        fontSize: 22,
+        fontWeight: FontWeight.bold,
+        letterSpacing: 0.35,
+        color: Color(primaryTextColorValue),
+      );
 
   static TextStyle get title3 => const TextStyle(
-    fontSize: 20,
-    fontWeight: FontWeight.w600,
-    letterSpacing: 0.35,
-    color: Color(primaryTextColorValue),
-  );
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.35,
+        color: Color(primaryTextColorValue),
+      );
 
   static TextStyle get headline => const TextStyle(
-    fontSize: 17,
-    fontWeight: FontWeight.w600,
-    letterSpacing: -0.41,
-    color: Color(primaryTextColorValue),
-  );
+        fontSize: 17,
+        fontWeight: FontWeight.w600,
+        letterSpacing: -0.41,
+        color: Color(primaryTextColorValue),
+      );
 
   static TextStyle get body => const TextStyle(
-    fontSize: 17,
-    fontWeight: FontWeight.normal,
-    letterSpacing: -0.41,
-    color: Color(primaryTextColorValue),
-  );
+        fontSize: 17,
+        fontWeight: FontWeight.normal,
+        letterSpacing: -0.41,
+        color: Color(primaryTextColorValue),
+      );
 
   static TextStyle get callout => const TextStyle(
-    fontSize: 16,
-    fontWeight: FontWeight.normal,
-    letterSpacing: -0.32,
-    color: Color(primaryTextColorValue),
-  );
+        fontSize: 16,
+        fontWeight: FontWeight.normal,
+        letterSpacing: -0.32,
+        color: Color(primaryTextColorValue),
+      );
 
   static TextStyle get subhead => const TextStyle(
-    fontSize: 15,
-    fontWeight: FontWeight.normal,
-    letterSpacing: -0.24,
-    color: Color(primaryTextColorValue),
-  );
+        fontSize: 15,
+        fontWeight: FontWeight.normal,
+        letterSpacing: -0.24,
+        color: Color(primaryTextColorValue),
+      );
 
   static TextStyle get footnote => const TextStyle(
-    fontSize: 13,
-    fontWeight: FontWeight.normal,
-    letterSpacing: -0.08,
-    color: Color(secondaryTextColorValue),
-  );
+        fontSize: 13,
+        fontWeight: FontWeight.normal,
+        letterSpacing: -0.08,
+        color: Color(secondaryTextColorValue),
+      );
 
   static TextStyle get caption => const TextStyle(
-    fontSize: 12,
-    fontWeight: FontWeight.normal,
-    letterSpacing: 0,
-    color: Color(secondaryTextColorValue),
-  );
+        fontSize: 12,
+        fontWeight: FontWeight.normal,
+        letterSpacing: 0,
+        color: Color(secondaryTextColorValue),
+      );
 }

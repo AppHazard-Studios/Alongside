@@ -7,8 +7,8 @@ class AppTextStyles {
   static const String _fontFamily = '.SF Pro Text';
 
   // Base colors
-  static const Color _primaryColor = Color(0xFF007AFF);  // iOS blue
-  static const Color _textColor = Color(0xFF000000);     // Black
+  static const Color _primaryColor = Color(0xFF007AFF); // iOS blue
+  static const Color _textColor = Color(0xFF000000); // Black
   static const Color _secondaryColor = Color(0xFF8E8E93); // iOS gray
 
   // Title style for main headings
@@ -150,7 +150,7 @@ class AppTextStyles {
   static const TextStyle placeholder = TextStyle(
     fontSize: 16,
     fontFamily: _fontFamily,
-    color: Color(0xFFBEBEC0),  // iOS placeholder color
+    color: Color(0xFFBEBEC0), // iOS placeholder color
   );
 
   // Small caption text
@@ -161,9 +161,9 @@ class AppTextStyles {
   );
 
   static TextStyle scaledTextStyle(
-      BuildContext context,
-      TextStyle baseStyle,
-      ) {
+    BuildContext context,
+    TextStyle baseStyle,
+  ) {
     return baseStyle.copyWith(
       fontSize: ResponsiveUtils.scaledFontSize(
         context,
