@@ -2,6 +2,7 @@
 import 'package:flutter/cupertino.dart';
 import '../utils/colors.dart';
 import '../utils/text_styles.dart';
+import '../utils/responsive_utils.dart';
 
 class NoUnderlineField extends StatelessWidget {
   final TextEditingController controller;
@@ -36,30 +37,36 @@ class NoUnderlineField extends StatelessWidget {
         Text(
           label,
           style: AppTextStyles.formLabel.copyWith(
-            fontSize: 14,
+            fontSize: ResponsiveUtils.scaledFontSize(context, 14),
             color: AppColors.textSecondary,
           ),
         ),
-        const SizedBox(height: 6),
+        SizedBox(height: ResponsiveUtils.scaledSpacing(context, 6)),
 
         // Using CupertinoTextField instead of Material TextField
-        // In the CupertinoTextField widget, ensure textCapitalization is passed through:
         CupertinoTextField(
           controller: controller,
           placeholder: placeholder,
           keyboardType: keyboardType,
-          textCapitalization: textCapitalization, // Make sure this is here
+          textCapitalization: textCapitalization,
           obscureText: obscureText,
           maxLines: maxLines,
           minLines: minLines,
-          style: AppTextStyles.inputText,
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 0),
+          style: AppTextStyles.inputText.copyWith(
+            fontSize: ResponsiveUtils.scaledFontSize(context, 16),
+          ),
+          padding: EdgeInsets.symmetric(
+            vertical: ResponsiveUtils.scaledSpacing(context, 10),
+            horizontal: 0,
+          ),
           decoration: null,
           suffix: suffixIcon,
-          placeholderStyle: AppTextStyles.placeholder,
+          placeholderStyle: AppTextStyles.placeholder.copyWith(
+            fontSize: ResponsiveUtils.scaledFontSize(context, 16),
+          ),
           autofocus: false,
           cursorColor: AppColors.primary,
-        )
+        ),
       ],
     );
   }

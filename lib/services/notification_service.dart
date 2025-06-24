@@ -1,4 +1,4 @@
-// lib/services/notification_service.dart - Compatible with flutter_local_notifications ^19.1.0
+// lib/services/notification_service.dart - Fixed reminder scheduling
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -17,7 +17,7 @@ class NotificationService {
   NotificationService._internal();
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
+  FlutterLocalNotificationsPlugin();
 
   NotificationActionCallback? _actionCallback;
   bool _isInitialized = false;
@@ -43,11 +43,11 @@ class NotificationService {
 
       // Android initialization settings with icon
       const AndroidInitializationSettings androidSettings =
-          AndroidInitializationSettings('@mipmap/ic_launcher');
+      AndroidInitializationSettings('@mipmap/ic_launcher');
 
       // iOS initialization settings
       const DarwinInitializationSettings iosSettings =
-          DarwinInitializationSettings(
+      DarwinInitializationSettings(
         requestAlertPermission: true,
         requestBadgePermission: true,
         requestSoundPermission: true,
@@ -88,8 +88,8 @@ class NotificationService {
     if (!Platform.isAndroid) return;
 
     final androidPlugin =
-        flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+    flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
 
     if (androidPlugin == null) {
       print("❌ Android plugin is null");
@@ -205,11 +205,11 @@ class NotificationService {
       final int id = _getNotificationId(friend.id, isPersistent: true);
 
       final AndroidNotificationDetails androidDetails =
-          AndroidNotificationDetails(
+      AndroidNotificationDetails(
         'alongside_persistent',
         'Quick Access Notifications',
         channelDescription:
-            'Persistent notifications for quick access to friends',
+        'Persistent notifications for quick access to friends',
         importance: Importance.low,
         priority: Priority.low,
         ongoing: true,
@@ -257,7 +257,7 @@ class NotificationService {
     }
   }
 
-  // Schedule reminder - Fixed without UILocalNotificationDateInterpretation
+  // Schedule reminder - FIXED logic
   Future<void> scheduleReminder(Friend friend) async {
     if (!_isInitialized) {
       print("❌ Notifications not initialized");
@@ -279,6 +279,8 @@ class NotificationService {
       // Get last action time or use now
       final lastActionKey = 'last_action_${friend.id}';
       final lastActionTime = prefs.getInt(lastActionKey);
+
+      // Use current time as base if no last action
       final DateTime baseTime = lastActionTime != null
           ? DateTime.fromMillisecondsSinceEpoch(lastActionTime)
           : DateTime.now();
@@ -288,19 +290,19 @@ class NotificationService {
       final int hour = int.tryParse(parts[0]) ?? 9;
       final int minute = int.tryParse(parts[1]) ?? 0;
 
-      // Calculate next reminder - add days first
-      DateTime nextReminder = baseTime.add(Duration(days: friend.reminderDays));
-
-      // Then set the specific time
-      nextReminder = DateTime(
-        nextReminder.year,
-        nextReminder.month,
-        nextReminder.day,
+      // Calculate next reminder date
+      DateTime nextReminder = DateTime(
+        baseTime.year,
+        baseTime.month,
+        baseTime.day,
         hour,
         minute,
       );
 
-      // Make sure it's in the future
+      // Add the reminder days
+      nextReminder = nextReminder.add(Duration(days: friend.reminderDays));
+
+      // If the calculated time is in the past, find the next valid time
       final now = DateTime.now();
       while (nextReminder.isBefore(now)) {
         nextReminder = nextReminder.add(Duration(days: friend.reminderDays));
@@ -314,7 +316,7 @@ class NotificationService {
 
       // Create notification details
       final AndroidNotificationDetails androidDetails =
-          AndroidNotificationDetails(
+      AndroidNotificationDetails(
         'alongside_reminders',
         'Friend Reminders',
         channelDescription: 'Notifications for friend check-in reminders',
@@ -344,9 +346,9 @@ class NotificationService {
 
       // Convert to TZDateTime
       final tz.TZDateTime scheduledDate =
-          tz.TZDateTime.from(nextReminder, tz.local);
+      tz.TZDateTime.from(nextReminder, tz.local);
 
-      // Schedule the notification (without uiLocalNotificationDateInterpretation)
+      // Schedule the notification
       await flutterLocalNotificationsPlugin.zonedSchedule(
         id,
         'Check in with ${friend.name}',
@@ -362,8 +364,16 @@ class NotificationService {
       );
 
       print("✅ Scheduled reminder for ${friend.name} at $nextReminder");
+
+      // Log all relevant times for debugging
+      print("   Base time: $baseTime");
+      print("   Current time: $now");
+      print("   Next reminder: $nextReminder");
+      print("   Reminder days: ${friend.reminderDays}");
+      print("   Reminder time: ${friend.reminderTime}");
     } catch (e) {
       print("❌ Error scheduling reminder: $e");
+      print("   Stack trace: ${StackTrace.current}");
     }
   }
 
@@ -399,7 +409,7 @@ class NotificationService {
 
     try {
       const AndroidNotificationDetails androidDetails =
-          AndroidNotificationDetails(
+      AndroidNotificationDetails(
         'alongside_reminders',
         'Friend Reminders',
         channelDescription: 'Test notification',
@@ -452,5 +462,23 @@ class NotificationService {
     }
 
     return true;
+  }
+
+  // Debug method to check scheduled notifications
+  Future<void> debugScheduledNotifications() async {
+    try {
+      final pendingNotifications = await flutterLocalNotificationsPlugin
+          .pendingNotificationRequests();
+
+      print("📅 Pending notifications: ${pendingNotifications.length}");
+      for (final notification in pendingNotifications) {
+        print("   ID: ${notification.id}");
+        print("   Title: ${notification.title}");
+        print("   Body: ${notification.body}");
+        print("   Payload: ${notification.payload}");
+      }
+    } catch (e) {
+      print("❌ Error checking pending notifications: $e");
+    }
   }
 }

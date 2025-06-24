@@ -10,6 +10,7 @@ import 'package:share_plus/share_plus.dart';
 import '../models/friend.dart';
 import '../providers/friends_provider.dart';
 import '../utils/colors.dart';
+import '../utils/responsive_utils.dart';
 
 class MessageScreenNew extends StatefulWidget {
   final Friend friend;
