@@ -1,4 +1,4 @@
-// lib/screens/settings_screen.dart - Enhanced settings with all new features
+// lib/screens/settings_screen.dart - Enhanced with debug features
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
@@ -14,6 +14,7 @@ import 'package:file_picker/file_picker.dart';
 import 'dart:convert';
 import 'dart:io';
 import '../services/lock_service.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -27,6 +28,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationSounds = true;
   bool _lockEnabled = false;
   String? _lockType;
+  int _lockCooldownMinutes = 5;
   final LockService _lockService = LockService();
 
   @override
@@ -39,12 +41,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final prefs = await SharedPreferences.getInstance();
     final lockEnabled = await _lockService.isLockEnabled();
     final lockType = await _lockService.getLockType();
+    final cooldownMinutes = await _lockService.getCooldownMinutes();
 
     setState(() {
       _lastBackupDate = prefs.getString('last_backup_date');
       _notificationSounds = prefs.getBool('notification_sounds') ?? true;
       _lockEnabled = lockEnabled;
       _lockType = lockType;
+      _lockCooldownMinutes = cooldownMinutes;
     });
   }
 
@@ -95,7 +99,52 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 const SizedBox(height: 16),
 
-                // Security section - NEW
+                // NOTIFICATION DEBUG SECTION - NEW
+                _buildSectionTitle('NOTIFICATION DEBUG'),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: CupertinoColors.systemGrey5,
+                      width: 0.5,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      _buildSettingsItem(
+                        context,
+                        icon: CupertinoIcons.bell_fill,
+                        iconColor: AppColors.primary,
+                        title: 'View Scheduled Notifications',
+                        subtitle: 'See all pending reminders',
+                        onTap: () => _showScheduledNotifications(context),
+                      ),
+                      _buildDivider(),
+                      _buildSettingsItem(
+                        context,
+                        icon: CupertinoIcons.checkmark_shield,
+                        iconColor: AppColors.success,
+                        title: 'Check Permissions',
+                        subtitle: 'Verify notification permissions',
+                        onTap: () => _checkPermissions(context),
+                      ),
+                      _buildDivider(),
+                      _buildSettingsItem(
+                        context,
+                        icon: CupertinoIcons.arrow_clockwise,
+                        iconColor: AppColors.warning,
+                        title: 'Reschedule All Reminders',
+                        subtitle: 'Force reschedule all friend reminders',
+                        onTap: () => _rescheduleAllReminders(context),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Security section
                 _buildSectionTitle('SECURITY'),
                 Container(
                   decoration: BoxDecoration(
@@ -128,6 +177,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           title: 'Change Lock Method',
                           subtitle: 'Switch between PIN and biometrics',
                           onTap: () => _changeLockMethod(),
+                        ),
+                        _buildDivider(),
+                        _buildSettingsItem(
+                          context,
+                          icon: CupertinoIcons.timer,
+                          iconColor: AppColors.accent,
+                          title: 'Lock Cooldown',
+                          subtitle: 'Lock after $_lockCooldownMinutes minutes in background',
+                          onTap: () => _showCooldownPicker(),
                         ),
                       ],
                     ],
@@ -361,13 +419,522 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // Add these new methods for lock functionality
-  Future<void> _toggleAppLock(bool enable) async {
+  // NEW: Show scheduled notifications
+  void _showScheduledNotifications(BuildContext context) async {
+    final notificationService = NotificationService();
+    await notificationService.debugScheduledNotifications();
+
+    // Also show in UI
+    final provider = Provider.of<FriendsProvider>(context, listen: false);
+    final friends = provider.friends;
+
+    List<Widget> notificationWidgets = [];
+
+    for (final friend in friends) {
+      if (friend.reminderDays > 0) {
+        final nextTime = await notificationService.getNextReminderTime(friend.id);
+        notificationWidgets.add(
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        friend.name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                      Text(
+                        nextTime != null
+                            ? 'Next: ${nextTime.toString().split('.')[0]}'
+                            : 'Not scheduled',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  nextTime != null
+                      ? CupertinoIcons.checkmark_circle_fill
+                      : CupertinoIcons.xmark_circle_fill,
+                  color: nextTime != null ? AppColors.success : AppColors.error,
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+    }
+
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.7,
+        decoration: const BoxDecoration(
+          color: CupertinoColors.systemBackground,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 8, bottom: 16),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: CupertinoColors.systemGrey3,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: Text(
+                'Scheduled Notifications',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                  fontFamily: '.SF Pro Text',
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                children: notificationWidgets.isEmpty
+                    ? [
+                  const Center(
+                    child: Text(
+                      'No notifications scheduled',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 16,
+                      ),
+                    ),
+                  )
+                ]
+                    : notificationWidgets,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // NEW: Check permissions
+  void _checkPermissions(BuildContext context) async {
+    final notificationService = NotificationService();
+    final hasSetup = await notificationService.checkNotificationSetup();
+
+    // Check individual permissions
+    final hasNotification = await Permission.notification.isGranted;
+    final hasExactAlarm = await Permission.scheduleExactAlarm.isGranted;
+    final hasBatteryOptimization = await Permission.ignoreBatteryOptimizations.isGranted;
+
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text(
+          'Permission Status',
+          style: TextStyle(
+            color: AppColors.primary,
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+            fontFamily: '.SF Pro Text',
+          ),
+        ),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildPermissionRow('Notifications', hasNotification),
+              const SizedBox(height: 8),
+              _buildPermissionRow('Exact Alarms', hasExactAlarm),
+              const SizedBox(height: 8),
+              _buildPermissionRow('Battery Optimization', hasBatteryOptimization),
+              const SizedBox(height: 16),
+              Text(
+                hasSetup ? '✅ Ready for notifications' : '❌ Setup incomplete',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: hasSetup ? AppColors.success : AppColors.error,
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          if (!hasSetup)
+            CupertinoDialogAction(
+              onPressed: () {
+                Navigator.pop(context);
+                openAppSettings();
+              },
+              child: const Text(
+                'Open Settings',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: '.SF Pro Text',
+                ),
+              ),
+            ),
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'OK',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600,
+                fontFamily: '.SF Pro Text',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPermissionRow(String name, bool granted) {
+    return Row(
+      children: [
+        Icon(
+          granted ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.xmark_circle_fill,
+          color: granted ? AppColors.success : AppColors.error,
+          size: 20,
+        ),
+        const SizedBox(width: 8),
+        Text(
+          name,
+          style: const TextStyle(fontSize: 16),
+        ),
+      ],
+    );
+  }
+
+  // NEW: Reschedule all reminders
+  void _rescheduleAllReminders(BuildContext context) async {
+    showCupertinoDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Center(
+        child: Container(
+          width: 120,
+          height: 120,
+          decoration: BoxDecoration(
+            color: CupertinoColors.black.withOpacity(0.8),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: const Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CupertinoActivityIndicator(
+                color: CupertinoColors.white,
+                radius: 14,
+              ),
+              SizedBox(height: 16),
+              Text(
+                'Rescheduling...',
+                style: TextStyle(
+                  color: CupertinoColors.white,
+                  fontSize: 16,
+                  fontFamily: '.SF Pro Text',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final provider = Provider.of<FriendsProvider>(context, listen: false);
+    final notificationService = NotificationService();
+    int count = 0;
+
+    for (final friend in provider.friends) {
+      if (friend.reminderDays > 0) {
+        await notificationService.scheduleReminder(friend);
+        count++;
+      }
+    }
+
+    if (context.mounted) {
+      Navigator.pop(context); // Close loading
+
+      showCupertinoDialog(
+        context: context,
+        builder: (context) => CupertinoAlertDialog(
+          title: const Text(
+            'Reminders Rescheduled',
+            style: TextStyle(
+              color: AppColors.success,
+              fontWeight: FontWeight.w700,
+              fontSize: 18,
+              fontFamily: '.SF Pro Text',
+            ),
+          ),
+          content: Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: Text(
+              'Successfully rescheduled $count reminder${count == 1 ? '' : 's'}',
+              style: const TextStyle(
+                fontSize: 16,
+                height: 1.4,
+                color: CupertinoColors.label,
+                fontFamily: '.SF Pro Text',
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'OK',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: '.SF Pro Text',
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  // Show cooldown picker
+  void _showCooldownPicker() {
+    final options = [0, 1, 5, 10, 15, 30, 60];
+    int selectedMinutes = _lockCooldownMinutes;
+
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => Container(
+        height: 250,
+        color: CupertinoColors.systemBackground,
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                CupertinoButton(
+                  child: const Text('Cancel'),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                CupertinoButton(
+                  child: const Text('Done'),
+                  onPressed: () async {
+                    await _lockService.setCooldownMinutes(selectedMinutes);
+                    setState(() {
+                      _lockCooldownMinutes = selectedMinutes;
+                    });
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            ),
+            Expanded(
+              child: CupertinoPicker(
+                itemExtent: 40,
+                scrollController: FixedExtentScrollController(
+                  initialItem: options.indexOf(_lockCooldownMinutes),
+                ),
+                onSelectedItemChanged: (index) {
+                  selectedMinutes = options[index];
+                },
+                children: options.map((minutes) {
+                  return Center(
+                    child: Text(
+                      minutes == 0
+                          ? 'Immediately'
+                          : '$minutes minute${minutes == 1 ? '' : 's'}',
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // All the existing helper methods remain the same...
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8, bottom: 8),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textSecondary,
+          letterSpacing: 0.5,
+          fontFamily: '.SF Pro Text',
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDivider() {
+    return Container(
+      height: 0.5,
+      color: CupertinoColors.systemGrey5,
+      margin: const EdgeInsets.only(left: 66),
+    );
+  }
+
+  Widget _buildSettingsItem(
+      BuildContext context, {
+        required IconData icon,
+        required Color iconColor,
+        required String title,
+        required String subtitle,
+        required VoidCallback onTap,
+        bool showChevron = true,
+        bool isDestructive = false,
+      }) {
+    return CupertinoButton(
+      padding: EdgeInsets.zero,
+      onPressed: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                color: iconColor,
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: isDestructive
+                          ? AppColors.error
+                          : CupertinoColors.label,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: '.SF Pro Text',
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 14,
+                      fontFamily: '.SF Pro Text',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (showChevron)
+              const Icon(
+                CupertinoIcons.chevron_right,
+                color: AppColors.textSecondary,
+                size: 16,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildToggleItem(
+      BuildContext context, {
+        required IconData icon,
+        required Color iconColor,
+        required String title,
+        required String subtitle,
+        required bool value,
+        required Function(bool) onChanged,
+      }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              color: iconColor,
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: CupertinoColors.label,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: '.SF Pro Text',
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 14,
+                    fontFamily: '.SF Pro Text',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          CupertinoSwitch(
+            value: value,
+            onChanged: onChanged,
+            activeColor: AppColors.primary,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // All existing action methods remain the same...
+  void _toggleAppLock(bool enable) async {
     if (enable) {
-      // Show lock method picker
       _showLockMethodPicker();
     } else {
-      // Confirm disable
       showCupertinoDialog(
         context: context,
         builder: (context) => CupertinoAlertDialog(
@@ -583,7 +1150,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               Navigator.pop(context);
               final success =
-                  await _lockService.enablePinLock(pinController.text);
+              await _lockService.enablePinLock(pinController.text);
               if (success) {
                 await _loadSettings();
               } else {
@@ -651,164 +1218,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // Keep all your existing helper methods below...
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 8, bottom: 8),
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textSecondary,
-          letterSpacing: 0.5,
-          fontFamily: '.SF Pro Text',
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDivider() {
-    return Container(
-      height: 0.5,
-      color: CupertinoColors.systemGrey5,
-      margin: const EdgeInsets.only(left: 66),
-    );
-  }
-
-  Widget _buildSettingsItem(
-    BuildContext context, {
-    required IconData icon,
-    required Color iconColor,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-    bool showChevron = true,
-    bool isDestructive = false,
-  }) {
-    return CupertinoButton(
-      padding: EdgeInsets.zero,
-      onPressed: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        child: Row(
-          children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                icon,
-                color: iconColor,
-                size: 18,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      color: isDestructive
-                          ? AppColors.error
-                          : CupertinoColors.label,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: '.SF Pro Text',
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 14,
-                      fontFamily: '.SF Pro Text',
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (showChevron)
-              const Icon(
-                CupertinoIcons.chevron_right,
-                color: AppColors.textSecondary,
-                size: 16,
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildToggleItem(
-    BuildContext context, {
-    required IconData icon,
-    required Color iconColor,
-    required String title,
-    required String subtitle,
-    required bool value,
-    required Function(bool) onChanged,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              icon,
-              color: iconColor,
-              size: 18,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: CupertinoColors.label,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: '.SF Pro Text',
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 14,
-                    fontFamily: '.SF Pro Text',
-                  ),
-                ),
-              ],
-            ),
-          ),
-          CupertinoSwitch(
-            value: value,
-            onChanged: onChanged,
-            activeColor: AppColors.primary,
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Keep all the existing action methods...
   void _testNotifications(BuildContext context) async {
     final notificationService = NotificationService();
     await notificationService.scheduleTestNotification();
@@ -818,7 +1227,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         context: context,
         builder: (context) => CupertinoAlertDialog(
           title: const Text(
-            'Test Notification Scheduled',
+            'Test Notification Sent',
             style: TextStyle(
               color: AppColors.primary,
               fontWeight: FontWeight.w700,
@@ -829,7 +1238,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           content: const Padding(
             padding: EdgeInsets.only(top: 16),
             child: Text(
-              'You should receive a notification in 10 seconds. If you don\'t, check your notification settings.',
+              'You should see a notification immediately. If you don\'t, check your notification settings.',
               style: TextStyle(
                 fontSize: 16,
                 height: 1.4,
@@ -1008,7 +1417,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               );
 
               final provider =
-                  Provider.of<FriendsProvider>(context, listen: false);
+              Provider.of<FriendsProvider>(context, listen: false);
               final storageService = provider.storageService;
 
               await storageService.saveFriends([]);
@@ -1136,6 +1545,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         '2. Disable battery optimization for Alongside',
                         '3. Make sure Do Not Disturb is off',
                         '4. Try the test notification feature',
+                        '5. Check permissions in Notification Debug section',
+                        '6. Try "Reschedule All Reminders" option',
                       ],
                     ),
                     _buildTroubleshootingSection(
@@ -1184,17 +1595,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 8),
           ...steps
               .map((step) => Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Text(
-                      step,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textSecondary,
-                        fontFamily: '.SF Pro Text',
-                        height: 1.4,
-                      ),
-                    ),
-                  ))
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Text(
+              step,
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+                fontFamily: '.SF Pro Text',
+                height: 1.4,
+              ),
+            ),
+          ))
               .toList(),
         ],
       ),

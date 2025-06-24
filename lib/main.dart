@@ -1,4 +1,4 @@
-// lib/main.dart - Complete file with fixed navigation
+// lib/main.dart - Fixed with lock cooldown and better notification handling
 import 'dart:async';
 import 'package:alongside/screens/lock_screen.dart';
 import 'package:alongside/services/lock_service.dart';
@@ -24,7 +24,7 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize notifications
+  // Initialize notifications with better error handling
   final notificationService = NotificationService();
   await notificationService.initialize();
 
@@ -48,6 +48,8 @@ void main() async {
 
 // Global notification handler function
 void _handleNotificationAction(String friendId, String action) async {
+  print("🔔 Notification action received: Friend=$friendId, Action=$action");
+
   // Wait for navigator to be ready (max 5 seconds)
   int attempts = 0;
   while (navigatorKey.currentState == null && attempts < 50) {
@@ -56,7 +58,7 @@ void _handleNotificationAction(String friendId, String action) async {
   }
 
   if (navigatorKey.currentState == null) {
-    print("Navigator not ready after 5 seconds");
+    print("❌ Navigator not ready after 5 seconds");
     return;
   }
 
@@ -80,17 +82,19 @@ class AlongsideApp extends StatefulWidget {
 
 class _AlongsideAppState extends State<AlongsideApp>
     with WidgetsBindingObserver {
-  bool _isLocked = true;
+  bool _isLocked = false;
   bool _lockChecked = false;
   final LockService _lockService = LockService();
+  DateTime? _pausedTime;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    // Check lock status immediately
-    _checkLockStatus();
+    // Don't check lock on initial app start
+    _lockChecked = true;
+    _isLocked = false;
 
     // Setup foreground service after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -107,66 +111,83 @@ class _AlongsideAppState extends State<AlongsideApp>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.resumed) {
-      // Check if we should show lock screen when app resumes
-      _checkIfShouldLock();
 
-      // Only restart the foreground service if it's not already running
-      ForegroundServiceManager.startForegroundService();
-    }
-  }
+    switch (state) {
+      case AppLifecycleState.paused:
+      // App going to background
+        print("📱 App paused - recording background time");
+        _lockService.recordBackgroundTime();
+        _pausedTime = DateTime.now();
+        break;
 
-  Future<void> _checkLockStatus() async {
-    final isEnabled = await _lockService.isLockEnabled();
+      case AppLifecycleState.resumed:
+      // App coming to foreground
+        print("📱 App resumed - checking if lock needed");
+        _checkIfShouldLock();
 
-    if (mounted) {
-      setState(() {
-        _isLocked = isEnabled;
-        _lockChecked = true;
-      });
+        // Restart foreground service if needed
+        ForegroundServiceManager.startForegroundService();
+        break;
+
+      case AppLifecycleState.inactive:
+      // Transitional state - do nothing
+        break;
+
+      case AppLifecycleState.detached:
+      // App is being destroyed
+        break;
+
+      case AppLifecycleState.hidden:
+      // App is hidden (newer Flutter versions)
+        break;
     }
   }
 
   Future<void> _checkIfShouldLock() async {
-    final isEnabled = await _lockService.isLockEnabled();
-    if (isEnabled && !_isLocked && mounted) {
+    // Check if we should show lock based on cooldown
+    final shouldLock = await _lockService.shouldShowLockScreen();
+
+    if (shouldLock && mounted) {
+      print("🔒 Showing lock screen after cooldown");
       setState(() {
         _isLocked = true;
       });
+    } else {
+      print("🔓 No lock needed - cooldown not met or lock disabled");
+      // Clear any background time if we're not locking
+      await _lockService.clearBackgroundTime();
     }
   }
 
   Future<void> _initializeApp() async {
+    print("🚀 Initializing app services...");
+
     // Initialize and start foreground service
     await ForegroundServiceManager.initForegroundService();
-    Future.delayed(const Duration(seconds: 3), () {
+
+    // Start service after a delay to ensure everything is ready
+    Future.delayed(const Duration(seconds: 2), () {
+      print("🔄 Starting foreground service...");
       ForegroundServiceManager.startForegroundService();
     });
 
-    // Check battery optimization after a delay to not interfere with startup
+    // Check battery optimization after a delay
     Future.delayed(const Duration(seconds: 5), () {
       if (mounted) {
+        print("🔋 Checking battery optimization...");
         BatteryOptimizationService.requestBatteryOptimization(context);
       }
+    });
+
+    // Debug scheduled notifications
+    Future.delayed(const Duration(seconds: 3), () async {
+      final notificationService = NotificationService();
+      await notificationService.debugScheduledNotifications();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Show loading while checking lock status
-    if (!_lockChecked) {
-      return CupertinoApp(
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.cupertinoTheme,
-        home: const CupertinoPageScaffold(
-          backgroundColor: AppColors.background,
-          child: Center(
-            child: CupertinoActivityIndicator(),
-          ),
-        ),
-      );
-    }
-
     // Show lock screen if needed
     if (_isLocked) {
       return CupertinoApp(
@@ -178,6 +199,8 @@ class _AlongsideAppState extends State<AlongsideApp>
             setState(() {
               _isLocked = false;
             });
+            // Clear background time when unlocked
+            _lockService.clearBackgroundTime();
           },
         ),
       );
@@ -194,7 +217,7 @@ class _AlongsideAppState extends State<AlongsideApp>
         '/notification': (context) => const NotificationRouterScreen(),
         '/call': (ctx) {
           final args =
-              ModalRoute.of(ctx)!.settings.arguments as Map<String, dynamic>;
+          ModalRoute.of(ctx)!.settings.arguments as Map<String, dynamic>;
           final friend = args['friend'] as Friend;
           return CallScreen(friend: friend);
         },
@@ -203,7 +226,7 @@ class _AlongsideAppState extends State<AlongsideApp>
   }
 }
 
-// New screen to handle notification routing
+// Screen to handle notification routing
 class NotificationRouterScreen extends StatefulWidget {
   const NotificationRouterScreen({Key? key}) : super(key: key);
 
@@ -220,6 +243,8 @@ class _NotificationRouterScreenState extends State<NotificationRouterScreen> {
   }
 
   Future<void> _processNotification() async {
+    print("🔔 Processing notification action...");
+
     final prefs = await SharedPreferences.getInstance();
     final pendingAction = prefs.getString('pending_notification_action');
 
@@ -231,6 +256,8 @@ class _NotificationRouterScreenState extends State<NotificationRouterScreen> {
         final friendId = parts[0];
         final action = parts[1];
 
+        print("🔔 Action details: Friend=$friendId, Action=$action");
+
         final provider = Provider.of<FriendsProvider>(context, listen: false);
         final friend = provider.getFriendById(friendId);
 
@@ -241,6 +268,7 @@ class _NotificationRouterScreenState extends State<NotificationRouterScreen> {
 
           if (mounted) {
             if (action == 'message') {
+              print("📱 Navigating to message screen");
               Navigator.pushReplacement(
                 context,
                 CupertinoPageRoute(
@@ -249,6 +277,7 @@ class _NotificationRouterScreenState extends State<NotificationRouterScreen> {
               );
               return;
             } else if (action == 'call') {
+              print("📞 Navigating to call screen");
               Navigator.pushReplacementNamed(
                 context,
                 '/call',
@@ -257,12 +286,15 @@ class _NotificationRouterScreenState extends State<NotificationRouterScreen> {
               return;
             }
           }
+        } else {
+          print("❌ Friend not found: $friendId");
         }
       }
     }
 
     // Default: go to home
     if (mounted) {
+      print("🏠 Navigating to home screen");
       Navigator.pushReplacementNamed(context, '/');
     }
   }
@@ -270,6 +302,7 @@ class _NotificationRouterScreenState extends State<NotificationRouterScreen> {
   @override
   Widget build(BuildContext context) {
     return const CupertinoPageScaffold(
+      backgroundColor: AppColors.background,
       child: Center(
         child: CupertinoActivityIndicator(),
       ),
