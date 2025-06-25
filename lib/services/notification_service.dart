@@ -67,7 +67,6 @@ class NotificationService {
         requestAlertPermission: true,
         requestBadgePermission: true,
         requestSoundPermission: true,
-        onDidReceiveLocalNotification: null,
       );
 
       final InitializationSettings initSettings = InitializationSettings(
@@ -384,7 +383,6 @@ class NotificationService {
         scheduledDate,
         details,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: null,
         payload: '${friend.id};${friend.phoneNumber}',
       );
@@ -442,8 +440,7 @@ class NotificationService {
     // Use a more stable ID generation
     int hash = 0;
     for (int i = 0; i < friendId.length; i++) {
-      hash = ((hash << 5) - hash) + friendId.codeUnitAt(i);
-      hash = hash & 0x7FFFFFFF; // Keep positive
+      hash = ((hash * 31) + friendId.codeUnitAt(i)) & 0x7FFFFFFF; // Keep positive
     }
 
     final baseId = (hash % 900000) + 100000; // Range: 100000-999999
@@ -702,20 +699,23 @@ class NotificationService {
   }
 
   // Check notification setup
-  Future<Map<String, bool>> checkNotificationSetup() async {
-    final setup = <String, bool>{};
+  Future<bool> checkNotificationSetup() async {
+    try {
+      bool allGood = _isInitialized;
 
-    setup['initialized'] = _isInitialized;
+      if (Platform.isAndroid) {
+        final hasNotification = await Permission.notification.isGranted;
+        final hasExactAlarm = await Permission.scheduleExactAlarm.isGranted;
 
-    if (Platform.isAndroid) {
-      setup['notification_permission'] = await Permission.notification.isGranted;
-      setup['exact_alarm_permission'] = await Permission.scheduleExactAlarm.isGranted;
-      setup['battery_optimization'] = await Permission.ignoreBatteryOptimizations.isGranted;
+        allGood = allGood && hasNotification && hasExactAlarm;
+      }
+
+      final pending = await getPendingNotifications();
+
+      return allGood;
+    } catch (e) {
+      print("❌ Error checking notification setup: $e");
+      return false;
     }
-
-    final pending = await getPendingNotifications();
-    setup['has_pending_notifications'] = pending.isNotEmpty;
-
-    return setup;
   }
 }

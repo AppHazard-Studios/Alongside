@@ -533,7 +533,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // NEW: Check permissions
   void _checkPermissions(BuildContext context) async {
     final notificationService = NotificationService();
-    final hasSetup = await notificationService.checkNotificationSetup();
+    final setupStatus = await notificationService.checkNotificationSetup();
+
+    // Convert the bool result to what we need
+    final hasSetup = setupStatus;
 
     // Check individual permissions
     final hasNotification = await Permission.notification.isGranted;

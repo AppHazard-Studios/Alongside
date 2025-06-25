@@ -109,14 +109,20 @@ class AlongsideTaskHandler extends TaskHandler {
         print("⚠️ Missed reminder for ${friend.name} - rescheduling");
 
         // Show immediate notification for missed reminder
-        await _notificationService.scheduleTestNotification(); // You can create a specific method for this
+        await _notificationService.scheduleTestNotification();
 
         // Reschedule for next cycle
         await _notificationService.scheduleReminder(friend);
       } else {
         // Verify it's actually scheduled
         final pending = await _notificationService.getPendingNotifications();
-        final id = 1000000 + friend.id.codeUnits.fold(0, (a, b) => ((a << 5) - a) + b) % 900000 + 100000;
+
+        // Generate stable ID using same logic as NotificationService
+        int hash = 0;
+        for (int i = 0; i < friend.id.length; i++) {
+          hash = ((hash * 31) + friend.id.codeUnitAt(i)) & 0x7FFFFFFF;
+        }
+        final id = 1000000 + (hash % 900000) + 100000;
 
         if (!pending.any((n) => n.id == id)) {
           print("⚠️ Reminder for ${friend.name} not in pending list - rescheduling");
@@ -138,12 +144,6 @@ class ForegroundServiceManager {
         channelDescription: 'Keeps reminders working reliably',
         channelImportance: NotificationChannelImportance.LOW,
         priority: NotificationPriority.LOW,
-        iconData: const NotificationIconData(
-          resType: ResourceType.mipmap,
-          resPrefix: ResourcePrefix.ic,
-          name: 'launcher',
-        ),
-        buttons: [],
       ),
       iosNotificationOptions: const IOSNotificationOptions(
         showNotification: false,
@@ -181,8 +181,6 @@ class ForegroundServiceManager {
     final result = await FlutterForegroundTask.startService(
       notificationTitle: 'Alongside Active',
       notificationText: 'Keeping your reminders on schedule',
-      notificationIcon: null,
-      notificationButtons: [],
       callback: startCallback,
     );
 
