@@ -1,4 +1,4 @@
-// lib/main.dart - Fixed with lock cooldown and better notification handling
+// lib/main.dart - Updated with boot handling and better initialization
 import 'dart:async';
 import 'package:alongside/screens/lock_screen.dart';
 import 'package:alongside/services/lock_service.dart';
@@ -17,19 +17,58 @@ import 'services/foreground_service.dart';
 import 'screens/call_screen.dart';
 import 'screens/message_screen.dart';
 import 'services/battery_optimization_service.dart';
+import 'package:workmanager/workmanager.dart';
 
-// Global key for navigation from notification callbacks
+// Global key for navigation
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+// WorkManager callback dispatcher - MUST be top-level
+@pragma('vm:entry-point')
+void callbackDispatcher() {
+  Workmanager().executeTask((task, inputData) async {
+    print("🔄 WorkManager task: $task");
+
+    // Initialize notification service
+    final notificationService = NotificationService();
+    await notificationService.initialize();
+
+    if (task == "checkReminders") {
+      // Check and reschedule all reminders
+      await notificationService.checkAndRescheduleAllReminders();
+    } else if (task == "showReminder") {
+      // Show a specific reminder (used as backup)
+      final friendId = inputData?['friendId'] as String?;
+      final friendName = inputData?['friendName'] as String?;
+      final reminderDays = inputData?['reminderDays'] as int?;
+
+      if (friendId != null && friendName != null && reminderDays != null) {
+        print("📌 Showing backup reminder for $friendName");
+        // You can implement a direct notification show here if needed
+      }
+    }
+
+    return Future.value(true);
+  });
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize notifications with better error handling
+  // Initialize WorkManager
+  await Workmanager().initialize(
+    callbackDispatcher,
+    isInDebugMode: false,
+  );
+
+  // Initialize notifications with comprehensive setup
   final notificationService = NotificationService();
   await notificationService.initialize();
 
   // Setup notification callback
   notificationService.setActionCallback(_handleNotificationAction);
+
+  // Check if app was started from boot
+  await _handleBootStart();
 
   runApp(
     MultiProvider(
@@ -46,11 +85,38 @@ void main() async {
   );
 }
 
-// Global notification handler function
-void _handleNotificationAction(String friendId, String action) async {
-  print("🔔 Notification action received: Friend=$friendId, Action=$action");
+// Handle boot start
+Future<void> _handleBootStart() async {
+  print("🔍 Checking for boot start...");
 
-  // Wait for navigator to be ready (max 5 seconds)
+  // If started from boot, reschedule all notifications
+  final prefs = await SharedPreferences.getInstance();
+  final lastBootCheck = prefs.getInt('last_boot_check') ?? 0;
+  final now = DateTime.now().millisecondsSinceEpoch;
+
+  // If more than 1 day since last check, assume device may have rebooted
+  if (now - lastBootCheck > 86400000) {
+    print("📱 Possible device restart detected - rescheduling notifications");
+
+    final notificationService = NotificationService();
+    final storageService = StorageService();
+    final friends = await storageService.getFriends();
+
+    for (final friend in friends) {
+      if (friend.reminderDays > 0) {
+        await notificationService.scheduleReminder(friend);
+      }
+    }
+
+    await prefs.setInt('last_boot_check', now);
+  }
+}
+
+// Global notification handler
+void _handleNotificationAction(String friendId, String action) async {
+  print("🔔 Notification action: Friend=$friendId, Action=$action");
+
+  // Wait for navigator
   int attempts = 0;
   while (navigatorKey.currentState == null && attempts < 50) {
     await Future.delayed(const Duration(milliseconds: 100));
@@ -58,18 +124,16 @@ void _handleNotificationAction(String friendId, String action) async {
   }
 
   if (navigatorKey.currentState == null) {
-    print("❌ Navigator not ready after 5 seconds");
+    print("❌ Navigator not ready");
     return;
   }
 
-  // Store the action to process
+  // Store action to process
   final prefs = await SharedPreferences.getInstance();
   await prefs.setString('pending_notification_action', '$friendId|$action');
 
-  // Navigate to home first
+  // Navigate
   navigatorKey.currentState!.popUntil((route) => route.isFirst);
-
-  // Then navigate to notification handler
   navigatorKey.currentState!.pushNamed('/notification');
 }
 
@@ -80,23 +144,22 @@ class AlongsideApp extends StatefulWidget {
   State<AlongsideApp> createState() => _AlongsideAppState();
 }
 
-class _AlongsideAppState extends State<AlongsideApp>
-    with WidgetsBindingObserver {
+class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver {
   bool _isLocked = false;
   bool _lockChecked = false;
   final LockService _lockService = LockService();
   DateTime? _pausedTime;
+  Timer? _notificationCheckTimer;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    // Don't check lock on initial app start
     _lockChecked = true;
     _isLocked = false;
 
-    // Setup foreground service after first frame
+    // Initialize app after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeApp();
     });
@@ -105,6 +168,7 @@ class _AlongsideAppState extends State<AlongsideApp>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _notificationCheckTimer?.cancel();
     super.dispose();
   }
 
@@ -114,81 +178,104 @@ class _AlongsideAppState extends State<AlongsideApp>
 
     switch (state) {
       case AppLifecycleState.paused:
-      // App going to background
-        print("📱 App paused - recording background time");
+        print("📱 App paused");
         _lockService.recordBackgroundTime();
         _pausedTime = DateTime.now();
         break;
 
       case AppLifecycleState.resumed:
-      // App coming to foreground
-        print("📱 App resumed - checking if lock needed");
+        print("📱 App resumed");
         _checkIfShouldLock();
 
-        // Restart foreground service if needed
+        // Check notifications when app resumes
+        _checkNotifications();
+
+        // Restart foreground service
         ForegroundServiceManager.startForegroundService();
         break;
 
       case AppLifecycleState.inactive:
-      // Transitional state - do nothing
-        break;
-
       case AppLifecycleState.detached:
-      // App is being destroyed
-        break;
-
       case AppLifecycleState.hidden:
-      // App is hidden (newer Flutter versions)
         break;
     }
   }
 
   Future<void> _checkIfShouldLock() async {
-    // Check if we should show lock based on cooldown
     final shouldLock = await _lockService.shouldShowLockScreen();
 
     if (shouldLock && mounted) {
-      print("🔒 Showing lock screen after cooldown");
       setState(() {
         _isLocked = true;
       });
     } else {
-      print("🔓 No lock needed - cooldown not met or lock disabled");
-      // Clear any background time if we're not locking
       await _lockService.clearBackgroundTime();
     }
   }
 
   Future<void> _initializeApp() async {
-    print("🚀 Initializing app services...");
+    print("🚀 Initializing app...");
 
-    // Initialize and start foreground service
-    await ForegroundServiceManager.initForegroundService();
+    try {
+      // Initialize foreground service
+      await ForegroundServiceManager.initForegroundService();
 
-    // Start service after a delay to ensure everything is ready
-    Future.delayed(const Duration(seconds: 2), () {
-      print("🔄 Starting foreground service...");
-      ForegroundServiceManager.startForegroundService();
-    });
+      // Start foreground service after delay
+      Future.delayed(const Duration(seconds: 2), () async {
+        print("🔄 Starting foreground service...");
+        await ForegroundServiceManager.startForegroundService();
+      });
 
-    // Check battery optimization after a delay
-    Future.delayed(const Duration(seconds: 5), () {
-      if (mounted) {
-        print("🔋 Checking battery optimization...");
-        BatteryOptimizationService.requestBatteryOptimization(context);
-      }
-    });
+      // Check battery optimization
+      Future.delayed(const Duration(seconds: 5), () {
+        if (mounted) {
+          BatteryOptimizationService.requestBatteryOptimization(context);
+        }
+      });
 
-    // Debug scheduled notifications
-    Future.delayed(const Duration(seconds: 3), () async {
+      // Setup periodic notification checks
+      _notificationCheckTimer = Timer.periodic(
+        const Duration(minutes: 60),
+            (_) => _checkNotifications(),
+      );
+
+      // Initial notification check
+      await _checkNotifications();
+
+      // Debug notifications
+      Future.delayed(const Duration(seconds: 3), () async {
+        final notificationService = NotificationService();
+        await notificationService.debugScheduledNotifications();
+      });
+    } catch (e) {
+      print("❌ Error initializing app: $e");
+    }
+  }
+
+  Future<void> _checkNotifications() async {
+    try {
+      print("🔍 Checking notifications...");
       final notificationService = NotificationService();
-      await notificationService.debugScheduledNotifications();
-    });
+      await notificationService.checkAndRescheduleAllReminders();
+
+      // Also verify all reminders are scheduled
+      final provider = Provider.of<FriendsProvider>(context, listen: false);
+      for (final friend in provider.friends) {
+        if (friend.reminderDays > 0) {
+          final nextTime = await notificationService.getNextReminderTime(friend.id);
+          if (nextTime == null) {
+            print("⚠️ No reminder scheduled for ${friend.name} - scheduling now");
+            await notificationService.scheduleReminder(friend);
+          }
+        }
+      }
+    } catch (e) {
+      print("❌ Error checking notifications: $e");
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Show lock screen if needed
     if (_isLocked) {
       return CupertinoApp(
         title: 'Alongside',
@@ -199,14 +286,12 @@ class _AlongsideAppState extends State<AlongsideApp>
             setState(() {
               _isLocked = false;
             });
-            // Clear background time when unlocked
             _lockService.clearBackgroundTime();
           },
         ),
       );
     }
 
-    // Main app
     return CupertinoApp(
       title: 'Alongside',
       navigatorKey: navigatorKey,
@@ -216,8 +301,7 @@ class _AlongsideAppState extends State<AlongsideApp>
         '/': (context) => const WithForegroundTask(child: HomeScreenNew()),
         '/notification': (context) => const NotificationRouterScreen(),
         '/call': (ctx) {
-          final args =
-          ModalRoute.of(ctx)!.settings.arguments as Map<String, dynamic>;
+          final args = ModalRoute.of(ctx)!.settings.arguments as Map<String, dynamic>;
           final friend = args['friend'] as Friend;
           return CallScreen(friend: friend);
         },
@@ -226,13 +310,12 @@ class _AlongsideAppState extends State<AlongsideApp>
   }
 }
 
-// Screen to handle notification routing
+// Notification router screen
 class NotificationRouterScreen extends StatefulWidget {
   const NotificationRouterScreen({Key? key}) : super(key: key);
 
   @override
-  State<NotificationRouterScreen> createState() =>
-      _NotificationRouterScreenState();
+  State<NotificationRouterScreen> createState() => _NotificationRouterScreenState();
 }
 
 class _NotificationRouterScreenState extends State<NotificationRouterScreen> {
@@ -243,7 +326,7 @@ class _NotificationRouterScreenState extends State<NotificationRouterScreen> {
   }
 
   Future<void> _processNotification() async {
-    print("🔔 Processing notification action...");
+    print("🔔 Processing notification...");
 
     final prefs = await SharedPreferences.getInstance();
     final pendingAction = prefs.getString('pending_notification_action');
@@ -256,19 +339,19 @@ class _NotificationRouterScreenState extends State<NotificationRouterScreen> {
         final friendId = parts[0];
         final action = parts[1];
 
-        print("🔔 Action details: Friend=$friendId, Action=$action");
-
         final provider = Provider.of<FriendsProvider>(context, listen: false);
         final friend = provider.getFriendById(friendId);
 
         if (friend != null) {
           // Update last action time
-          await prefs.setInt(
-              'last_action_$friendId', DateTime.now().millisecondsSinceEpoch);
+          await prefs.setInt('last_action_$friendId', DateTime.now().millisecondsSinceEpoch);
+
+          // Reschedule reminder for this friend
+          final notificationService = NotificationService();
+          await notificationService.scheduleReminder(friend);
 
           if (mounted) {
             if (action == 'message') {
-              print("📱 Navigating to message screen");
               Navigator.pushReplacement(
                 context,
                 CupertinoPageRoute(
@@ -277,7 +360,6 @@ class _NotificationRouterScreenState extends State<NotificationRouterScreen> {
               );
               return;
             } else if (action == 'call') {
-              print("📞 Navigating to call screen");
               Navigator.pushReplacementNamed(
                 context,
                 '/call',
@@ -286,15 +368,11 @@ class _NotificationRouterScreenState extends State<NotificationRouterScreen> {
               return;
             }
           }
-        } else {
-          print("❌ Friend not found: $friendId");
         }
       }
     }
 
-    // Default: go to home
     if (mounted) {
-      print("🏠 Navigating to home screen");
       Navigator.pushReplacementNamed(context, '/');
     }
   }

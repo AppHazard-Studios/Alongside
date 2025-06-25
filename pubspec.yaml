@@ -24,7 +24,9 @@ dependencies:
   file_picker: ^10.2.0
   local_auth: ^2.3.0
 
-  # Removed notification packages for now
+  # NEW DEPENDENCIES FOR NOTIFICATIONS
+  flutter_timezone: ^3.0.0
+  workmanager: ^0.6.0
 
 dev_dependencies:
   flutter_test:
