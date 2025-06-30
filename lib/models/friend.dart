@@ -1,4 +1,4 @@
-// models/friend.dart - Added favorite field
+// lib/models/friend.dart - REPLACE ENTIRE FILE
 class Friend {
   final String id;
   final String name;
@@ -7,8 +7,9 @@ class Friend {
   final bool isEmoji;
   final int reminderDays; // Reminder frequency in days (0 = no reminder)
   final String reminderTime; // Format: "HH:MM" (24-hour)
+  final String? reminderData; // NEW: Stores the DaySelectionData as string
   final bool hasPersistentNotification;
-  final bool isFavorite; // NEW: For favorites/stories section
+  final bool isFavorite;
   final String? helpingWith; // What you're helping them with
   final String? theyHelpingWith; // What they're helping you with
 
@@ -19,9 +20,10 @@ class Friend {
     required this.profileImage,
     required this.isEmoji,
     this.reminderDays = 0,
-    this.reminderTime = "09:00", // Default to 9:00 AM
+    this.reminderTime = "09:00",
+    this.reminderData, // NEW
     this.hasPersistentNotification = false,
-    this.isFavorite = false, // NEW: Default to false
+    this.isFavorite = false,
     this.helpingWith = '',
     this.theyHelpingWith = '',
   });
@@ -36,8 +38,9 @@ class Friend {
       'isEmoji': isEmoji,
       'reminderDays': reminderDays,
       'reminderTime': reminderTime,
+      'reminderData': reminderData, // NEW
       'hasPersistentNotification': hasPersistentNotification,
-      'isFavorite': isFavorite, // NEW: Include in JSON
+      'isFavorite': isFavorite,
       'helpingWith': helpingWith,
       'theyHelpingWith': theyHelpingWith,
     };
@@ -52,8 +55,9 @@ class Friend {
       isEmoji: json['isEmoji'],
       reminderDays: json['reminderDays'] ?? 0,
       reminderTime: json['reminderTime'] ?? "09:00",
+      reminderData: json['reminderData'], // NEW
       hasPersistentNotification: json['hasPersistentNotification'] ?? false,
-      isFavorite: json['isFavorite'] ?? false, // NEW: Handle existing data
+      isFavorite: json['isFavorite'] ?? false,
       helpingWith: json['helpingWith'] ?? '',
       theyHelpingWith: json['theyHelpingWith'] ?? '',
     );
@@ -66,8 +70,9 @@ class Friend {
     bool? isEmoji,
     int? reminderDays,
     String? reminderTime,
+    String? reminderData, // NEW
     bool? hasPersistentNotification,
-    bool? isFavorite, // NEW: Include in copyWith
+    bool? isFavorite,
     String? helpingWith,
     String? theyHelpingWith,
   }) {
@@ -79,11 +84,17 @@ class Friend {
       isEmoji: isEmoji ?? this.isEmoji,
       reminderDays: reminderDays ?? this.reminderDays,
       reminderTime: reminderTime ?? this.reminderTime,
+      reminderData: reminderData ?? this.reminderData, // NEW
       hasPersistentNotification:
-          hasPersistentNotification ?? this.hasPersistentNotification,
-      isFavorite: isFavorite ?? this.isFavorite, // NEW: Include in copyWith
+      hasPersistentNotification ?? this.hasPersistentNotification,
+      isFavorite: isFavorite ?? this.isFavorite,
       helpingWith: helpingWith ?? this.helpingWith,
       theyHelpingWith: theyHelpingWith ?? this.theyHelpingWith,
     );
+  }
+
+  // Helper method to check if friend has any reminders
+  bool get hasReminder {
+    return reminderData != null || reminderDays > 0;
   }
 }

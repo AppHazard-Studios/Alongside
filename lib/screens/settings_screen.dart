@@ -1016,7 +1016,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             CupertinoActionSheetAction(
               onPressed: () async {
                 Navigator.pop(context);
-                final success = await _lockService.enableBiometricLock();
+                final Object? result = await _lockService.enableBiometricLock();
+                final bool success = result is bool ? result : false;
                 if (success) {
                   await _loadSettings();
                 } else {

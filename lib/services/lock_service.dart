@@ -1,4 +1,4 @@
-// lib/services/lock_service.dart - With 5-minute cooldown
+// lib/services/lock_service.dart - REPLACE ENTIRE FILE
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:local_auth/local_auth.dart';
@@ -85,18 +85,88 @@ class LockService {
     return shouldLock;
   }
 
-  // Enable biometric lock
-  Future<bool> enableBiometricLock() async {
+  // Enable biometric lock with proper authentication check
+  Future<BiometricSetupResult> enableBiometricLock() async {
     try {
+      // Check if biometric is available
       final isAvailable = await _localAuth.canCheckBiometrics;
-      if (!isAvailable) return false;
+      final isDeviceSupported = await _localAuth.isDeviceSupported();
 
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_lockEnabledKey, true);
-      await prefs.setString(_lockTypeKey, 'biometric');
-      return true;
+      if (!isAvailable || !isDeviceSupported) {
+        return BiometricSetupResult(
+          success: false,
+          error: 'Biometric authentication is not available on this device',
+        );
+      }
+
+      // Get available biometrics
+      final availableBiometrics = await _localAuth.getAvailableBiometrics();
+
+      if (availableBiometrics.isEmpty) {
+        return BiometricSetupResult(
+          success: false,
+          error: 'No biometric data enrolled. Please set up fingerprint or face authentication in device settings',
+        );
+      }
+
+      // Authenticate to confirm biometric setup - THIS IS THE KEY FIX
+      try {
+        final authenticated = await _localAuth.authenticate(
+          localizedReason: 'Authenticate to enable biometric lock for Alongside',
+          options: const AuthenticationOptions(
+            stickyAuth: true,
+            biometricOnly: false, // CHANGED: Allow fallback to device credential
+            sensitiveTransaction: true,
+            useErrorDialogs: true,
+          ),
+        );
+
+        if (!authenticated) {
+          return BiometricSetupResult(
+            success: false,
+            error: 'Authentication failed. Please try again',
+          );
+        }
+
+        // Save settings only after successful authentication
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool(_lockEnabledKey, true);
+        await prefs.setString(_lockTypeKey, 'biometric');
+
+        return BiometricSetupResult(success: true);
+      } on PlatformException catch (e) {
+        print("🔐 Biometric setup error: ${e.code} - ${e.message}");
+        return BiometricSetupResult(
+          success: false,
+          error: _getBiometricErrorMessage(e.code),
+        );
+      }
     } catch (e) {
-      return false;
+      print("🔐 Biometric setup error: $e");
+      return BiometricSetupResult(
+        success: false,
+        error: 'Failed to set up biometric lock: ${e.toString()}',
+      );
+    }
+  }
+
+  // Helper to get user-friendly error messages
+  String _getBiometricErrorMessage(String code) {
+    switch (code) {
+      case 'NotAvailable':
+        return 'Biometric authentication is not available';
+      case 'NotEnrolled':
+        return 'No biometric data found. Please enroll fingerprint or face in device settings';
+      case 'LockedOut':
+        return 'Too many failed attempts. Please try again later';
+      case 'PermanentlyLockedOut':
+        return 'Biometric authentication is locked. Please use device passcode';
+      case 'PasscodeNotSet':
+        return 'Device passcode not set. Please set up a passcode first';
+      case 'OtherOperatingSystem':
+        return 'Biometric authentication is not supported on this OS version';
+      default:
+        return 'Biometric setup failed. Please try again';
     }
   }
 
@@ -120,18 +190,50 @@ class LockService {
     await prefs.remove(_backgroundTimeKey);
   }
 
-  // Authenticate with biometric
+  // Authenticate with biometric - FIXED
   Future<bool> authenticateBiometric() async {
     try {
+      // Check if biometric is available first
+      final isAvailable = await _localAuth.canCheckBiometrics;
+      final isDeviceSupported = await _localAuth.isDeviceSupported();
+
+      if (!isAvailable || !isDeviceSupported) {
+        print("🔐 Biometric not available");
+        return false;
+      }
+
+      // Check if biometrics are enrolled
+      final availableBiometrics = await _localAuth.getAvailableBiometrics();
+      if (availableBiometrics.isEmpty) {
+        print("🔐 No biometrics enrolled");
+        return false;
+      }
+
+      // Authenticate with proper options
       final authenticated = await _localAuth.authenticate(
         localizedReason: 'Authenticate to access Alongside',
         options: const AuthenticationOptions(
           stickyAuth: true,
-          biometricOnly: true,
+          biometricOnly: false, // Allow fallback to device credential
+          useErrorDialogs: true,
+          sensitiveTransaction: false,
         ),
       );
+
       return authenticated;
+    } on PlatformException catch (e) {
+      print("🔐 Biometric authentication error: ${e.code} - ${e.message}");
+
+      // Handle specific error codes
+      if (e.code == 'NotAvailable' || e.code == 'NotEnrolled') {
+        // These are expected errors, not failures
+        return false;
+      }
+
+      // For other errors, throw to handle upstream
+      rethrow;
     } catch (e) {
+      print("🔐 Biometric authentication error: $e");
       return false;
     }
   }
@@ -148,9 +250,35 @@ class LockService {
     try {
       final isAvailable = await _localAuth.canCheckBiometrics;
       final isDeviceSupported = await _localAuth.isDeviceSupported();
-      return isAvailable && isDeviceSupported;
+
+      if (isAvailable && isDeviceSupported) {
+        final availableBiometrics = await _localAuth.getAvailableBiometrics();
+        return availableBiometrics.isNotEmpty;
+      }
+
+      return false;
     } catch (e) {
       return false;
     }
   }
+
+  // Get available biometric types
+  Future<List<BiometricType>> getAvailableBiometrics() async {
+    try {
+      return await _localAuth.getAvailableBiometrics();
+    } catch (e) {
+      return [];
+    }
+  }
+}
+
+// Result class for biometric setup
+class BiometricSetupResult {
+  final bool success;
+  final String? error;
+
+  BiometricSetupResult({
+    required this.success,
+    this.error,
+  });
 }
