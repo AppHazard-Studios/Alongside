@@ -1,4 +1,4 @@
-// lib/services/notification_service.dart - COMPLETE WORKING SOLUTION
+// lib/services/notification_service.dart - COMPLETE FIXED VERSION
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
@@ -83,7 +83,7 @@ class NotificationService {
       if (initialized == true) {
         print("✅ Notification plugin initialized");
 
-        // Create notification channels
+        // Create notification channels - CLEANED UP VERSION
         await _createNotificationChannels();
 
         // Request all permissions
@@ -154,7 +154,7 @@ class NotificationService {
     }
   }
 
-  // Create channels with proper configuration
+  // Create channels with proper configuration - CLEANED UP TO SINGLE CHANNEL
   Future<void> _createNotificationChannels() async {
     if (!Platform.isAndroid) return;
 
@@ -164,22 +164,21 @@ class NotificationService {
     if (androidPlugin == null) return;
 
     try {
-      // HIGH PRIORITY channel for reminders
+      // SINGLE HIGH PRIORITY channel for all reminders
       const reminderChannel = AndroidNotificationChannel(
-        'alongside_reminders_high',
+        'alongside_reminders',
         'Friend Reminders',
-        description: 'Important reminders to check in with friends',
+        description: 'Reminders to check in with friends',
         importance: Importance.high,
         playSound: true,
         enableVibration: true,
         enableLights: true,
         showBadge: true,
         ledColor: Colors.blue,
-        sound: RawResourceAndroidNotificationSound('notification_sound'),
       );
       await androidPlugin.createNotificationChannel(reminderChannel);
 
-      // Persistent channel
+      // Persistent channel remains separate
       const persistentChannel = AndroidNotificationChannel(
         'alongside_persistent',
         'Quick Access',
@@ -267,7 +266,7 @@ class NotificationService {
     }
   }
 
-  // Schedule reminder with multiple fallback mechanisms
+  // Schedule reminder with FIXED timing logic
   Future<bool> scheduleReminder(Friend friend) async {
     if (!_isInitialized) {
       await initialize();
@@ -290,31 +289,48 @@ class NotificationService {
       final now = DateTime.now();
       final prefs = await SharedPreferences.getInstance();
 
-      final lastActionTime = prefs.getInt('last_action_${friend.id}');
-      final baseTime = lastActionTime != null
-          ? DateTime.fromMillisecondsSinceEpoch(lastActionTime)
-          : now;
-
       // Parse time
       final timeParts = friend.reminderTime.split(':');
       final hour = int.tryParse(timeParts[0]) ?? 9;
       final minute = timeParts.length > 1 ? int.tryParse(timeParts[1]) ?? 0 : 0;
 
-      // Calculate next reminder
-      DateTime nextReminder = DateTime(
-        baseTime.year,
-        baseTime.month,
-        baseTime.day,
-        hour,
-        minute,
-      );
+      DateTime nextReminder;
 
-      // Add days
-      nextReminder = nextReminder.add(Duration(days: friend.reminderDays));
+      // Check if we have reminder data for day-based scheduling
+      if (friend.reminderData != null && friend.reminderData!.isNotEmpty) {
+        // Day-based scheduling - will be implemented with the new feature
+        nextReminder = _calculateNextDayBasedReminder(friend, now, hour, minute);
+      } else {
+        // Interval-based scheduling
+        final lastActionTime = prefs.getInt('last_action_${friend.id}');
 
-      // Ensure future time
-      while (nextReminder.isBefore(now)) {
-        nextReminder = nextReminder.add(Duration(days: friend.reminderDays));
+        if (lastActionTime == null) {
+          // First time - check if we can do it today
+          DateTime todayReminder = DateTime(now.year, now.month, now.day, hour, minute);
+
+          if (todayReminder.isAfter(now)) {
+            // Can do it today!
+            nextReminder = todayReminder;
+          } else {
+            // Too late today, schedule for tomorrow
+            nextReminder = todayReminder.add(const Duration(days: 1));
+          }
+        } else {
+          // Has previous action - calculate from last action
+          final baseTime = DateTime.fromMillisecondsSinceEpoch(lastActionTime);
+          nextReminder = DateTime(
+            baseTime.year,
+            baseTime.month,
+            baseTime.day,
+            hour,
+            minute,
+          ).add(Duration(days: friend.reminderDays));
+
+          // Ensure it's in the future
+          while (nextReminder.isBefore(now)) {
+            nextReminder = nextReminder.add(Duration(days: friend.reminderDays));
+          }
+        }
       }
 
       // Store times
@@ -327,11 +343,11 @@ class NotificationService {
       print("   ID: $id");
       print("   Time: $nextReminder");
 
-      // Android notification details with HIGH priority
+      // Android notification details - USING SINGLE CHANNEL
       final androidDetails = AndroidNotificationDetails(
-        'alongside_reminders_high',
+        'alongside_reminders',
         'Friend Reminders',
-        channelDescription: 'Important reminders to check in with friends',
+        channelDescription: 'Reminders to check in with friends',
         importance: Importance.high,
         priority: Priority.high,
         ticker: 'Alongside Reminder',
@@ -347,14 +363,12 @@ class NotificationService {
             'Message',
             showsUserInterface: true,
             cancelNotification: true,
-            icon: DrawableResourceAndroidBitmap('ic_message'),
           ),
           const AndroidNotificationAction(
             'call',
             'Call',
             showsUserInterface: true,
             cancelNotification: true,
-            icon: DrawableResourceAndroidBitmap('ic_call'),
           ),
         ],
       );
@@ -407,6 +421,17 @@ class NotificationService {
       print("Stack trace: $stackTrace");
       return false;
     }
+  }
+
+  // Helper method for day-based reminders (placeholder for now)
+  DateTime _calculateNextDayBasedReminder(Friend friend, DateTime now, int hour, int minute) {
+    // This will be implemented when we add the day selection feature
+    // For now, fallback to interval-based
+    DateTime nextReminder = DateTime(now.year, now.month, now.day, hour, minute);
+    if (nextReminder.isBefore(now)) {
+      nextReminder = nextReminder.add(const Duration(days: 1));
+    }
+    return nextReminder;
   }
 
   // Schedule backup reminder using WorkManager
@@ -497,9 +522,9 @@ class NotificationService {
       final id = _getStableNotificationId(friendId) + 50000; // Different ID for immediate
 
       final androidDetails = AndroidNotificationDetails(
-        'alongside_reminders_high',
+        'alongside_reminders',
         'Friend Reminders',
-        channelDescription: 'Important reminders to check in with friends',
+        channelDescription: 'Reminders to check in with friends',
         importance: Importance.high,
         priority: Priority.high,
         actions: <AndroidNotificationAction>[
@@ -644,7 +669,7 @@ class NotificationService {
 
     try {
       const androidDetails = AndroidNotificationDetails(
-        'alongside_reminders_high',
+        'alongside_reminders',
         'Friend Reminders',
         channelDescription: 'Test notification',
         importance: Importance.high,
@@ -716,6 +741,23 @@ class NotificationService {
     } catch (e) {
       print("❌ Error checking notification setup: $e");
       return false;
+    }
+  }
+
+  // Force migrate all existing reminders to new system
+  Future<void> migrateExistingReminders() async {
+    try {
+      print("🔄 Starting reminder migration...");
+
+      // Cancel all existing notifications
+      await flutterLocalNotificationsPlugin.cancelAll();
+
+      // Clear all WorkManager tasks
+      await Workmanager().cancelAll();
+
+      print("✅ Migration complete - reminders will be rescheduled when friends are updated");
+    } catch (e) {
+      print("❌ Error during migration: $e");
     }
   }
 }
