@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../models/friend.dart';
 import '../services/storage_service.dart';
 import '../services/notification_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FriendsProvider with ChangeNotifier {
   final StorageService storageService;
@@ -51,18 +52,28 @@ class FriendsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+// In friends_provider.dart - Update the addFriend method
   Future<void> addFriend(Friend friend) async {
-    _friends.add(friend);
-    await storageService.saveFriends(_friends);
+    friends.add(friend);
+    notifyListeners();
 
+    await storageService.saveFriends(friends);
+
+    // PHASE 2 ADDITION: Mark friend as just created for immediate reminders
+    if (friend.reminderDays > 0) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('just_created_${friend.id}', true);
+    }
+
+    // Schedule notification if needed
     if (friend.reminderDays > 0) {
       await notificationService.scheduleReminder(friend);
     }
+
+    // Handle persistent notification
     if (friend.hasPersistentNotification) {
       await notificationService.showPersistentNotification(friend);
     }
-
-    notifyListeners();
   }
 
   // Add this method to FriendsProvider class

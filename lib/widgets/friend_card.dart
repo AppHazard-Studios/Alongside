@@ -1,4 +1,4 @@
-// lib/widgets/friend_card.dart - Fixed text wrapping and consistent colors
+// lib/widgets/friend_card.dart - Complete updated version with reminder helper
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -11,6 +11,8 @@ import '../utils/colors.dart';
 import '../providers/friends_provider.dart';
 import '../utils/constants.dart';
 import '../utils/responsive_utils.dart';
+import '../services/notification_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FriendCardNew extends StatefulWidget {
   final Friend friend;
@@ -37,6 +39,7 @@ class _FriendCardNewState extends State<FriendCardNew>
   late AnimationController _controller;
   late Animation<double> _expandAnimation;
   bool _isPressed = false;
+  DateTime? _nextReminderTime;
 
   @override
   void initState() {
@@ -53,6 +56,43 @@ class _FriendCardNewState extends State<FriendCardNew>
     if (widget.isExpanded) {
       _controller.value = 1.0;
     }
+
+    _loadNextReminderTime();
+  }
+
+  // Load next reminder time
+  Future<void> _loadNextReminderTime() async {
+    if (widget.friend.reminderDays > 0) {
+      final notificationService = NotificationService();
+      final nextTime = await notificationService.getNextReminderTime(widget.friend.id);
+      if (mounted) {
+        setState(() {
+          _nextReminderTime = nextTime;
+        });
+      }
+    }
+  }
+
+  // Helper method to format next reminder text
+  String _getNextReminderText(DateTime? nextReminder) {
+    if (nextReminder == null) return '';
+
+    final now = DateTime.now();
+    final difference = nextReminder.difference(now);
+
+    if (difference.isNegative) {
+      return 'Reminder overdue';
+    } else if (difference.inDays > 1) {
+      return 'Next reminder in ${difference.inDays} days';
+    } else if (difference.inDays == 1) {
+      return 'Next reminder tomorrow';
+    } else if (difference.inHours > 1) {
+      return 'Next reminder in ${difference.inHours} hours';
+    } else if (difference.inMinutes > 1) {
+      return 'Next reminder in ${difference.inMinutes} minutes';
+    } else {
+      return 'Reminder coming soon';
+    }
   }
 
   @override
@@ -60,6 +100,10 @@ class _FriendCardNewState extends State<FriendCardNew>
     super.didUpdateWidget(oldWidget);
     if (widget.isExpanded != oldWidget.isExpanded) {
       widget.isExpanded ? _controller.forward() : _controller.reverse();
+    }
+    if (widget.friend.reminderDays != oldWidget.friend.reminderDays ||
+        widget.friend.reminderTime != oldWidget.friend.reminderTime) {
+      _loadNextReminderTime();
     }
   }
 
@@ -103,18 +147,15 @@ class _FriendCardNewState extends State<FriendCardNew>
             Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment
-                    .start, // Align to top for proper wrapping
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildProfileImage(),
                   const SizedBox(width: 16),
                   Expanded(
-                    // Important: This allows text to wrap properly
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Friend name row with reminder badge (only when collapsed)
-// Friend name row with reminder badge (only when collapsed)
+                        // Friend name row with reminder badge
                         Row(
                           children: [
                             Expanded(
@@ -143,10 +184,10 @@ class _FriendCardNewState extends State<FriendCardNew>
                                   widget.friend.reminderDays <= 30
                                       ? '${widget.friend.reminderDays}d'
                                       : widget.friend.reminderDays == 60
-                                          ? '2mo'
-                                          : widget.friend.reminderDays == 90
-                                              ? '3mo'
-                                              : '6mo',
+                                      ? '2mo'
+                                      : widget.friend.reminderDays == 90
+                                      ? '3mo'
+                                      : '6mo',
                                   style: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
@@ -159,7 +200,7 @@ class _FriendCardNewState extends State<FriendCardNew>
                           ],
                         ),
 
-                        // "Alongside them in" info - Always visible with proper wrapping
+                        // "Alongside them in" info
                         if (widget.friend.helpingWith != null &&
                             widget.friend.helpingWith!.isNotEmpty) ...[
                           const SizedBox(height: 8),
@@ -169,30 +210,26 @@ class _FriendCardNewState extends State<FriendCardNew>
                               Container(
                                 padding: const EdgeInsets.all(4),
                                 decoration: BoxDecoration(
-                                  color: AppColors
-                                      .primaryLight, // Use consistent primary color
+                                  color: AppColors.primaryLight,
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
                                   CupertinoIcons.heart_fill,
-                                  color: AppColors
-                                      .primary, // Use consistent primary color
+                                  color: AppColors.primary,
                                   size: 10,
                                 ),
                               ),
                               const SizedBox(width: 8),
                               Expanded(
-                                // Critical: This allows text to wrap properly
                                 child: Text(
                                   "Alongside them: ${widget.friend.helpingWith}",
                                   style: const TextStyle(
                                     color: AppColors.textSecondary,
                                     fontSize: 14,
                                     fontFamily: '.SF Pro Text',
-                                    height:
-                                        1.3, // Better line height for readability
+                                    height: 1.3,
                                   ),
-                                  maxLines: 3, // Allow multiple lines
+                                  maxLines: 3,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -251,7 +288,7 @@ class _FriendCardNewState extends State<FriendCardNew>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // "They're alongside you in" section with proper wrapping
+                        // "They're alongside you in" section
                         if (widget.friend.theyHelpingWith != null &&
                             widget.friend.theyHelpingWith!.isNotEmpty) ...[
                           Row(
@@ -271,7 +308,6 @@ class _FriendCardNewState extends State<FriendCardNew>
                               ),
                               const SizedBox(width: 12),
                               Expanded(
-                                // Critical: This allows text to wrap properly
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -291,9 +327,9 @@ class _FriendCardNewState extends State<FriendCardNew>
                                         fontSize: 15,
                                         color: CupertinoColors.label,
                                         fontFamily: '.SF Pro Text',
-                                        height: 1.3, // Better line height
+                                        height: 1.3,
                                       ),
-                                      maxLines: 5, // Allow multiple lines
+                                      maxLines: 5,
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ],
@@ -304,8 +340,7 @@ class _FriendCardNewState extends State<FriendCardNew>
                           const SizedBox(height: 16),
                         ],
 
-                        // Reminder info with icon
-// Reminder info with icon
+                        // Reminder info with next reminder time
                         if (widget.friend.reminderDays > 0) ...[
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -351,12 +386,24 @@ class _FriendCardNewState extends State<FriendCardNew>
                                           style: const TextStyle(
                                             fontSize: 13,
                                             color:
-                                                CupertinoColors.secondaryLabel,
+                                            CupertinoColors.secondaryLabel,
                                             fontFamily: '.SF Pro Text',
                                           ),
                                         ),
                                       ],
                                     ),
+                                    if (_nextReminderTime != null) ...[
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        _getNextReminderText(_nextReminderTime),
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.primary,
+                                          fontFamily: '.SF Pro Text',
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
                                   ],
                                 ),
                               ),
@@ -367,9 +414,7 @@ class _FriendCardNewState extends State<FriendCardNew>
                     ),
                   ),
 
-                  // Action buttons section with consistent primary color
-// Action buttons section with proper scaling
-// Action buttons section with intelligent scaling
+                  // Action buttons section
                   Padding(
                     padding: EdgeInsets.fromLTRB(
                       16,
@@ -388,7 +433,7 @@ class _FriendCardNewState extends State<FriendCardNew>
                             onPressed: () => _navigateToMessageScreen(context),
                             child: Container(
                               height:
-                                  ResponsiveUtils.scaledButtonHeight(context),
+                              ResponsiveUtils.scaledButtonHeight(context),
                               padding: ResponsiveUtils.scaledPadding(
                                 context,
                                 const EdgeInsets.symmetric(horizontal: 8),
@@ -412,9 +457,9 @@ class _FriendCardNewState extends State<FriendCardNew>
                                         color: CupertinoColors.white,
                                         fontWeight: FontWeight.w600,
                                         fontSize:
-                                            ResponsiveUtils.scaledFontSize(
-                                                context, 15,
-                                                maxScale: 1.3),
+                                        ResponsiveUtils.scaledFontSize(
+                                            context, 15,
+                                            maxScale: 1.3),
                                         fontFamily: '.SF Pro Text',
                                       ),
                                       maxLines: 1,
@@ -437,7 +482,7 @@ class _FriendCardNewState extends State<FriendCardNew>
                             onPressed: () => _callFriend(context),
                             child: Container(
                               height:
-                                  ResponsiveUtils.scaledButtonHeight(context),
+                              ResponsiveUtils.scaledButtonHeight(context),
                               padding: ResponsiveUtils.scaledPadding(
                                 context,
                                 const EdgeInsets.symmetric(horizontal: 8),
@@ -461,9 +506,9 @@ class _FriendCardNewState extends State<FriendCardNew>
                                         color: AppColors.primary,
                                         fontWeight: FontWeight.w600,
                                         fontSize:
-                                            ResponsiveUtils.scaledFontSize(
-                                                context, 15,
-                                                maxScale: 1.3),
+                                        ResponsiveUtils.scaledFontSize(
+                                            context, 15,
+                                            maxScale: 1.3),
                                         fontFamily: '.SF Pro Text',
                                       ),
                                       maxLines: 1,
@@ -547,11 +592,10 @@ class _FriendCardNewState extends State<FriendCardNew>
   }
 
   // Call friend
-// Call friend
   void _callFriend(BuildContext context) async {
     // Simplified phone number cleaning
     final phoneNumber =
-        widget.friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+    widget.friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
     try {
       final telUri = Uri.parse('tel:$phoneNumber');
       await launchUrl(
@@ -563,6 +607,15 @@ class _FriendCardNewState extends State<FriendCardNew>
       final storageService =
           Provider.of<FriendsProvider>(context, listen: false).storageService;
       await storageService.incrementCallsMade();
+
+      // Record action for reminder rescheduling
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('last_action_${widget.friend.id}', DateTime.now().millisecondsSinceEpoch);
+
+      // Reschedule reminder
+      final notificationService = NotificationService();
+      await notificationService.scheduleReminder(widget.friend);
+
     } catch (e) {
       if (context.mounted) {
         showCupertinoDialog(
@@ -588,7 +641,7 @@ class _FriendCardNewState extends State<FriendCardNew>
   Widget _buildProfileImage() {
     final containerSize = ResponsiveUtils.scaledContainerSize(context, 60);
     final emojiSize =
-        ResponsiveUtils.scaledIconSize(context, 30, maxScale: 1.3);
+    ResponsiveUtils.scaledIconSize(context, 30, maxScale: 1.3);
 
     return Container(
       width: containerSize,
@@ -605,23 +658,23 @@ class _FriendCardNewState extends State<FriendCardNew>
       ),
       child: widget.friend.isEmoji
           ? Center(
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Padding(
-                  padding: const EdgeInsets.all(4),
-                  child: Text(
-                    widget.friend.profileImage,
-                    style: TextStyle(fontSize: emojiSize),
-                  ),
-                ),
-              ),
-            )
-          : ClipOval(
-              child: Image.file(
-                File(widget.friend.profileImage),
-                fit: BoxFit.cover,
-              ),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Padding(
+            padding: const EdgeInsets.all(4),
+            child: Text(
+              widget.friend.profileImage,
+              style: TextStyle(fontSize: emojiSize),
             ),
+          ),
+        ),
+      )
+          : ClipOval(
+        child: Image.file(
+          File(widget.friend.profileImage),
+          fit: BoxFit.cover,
+        ),
+      ),
     );
   }
 }

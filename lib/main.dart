@@ -17,48 +17,12 @@ import 'services/foreground_service.dart';
 import 'screens/call_screen.dart';
 import 'screens/message_screen.dart';
 import 'services/battery_optimization_service.dart';
-import 'package:workmanager/workmanager.dart';
 
 // Global key for navigation
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-// WorkManager callback dispatcher - MUST be top-level
-@pragma('vm:entry-point')
-void callbackDispatcher() {
-  Workmanager().executeTask((task, inputData) async {
-    print("🔄 WorkManager task: $task");
-
-    // Initialize notification service
-    final notificationService = NotificationService();
-    await notificationService.initialize();
-
-    if (task == "checkReminders") {
-      // Check and reschedule all reminders
-      await notificationService.checkAndRescheduleAllReminders();
-    } else if (task == "showReminder") {
-      // Show a specific reminder (used as backup)
-      final friendId = inputData?['friendId'] as String?;
-      final friendName = inputData?['friendName'] as String?;
-      final reminderDays = inputData?['reminderDays'] as int?;
-
-      if (friendId != null && friendName != null && reminderDays != null) {
-        print("📌 Showing backup reminder for $friendName");
-        // You can implement a direct notification show here if needed
-      }
-    }
-
-    return Future.value(true);
-  });
-}
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize WorkManager
-  await Workmanager().initialize(
-    callbackDispatcher,
-    isInDebugMode: false,
-  );
 
   // Initialize notifications with comprehensive setup
   final notificationService = NotificationService();
@@ -343,10 +307,14 @@ class _NotificationRouterScreenState extends State<NotificationRouterScreen> {
         final friend = provider.getFriendById(friendId);
 
         if (friend != null) {
-          // Update last action time
-          await prefs.setInt('last_action_$friendId', DateTime.now().millisecondsSinceEpoch);
+          // PHASE 2 UPDATE: Record exact action time for accurate interval calculation
+          final actionTime = DateTime.now();
+          await prefs.setInt('last_action_$friendId', actionTime.millisecondsSinceEpoch);
 
-          // Reschedule reminder for this friend
+          // Log the action for debugging
+          print("📱 Action recorded for ${friend.name} at ${actionTime.toString()}");
+
+          // Reschedule reminder for this friend based on new action time
           final notificationService = NotificationService();
           await notificationService.scheduleReminder(friend);
 

@@ -267,6 +267,7 @@ class NotificationService {
   }
 
   // Schedule reminder with FIXED timing logic
+// Schedule reminder with FIXED timing logic - PHASE 2 UPDATE
   Future<bool> scheduleReminder(Friend friend) async {
     if (!_isInitialized) {
       await initialize();
@@ -298,37 +299,92 @@ class NotificationService {
 
       // Check if we have reminder data for day-based scheduling
       if (friend.reminderData != null && friend.reminderData!.isNotEmpty) {
-        // Day-based scheduling - will be implemented with the new feature
+        // Day-based scheduling - will be implemented in Phase 3
         nextReminder = _calculateNextDayBasedReminder(friend, now, hour, minute);
       } else {
-        // Interval-based scheduling
+        // PHASE 2 FIX: Improved interval-based scheduling
         final lastActionTime = prefs.getInt('last_action_${friend.id}');
+        final justCreated = prefs.getBool('just_created_${friend.id}') ?? false;
 
-        if (lastActionTime == null) {
-          // First time - check if we can do it today
+        if (justCreated) {
+          // Friend was just created - allow same-day reminder
+          await prefs.remove('just_created_${friend.id}');
+
           DateTime todayReminder = DateTime(now.year, now.month, now.day, hour, minute);
 
+          // If the time hasn't passed today, schedule for today
           if (todayReminder.isAfter(now)) {
-            // Can do it today!
             nextReminder = todayReminder;
+            print("📅 First reminder scheduled for TODAY at ${todayReminder.hour}:${todayReminder.minute.toString().padLeft(2, '0')}");
           } else {
-            // Too late today, schedule for tomorrow
-            nextReminder = todayReminder.add(const Duration(days: 1));
+            // Time has passed today, but for first reminder, we start interval from NOW
+            // So next reminder is in X days from today at the specified time
+            nextReminder = DateTime(
+              now.year,
+              now.month,
+              now.day + friend.reminderDays,
+              hour,
+              minute,
+            );
+            print("📅 First reminder scheduled for ${friend.reminderDays} days from today");
+          }
+        } else if (lastActionTime == null) {
+          // No last action and not just created - existing friend without action history
+          // Check if we can do it today
+          DateTime todayReminder = DateTime(now.year, now.month, now.day, hour, minute);
+
+          // Give 5 minute grace period for "same time" scheduling
+          final nowWithGrace = now.add(const Duration(minutes: 5));
+
+          if (todayReminder.isAfter(nowWithGrace)) {
+            // Can still do it today!
+            nextReminder = todayReminder;
+            print("📅 Reminder scheduled for TODAY (existing friend)");
+          } else {
+            // Too late today, but count interval from TODAY
+            nextReminder = DateTime(
+              now.year,
+              now.month,
+              now.day + friend.reminderDays,
+              hour,
+              minute,
+            );
+            print("📅 Reminder scheduled ${friend.reminderDays} days from today");
           }
         } else {
           // Has previous action - calculate from last action
-          final baseTime = DateTime.fromMillisecondsSinceEpoch(lastActionTime);
-          nextReminder = DateTime(
-            baseTime.year,
-            baseTime.month,
-            baseTime.day,
-            hour,
-            minute,
-          ).add(Duration(days: friend.reminderDays));
+          final lastAction = DateTime.fromMillisecondsSinceEpoch(lastActionTime);
 
-          // Ensure it's in the future
-          while (nextReminder.isBefore(now)) {
-            nextReminder = nextReminder.add(Duration(days: friend.reminderDays));
+          // Calculate days since last action
+          final daysSinceAction = now.difference(lastAction).inDays;
+
+          if (daysSinceAction >= friend.reminderDays) {
+            // Overdue - show as soon as possible
+            DateTime todayReminder = DateTime(now.year, now.month, now.day, hour, minute);
+
+            if (todayReminder.isAfter(now.add(const Duration(minutes: 5)))) {
+              // Can do it today
+              nextReminder = todayReminder;
+            } else {
+              // Do it tomorrow
+              nextReminder = todayReminder.add(const Duration(days: 1));
+            }
+            print("⚠️ Overdue reminder - scheduling ASAP");
+          } else {
+            // Schedule based on last action + interval
+            nextReminder = DateTime(
+              lastAction.year,
+              lastAction.month,
+              lastAction.day + friend.reminderDays,
+              hour,
+              minute,
+            );
+
+            // Ensure it's in the future
+            while (nextReminder.isBefore(now)) {
+              nextReminder = nextReminder.add(Duration(days: friend.reminderDays));
+            }
+            print("📅 Next reminder based on last action: $nextReminder");
           }
         }
       }
@@ -342,8 +398,9 @@ class NotificationService {
       print("📅 Scheduling reminder for ${friend.name}:");
       print("   ID: $id");
       print("   Time: $nextReminder");
+      print("   Days interval: ${friend.reminderDays}");
 
-      // Android notification details - USING SINGLE CHANNEL
+      // Android notification details
       final androidDetails = AndroidNotificationDetails(
         'alongside_reminders',
         'Friend Reminders',

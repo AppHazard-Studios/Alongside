@@ -11,6 +11,8 @@ import '../models/friend.dart';
 import '../providers/friends_provider.dart';
 import '../utils/colors.dart';
 import '../utils/responsive_utils.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/notification_service.dart';
 
 class MessageScreenNew extends StatefulWidget {
   final Friend friend;
@@ -42,6 +44,7 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
   @override
   void initState() {
     super.initState();
+    _recordMessageAction();
     _loadMessages();
   }
 
@@ -49,6 +52,23 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
   void dispose() {
     _pageController.dispose();
     super.dispose();
+  }
+
+  Future<void> _recordMessageAction() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // Check if this was opened from a notification
+    final pendingAction = prefs.getString('pending_notification_action');
+    if (pendingAction == null || !pendingAction.contains(widget.friend.id)) {
+      // Manual action - record it
+      await prefs.setInt('last_action_${widget.friend.id}', DateTime.now().millisecondsSinceEpoch);
+
+      // Reschedule reminder
+      final notificationService = NotificationService();
+      await notificationService.scheduleReminder(widget.friend);
+
+      print("📱 Manual message action recorded for ${widget.friend.name}");
+    }
   }
 
   Future<void> _loadMessages() async {

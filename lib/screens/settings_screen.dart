@@ -420,6 +420,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   // NEW: Show scheduled notifications
+  // NEW: Show scheduled notifications
   void _showScheduledNotifications(BuildContext context) async {
     final notificationService = NotificationService();
     await notificationService.debugScheduledNotifications();
@@ -530,7 +531,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // NEW: Check permissions
+// NEW: Check permissions
   void _checkPermissions(BuildContext context) async {
     final notificationService = NotificationService();
     final setupStatus = await notificationService.checkNotificationSetup();
@@ -626,7 +627,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // NEW: Reschedule all reminders
+// NEW: Reschedule all reminders
   void _rescheduleAllReminders(BuildContext context) async {
     showCupertinoDialog(
       context: context,
