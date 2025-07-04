@@ -100,6 +100,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 16),
 
                 // NOTIFICATION DEBUG SECTION - NEW
+                // NOTIFICATION DEBUG SECTION - NEW
                 _buildSectionTitle('NOTIFICATION DEBUG'),
                 Container(
                   decoration: BoxDecoration(
@@ -419,7 +420,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // NEW: Show scheduled notifications
   // NEW: Show scheduled notifications
   void _showScheduledNotifications(BuildContext context) async {
     final notificationService = NotificationService();

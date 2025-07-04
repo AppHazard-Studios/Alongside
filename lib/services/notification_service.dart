@@ -479,7 +479,6 @@ class NotificationService {
       return false;
     }
   }
-
   // Helper method for day-based reminders (placeholder for now)
   DateTime _calculateNextDayBasedReminder(Friend friend, DateTime now, int hour, int minute) {
     // This will be implemented when we add the day selection feature

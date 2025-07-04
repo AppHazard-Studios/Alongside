@@ -306,6 +306,9 @@ class _NotificationRouterScreenState extends State<NotificationRouterScreen> {
         final provider = Provider.of<FriendsProvider>(context, listen: false);
         final friend = provider.getFriendById(friendId);
 
+// In _NotificationRouterScreenState._processNotification() method
+// Find this section and update it:
+
         if (friend != null) {
           // PHASE 2 UPDATE: Record exact action time for accurate interval calculation
           final actionTime = DateTime.now();

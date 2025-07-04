@@ -5,6 +5,7 @@ import '../services/lock_service.dart';
 import '../utils/colors.dart';
 import '../widgets/illustrations.dart';
 import 'dart:async';
+import 'dart:ui';
 
 class LockScreen extends StatefulWidget {
   final VoidCallback onUnlocked;
@@ -195,139 +196,141 @@ class _LockScreenState extends State<LockScreen> with TickerProviderStateMixin {
         backgroundColor: AppColors.background,
         child: FadeTransition(
           opacity: _fadeAnimation,
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppColors.background,
-                  AppColors.primaryLight.withOpacity(0.3),
-                  AppColors.background,
-                ],
-              ),
-            ),
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Spacer(),
-
-                    // App icon/illustration with animation
-                    AnimatedBuilder(
-                      animation: _iconAnimation,
-                      builder: (context, child) {
-                        return Transform.scale(
-                          scale: 0.9 + (_iconAnimation.value * 0.1),
-                          child: Container(
-                            width: 120,
-                            height: 120,
-                            decoration: BoxDecoration(
-                              color: AppColors.primaryLight,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.primary.withOpacity(0.2),
-                                  blurRadius: 20,
-                                  spreadRadius: 5,
-                                ),
-                              ],
-                            ),
-                            child: Illustrations.friendsIllustration(size: 120),
-                          ),
-                        );
-                      },
-                    ),
-
-                    const SizedBox(height: 48),
-
-                    Text(
-                      'Welcome back',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
-                        fontFamily: '.SF Pro Text',
-                      ),
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    Text(
-                      _lockType == 'biometric'
-                          ? 'Authenticate to continue'
-                          : 'Enter your PIN to continue',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: AppColors.textSecondary,
-                        fontFamily: '.SF Pro Text',
-                      ),
-                    ),
-
-                    const SizedBox(height: 48),
-
-                    // Authentication area with shake animation
-                    AnimatedBuilder(
-                      animation: _shakeAnimation,
-                      builder: (context, child) {
-                        return Transform.translate(
-                          offset: Offset(_shakeAnimation.value, 0),
-                          child: child,
-                        );
-                      },
-                      child: _buildAuthenticationArea(),
-                    ),
-
-                    // Error message
-                    if (_errorMessage.isNotEmpty) ...[
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: AppColors.error.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          _errorMessage,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: AppColors.error,
-                            fontFamily: '.SF Pro Text',
-                          ),
-                        ),
-                      ),
-                    ],
-
-                    const Spacer(),
-
-                    // Bottom action
-                    if (_lockType == 'biometric' && !_isAuthenticating)
-                      CupertinoButton(
-                        onPressed: _authenticateBiometric,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              CupertinoIcons.lock_shield_fill,
-                              color: AppColors.primary,
-                              size: 18,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Try Again',
-                              style: TextStyle(
-                                color: AppColors.primary,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                fontFamily: '.SF Pro Text',
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+          child: SizedBox.expand(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.background,
+                    AppColors.primaryLight.withOpacity(0.3),
+                    AppColors.background,
                   ],
+                ),
+              ),
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Spacer(),
+
+                      // App icon/illustration with animation
+                      AnimatedBuilder(
+                        animation: _iconAnimation,
+                        builder: (context, child) {
+                          return Transform.scale(
+                            scale: 0.9 + (_iconAnimation.value * 0.1),
+                            child: Container(
+                              width: 120,
+                              height: 120,
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryLight,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.primary.withOpacity(0.2),
+                                    blurRadius: 8,
+                                    spreadRadius: 2,
+                                  ),
+                                ],
+                              ),
+                              child: Illustrations.friendsIllustration(size: 120),
+                            ),
+                          );
+                        },
+                      ),
+
+                      const SizedBox(height: 48),
+
+                      Text(
+                        'Welcome back',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                          fontFamily: '.SF Pro Text',
+                        ),
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      Text(
+                        _lockType == 'biometric'
+                            ? 'Authenticate to continue'
+                            : 'Enter your PIN to continue',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: AppColors.textSecondary,
+                          fontFamily: '.SF Pro Text',
+                        ),
+                      ),
+
+                      const SizedBox(height: 48),
+
+                      // Authentication area with shake animation
+                      AnimatedBuilder(
+                        animation: _shakeAnimation,
+                        builder: (context, child) {
+                          return Transform.translate(
+                            offset: Offset(_shakeAnimation.value, 0),
+                            child: child,
+                          );
+                        },
+                        child: _buildAuthenticationArea(),
+                      ),
+
+                      // Error message
+                      if (_errorMessage.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: AppColors.error.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            _errorMessage,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: AppColors.error,
+                              fontFamily: '.SF Pro Text',
+                            ),
+                          ),
+                        ),
+                      ],
+
+                      const Spacer(),
+
+                      // Bottom action
+                      if (_lockType == 'biometric' && !_isAuthenticating)
+                        CupertinoButton(
+                          onPressed: _authenticateBiometric,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                CupertinoIcons.lock_shield_fill,
+                                color: AppColors.primary,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Try Again',
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  fontFamily: '.SF Pro Text',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -402,19 +405,19 @@ class _LockScreenState extends State<LockScreen> with TickerProviderStateMixin {
         Container(
           width: 200,
           decoration: BoxDecoration(
-            color: CupertinoColors.white,
+            color: CupertinoColors.white.withOpacity(0.2),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: _errorMessage.isNotEmpty
-                  ? AppColors.error
-                  : AppColors.primary.withOpacity(0.3),
+                  ? AppColors.error.withOpacity(0.8)
+                  : CupertinoColors.white.withOpacity(0.3),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withOpacity(0.1),
-                blurRadius: 10,
-                offset: const Offset(0, 3),
+                color: CupertinoColors.black.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
