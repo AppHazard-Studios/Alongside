@@ -16,7 +16,6 @@ dependencies:
   image_picker: ^1.0.2
   path_provider: ^2.1.0
   flutter_local_notifications: ^19.1.0
-  flutter_foreground_task: ^9.1.0
   permission_handler: ^12.0.0+1
   flutter_contacts: ^1.1.9+2
   flutter_native_contact_picker: ^0.0.10

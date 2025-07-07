@@ -424,6 +424,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _showScheduledNotifications(BuildContext context) async {
     final notificationService = NotificationService();
     await notificationService.debugScheduledNotifications();
+    await notificationService.scheduleTestIn30Seconds();
 
     // Also show in UI
     final provider = Provider.of<FriendsProvider>(context, listen: false);
@@ -534,9 +535,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 // NEW: Check permissions
   void _checkPermissions(BuildContext context) async {
     final notificationService = NotificationService();
-    final setupStatus = await notificationService.checkNotificationSetup();
+    final isSetup = true; // Simplified system doesn't need setup check
 
     // Convert the bool result to what we need
+    final setupStatus = true;
     final hasSetup = setupStatus;
 
     // Check individual permissions

@@ -1,4 +1,4 @@
-// lib/providers/friends_provider.dart
+// lib/providers/friends_provider.dart - SIMPLIFIED VERSION
 import 'package:flutter/foundation.dart';
 import '../models/friend.dart';
 import '../services/storage_service.dart';
@@ -37,13 +37,6 @@ class FriendsProvider with ChangeNotifier {
 
     _isLoading = false;
     notifyListeners();
-
-    // REMOVED: The automatic notification scheduling on load
-    // This was causing duplicate notifications every time the provider loaded
-    // Notifications should only be scheduled when:
-    // 1. A friend is first added
-    // 2. A friend's reminder settings are updated
-    // 3. The foreground service checks and reschedules as needed
   }
 
   Future<void> reorderFriends(List<Friend> reorderedFriends) async {
@@ -52,21 +45,18 @@ class FriendsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-// In friends_provider.dart - Update the addFriend method
   Future<void> addFriend(Friend friend) async {
     friends.add(friend);
     notifyListeners();
 
     await storageService.saveFriends(friends);
 
-    // PHASE 2 ADDITION: Mark friend as just created for immediate reminders
+    // Schedule notifications if needed
     if (friend.reminderDays > 0) {
+      // Mark as just created for immediate scheduling
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('just_created_${friend.id}', true);
-    }
 
-    // Schedule notification if needed
-    if (friend.reminderDays > 0) {
       await notificationService.scheduleReminder(friend);
     }
 
@@ -76,7 +66,6 @@ class FriendsProvider with ChangeNotifier {
     }
   }
 
-  // Add this method to FriendsProvider class
   Future<void> reloadFriends() async {
     _friends = [];
     notifyListeners();
@@ -90,28 +79,26 @@ class FriendsProvider with ChangeNotifier {
       _friends[index] = updatedFriend;
       await storageService.saveFriends(_friends);
 
-      // Only handle notification changes if settings actually changed
-
       // Handle reminder changes
       if (oldFriend.reminderDays != updatedFriend.reminderDays ||
-          oldFriend.reminderTime != updatedFriend.reminderTime) {
-        // Cancel old reminder first
+          oldFriend.reminderTime != updatedFriend.reminderTime ||
+          oldFriend.reminderData != updatedFriend.reminderData) {
+
+        // Cancel old reminders
         await notificationService.cancelReminder(updatedFriend.id);
 
-        // Schedule new reminder if enabled
+        // Schedule new reminders if enabled
         if (updatedFriend.reminderDays > 0) {
           await notificationService.scheduleReminder(updatedFriend);
         }
       }
 
       // Handle persistent notification changes
-      if (oldFriend.hasPersistentNotification !=
-          updatedFriend.hasPersistentNotification) {
+      if (oldFriend.hasPersistentNotification != updatedFriend.hasPersistentNotification) {
         if (updatedFriend.hasPersistentNotification) {
           await notificationService.showPersistentNotification(updatedFriend);
         } else {
-          await notificationService
-              .removePersistentNotification(updatedFriend.id);
+          await notificationService.removePersistentNotification(updatedFriend.id);
         }
       }
 
@@ -123,6 +110,7 @@ class FriendsProvider with ChangeNotifier {
     _friends.removeWhere((friend) => friend.id == id);
     await storageService.saveFriends(_friends);
 
+    // Cancel all notifications for this friend
     await notificationService.cancelReminder(id);
     await notificationService.removePersistentNotification(id);
 

@@ -1,4 +1,4 @@
-// lib/main.dart - Updated with boot handling and better initialization
+// lib/main.dart - SIMPLIFIED VERSION WITHOUT FOREGROUND SERVICE
 import 'dart:async';
 import 'package:alongside/screens/lock_screen.dart';
 import 'package:alongside/services/lock_service.dart';
@@ -12,8 +12,6 @@ import 'models/friend.dart';
 import 'services/storage_service.dart';
 import 'providers/friends_provider.dart';
 import 'theme/app_theme.dart';
-import 'package:flutter_foreground_task/flutter_foreground_task.dart';
-import 'services/foreground_service.dart';
 import 'screens/call_screen.dart';
 import 'screens/message_screen.dart';
 import 'services/battery_optimization_service.dart';
@@ -24,15 +22,12 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize notifications with comprehensive setup
+  // Initialize notifications
   final notificationService = NotificationService();
   await notificationService.initialize();
 
   // Setup notification callback
   notificationService.setActionCallback(_handleNotificationAction);
-
-  // Check if app was started from boot
-  await _handleBootStart();
 
   runApp(
     MultiProvider(
@@ -47,33 +42,6 @@ void main() async {
       child: const AlongsideApp(),
     ),
   );
-}
-
-// Handle boot start
-Future<void> _handleBootStart() async {
-  print("🔍 Checking for boot start...");
-
-  // If started from boot, reschedule all notifications
-  final prefs = await SharedPreferences.getInstance();
-  final lastBootCheck = prefs.getInt('last_boot_check') ?? 0;
-  final now = DateTime.now().millisecondsSinceEpoch;
-
-  // If more than 1 day since last check, assume device may have rebooted
-  if (now - lastBootCheck > 86400000) {
-    print("📱 Possible device restart detected - rescheduling notifications");
-
-    final notificationService = NotificationService();
-    final storageService = StorageService();
-    final friends = await storageService.getFriends();
-
-    for (final friend in friends) {
-      if (friend.reminderDays > 0) {
-        await notificationService.scheduleReminder(friend);
-      }
-    }
-
-    await prefs.setInt('last_boot_check', now);
-  }
 }
 
 // Global notification handler
@@ -113,7 +81,7 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
   bool _lockChecked = false;
   final LockService _lockService = LockService();
   DateTime? _pausedTime;
-  Timer? _notificationCheckTimer;
+  Timer? _scheduleCheckTimer;
 
   @override
   void initState() {
@@ -132,7 +100,7 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _notificationCheckTimer?.cancel();
+    _scheduleCheckTimer?.cancel();
     super.dispose();
   }
 
@@ -151,11 +119,8 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
         print("📱 App resumed");
         _checkIfShouldLock();
 
-        // Check notifications when app resumes
-        _checkNotifications();
-
-        // Restart foreground service
-        ForegroundServiceManager.startForegroundService();
+        // Check and extend notification schedules when app resumes
+        _checkNotificationSchedules();
         break;
 
       case AppLifecycleState.inactive:
@@ -181,30 +146,21 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
     print("🚀 Initializing app...");
 
     try {
-      // Initialize foreground service
-      await ForegroundServiceManager.initForegroundService();
-
-      // Start foreground service after delay
-      Future.delayed(const Duration(seconds: 2), () async {
-        print("🔄 Starting foreground service...");
-        await ForegroundServiceManager.startForegroundService();
-      });
-
-      // Check battery optimization
+      // Check battery optimization after delay
       Future.delayed(const Duration(seconds: 5), () {
         if (mounted) {
           BatteryOptimizationService.requestBatteryOptimization(context);
         }
       });
 
-      // Setup periodic notification checks
-      _notificationCheckTimer = Timer.periodic(
-        const Duration(minutes: 60),
-            (_) => _checkNotifications(),
+      // Setup periodic schedule checks (every 6 hours)
+      _scheduleCheckTimer = Timer.periodic(
+        const Duration(hours: 6),
+            (_) => _checkNotificationSchedules(),
       );
 
-      // Initial notification check
-      await _checkNotifications();
+      // Initial schedule check
+      await _checkNotificationSchedules();
 
       // Debug notifications
       Future.delayed(const Duration(seconds: 3), () async {
@@ -216,25 +172,13 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
     }
   }
 
-  Future<void> _checkNotifications() async {
+  Future<void> _checkNotificationSchedules() async {
     try {
-      print("🔍 Checking notifications...");
+      print("🔍 Checking notification schedules...");
       final notificationService = NotificationService();
-      await notificationService.checkAndRescheduleAllReminders();
-
-      // Also verify all reminders are scheduled
-      final provider = Provider.of<FriendsProvider>(context, listen: false);
-      for (final friend in provider.friends) {
-        if (friend.reminderDays > 0) {
-          final nextTime = await notificationService.getNextReminderTime(friend.id);
-          if (nextTime == null) {
-            print("⚠️ No reminder scheduled for ${friend.name} - scheduling now");
-            await notificationService.scheduleReminder(friend);
-          }
-        }
-      }
+      await notificationService.checkAndExtendSchedule();
     } catch (e) {
-      print("❌ Error checking notifications: $e");
+      print("❌ Error checking schedules: $e");
     }
   }
 
@@ -262,7 +206,7 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
       debugShowCheckedModeBanner: false,
       theme: AppTheme.cupertinoTheme,
       routes: {
-        '/': (context) => const WithForegroundTask(child: HomeScreenNew()),
+        '/': (context) => const HomeScreenNew(),
         '/notification': (context) => const NotificationRouterScreen(),
         '/call': (ctx) {
           final args = ModalRoute.of(ctx)!.settings.arguments as Map<String, dynamic>;
@@ -306,18 +250,12 @@ class _NotificationRouterScreenState extends State<NotificationRouterScreen> {
         final provider = Provider.of<FriendsProvider>(context, listen: false);
         final friend = provider.getFriendById(friendId);
 
-// In _NotificationRouterScreenState._processNotification() method
-// Find this section and update it:
-
         if (friend != null) {
-          // PHASE 2 UPDATE: Record exact action time for accurate interval calculation
+          // Record action time
           final actionTime = DateTime.now();
           await prefs.setInt('last_action_$friendId', actionTime.millisecondsSinceEpoch);
 
-          // Log the action for debugging
-          print("📱 Action recorded for ${friend.name} at ${actionTime.toString()}");
-
-          // Reschedule reminder for this friend based on new action time
+          // Reschedule notifications for this friend
           final notificationService = NotificationService();
           await notificationService.scheduleReminder(friend);
 
