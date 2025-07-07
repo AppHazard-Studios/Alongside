@@ -230,8 +230,11 @@ class NotificationService {
       // New friend - try to schedule today if time hasn't passed
       nextTime = DateTime(now.year, now.month, now.day, hour, minute);
 
+      // Add 1 minute buffer to allow for processing time
+      final nowWithBuffer = now.add(Duration(minutes: 1));
+
       // If time has passed today, schedule for tomorrow
-      if (nextTime.isBefore(now)) {
+      if (nextTime.isBefore(nowWithBuffer)) {
         nextTime = nextTime.add(Duration(days: 1));
       }
     } else {
@@ -343,6 +346,9 @@ class NotificationService {
       matchDateTimeComponents: null,
       payload: '${friend.id};${friend.phoneNumber}',
     );
+    print("✅ Scheduled notification for ${friend.name}");
+    print("   Scheduled time: $tzScheduleTime");
+    print("   That's in: ${tzScheduleTime.difference(tz.TZDateTime.now(tz.local))}");
   }
 
   // Generate notification ID
@@ -520,7 +526,6 @@ class NotificationService {
   Future<void> debugScheduledNotifications() async {
     try {
       final pending = await getPendingNotifications();
-      final prefs = await SharedPreferences.getInstance();
 
       print("\n📅 ===== SCHEDULED NOTIFICATIONS =====");
       print("Current time: ${DateTime.now()}");
@@ -528,19 +533,7 @@ class NotificationService {
 
       for (final notification in pending) {
         print("\nID: ${notification.id} - ${notification.title}");
-
-        // Try to find the scheduled time from prefs
-        final keys = prefs.getKeys();
-        for (final key in keys) {
-          if (key.startsWith('next_reminder_')) {
-            final time = prefs.getInt(key);
-            if (time != null) {
-              final friendId = key.replaceFirst('next_reminder_', '');
-              final scheduledTime = DateTime.fromMillisecondsSinceEpoch(time);
-              print("   Friend $friendId next: $scheduledTime");
-            }
-          }
-        }
+        // Don't try to match with stored times - just show what's scheduled
       }
       print("=====================================\n");
     } catch (e) {
