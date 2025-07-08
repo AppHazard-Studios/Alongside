@@ -9,6 +9,8 @@ import '../utils/constants.dart';
 import '../utils/text_styles.dart';
 import '../utils/ui_constants.dart';
 import '../providers/friends_provider.dart';
+import '../services/notification_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CallScreen extends StatefulWidget {
   final Friend friend;
@@ -41,7 +43,7 @@ class _CallScreenState extends State<CallScreen> {
 
     try {
       final phoneNumber =
-          widget.friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+      widget.friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
       final telUri = Uri.parse('tel:$phoneNumber');
 
       final launched = await launchUrl(
@@ -58,6 +60,9 @@ class _CallScreenState extends State<CallScreen> {
           Provider.of<FriendsProvider>(context, listen: false).storageService;
       await storageService.incrementCallsMade();
 
+      // CRITICAL: Record friend interaction for reminder scheduling
+      await _recordCallInteraction();
+
       // Return to home screen after initiating call
       if (mounted) {
         Navigator.of(context).popUntil((route) => route.isFirst);
@@ -70,6 +75,39 @@ class _CallScreenState extends State<CallScreen> {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  // ADD this new method to the _CallScreenState class
+  Future<void> _recordCallInteraction() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // Check if this was opened from a notification
+      final pendingAction = prefs.getString('pending_notification_action');
+      if (pendingAction == null || !pendingAction.contains(widget.friend.id)) {
+        // Manual action - record it
+        await prefs.setInt('last_action_${widget.friend.id}', DateTime.now().millisecondsSinceEpoch);
+
+        // Reschedule reminder
+        final notificationService = NotificationService();
+        await notificationService.scheduleReminder(widget.friend);
+
+        print("📞 Manual call action recorded for ${widget.friend.name}");
+      }
+    } catch (e) {
+      print("❌ Error recording call interaction: $e");
+    }
+  }
+
+  // ADD this method to both MessageScreen and CallScreen classes
+  Future<void> _recordFriendInteraction() async {
+    try {
+      final notificationService = NotificationService();
+      await notificationService.recordFriendInteraction(widget.friend.id);
+      print("📝 Recorded manual interaction with ${widget.friend.name}");
+    } catch (e) {
+      print("❌ Error recording interaction: $e");
     }
   }
 

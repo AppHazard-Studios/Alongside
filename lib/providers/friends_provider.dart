@@ -51,13 +51,20 @@ class FriendsProvider with ChangeNotifier {
 
     await storageService.saveFriends(friends);
 
-    // Schedule notifications if needed
+    // IMPROVED: Schedule notifications with better error handling
     if (friend.reminderDays > 0) {
-      // Mark as just created for immediate scheduling
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('just_created_${friend.id}', true);
+      print("📅 Setting up reminders for new friend: ${friend.name}");
 
-      await notificationService.scheduleReminder(friend);
+      // Mark as new friend (no previous interactions)
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('last_action_${friend.id}'); // Ensure clean slate
+
+      final success = await notificationService.scheduleReminder(friend);
+      if (success) {
+        print("✅ Successfully scheduled reminder for ${friend.name}");
+      } else {
+        print("❌ Failed to schedule reminder for ${friend.name}");
+      }
     }
 
     // Handle persistent notification
@@ -79,17 +86,27 @@ class FriendsProvider with ChangeNotifier {
       _friends[index] = updatedFriend;
       await storageService.saveFriends(_friends);
 
-      // Handle reminder changes
-      if (oldFriend.reminderDays != updatedFriend.reminderDays ||
+      // IMPROVED: Handle reminder changes with better validation
+      final reminderChanged = oldFriend.reminderDays != updatedFriend.reminderDays ||
           oldFriend.reminderTime != updatedFriend.reminderTime ||
-          oldFriend.reminderData != updatedFriend.reminderData) {
+          oldFriend.reminderData != updatedFriend.reminderData;
 
-        // Cancel old reminders
+      if (reminderChanged) {
+        print("🔄 Reminder settings changed for ${updatedFriend.name}");
+
+        // Always cancel old reminders first
         await notificationService.cancelReminder(updatedFriend.id);
 
         // Schedule new reminders if enabled
         if (updatedFriend.reminderDays > 0) {
-          await notificationService.scheduleReminder(updatedFriend);
+          final success = await notificationService.scheduleReminder(updatedFriend);
+          if (success) {
+            print("✅ Successfully updated reminder for ${updatedFriend.name}");
+          } else {
+            print("❌ Failed to update reminder for ${updatedFriend.name}");
+          }
+        } else {
+          print("🔕 Reminders disabled for ${updatedFriend.name}");
         }
       }
 

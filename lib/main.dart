@@ -22,7 +22,7 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize notifications
+  // Initialize notifications with hybrid system
   final notificationService = NotificationService();
   await notificationService.initialize();
 
@@ -88,8 +88,9 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    _lockChecked = true;
-    _isLocked = false;
+    // FIXED: Don't set lock state immediately - check it properly
+    _lockChecked = false;  // Start as unchecked
+    _isLocked = false;     // Will be set by lock check
 
     // Initialize app after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -131,13 +132,17 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
   }
 
   Future<void> _checkIfShouldLock() async {
+    print("🔒 Checking lock on app resume...");
+
     final shouldLock = await _lockService.shouldShowLockScreen();
 
     if (shouldLock && mounted) {
+      print("🔒 Lock screen required on resume");
       setState(() {
         _isLocked = true;
       });
     } else {
+      print("🔓 No lock required on resume");
       await _lockService.clearBackgroundTime();
     }
   }
@@ -146,29 +151,66 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
     print("🚀 Initializing app...");
 
     try {
-      // Check battery optimization after delay
-      Future.delayed(const Duration(seconds: 5), () {
-        if (mounted) {
-          BatteryOptimizationService.requestBatteryOptimization(context);
-        }
-      });
+      // CRITICAL: Check if lock screen should be shown on cold start
+      await _checkLockOnColdStart();
 
-      // Setup periodic schedule checks (every 6 hours)
-      _scheduleCheckTimer = Timer.periodic(
-        const Duration(hours: 6),
-            (_) => _checkNotificationSchedules(),
-      );
+      // Only continue with other initialization if not locked
+      if (!_isLocked) {
+        // Check battery optimization after delay
+        Future.delayed(const Duration(seconds: 5), () {
+          if (mounted) {
+            BatteryOptimizationService.requestBatteryOptimization(context);
+          }
+        });
 
-      // Initial schedule check
-      await _checkNotificationSchedules();
+        // Setup periodic schedule checks (every 6 hours)
+        _scheduleCheckTimer = Timer.periodic(
+          const Duration(hours: 6),
+              (_) => _checkNotificationSchedules(),
+        );
 
-      // Debug notifications
-      Future.delayed(const Duration(seconds: 3), () async {
-        final notificationService = NotificationService();
-        await notificationService.debugScheduledNotifications();
-      });
+        // Initial schedule check
+        await _checkNotificationSchedules();
+
+        // Debug notifications
+        Future.delayed(const Duration(seconds: 3), () async {
+          final notificationService = NotificationService();
+          await notificationService.debugScheduledNotifications();
+        });
+      }
     } catch (e) {
       print("❌ Error initializing app: $e");
+    }
+  }
+
+  Future<void> _checkLockOnColdStart() async {
+    try {
+      print("🔒 Checking lock on cold start...");
+
+      final shouldLock = await _lockService.shouldShowLockScreen();
+
+      if (shouldLock && mounted) {
+        print("🔒 Lock screen required on cold start");
+        setState(() {
+          _isLocked = true;
+          _lockChecked = true;
+        });
+      } else {
+        print("🔓 No lock required on cold start");
+        setState(() {
+          _isLocked = false;
+          _lockChecked = true;
+        });
+        // Clear any background time since we're starting fresh
+        await _lockService.clearBackgroundTime();
+      }
+    } catch (e) {
+      print("❌ Error checking lock on cold start: $e");
+      // If error, default to not locked but mark as checked
+      setState(() {
+        _isLocked = false;
+        _lockChecked = true;
+      });
     }
   }
 
@@ -184,6 +226,51 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
 
   @override
   Widget build(BuildContext context) {
+    // Show loading while checking lock status
+    if (!_lockChecked) {
+      return CupertinoApp(
+        title: 'Alongside',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.cupertinoTheme,
+        home: CupertinoPageScaffold(
+          backgroundColor: AppColors.background,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLight,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    CupertinoIcons.heart_fill,
+                    size: 40,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const CupertinoActivityIndicator(radius: 14),
+                const SizedBox(height: 16),
+                const Text(
+                  'Alongside',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                    fontFamily: '.SF Pro Text',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Show lock screen if locked
     if (_isLocked) {
       return CupertinoApp(
         title: 'Alongside',
@@ -200,6 +287,7 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
       );
     }
 
+    // Show main app
     return CupertinoApp(
       title: 'Alongside',
       navigatorKey: navigatorKey,
@@ -251,13 +339,11 @@ class _NotificationRouterScreenState extends State<NotificationRouterScreen> {
         final friend = provider.getFriendById(friendId);
 
         if (friend != null) {
-          // Record action time
-          final actionTime = DateTime.now();
-          await prefs.setInt('last_action_$friendId', actionTime.millisecondsSinceEpoch);
-
-          // Reschedule notifications for this friend
+          // CRITICAL FIX: Record interaction time using notification service
           final notificationService = NotificationService();
-          await notificationService.scheduleReminder(friend);
+          await notificationService.recordFriendInteraction(friendId);
+
+          print("✅ Recorded notification interaction for ${friend.name}");
 
           if (mounted) {
             if (action == 'message') {

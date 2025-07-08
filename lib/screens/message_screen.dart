@@ -86,6 +86,17 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
     });
   }
 
+  // ADD this method to both MessageScreen and CallScreen classes
+  Future<void> _recordFriendInteraction() async {
+    try {
+      final notificationService = NotificationService();
+      await notificationService.recordFriendInteraction(widget.friend.id);
+      print("📝 Recorded manual interaction with ${widget.friend.name}");
+    } catch (e) {
+      print("❌ Error recording interaction: $e");
+    }
+  }
+
   Future<void> _updateFavorites(List<String> newFavorites) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList('favorite_messages', newFavorites);
@@ -1292,7 +1303,7 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
       );
 
       await Future.delayed(const Duration(milliseconds: 300));
-
+      await _recordFriendInteraction();
       final smsUri =
           Uri.parse('sms:$phoneNumber?body=${Uri.encodeComponent(message)}');
       await launchUrl(
