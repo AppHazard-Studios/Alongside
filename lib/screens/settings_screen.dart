@@ -605,6 +605,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 // NEW: Check permissions
 // REPLACE the _checkPermissions method with this CLEAN sliding modal version
+// REPLACE the _checkPermissions method with this FINAL clean version
   void _checkPermissions(BuildContext context) async {
     // Check individual permissions
     final hasNotification = await Permission.notification.isGranted;
@@ -616,14 +617,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showCupertinoModalPopup(
       context: context,
       builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.6,
+        height: MediaQuery.of(context).size.height * 0.5,
         decoration: const BoxDecoration(
           color: CupertinoColors.systemBackground,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: Column(
           children: [
-            // Handle
+            // Handle for swiping
             Container(
               margin: const EdgeInsets.only(top: 8, bottom: 16),
               width: 40,
@@ -650,7 +651,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             const SizedBox(height: 24),
 
-            // Permission items
+            // Permission items - clean and simple
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -662,98 +663,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const SizedBox(height: 16),
                     _buildPermissionRow('Battery Optimisations', hasBatteryOptimisation),
 
-                    const SizedBox(height: 32),
+                    const Spacer(),
 
-                    // Status summary
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: allPermissionsGood ? AppColors.success.withOpacity(0.1) : AppColors.warning.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: allPermissionsGood ? AppColors.success.withOpacity(0.3) : AppColors.warning.withOpacity(0.3),
+                    // Only show settings button if something needs attention
+                    if (!allPermissionsGood)
+                      CupertinoButton(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(12),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          openAppSettings();
+                        },
+                        child: const Text(
+                          'Open Settings App',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                            fontFamily: '.SF Pro Text',
+                          ),
                         ),
                       ),
-                      child: Column(
-                        children: [
-                          Icon(
-                            allPermissionsGood ? CupertinoIcons.checkmark_seal_fill : CupertinoIcons.exclamationmark_triangle_fill,
-                            color: allPermissionsGood ? AppColors.success : AppColors.warning,
-                            size: 32,
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            allPermissionsGood ? 'All Set!' : 'Needs Attention',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: allPermissionsGood ? AppColors.success : AppColors.warning,
-                              fontFamily: '.SF Pro Text',
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            allPermissionsGood
-                                ? 'All permissions are properly configured for reliable notifications.'
-                                : 'Some permissions need attention for reliable notifications.',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: AppColors.textSecondary,
-                              fontFamily: '.SF Pro Text',
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
                   ],
                 ),
               ),
             ),
 
-            // Action buttons
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  if (!allPermissionsGood)
-                    CupertinoButton(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(12),
-                      onPressed: () {
-                        Navigator.pop(context);
-                        openAppSettings();
-                      },
-                      child: const Text(
-                        'Open Settings App',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                          fontFamily: '.SF Pro Text',
-                        ),
-                      ),
-                    ),
-                  if (!allPermissionsGood)
-                    const SizedBox(height: 12),
-                  CupertinoButton(
-                    color: allPermissionsGood ? AppColors.primary : AppColors.secondary,
-                    borderRadius: BorderRadius.circular(12),
-                    onPressed: () => Navigator.pop(context),
-                    child: Text(
-                      'Close',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                        fontFamily: '.SF Pro Text',
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -1584,6 +1520,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
 // REPLACE the _showBatteryOptimization method with this SMART version
 // REPLACE the _showBatteryOptimization method with this CLEANER version
+// REPLACE the _showBatteryOptimization method with this FINAL clean version
   void _showBatteryOptimization(BuildContext context) async {
     // Check current battery optimisation status
     final hasPermission = await Permission.ignoreBatteryOptimizations.isGranted;
@@ -1591,14 +1528,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showCupertinoModalPopup(
       context: context,
       builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.6,
+        height: MediaQuery.of(context).size.height * 0.65,
         decoration: const BoxDecoration(
           color: CupertinoColors.systemBackground,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: Column(
           children: [
-            // Handle
+            // Handle for swiping
             Container(
               margin: const EdgeInsets.only(top: 8, bottom: 16),
               width: 40,
@@ -1609,7 +1546,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
 
-            // Title with status
+            // Title with clear status
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
@@ -1641,7 +1578,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          hasPermission ? 'Optimised' : 'Not Optimised',
+                          hasPermission ? 'Unrestricted' : 'Restricted',
                           style: const TextStyle(
                             fontSize: 12,
                             color: Colors.white,
@@ -1658,13 +1595,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             const SizedBox(height: 20),
 
-            // Content
+            // Content - no extra spacing
             Expanded(
-              child: SingleChildScrollView(
+              child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   children: [
-                    // Explanation
+                    // Clear explanation
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
@@ -1677,8 +1614,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         children: [
                           Text(
                             hasPermission
-                                ? 'Alongside is optimised for reliable notifications'
-                                : 'Alongside needs battery optimisation',
+                                ? 'Alongside runs without battery restrictions'
+                                : 'Alongside has battery restrictions',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -1689,7 +1626,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           const SizedBox(height: 8),
                           Text(
                             hasPermission
-                                ? 'Your friend reminders will work reliably, even when the app is closed or your device is sleeping.'
+                                ? 'Your friend reminders will work reliably, even when the app is closed.'
                                 : 'Android may prevent Alongside from sending scheduled reminders to save battery. This can cause notifications to be delayed or missed.',
                             style: const TextStyle(
                               fontSize: 14,
@@ -1706,17 +1643,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const SizedBox(height: 20),
                       BatteryOptimizationService.buildBatteryOptimizationGuide(context),
                     ],
+
+                    const Spacer(), // This pushes buttons to bottom
                   ],
                 ),
               ),
             ),
 
-            // Action button - only show if not optimised
-            if (!hasPermission)
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
+            // Action buttons at bottom
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+              child: Column(
+                children: [
+                  if (!hasPermission) ...[
                     CupertinoButton(
                       color: AppColors.primary,
                       borderRadius: BorderRadius.circular(12),
@@ -1725,7 +1664,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         await BatteryOptimizationService.requestBatteryOptimization(context);
                       },
                       child: const Text(
-                        'Optimise for Alongside',
+                        'Remove Battery Restrictions',
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
@@ -1735,38 +1674,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
+                  ] else ...[
                     CupertinoButton(
-                      onPressed: () => Navigator.pop(context),
+                      color: AppColors.secondary,
+                      borderRadius: BorderRadius.circular(12),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        openAppSettings();
+                      },
                       child: const Text(
-                        'Maybe Later',
+                        'View App Settings',
                         style: TextStyle(
-                          color: AppColors.secondary,
+                          color: Colors.white,
                           fontWeight: FontWeight.w600,
                           fontSize: 16,
                           fontFamily: '.SF Pro Text',
                         ),
                       ),
                     ),
+                    const SizedBox(height: 12),
                   ],
-                ),
-              )
-            else
-            // Just a close button when optimised
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: CupertinoButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text(
-                    'Close',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                      fontFamily: '.SF Pro Text',
-                    ),
-                  ),
-                ),
+                ],
               ),
+            ),
           ],
         ),
       ),
