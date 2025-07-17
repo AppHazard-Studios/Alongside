@@ -1107,6 +1107,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                         setState(() {
                           _reminderTimeStr = newTime;
                         });
+                        print("🕐 Time updated to: $newTime"); // Debug log
                       },
                       onChanged: (daySelectionData) {
                         setState(() {
@@ -1115,6 +1116,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                             _reminderDays = 0;
                           }
                         });
+                        print("📅 Day selection updated: ${daySelectionData?.getDescription()}"); // Debug log
                       },
                     ),
                   ),

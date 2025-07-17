@@ -62,20 +62,49 @@ class _FriendCardNewState extends State<FriendCardNew>
   }
 
   // Load next reminder time
+// Load next reminder time - FIXED VERSION
   Future<void> _loadNextReminderTime() async {
     if (widget.friend.reminderDays > 0) {
       setState(() {
         _isLoadingReminderTime = true;
       });
 
-      final notificationService = NotificationService();
-      final nextTime = await notificationService.getNextReminderTime(widget.friend.id);
+      try {
+        final notificationService = NotificationService();
+        final nextTime = await notificationService.getNextReminderTime(widget.friend.id);
 
-      if (mounted) {
-        setState(() {
-          _nextReminderTime = nextTime;
-          _isLoadingReminderTime = false;
-        });
+        print('DEBUG: Friend ${widget.friend.name} - Next reminder: $nextTime');
+
+        // If no scheduled time found, try to schedule one
+        if (nextTime == null) {
+          print('DEBUG: No scheduled reminder found, scheduling one');
+          await notificationService.scheduleReminder(widget.friend);
+          // Try getting the time again
+          final newNextTime = await notificationService.getNextReminderTime(widget.friend.id);
+          print('DEBUG: After scheduling - Next reminder: $newNextTime');
+
+          if (mounted) {
+            setState(() {
+              _nextReminderTime = newNextTime;
+              _isLoadingReminderTime = false;
+            });
+          }
+        } else {
+          if (mounted) {
+            setState(() {
+              _nextReminderTime = nextTime;
+              _isLoadingReminderTime = false;
+            });
+          }
+        }
+      } catch (e) {
+        print('DEBUG: Error loading reminder time: $e');
+        if (mounted) {
+          setState(() {
+            _nextReminderTime = null;
+            _isLoadingReminderTime = false;
+          });
+        }
       }
     }
   }
@@ -222,27 +251,30 @@ class _FriendCardNewState extends State<FriendCardNew>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Friend name row with dynamic reminder badge
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                widget.friend.name,
-                                style: const TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: '.SF Pro Text',
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            if (widget.friend.reminderDays > 0 &&
-                                !widget.isExpanded) ...[
-                              const SizedBox(width: 8),
-                              _buildCollapsedReminderBadge(),
-                            ],
-                          ],
-                        ),
+// REPLACE this section in lib/widgets/friend_card.dart
+// Find this part in the Row with friend name (around line 140):
+
+// Friend name row with dynamic reminder badge
+                    Row(
+                    children: [
+                    Expanded(
+                    child: Text(
+                      widget.friend.name,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: '.SF Pro Text',
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (widget.friend.reminderDays > 0 && !widget.isExpanded) ...[
+                    const SizedBox(width: 8),
+                    _buildCollapsedReminderBadge(),
+                  ],
+                ],
+              ),
 
                         // "Alongside them in" info
                         if (widget.friend.helpingWith != null &&
@@ -593,6 +625,7 @@ class _FriendCardNewState extends State<FriendCardNew>
   }
 
   // Build the collapsed reminder badge with dynamic time display
+// Build the collapsed reminder badge with dynamic time display - IMPROVED VERSION
   Widget _buildCollapsedReminderBadge() {
     if (_isLoadingReminderTime) {
       return Container(
@@ -609,24 +642,46 @@ class _FriendCardNewState extends State<FriendCardNew>
       );
     }
 
+    // Show dynamic time if available, otherwise show static interval
+    String badgeText;
+    Color badgeColor;
+    Color backgroundColor;
+
+    if (_nextReminderTime != null) {
+      badgeText = _getCollapsedReminderText(_nextReminderTime);
+      badgeColor = _getBadgeColor(_nextReminderTime);
+      backgroundColor = _getBadgeBackgroundColor(_nextReminderTime);
+    } else {
+      // Fallback to static interval display
+      badgeText = widget.friend.reminderDays <= 30
+          ? '${widget.friend.reminderDays}d'
+          : widget.friend.reminderDays == 60
+          ? '2mo'
+          : widget.friend.reminderDays == 90
+          ? '3mo'
+          : '6mo';
+      badgeColor = AppColors.primary;
+      backgroundColor = AppColors.primaryLight;
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: _getBadgeBackgroundColor(_nextReminderTime),
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        _getCollapsedReminderText(_nextReminderTime),
+        badgeText,
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
-          color: _getBadgeColor(_nextReminderTime),
+          color: badgeColor,
           fontFamily: '.SF Pro Text',
         ),
       ),
     );
   }
-
+  
   // Convert 24h time format to 12h time format
   String _formatTimeString(String timeStr) {
     try {

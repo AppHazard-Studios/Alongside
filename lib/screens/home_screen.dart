@@ -316,41 +316,42 @@ class _HomeScreenNewState extends State<HomeScreenNew>
             children: [
               // Sort toggle button
               if (!_isSearching) ...[
-                CupertinoButton(
-                  padding: EdgeInsets.zero,
-                  child: Container(
-                    width: ResponsiveUtils.scaledContainerSize(context, 32),
-                    height: ResponsiveUtils.scaledContainerSize(context, 32),
-                    decoration: BoxDecoration(
-                      color: _isSortedByReminders
-                          ? AppColors.primary
-                          : AppColors.background,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.primary.withOpacity(0.3),
-                        width: 1,
-                      ),
-                    ),
-                    child: _isSorting
-                        ? CupertinoActivityIndicator(
-                      radius: 8,
-                      color: _isSortedByReminders
-                          ? CupertinoColors.white
-                          : AppColors.primary,
-                    )
-                        : Icon(
-                      CupertinoIcons.sort_down,
-                      size: ResponsiveUtils.scaledIconSize(context, 16),
-                      color: _isSortedByReminders
-                          ? CupertinoColors.white
-                          : AppColors.primary,
-                      semanticLabel: _isSortedByReminders
-                          ? 'Sorted by reminders'
-                          : 'Sort by reminders',
-                    ),
-                  ),
-                  onPressed: _isSorting ? null : _toggleSort,
-                ),
+// Sort toggle button - IMPROVED VERSION
+        CupertinoButton(
+        padding: EdgeInsets.zero,
+        child: Container(
+          width: ResponsiveUtils.scaledContainerSize(context, 32),
+          height: ResponsiveUtils.scaledContainerSize(context, 32),
+          decoration: BoxDecoration(
+            color: _isSortedByReminders
+                ? AppColors.primary
+                : AppColors.background,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: AppColors.primary.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: _isSorting
+              ? CupertinoActivityIndicator(
+            radius: 8,
+            color: _isSortedByReminders
+                ? CupertinoColors.white
+                : AppColors.primary,
+          )
+              : Icon(
+            CupertinoIcons.sort_down,
+            size: ResponsiveUtils.scaledIconSize(context, 16),
+            color: _isSortedByReminders
+                ? CupertinoColors.white
+                : AppColors.primary,
+            semanticLabel: _isSortedByReminders
+                ? 'Sorted by next reminder - tap for custom order'
+                : 'Custom order - tap to sort by next reminder',
+          ),
+        ),
+        onPressed: _isSorting ? null : _toggleSort,
+      ),
                 SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
               ],
               // Settings button
@@ -1651,18 +1652,31 @@ class _HomeScreenNewState extends State<HomeScreenNew>
   }
 
   // Optimized sorting method using bulk lookup
+// IMPROVED sorting method with better logic and debugging
+// SIMPLIFIED sorting method with cleaner debug output
   Future<List<Friend>> _sortFriendsByReminderProximity(List<Friend> friends) async {
     if (friends.isEmpty) return friends;
 
-    // Get all reminder times efficiently
-    final notificationService = NotificationService();
-    final friendIds = friends.map((f) => f.id).toList();
+    print('\n🔄 Sorting ${friends.length} friends by next reminder');
 
-    // Create list with reminder times
+    final notificationService = NotificationService();
     List<MapEntry<Friend, DateTime?>> friendsWithTimes = [];
 
+    // Get reminder times for each friend and ensure they're scheduled
     for (Friend friend in friends) {
-      DateTime? nextTime = await _getNextReminderTimeForFriend(friend);
+      DateTime? nextTime;
+
+      if (friend.reminderDays > 0) {
+        // Try to get existing reminder time
+        nextTime = await notificationService.getNextReminderTime(friend.id);
+
+        // If no reminder scheduled, schedule one
+        if (nextTime == null) {
+          await notificationService.scheduleReminder(friend);
+          nextTime = await notificationService.getNextReminderTime(friend.id);
+        }
+      }
+
       friendsWithTimes.add(MapEntry(friend, nextTime));
     }
 
@@ -1672,46 +1686,63 @@ class _HomeScreenNewState extends State<HomeScreenNew>
       final bHasReminder = b.key.reminderDays > 0;
 
       // Friends without reminders go to the end
-      if (!aHasReminder && !bHasReminder) return 0;
+      if (!aHasReminder && !bHasReminder) {
+        return a.key.name.compareTo(b.key.name);
+      }
       if (!aHasReminder) return 1;
       if (!bHasReminder) return -1;
 
       // Both have reminders - sort by next reminder time
-      if (a.value == null && b.value == null) return 0;
+      if (a.value == null && b.value == null) {
+        return a.key.name.compareTo(b.key.name);
+      }
       if (a.value == null) return 1;
       if (b.value == null) return -1;
 
       return a.value!.compareTo(b.value!);
     });
 
-    return friendsWithTimes.map((entry) => entry.key).toList();
+    final sortedFriends = friendsWithTimes.map((entry) => entry.key).toList();
+    final friendsWithReminders = sortedFriends.where((f) => f.reminderDays > 0).length;
+
+    print('✅ Sorted complete - $friendsWithReminders friends have reminders');
+
+    return sortedFriends;
   }
 
   // Toggle sort method
 // Store original order
 
   // Toggle sort method
+// IMPROVED toggle sort method with better feedback
+// IMPROVED toggle sort method with simple, clear messages
   Future<void> _toggleSort() async {
     setState(() => _isSorting = true);
 
     final provider = Provider.of<FriendsProvider>(context, listen: false);
 
     if (_isSortedByReminders) {
+      print('🔄 RESETTING TO CUSTOM ORDER');
       // Reset to original order
       if (_originalFriendsOrder != null) {
         provider.reorderFriends(_originalFriendsOrder!);
+        _showSuccessToast(context, 'Custom order');
       }
       setState(() {
         _isSortedByReminders = false;
         _originalFriendsOrder = null;
       });
     } else {
+      print('🔄 SORTING BY NEXT REMINDER');
       // Store original order before sorting
       _originalFriendsOrder = List<Friend>.from(provider.friends);
 
       // Sort by reminders
       final sortedFriends = await _sortFriendsByReminderProximity(provider.friends);
       provider.reorderFriends(sortedFriends);
+
+      _showSuccessToast(context, 'Sorted by next reminder');
+
       setState(() {
         _isSortedByReminders = true;
       });
@@ -1825,5 +1856,14 @@ class _HomeScreenNewState extends State<HomeScreenNew>
 
     provider.reorderFriends(reorderedFriends);
     HapticFeedback.lightImpact();
+
+    // If we're in sorted mode, exit it since user manually reordered
+    if (_isSortedByReminders) {
+      setState(() {
+        _isSortedByReminders = false;
+        _originalFriendsOrder = null;
+      });
+      _showSuccessToast(context, 'Switched to custom order');
+    }
   }
 }

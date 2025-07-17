@@ -1,4 +1,4 @@
-// lib/widgets/day_selector_widget.dart - UPDATED WITH INTEGRATED TIME PICKER
+// lib/widgets/day_selector_widget.dart - FIXED TIME SYNCHRONIZATION
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../models/day_selection_data.dart';
@@ -6,7 +6,7 @@ import '../models/day_selection_data.dart';
 class DaySelectorWidget extends StatefulWidget {
   final DaySelectionData? initialData;
   final Function(DaySelectionData?) onChanged;
-  final String reminderTime;
+  final String reminderTime; // Time from parent
   final Function(String) onTimeChanged;
 
   const DaySelectorWidget({
@@ -24,7 +24,6 @@ class DaySelectorWidget extends StatefulWidget {
 class _DaySelectorWidgetState extends State<DaySelectorWidget> {
   late Set<int> _selectedDays;
   late RepeatInterval _interval;
-  late String _reminderTimeStr;
 
   @override
   void initState() {
@@ -36,8 +35,10 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
       _selectedDays = {};
       _interval = RepeatInterval.weekly;
     }
-    _reminderTimeStr = widget.reminderTime;
   }
+
+  // Use the parent's reminder time directly
+  String get _reminderTimeStr => widget.reminderTime;
 
   // Parse time for display in 12-hour format
   String get _formattedReminderTime {
@@ -121,12 +122,9 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
                 mode: CupertinoDatePickerMode.time,
                 initialDateTime: initialDateTime,
                 onDateTimeChanged: (dateTime) {
-                  setState(() {
-                    // Update time string in HH:MM format
-                    _reminderTimeStr =
-                    '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
-                    widget.onTimeChanged(_reminderTimeStr);
-                  });
+                  // Update time string in HH:MM format and notify parent
+                  final newTimeStr = '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+                  widget.onTimeChanged(newTimeStr);
                 },
                 use24hFormat: false,
               ),

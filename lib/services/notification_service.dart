@@ -155,6 +155,7 @@ class NotificationService {
   }
 
   // Optimized method to get all reminder times in bulk
+// Optimized method to get all reminder times in bulk
   Future<Map<String, DateTime?>> getAllReminderTimes(List<String> friendIds) async {
     final Map<String, DateTime?> reminderTimes = {};
     final prefs = await SharedPreferences.getInstance();
