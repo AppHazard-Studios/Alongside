@@ -1,4 +1,4 @@
-// lib/widgets/friend_card.dart - Complete updated version with simplified reminders
+// lib/widgets/friend_card.dart - Complete updated version with dynamic reminder display
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -40,6 +40,7 @@ class _FriendCardNewState extends State<FriendCardNew>
   late Animation<double> _expandAnimation;
   bool _isPressed = false;
   DateTime? _nextReminderTime;
+  bool _isLoadingReminderTime = false;
 
   @override
   void initState() {
@@ -63,19 +64,25 @@ class _FriendCardNewState extends State<FriendCardNew>
   // Load next reminder time
   Future<void> _loadNextReminderTime() async {
     if (widget.friend.reminderDays > 0) {
+      setState(() {
+        _isLoadingReminderTime = true;
+      });
+
       final notificationService = NotificationService();
       final nextTime = await notificationService.getNextReminderTime(widget.friend.id);
+
       if (mounted) {
         setState(() {
           _nextReminderTime = nextTime;
+          _isLoadingReminderTime = false;
         });
       }
     }
   }
 
-  // Helper method to format next reminder text
+  // Helper method to format next reminder text for expanded view
   String _getNextReminderText(DateTime? nextReminder) {
-    if (nextReminder == null) return '';
+    if (nextReminder == null) return 'No reminder scheduled';
 
     final now = DateTime.now();
     final difference = nextReminder.difference(now);
@@ -92,6 +99,65 @@ class _FriendCardNewState extends State<FriendCardNew>
       return 'Next reminder in ${difference.inMinutes} minutes';
     } else {
       return 'Reminder coming soon';
+    }
+  }
+
+  // Helper method to format concise reminder text for collapsed view badge
+  String _getCollapsedReminderText(DateTime? nextReminder) {
+    if (nextReminder == null) return 'No reminder';
+
+    final now = DateTime.now();
+    final difference = nextReminder.difference(now);
+
+    if (difference.isNegative) {
+      return 'Overdue';
+    } else if (difference.inDays > 30) {
+      final months = (difference.inDays / 30).round();
+      return '${months}mo';
+    } else if (difference.inDays > 1) {
+      return '${difference.inDays}d';
+    } else if (difference.inDays == 1) {
+      return 'Tomorrow';
+    } else if (difference.inHours > 1) {
+      return '${difference.inHours}h';
+    } else {
+      return 'Soon';
+    }
+  }
+
+  // Get badge color based on reminder urgency
+  Color _getBadgeColor(DateTime? nextReminder) {
+    if (nextReminder == null) return CupertinoColors.systemGrey;
+
+    final now = DateTime.now();
+    final difference = nextReminder.difference(now);
+
+    if (difference.isNegative) {
+      return CupertinoColors.systemRed;
+    } else if (difference.inDays == 0) {
+      return AppColors.warning;
+    } else if (difference.inDays <= 1) {
+      return AppColors.primary;
+    } else {
+      return AppColors.primary;
+    }
+  }
+
+  // Get badge background color based on reminder urgency
+  Color _getBadgeBackgroundColor(DateTime? nextReminder) {
+    if (nextReminder == null) return CupertinoColors.systemGrey6;
+
+    final now = DateTime.now();
+    final difference = nextReminder.difference(now);
+
+    if (difference.isNegative) {
+      return CupertinoColors.systemRed.withOpacity(0.1);
+    } else if (difference.inDays == 0) {
+      return AppColors.warning.withOpacity(0.1);
+    } else if (difference.inDays <= 1) {
+      return AppColors.primaryLight;
+    } else {
+      return AppColors.primaryLight;
     }
   }
 
@@ -155,7 +221,7 @@ class _FriendCardNewState extends State<FriendCardNew>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Friend name row with reminder badge
+                        // Friend name row with dynamic reminder badge
                         Row(
                           children: [
                             Expanded(
@@ -173,29 +239,7 @@ class _FriendCardNewState extends State<FriendCardNew>
                             if (widget.friend.reminderDays > 0 &&
                                 !widget.isExpanded) ...[
                               const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primaryLight,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  widget.friend.reminderDays <= 30
-                                      ? '${widget.friend.reminderDays}d'
-                                      : widget.friend.reminderDays == 60
-                                      ? '2mo'
-                                      : widget.friend.reminderDays == 90
-                                      ? '3mo'
-                                      : '6mo',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.primary,
-                                    fontFamily: '.SF Pro Text',
-                                  ),
-                                ),
-                              ),
+                              _buildCollapsedReminderBadge(),
                             ],
                           ],
                         ),
@@ -392,18 +436,16 @@ class _FriendCardNewState extends State<FriendCardNew>
                                         ),
                                       ],
                                     ),
-                                    if (_nextReminderTime != null) ...[
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        _getNextReminderText(_nextReminderTime),
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: AppColors.primary,
-                                          fontFamily: '.SF Pro Text',
-                                          fontWeight: FontWeight.w500,
-                                        ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _getNextReminderText(_nextReminderTime),
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: _getBadgeColor(_nextReminderTime),
+                                        fontFamily: '.SF Pro Text',
+                                        fontWeight: FontWeight.w500,
                                       ),
-                                    ],
+                                    ),
                                   ],
                                 ),
                               ),
@@ -550,6 +592,41 @@ class _FriendCardNewState extends State<FriendCardNew>
     );
   }
 
+  // Build the collapsed reminder badge with dynamic time display
+  Widget _buildCollapsedReminderBadge() {
+    if (_isLoadingReminderTime) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: CupertinoColors.systemGrey6,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const SizedBox(
+          width: 12,
+          height: 12,
+          child: CupertinoActivityIndicator(radius: 6),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: _getBadgeBackgroundColor(_nextReminderTime),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        _getCollapsedReminderText(_nextReminderTime),
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: _getBadgeColor(_nextReminderTime),
+          fontFamily: '.SF Pro Text',
+        ),
+      ),
+    );
+  }
+
   // Convert 24h time format to 12h time format
   String _formatTimeString(String timeStr) {
     try {
@@ -612,9 +689,12 @@ class _FriendCardNewState extends State<FriendCardNew>
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('last_action_${widget.friend.id}', DateTime.now().millisecondsSinceEpoch);
 
-      // Reschedule reminder
+      // Reschedule reminder and refresh display
       final notificationService = NotificationService();
       await notificationService.scheduleReminder(widget.friend);
+
+      // Reload the next reminder time to update the display
+      _loadNextReminderTime();
 
     } catch (e) {
       if (context.mounted) {

@@ -154,6 +154,19 @@ class NotificationService {
     }
   }
 
+  // Optimized method to get all reminder times in bulk
+  Future<Map<String, DateTime?>> getAllReminderTimes(List<String> friendIds) async {
+    final Map<String, DateTime?> reminderTimes = {};
+    final prefs = await SharedPreferences.getInstance();
+
+    for (String friendId in friendIds) {
+      final time = prefs.getInt('next_reminder_$friendId');
+      reminderTimes[friendId] = time != null ? DateTime.fromMillisecondsSinceEpoch(time) : null;
+    }
+
+    return reminderTimes;
+  }
+
   Future<void> _createNotificationChannels() async {
     if (!Platform.isAndroid) return;
 
@@ -217,6 +230,40 @@ class NotificationService {
     if (friendId.isNotEmpty) {
       _actionCallback?.call(friendId, actionId ?? "tap");
     }
+  }
+
+  Future<List<Friend>> sortFriendsByReminderProximityOptimized(List<Friend> friends) async {
+    if (friends.isEmpty) return friends;
+
+    // Get all reminder times in one go
+    final friendIds = friends.map((f) => f.id).toList();
+    final notificationService = NotificationService();
+    final reminderTimes = await notificationService.getAllReminderTimes(friendIds);
+
+    // Create list with reminder times
+    List<MapEntry<Friend, DateTime?>> friendsWithTimes = friends
+        .map((friend) => MapEntry(friend, reminderTimes[friend.id]))
+        .toList();
+
+    // Sort by reminder proximity
+    friendsWithTimes.sort((a, b) {
+      final aHasReminder = a.key.reminderDays > 0;
+      final bHasReminder = b.key.reminderDays > 0;
+
+      // Friends without reminders go to the end
+      if (!aHasReminder && !bHasReminder) return 0;
+      if (!aHasReminder) return 1;
+      if (!bHasReminder) return -1;
+
+      // Both have reminders - sort by next reminder time
+      if (a.value == null && b.value == null) return 0;
+      if (a.value == null) return 1;
+      if (b.value == null) return -1;
+
+      return a.value!.compareTo(b.value!);
+    });
+
+    return friendsWithTimes.map((entry) => entry.key).toList();
   }
 
   // UPDATED: Schedule reminder with day selection support
@@ -523,6 +570,8 @@ class NotificationService {
       return [];
     }
   }
+
+
 
   Future<void> debugScheduledNotifications() async {
     try {

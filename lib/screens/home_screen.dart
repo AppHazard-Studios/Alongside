@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/friends_provider.dart';
+import '../services/notification_service.dart';
 import '../utils/responsive_utils.dart';
 import '../widgets/friend_card.dart';
 import '../utils/colors.dart';
@@ -36,8 +37,11 @@ class _HomeScreenNewState extends State<HomeScreenNew>
 
   bool _isSearching = false;
   String _searchQuery = '';
+  bool _isSortedByReminders = false;
+  bool _isSorting = false;
+  List<Friend>? _originalFriendsOrder; // ADD THIS LINE
 
-  // Track if this is the first launch for onboarding
+// Track if this is the first launch for onboarding
   bool _shouldShowOnboarding = false;
 
   // Track stats
@@ -307,28 +311,73 @@ class _HomeScreenNewState extends State<HomeScreenNew>
           ),
           onPressed: _toggleSearch,
         ),
-        trailing: CupertinoButton(
-          padding: EdgeInsets.zero,
-          child: Container(
-            width: ResponsiveUtils.scaledContainerSize(context, 32),
-            height: ResponsiveUtils.scaledContainerSize(context, 32),
-            decoration: BoxDecoration(
-              color: AppColors.background,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.primary.withOpacity(0.3),
-                width: 1,
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Sort toggle button
+              if (!_isSearching) ...[
+                CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  child: Container(
+                    width: ResponsiveUtils.scaledContainerSize(context, 32),
+                    height: ResponsiveUtils.scaledContainerSize(context, 32),
+                    decoration: BoxDecoration(
+                      color: _isSortedByReminders
+                          ? AppColors.primary
+                          : AppColors.background,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.primary.withOpacity(0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: _isSorting
+                        ? CupertinoActivityIndicator(
+                      radius: 8,
+                      color: _isSortedByReminders
+                          ? CupertinoColors.white
+                          : AppColors.primary,
+                    )
+                        : Icon(
+                      CupertinoIcons.sort_down,
+                      size: ResponsiveUtils.scaledIconSize(context, 16),
+                      color: _isSortedByReminders
+                          ? CupertinoColors.white
+                          : AppColors.primary,
+                      semanticLabel: _isSortedByReminders
+                          ? 'Sorted by reminders'
+                          : 'Sort by reminders',
+                    ),
+                  ),
+                  onPressed: _isSorting ? null : _toggleSort,
+                ),
+                SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+              ],
+              // Settings button
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                child: Container(
+                  width: ResponsiveUtils.scaledContainerSize(context, 32),
+                  height: ResponsiveUtils.scaledContainerSize(context, 32),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.primary.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Icon(
+                    CupertinoIcons.gear,
+                    size: ResponsiveUtils.scaledIconSize(context, 16),
+                    color: AppColors.primary,
+                    semanticLabel: 'Settings',
+                  ),
+                ),
+                onPressed: () => _navigateToSettings(context),
               ),
-            ),
-            child: Icon(
-              CupertinoIcons.gear,
-              size: ResponsiveUtils.scaledIconSize(context, 16),
-              color: AppColors.primary,
-              semanticLabel: 'Settings',
-            ),
+            ],
           ),
-          onPressed: () => _navigateToSettings(context),
-        ),
       ),
       child: Consumer<FriendsProvider>(
         builder: (context, friendsProvider, child) {
@@ -830,6 +879,7 @@ class _HomeScreenNewState extends State<HomeScreenNew>
       ],
     );
   }
+
 
   Widget _buildCompactStat({
     required IconData icon,
@@ -1590,6 +1640,84 @@ class _HomeScreenNewState extends State<HomeScreenNew>
         ),
       ),
     );
+  }
+
+  // Helper method to get next reminder time for sorting
+  Future<DateTime?> _getNextReminderTimeForFriend(Friend friend) async {
+    if (friend.reminderDays <= 0) return null;
+
+    final notificationService = NotificationService();
+    return await notificationService.getNextReminderTime(friend.id);
+  }
+
+  // Optimized sorting method using bulk lookup
+  Future<List<Friend>> _sortFriendsByReminderProximity(List<Friend> friends) async {
+    if (friends.isEmpty) return friends;
+
+    // Get all reminder times efficiently
+    final notificationService = NotificationService();
+    final friendIds = friends.map((f) => f.id).toList();
+
+    // Create list with reminder times
+    List<MapEntry<Friend, DateTime?>> friendsWithTimes = [];
+
+    for (Friend friend in friends) {
+      DateTime? nextTime = await _getNextReminderTimeForFriend(friend);
+      friendsWithTimes.add(MapEntry(friend, nextTime));
+    }
+
+    // Sort by reminder proximity
+    friendsWithTimes.sort((a, b) {
+      final aHasReminder = a.key.reminderDays > 0;
+      final bHasReminder = b.key.reminderDays > 0;
+
+      // Friends without reminders go to the end
+      if (!aHasReminder && !bHasReminder) return 0;
+      if (!aHasReminder) return 1;
+      if (!bHasReminder) return -1;
+
+      // Both have reminders - sort by next reminder time
+      if (a.value == null && b.value == null) return 0;
+      if (a.value == null) return 1;
+      if (b.value == null) return -1;
+
+      return a.value!.compareTo(b.value!);
+    });
+
+    return friendsWithTimes.map((entry) => entry.key).toList();
+  }
+
+  // Toggle sort method
+// Store original order
+
+  // Toggle sort method
+  Future<void> _toggleSort() async {
+    setState(() => _isSorting = true);
+
+    final provider = Provider.of<FriendsProvider>(context, listen: false);
+
+    if (_isSortedByReminders) {
+      // Reset to original order
+      if (_originalFriendsOrder != null) {
+        provider.reorderFriends(_originalFriendsOrder!);
+      }
+      setState(() {
+        _isSortedByReminders = false;
+        _originalFriendsOrder = null;
+      });
+    } else {
+      // Store original order before sorting
+      _originalFriendsOrder = List<Friend>.from(provider.friends);
+
+      // Sort by reminders
+      final sortedFriends = await _sortFriendsByReminderProximity(provider.friends);
+      provider.reorderFriends(sortedFriends);
+      setState(() {
+        _isSortedByReminders = true;
+      });
+    }
+
+    setState(() => _isSorting = false);
   }
 
   void _showReorderOptions(
