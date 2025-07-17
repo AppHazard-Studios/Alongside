@@ -63,8 +63,10 @@ class _FriendCardNewState extends State<FriendCardNew>
 
   // Load next reminder time
 // Load next reminder time - FIXED VERSION
+  // Load next reminder time - FIXED VERSION
   Future<void> _loadNextReminderTime() async {
-    if (widget.friend.reminderDays > 0) {
+    // FIXED: Use hasReminder instead of reminderDays > 0
+    if (widget.friend.hasReminder) {
       setState(() {
         _isLoadingReminderTime = true;
       });
@@ -681,7 +683,7 @@ class _FriendCardNewState extends State<FriendCardNew>
       ),
     );
   }
-  
+
   // Convert 24h time format to 12h time format
   String _formatTimeString(String timeStr) {
     try {

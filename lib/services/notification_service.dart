@@ -1,4 +1,4 @@
-// lib/services/notification_service.dart - UPDATED FILE
+// lib/services/notification_service.dart - FIXED FOR NEW REMINDER SYSTEM
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -155,7 +155,6 @@ class NotificationService {
   }
 
   // Optimized method to get all reminder times in bulk
-// Optimized method to get all reminder times in bulk
   Future<Map<String, DateTime?>> getAllReminderTimes(List<String> friendIds) async {
     final Map<String, DateTime?> reminderTimes = {};
     final prefs = await SharedPreferences.getInstance();
@@ -248,8 +247,9 @@ class NotificationService {
 
     // Sort by reminder proximity
     friendsWithTimes.sort((a, b) {
-      final aHasReminder = a.key.reminderDays > 0;
-      final bHasReminder = b.key.reminderDays > 0;
+      // FIXED: Use hasReminder instead of reminderDays > 0
+      final aHasReminder = a.key.hasReminder;
+      final bHasReminder = b.key.hasReminder;
 
       // Friends without reminders go to the end
       if (!aHasReminder && !bHasReminder) return 0;
@@ -274,9 +274,19 @@ class NotificationService {
     }
 
     print("\n🔄 SCHEDULING REMINDER FOR: ${friend.name}");
+    print("   - Has reminder: ${friend.hasReminder}");
+    print("   - Uses advanced reminders: ${friend.usesAdvancedReminders}");
+    print("   - Reminder days: ${friend.reminderDays}");
+    print("   - Reminder data: ${friend.reminderData}");
 
     try {
       await cancelReminder(friend.id);
+
+      // FIXED: Check hasReminder instead of reminderDays > 0
+      if (!friend.hasReminder) {
+        print("❌ Friend has no reminders enabled");
+        return false;
+      }
 
       final nextTime = await _calculateNextReminderTime(friend);
       if (nextTime == null) {
@@ -349,6 +359,7 @@ class NotificationService {
 
   // Legacy reminder calculation for backward compatibility
   Future<DateTime?> _calculateLegacyReminderTime(Friend friend, DateTime now, int hour, int minute, int? lastActionTime) async {
+    // FIXED: For legacy system, check reminderDays > 0
     if (friend.reminderDays <= 0) return null;
 
     DateTime nextTime;
@@ -571,8 +582,6 @@ class NotificationService {
       return [];
     }
   }
-
-
 
   Future<void> debugScheduledNotifications() async {
     try {

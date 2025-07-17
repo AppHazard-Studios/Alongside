@@ -1,4 +1,4 @@
-// lib/providers/friends_provider.dart - SIMPLIFIED VERSION
+// lib/providers/friends_provider.dart - FIXED FOR NEW REMINDER SYSTEM
 import 'package:flutter/foundation.dart';
 import '../models/friend.dart';
 import '../services/storage_service.dart';
@@ -51,9 +51,12 @@ class FriendsProvider with ChangeNotifier {
 
     await storageService.saveFriends(friends);
 
-    // IMPROVED: Schedule notifications with better error handling
-    if (friend.reminderDays > 0) {
+    // FIXED: Use the friend's hasReminder property instead of reminderDays
+    if (friend.hasReminder) {
       print("📅 Setting up reminders for new friend: ${friend.name}");
+      print("   - Uses advanced reminders: ${friend.usesAdvancedReminders}");
+      print("   - Reminder days: ${friend.reminderDays}");
+      print("   - Reminder data: ${friend.reminderData}");
 
       // Mark as new friend (no previous interactions)
       final prefs = await SharedPreferences.getInstance();
@@ -65,6 +68,8 @@ class FriendsProvider with ChangeNotifier {
       } else {
         print("❌ Failed to schedule reminder for ${friend.name}");
       }
+    } else {
+      print("🔕 No reminders set for ${friend.name}");
     }
 
     // Handle persistent notification
@@ -86,18 +91,23 @@ class FriendsProvider with ChangeNotifier {
       _friends[index] = updatedFriend;
       await storageService.saveFriends(_friends);
 
-      // IMPROVED: Handle reminder changes with better validation
-      final reminderChanged = oldFriend.reminderDays != updatedFriend.reminderDays ||
-          oldFriend.reminderTime != updatedFriend.reminderTime;
+      // FIXED: Check for reminder changes using hasReminder property
+      final reminderChanged = oldFriend.hasReminder != updatedFriend.hasReminder ||
+          oldFriend.reminderTime != updatedFriend.reminderTime ||
+          oldFriend.reminderData != updatedFriend.reminderData ||
+          oldFriend.reminderDays != updatedFriend.reminderDays;
 
       if (reminderChanged) {
         print("🔄 Reminder settings changed for ${updatedFriend.name}");
+        print("   - Old has reminder: ${oldFriend.hasReminder}");
+        print("   - New has reminder: ${updatedFriend.hasReminder}");
+        print("   - Uses advanced reminders: ${updatedFriend.usesAdvancedReminders}");
 
         // Always cancel old reminders first
         await notificationService.cancelReminder(updatedFriend.id);
 
         // Schedule new reminders if enabled
-        if (updatedFriend.reminderDays > 0) {
+        if (updatedFriend.hasReminder) {
           final success = await notificationService.scheduleReminder(updatedFriend);
           if (success) {
             print("✅ Successfully updated reminder for ${updatedFriend.name}");

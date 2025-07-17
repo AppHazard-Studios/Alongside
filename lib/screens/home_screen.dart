@@ -1682,8 +1682,9 @@ class _HomeScreenNewState extends State<HomeScreenNew>
 
     // Sort by reminder proximity
     friendsWithTimes.sort((a, b) {
-      final aHasReminder = a.key.reminderDays > 0;
-      final bHasReminder = b.key.reminderDays > 0;
+      // FIXED: Use hasReminder instead of reminderDays > 0
+      final aHasReminder = a.key.hasReminder;
+      final bHasReminder = b.key.hasReminder;
 
       // Friends without reminders go to the end
       if (!aHasReminder && !bHasReminder) {
