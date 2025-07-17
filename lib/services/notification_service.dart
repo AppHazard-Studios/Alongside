@@ -1,8 +1,8 @@
-// lib/services/notification_service.dart - UPDATED WITH DAY SELECTION SUPPORT
+// lib/services/notification_service.dart - UPDATED FILE
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart' hide RepeatInterval;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -340,10 +340,34 @@ class NotificationService {
       // Cancel existing
       await Workmanager().cancelByUniqueName("reminder_${friend.id}");
 
-      // Get reminder text
-      String reminderText = friend.usesAdvancedReminders ?
-      'Your scheduled check-in' :
-      'It\'s been ${friend.reminderDays} ${friend.reminderDays == 1 ? 'day' : 'days'}';
+      // Get reminder text based on interval
+      String reminderText = 'Your scheduled check-in';
+      if (friend.usesAdvancedReminders) {
+        try {
+          final daySelectionData = DaySelectionData.fromJson(friend.reminderData!);
+          switch (daySelectionData.interval) {
+            case RepeatInterval.weekly:
+              reminderText = 'Your weekly check-in';
+              break;
+            case RepeatInterval.biweekly:
+              reminderText = 'Your bi-weekly check-in';
+              break;
+            case RepeatInterval.monthly:
+              reminderText = 'Your monthly check-in';
+              break;
+            case RepeatInterval.quarterly:
+              reminderText = 'Your quarterly check-in';
+              break;
+            case RepeatInterval.semiannually:
+              reminderText = 'Your semi-annual check-in';
+              break;
+          }
+        } catch (e) {
+          reminderText = 'Your scheduled check-in';
+        }
+      } else {
+        reminderText = 'It\'s been ${friend.reminderDays} ${friend.reminderDays == 1 ? 'day' : 'days'}';
+      }
 
       // Schedule with WorkManager
       await Workmanager().registerOneOffTask(

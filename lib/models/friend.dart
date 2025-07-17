@@ -1,6 +1,6 @@
+// lib/models/friend.dart - UPDATED FILE
 import '../models/day_selection_data.dart';
 
-// lib/models/friend.dart - UPDATED WITH BETTER REMINDER SYSTEM
 class Friend {
   final String id;
   final String name;

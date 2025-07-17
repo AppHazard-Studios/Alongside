@@ -11,7 +11,6 @@ import '../models/friend.dart';
 import '../providers/friends_provider.dart';
 import '../utils/colors.dart';
 import '../utils/responsive_utils.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../services/notification_service.dart';
 
 class MessageScreenNew extends StatefulWidget {

@@ -1,4 +1,4 @@
-// lib/screens/add_friend_screen.dart - Complete file with delete friend functionality
+// lib/screens/add_friend_screen.dart - UPDATED WITH INTEGRATED TIME PICKER
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -72,8 +72,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       _helpingYouWithController.text = widget.friend!.theyHelpingWith ?? '';
       _reminderTimeStr = widget.friend!.reminderTime;
 
-
-      // NEW: Load day selection data
+      // Load day selection data
       if (widget.friend!.reminderData != null && widget.friend!.reminderData!.isNotEmpty) {
         try {
           _daySelectionData = DaySelectionData.fromJson(widget.friend!.reminderData!);
@@ -90,8 +89,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     }
   }
 
-
-// Add this method
   void _showContactPickerPrompt() {
     showCupertinoDialog(
       context: context,
@@ -159,19 +156,17 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     super.dispose();
   }
 
-  // Method to pick a contact
-// Enhanced method to pick a contact with search and multiple number handling
+  // Enhanced method to pick a contact with search and multiple number handling
   Future<void> _pickContact() async {
     if (await FlutterContacts.requestPermission()) {
       try {
         final contacts = await FlutterContacts.getContacts(
           withProperties: true,
-          withPhoto: true, // CHANGED: Enable photo fetching
+          withPhoto: true,
         );
 
         if (!mounted) return;
 
-        // Show the enhanced contact picker with search
         showCupertinoModalPopup(
           context: context,
           builder: (context) => _ContactPickerWithSearch(
@@ -182,19 +177,14 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                 return;
               }
 
-              // Set the name immediately
               setState(() {
                 _nameController.text = contact.displayName;
               });
 
-              // Handle contact photo if available
               if (contact.photo != null && contact.photo!.isNotEmpty) {
                 try {
-                  // Save the photo to app's document directory
-                  final Directory docDir =
-                      await getApplicationDocumentsDirectory();
-                  final String imagePath =
-                      '${docDir.path}/contact_${DateTime.now().millisecondsSinceEpoch}.jpg';
+                  final Directory docDir = await getApplicationDocumentsDirectory();
+                  final String imagePath = '${docDir.path}/contact_${DateTime.now().millisecondsSinceEpoch}.jpg';
                   final File imageFile = File(imagePath);
                   await imageFile.writeAsBytes(contact.photo!);
 
@@ -203,19 +193,15 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                     _isEmoji = false;
                   });
                 } catch (e) {
-                  // If photo saving fails, keep the default emoji
                   print('Error saving contact photo: $e');
                 }
               }
 
-              // Handle multiple phone numbers
               if (contact.phones.length == 1) {
-                // Single number - use it directly
                 setState(() {
                   _phoneController.text = contact.phones.first.number;
                 });
               } else {
-                // Multiple numbers - let user choose
                 _showPhoneNumberSelector(contact);
               }
             },
@@ -229,9 +215,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     }
   }
 
-  // Show phone number selector for contacts with multiple numbers
-// Show phone number selector for contacts with multiple numbers - Fixed PhoneLabel handling
-// Show phone number selector for contacts with multiple numbers - Fixed warnings
   void _showPhoneNumberSelector(Contact contact) {
     showCupertinoModalPopup(
       context: context,
@@ -256,7 +239,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
         actions: contact.phones.map((phone) {
           String labelText = '';
 
-          // Properly handle PhoneLabel type
           switch (phone.label) {
             case PhoneLabel.mobile:
               labelText = 'Mobile';
@@ -283,8 +265,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               labelText = 'Other';
               break;
             case PhoneLabel.custom:
-              labelText =
-                  phone.customLabel.isNotEmpty ? phone.customLabel : 'Custom';
+              labelText = phone.customLabel.isNotEmpty ? phone.customLabel : 'Custom';
               break;
             default:
               labelText = '';
@@ -451,7 +432,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
 
   Future<void> _pickImage(ImageSource source) async {
     try {
-      // Request camera permission if taking a photo
       if (source == ImageSource.camera) {
         final cameraStatus = await Permission.camera.status;
 
@@ -529,8 +509,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
 
       if (pickedFile != null) {
         final Directory docDir = await getApplicationDocumentsDirectory();
-        final String imagePath =
-            '${docDir.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final String imagePath = '${docDir.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
 
         await File(pickedFile.path).copy(imagePath);
 
@@ -631,154 +610,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     );
   }
 
-  void _showReminderPicker() {
-    final reminderOptions = AppConstants.reminderOptions;
-    int selectedOption = _reminderDays;
-
-    showCupertinoModalPopup(
-      context: context,
-      builder: (context) => Container(
-        height: 250,
-        color: CupertinoColors.systemBackground,
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                CupertinoButton(
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(
-                      color: CupertinoColors.systemBlue,
-                      fontFamily: '.SF Pro Text',
-                    ),
-                  ),
-                  onPressed: () => Navigator.pop(context),
-                ),
-                CupertinoButton(
-                  child: const Text(
-                    'Done',
-                    style: TextStyle(
-                      color: CupertinoColors.systemBlue,
-                      fontWeight: FontWeight.w600,
-                      fontFamily: '.SF Pro Text',
-                    ),
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _reminderDays = selectedOption;
-                    });
-                    Navigator.pop(context);
-
-                    if (selectedOption > 0) {
-                      _showTimePicker();
-                    }
-                  },
-                ),
-              ],
-            ),
-            Expanded(
-              child: CupertinoPicker(
-                itemExtent: 40,
-                looping: false,
-                scrollController: FixedExtentScrollController(
-                  initialItem: reminderOptions.indexOf(
-                    reminderOptions.contains(_reminderDays) ? _reminderDays : 0,
-                  ),
-                ),
-                onSelectedItemChanged: (index) {
-                  selectedOption = reminderOptions[index];
-                },
-                children: reminderOptions.map((days) {
-                  return Center(
-                    child: Text(
-                      AppConstants.formatReminderOption(days),
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: CupertinoColors.label,
-                        fontFamily: '.SF Pro Text',
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showTimePicker() {
-    // Extract current hours and minutes from string
-    final parts = _reminderTimeStr.split(':');
-    int currentHour = int.tryParse(parts[0]) ?? 9;
-    int currentMinute = int.tryParse(parts[1]) ?? 0;
-
-    // Create initial DateTime for the picker
-    final initialDateTime = DateTime(
-      DateTime.now().year,
-      DateTime.now().month,
-      DateTime.now().day,
-      currentHour,
-      currentMinute,
-    );
-
-    showCupertinoModalPopup(
-      context: context,
-      builder: (context) => Container(
-        height: 280,
-        color: CupertinoColors.systemBackground,
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                CupertinoButton(
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(
-                      color: CupertinoColors.systemBlue,
-                      fontFamily: '.SF Pro Text',
-                    ),
-                  ),
-                  onPressed: () => Navigator.pop(context),
-                ),
-                CupertinoButton(
-                  child: const Text(
-                    'Done',
-                    style: TextStyle(
-                      color: CupertinoColors.systemBlue,
-                      fontWeight: FontWeight.w600,
-                      fontFamily: '.SF Pro Text',
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                ),
-              ],
-            ),
-            Expanded(
-              child: CupertinoDatePicker(
-                mode: CupertinoDatePickerMode.time,
-                initialDateTime: initialDateTime,
-                onDateTimeChanged: (dateTime) {
-                  setState(() {
-                    // Update time string in HH:MM format
-                    _reminderTimeStr =
-                        '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
-                  });
-                },
-                use24hFormat: false,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   void _saveFriend() async {
     if (_nameController.text.trim().isEmpty) {
       _showErrorSnackBar('Please enter a name');
@@ -793,7 +624,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     final isNewFriend = widget.friend == null;
 
     if (isNewFriend) {
-      // Create a new friend
       final newFriend = Friend(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         name: _nameController.text.trim(),
@@ -802,7 +632,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
         isEmoji: _isEmoji,
         reminderDays: _reminderDays,
         reminderTime: _reminderTimeStr,
-        reminderData: _daySelectionData?.toJson(), // NEW: Save day selection data
+        reminderData: _daySelectionData?.toJson(),
         hasPersistentNotification: _hasPersistentNotification,
         helpingWith: _helpingThemWithController.text.trim(),
         theyHelpingWith: _helpingYouWithController.text.trim(),
@@ -814,7 +644,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
         _showInviteDialog(context, newFriend);
       }
     } else {
-      // Update existing friend
       final updatedFriend = widget.friend!.copyWith(
         name: _nameController.text.trim(),
         phoneNumber: _phoneController.text.trim(),
@@ -822,7 +651,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
         isEmoji: _isEmoji,
         reminderDays: _reminderDays,
         reminderTime: _reminderTimeStr,
-        reminderData: _daySelectionData?.toJson(), // NEW: Save day selection data
+        reminderData: _daySelectionData?.toJson(),
         hasPersistentNotification: _hasPersistentNotification,
         helpingWith: _helpingThemWithController.text.trim(),
         theyHelpingWith: _helpingYouWithController.text.trim(),
@@ -833,7 +662,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     }
   }
 
-// Add this new method
   void _showInviteDialog(BuildContext context, Friend friend) {
     showCupertinoDialog(
       context: context,
@@ -876,14 +704,12 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             onPressed: () async {
               Navigator.pop(context);
 
-              final message =
-                  'Hey ${friend.name.split(' ')[0]}! I just added you to Alongside - '
+              final message = 'Hey ${friend.name.split(' ')[0]}! I just added you to Alongside - '
                   'an app that helps us stay connected. '
                   'It reminds me to check in with you and makes it easy to send quick messages. '
                   'Would love if you joined too! Download at: alongside.app';
 
-              final smsUri = Uri.parse(
-                  'sms:${friend.phoneNumber}?body=${Uri.encodeComponent(message)}');
+              final smsUri = Uri.parse('sms:${friend.phoneNumber}?body=${Uri.encodeComponent(message)}');
 
               try {
                 await launchUrl(smsUri, mode: LaunchMode.externalApplication);
@@ -905,7 +731,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     );
   }
 
-  // Show delete confirmation dialog
   void _showDeleteConfirmation(BuildContext context) {
     showCupertinoDialog(
       context: context,
@@ -945,13 +770,11 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
           ),
           CupertinoDialogAction(
             onPressed: () async {
-              Navigator.pop(context); // Close dialog
+              Navigator.pop(context);
 
-              final provider =
-                  Provider.of<FriendsProvider>(context, listen: false);
+              final provider = Provider.of<FriendsProvider>(context, listen: false);
               await provider.removeFriend(widget.friend!.id);
 
-              // Navigate back to home screen
               if (mounted) {
                 Navigator.of(context).popUntil((route) => route.isFirst);
               }
@@ -974,7 +797,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   @override
   Widget build(BuildContext context) {
     return Material(
-      // Wrap in Material for localizations
       child: CupertinoApp(
         debugShowCheckedModeBanner: false,
         theme: const CupertinoThemeData(
@@ -1035,7 +857,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               child: ListView(
                 padding: const EdgeInsets.only(top: 16),
                 children: [
-                  // Profile image selection - with white background for emoji
+                  // Profile image selection
                   Center(
                     child: Column(
                       children: [
@@ -1045,8 +867,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                             width: 100,
                             height: 100,
                             decoration: BoxDecoration(
-                              color: CupertinoColors
-                                  .white, // White background for all profile images
+                              color: CupertinoColors.white,
                               shape: BoxShape.circle,
                               border: Border.all(
                                 color: CupertinoColors.systemGrey5,
@@ -1055,17 +876,17 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                             ),
                             child: _isEmoji
                                 ? Center(
-                                    child: Text(
-                                      _profileImage,
-                                      style: const TextStyle(fontSize: 50),
-                                    ),
-                                  )
+                              child: Text(
+                                _profileImage,
+                                style: const TextStyle(fontSize: 50),
+                              ),
+                            )
                                 : ClipOval(
-                                    child: Image.file(
-                                      File(_profileImage),
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
+                              child: Image.file(
+                                File(_profileImage),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -1114,8 +935,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                       children: [
                         // Name field
                         Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
@@ -1123,8 +943,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                                 width: 38,
                                 height: 38,
                                 decoration: BoxDecoration(
-                                  color: CupertinoColors.systemBlue
-                                      .withOpacity(0.1),
+                                  color: CupertinoColors.systemBlue.withOpacity(0.1),
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
@@ -1154,8 +973,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
 
                         // Phone Number field
                         Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
@@ -1163,8 +981,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                                 width: 38,
                                 height: 38,
                                 decoration: BoxDecoration(
-                                  color: CupertinoColors.systemGreen
-                                      .withOpacity(0.1),
+                                  color: CupertinoColors.systemGreen.withOpacity(0.1),
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
@@ -1180,8 +997,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                                   label: 'Phone Number',
                                   placeholder: 'Enter phone number',
                                   keyboardType: TextInputType.phone,
-                                  textCapitalization: TextCapitalization
-                                      .words, // Auto-capitalize for names
+                                  textCapitalization: TextCapitalization.words,
                                 ),
                               ),
                             ],
@@ -1208,8 +1024,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                       children: [
                         // What are you alongside them in?
                         Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
@@ -1217,8 +1032,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                                 width: 38,
                                 height: 38,
                                 decoration: BoxDecoration(
-                                  color: CupertinoColors.systemBlue
-                                      .withOpacity(0.1),
+                                  color: CupertinoColors.systemBlue.withOpacity(0.1),
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
@@ -1232,10 +1046,8 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                                 child: NoUnderlineField(
                                   controller: _helpingThemWithController,
                                   label: 'What are you alongside them in?',
-                                  placeholder:
-                                      'e.g., "Accountability for exercise"',
-                                  textCapitalization:
-                                      TextCapitalization.sentences,
+                                  placeholder: 'e.g., "Accountability for exercise"',
+                                  textCapitalization: TextCapitalization.sentences,
                                 ),
                               ),
                             ],
@@ -1250,8 +1062,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
 
                         // What are they alongside you in?
                         Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
@@ -1259,8 +1070,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                                 width: 38,
                                 height: 38,
                                 decoration: BoxDecoration(
-                                  color: CupertinoColors.systemBlue
-                                      .withOpacity(0.1),
+                                  color: CupertinoColors.systemBlue.withOpacity(0.1),
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
@@ -1274,16 +1084,38 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                                 child: NoUnderlineField(
                                   controller: _helpingYouWithController,
                                   label: 'What are they alongside you in?',
-                                  placeholder:
-                                      'e.g., "Prayer for family issues"',
-                                  textCapitalization:
-                                      TextCapitalization.sentences,
+                                  placeholder: 'e.g., "Prayer for family issues"',
+                                  textCapitalization: TextCapitalization.sentences,
                                 ),
                               ),
                             ],
                           ),
                         ),
                       ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Day selector widget with integrated time picker
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    child: DaySelectorWidget(
+                      initialData: _daySelectionData,
+                      reminderTime: _reminderTimeStr,
+                      onTimeChanged: (newTime) {
+                        setState(() {
+                          _reminderTimeStr = newTime;
+                        });
+                      },
+                      onChanged: (daySelectionData) {
+                        setState(() {
+                          _daySelectionData = daySelectionData;
+                          if (daySelectionData != null) {
+                            _reminderDays = 0;
+                          }
+                        });
+                      },
                     ),
                   ),
 
@@ -1304,101 +1136,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                     ),
                   ),
 
-                  // Reminder time picker (always visible)
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: CupertinoColors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: CupertinoColors.systemGrey5,
-                        width: 0.5,
-                      ),
-                    ),
-                    child: GestureDetector(
-                      onTap: _showTimePicker,
-                      behavior: HitTestBehavior.opaque,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 38,
-                              height: 38,
-                              decoration: BoxDecoration(
-                                color: CupertinoColors.systemBlue.withOpacity(0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                CupertinoIcons.time,
-                                color: CupertinoColors.systemBlue,
-                                size: 18,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Reminder Time',
-                                    style: TextStyle(
-                                      color: CupertinoColors.secondaryLabel,
-                                      fontSize: 14,
-                                      fontFamily: '.SF Pro Text',
-                                    ),
-                                  ),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        _formattedReminderTime,
-                                        style: const TextStyle(
-                                          color: CupertinoColors.label,
-                                          fontSize: 16,
-                                          fontFamily: '.SF Pro Text',
-                                        ),
-                                      ),
-                                      const Icon(
-                                        CupertinoIcons.chevron_down,
-                                        size: 14,
-                                        color: CupertinoColors.secondaryLabel,
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Day selector widget (main reminder interface)
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
-                    child: DaySelectorWidget(
-                      initialData: _daySelectionData,
-                      reminderTime: _formattedReminderTime,
-                      onChanged: (daySelectionData) {
-                        setState(() {
-                          _daySelectionData = daySelectionData;
-                          // Clear old reminder days when using new system
-                          if (daySelectionData != null) {
-                            _reminderDays = 0;
-                          }
-                        });
-                      },
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Persistent notification setting (separate from reminders)
+                  // Persistent notification setting
                   Container(
                     margin: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
@@ -1473,9 +1211,9 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                     ),
                   ),
 
-                  // Delete friend button (only when editing)
                   const SizedBox(height: 16),
 
+                  // Delete friend button (only when editing)
                   if (widget.friend != null)
                     Container(
                       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -1519,7 +1257,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
 }
 
 // Contact picker widget with search functionality
-// Contact picker widget with search functionality - Fixed PhoneLabel handling
 class _ContactPickerWithSearch extends StatefulWidget {
   final List<Contact> contacts;
   final Function(Contact) onContactSelected;
@@ -1530,8 +1267,7 @@ class _ContactPickerWithSearch extends StatefulWidget {
   });
 
   @override
-  State<_ContactPickerWithSearch> createState() =>
-      _ContactPickerWithSearchState();
+  State<_ContactPickerWithSearch> createState() => _ContactPickerWithSearchState();
 }
 
 class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
@@ -1639,7 +1375,7 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 60), // Balance the cancel button
+                const SizedBox(width: 60),
               ],
             ),
           ),
@@ -1660,17 +1396,15 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
               ),
               suffix: _searchController.text.isNotEmpty
                   ? CupertinoButton(
-                      padding: EdgeInsets.zero,
-                      minSize: 0,
-                      onPressed: () {
-                        _searchController.clear();
-                      },
-                      child: const Icon(
-                        CupertinoIcons.clear_circled,
-                        color: CupertinoColors.systemGrey,
-                        size: 18,
-                      ),
-                    )
+                padding: EdgeInsets.zero,
+                minSize: 0,
+                onPressed: () => _searchController.clear(),
+                child: const Icon(
+                  CupertinoIcons.clear_circled,
+                  color: CupertinoColors.systemGrey,
+                  size: 18,
+                ),
+              )
                   : null,
               style: const TextStyle(
                 fontSize: 16,
@@ -1690,119 +1424,114 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
           Expanded(
             child: _filteredContacts.isEmpty
                 ? const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          CupertinoIcons.person_3,
-                          size: 48,
-                          color: CupertinoColors.systemGrey,
-                        ),
-                        SizedBox(height: 16),
-                        Text(
-                          'No contacts found',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: CupertinoColors.systemGrey,
-                            fontFamily: '.SF Pro Text',
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                : CupertinoScrollbar(
-                    child: ListView.builder(
-                      itemCount: _filteredContacts.length,
-                      itemBuilder: (context, index) {
-                        final contact = _filteredContacts[index];
-                        return Container(
-                          decoration: const BoxDecoration(
-                            border: Border(
-                              bottom: BorderSide(
-                                color: CupertinoColors.separator,
-                                width: 0.5,
-                              ),
-                            ),
-                          ),
-                          child: CupertinoListTile(
-                            title: Text(
-                              contact.displayName,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontFamily: '.SF Pro Text',
-                              ),
-                            ),
-                            subtitle: contact.phones.isNotEmpty
-                                ? Text(
-                                    contact.phones.length == 1
-                                        ? '${contact.phones.first.number}${_getPhoneLabel(contact.phones.first).isNotEmpty ? ' (${_getPhoneLabel(contact.phones.first)})' : ''}'
-                                        : '${contact.phones.length} phone numbers',
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      color: CupertinoColors.secondaryLabel,
-                                      fontFamily: '.SF Pro Text',
-                                    ),
-                                  )
-                                : const Text(
-                                    'No phone number',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: CupertinoColors.systemGrey,
-                                      fontFamily: '.SF Pro Text',
-                                    ),
-                                  ),
-                            leading: Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: contact.photo != null &&
-                                        contact.photo!.isNotEmpty
-                                    ? null
-                                    : CupertinoColors.systemBlue
-                                        .withOpacity(0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: contact.photo != null &&
-                                      contact.photo!.isNotEmpty
-                                  ? ClipOval(
-                                      child: Image.memory(
-                                        contact.photo!,
-                                        fit: BoxFit.cover,
-                                        errorBuilder:
-                                            (context, error, stackTrace) {
-                                          // Fallback if photo fails to load
-                                          return const Icon(
-                                            CupertinoIcons.person,
-                                            color: CupertinoColors.systemBlue,
-                                            size: 20,
-                                          );
-                                        },
-                                      ),
-                                    )
-                                  : const Icon(
-                                      CupertinoIcons.person,
-                                      color: CupertinoColors.systemBlue,
-                                      size: 20,
-                                    ),
-                            ),
-                            trailing: contact.phones.isNotEmpty
-                                ? const Icon(
-                                    CupertinoIcons.chevron_right,
-                                    color: CupertinoColors.systemGrey,
-                                    size: 16,
-                                  )
-                                : null,
-                            onTap: contact.phones.isNotEmpty
-                                ? () {
-                                    Navigator.pop(context);
-                                    widget.onContactSelected(contact);
-                                  }
-                                : null,
-                          ),
-                        );
-                      },
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    CupertinoIcons.person_3,
+                    size: 48,
+                    color: CupertinoColors.systemGrey,
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'No contacts found',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: CupertinoColors.systemGrey,
+                      fontFamily: '.SF Pro Text',
                     ),
                   ),
+                ],
+              ),
+            )
+                : CupertinoScrollbar(
+              child: ListView.builder(
+                itemCount: _filteredContacts.length,
+                itemBuilder: (context, index) {
+                  final contact = _filteredContacts[index];
+                  return Container(
+                    decoration: const BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: CupertinoColors.separator,
+                          width: 0.5,
+                        ),
+                      ),
+                    ),
+                    child: CupertinoListTile(
+                      title: Text(
+                        contact.displayName,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontFamily: '.SF Pro Text',
+                        ),
+                      ),
+                      subtitle: contact.phones.isNotEmpty
+                          ? Text(
+                        contact.phones.length == 1
+                            ? '${contact.phones.first.number}${_getPhoneLabel(contact.phones.first).isNotEmpty ? ' (${_getPhoneLabel(contact.phones.first)})' : ''}'
+                            : '${contact.phones.length} phone numbers',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: CupertinoColors.secondaryLabel,
+                          fontFamily: '.SF Pro Text',
+                        ),
+                      )
+                          : const Text(
+                        'No phone number',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: CupertinoColors.systemGrey,
+                          fontFamily: '.SF Pro Text',
+                        ),
+                      ),
+                      leading: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: contact.photo != null && contact.photo!.isNotEmpty
+                              ? null
+                              : CupertinoColors.systemBlue.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: contact.photo != null && contact.photo!.isNotEmpty
+                            ? ClipOval(
+                          child: Image.memory(
+                            contact.photo!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Icon(
+                                CupertinoIcons.person,
+                                color: CupertinoColors.systemBlue,
+                                size: 20,
+                              );
+                            },
+                          ),
+                        )
+                            : const Icon(
+                          CupertinoIcons.person,
+                          color: CupertinoColors.systemBlue,
+                          size: 20,
+                        ),
+                      ),
+                      trailing: contact.phones.isNotEmpty
+                          ? const Icon(
+                        CupertinoIcons.chevron_right,
+                        color: CupertinoColors.systemGrey,
+                        size: 16,
+                      )
+                          : null,
+                      onTap: contact.phones.isNotEmpty
+                          ? () {
+                        Navigator.pop(context);
+                        widget.onContactSelected(contact);
+                      }
+                          : null,
+                    ),
+                  );
+                },
+              ),
+            ),
           ),
         ],
       ),

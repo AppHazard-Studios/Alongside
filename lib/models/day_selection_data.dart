@@ -1,22 +1,21 @@
-// lib/models/day_selection_data.dart - NEW FILE
+// lib/models/day_selection_data.dart - UPDATED FILE
 import 'dart:convert';
 
 enum RepeatInterval {
   weekly,
   biweekly,
   monthly,
-  custom
+  quarterly,    // Every 3 months
+  semiannually, // Every 6 months
 }
 
 class DaySelectionData {
   final Set<int> selectedDays; // 1-7 where 1 is Monday, 7 is Sunday
   final RepeatInterval interval;
-  final int customIntervalDays; // Only used when interval is custom
 
   DaySelectionData({
     required this.selectedDays,
     required this.interval,
-    this.customIntervalDays = 0,
   });
 
   // Convert to JSON string for storage
@@ -24,7 +23,6 @@ class DaySelectionData {
     return jsonEncode({
       'selectedDays': selectedDays.toList(),
       'interval': interval.index,
-      'customIntervalDays': customIntervalDays,
     });
   }
 
@@ -35,7 +33,6 @@ class DaySelectionData {
       return DaySelectionData(
         selectedDays: Set<int>.from(json['selectedDays'] ?? []),
         interval: RepeatInterval.values[json['interval'] ?? 0],
-        customIntervalDays: json['customIntervalDays'] ?? 0,
       );
     } catch (e) {
       // Return default if parsing fails
@@ -65,8 +62,10 @@ class DaySelectionData {
         return 'Every 2 weeks on $daysText';
       case RepeatInterval.monthly:
         return 'Monthly on $daysText';
-      case RepeatInterval.custom:
-        return 'Every $customIntervalDays days on $daysText';
+      case RepeatInterval.quarterly:
+        return 'Every 3 months on $daysText';
+      case RepeatInterval.semiannually:
+        return 'Every 6 months on $daysText';
     }
   }
 
@@ -114,7 +113,6 @@ class DaySelectionData {
           candidate = candidate.add(const Duration(days: 14));
           break;
         case RepeatInterval.monthly:
-        // Add a month
           candidate = DateTime(
             candidate.month == 12 ? candidate.year + 1 : candidate.year,
             candidate.month == 12 ? 1 : candidate.month + 1,
@@ -123,8 +121,23 @@ class DaySelectionData {
             candidate.minute,
           );
           break;
-        case RepeatInterval.custom:
-          candidate = candidate.add(Duration(days: customIntervalDays));
+        case RepeatInterval.quarterly:
+          candidate = DateTime(
+            candidate.month >= 10 ? candidate.year + 1 : candidate.year,
+            candidate.month >= 10 ? candidate.month - 9 : candidate.month + 3,
+            candidate.day,
+            candidate.hour,
+            candidate.minute,
+          );
+          break;
+        case RepeatInterval.semiannually:
+          candidate = DateTime(
+            candidate.month >= 7 ? candidate.year + 1 : candidate.year,
+            candidate.month >= 7 ? candidate.month - 6 : candidate.month + 6,
+            candidate.day,
+            candidate.hour,
+            candidate.minute,
+          );
           break;
       }
     }
@@ -135,12 +148,10 @@ class DaySelectionData {
   DaySelectionData copyWith({
     Set<int>? selectedDays,
     RepeatInterval? interval,
-    int? customIntervalDays,
   }) {
     return DaySelectionData(
       selectedDays: selectedDays ?? this.selectedDays,
       interval: interval ?? this.interval,
-      customIntervalDays: customIntervalDays ?? this.customIntervalDays,
     );
   }
 }
