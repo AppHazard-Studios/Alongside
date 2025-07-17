@@ -1,4 +1,4 @@
-// lib/services/notification_service.dart - FIXED WORKMANAGER CALLBACK
+// lib/services/notification_service.dart - UPDATED WITH DAY SELECTION SUPPORT
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,6 +7,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/friend.dart';
+import '../models/day_selection_data.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:workmanager/workmanager.dart';
@@ -14,55 +15,43 @@ import 'storage_service.dart';
 
 typedef NotificationActionCallback = void Function(String friendId, String action);
 
-// REPLACE the entire callbackDispatcher section with this CLEAN version:
-
-// CLEAN WORKMANAGER DISPATCHER - No debug info, clean notifications only
+// CLEAN WORKMANAGER DISPATCHER
 @pragma('vm:entry-point')
 void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
-    // NO debug logging that could leak into notifications
-
     try {
       if (task == "send_reminder") {
         final friendId = inputData?['friendId'] as String?;
         final friendName = inputData?['friendName'] as String?;
-        final reminderDays = inputData?['reminderDays'] as int? ?? 1;
+        final reminderText = inputData?['reminderText'] as String? ?? 'Check in reminder';
 
         if (friendId != null && friendName != null) {
-          // Send ONLY a clean notification, no debug info
-          await _sendCleanBackgroundNotification(friendId, friendName, reminderDays);
+          await _sendCleanBackgroundNotification(friendId, friendName, reminderText);
           return Future.value(true);
         }
       }
     } catch (e) {
-      // Silent error handling - don't let errors leak into notifications
+      // Silent error handling
     }
-
     return Future.value(false);
   });
 }
 
-// COMPLETELY CLEAN background notification - no WorkManager contamination
-
-// REPLACE the _sendCleanBackgroundNotification function with this CLEAN MESSAGING version:
-Future<void> _sendCleanBackgroundNotification(String friendId, String friendName, int reminderDays) async {
+// CLEAN background notification
+Future<void> _sendCleanBackgroundNotification(String friendId, String friendName, String reminderText) async {
   try {
-    // Fresh, isolated notification service for background
     final notificationPlugin = FlutterLocalNotificationsPlugin();
 
-    // Minimal initialization
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const initSettings = InitializationSettings(android: androidSettings);
     await notificationPlugin.initialize(initSettings);
 
-    // Simple notification ID
     final notificationId = friendName.hashCode.abs() % 999999 + 100000;
 
-    // CLEAN, USER-FRIENDLY notification with proper language
     await notificationPlugin.show(
       notificationId,
       'Time to check in with $friendName',
-      'It\'s been $reminderDays ${reminderDays == 1 ? 'day' : 'days'}',
+      reminderText,
       const NotificationDetails(
         android: AndroidNotificationDetails(
           'alongside_reminders',
@@ -91,46 +80,8 @@ Future<void> _sendCleanBackgroundNotification(String friendId, String friendName
       ),
       payload: friendId,
     );
-
   } catch (e) {
-    // Silent - don't let background errors contaminate notifications
-  }
-}
-
-// Schedule next reminder in background
-Future<void> _scheduleNextReminder(String friendId, String friendName, int reminderDays) async {
-  try {
-    print("🔄 Scheduling next reminder for: $friendName");
-
-    // Calculate next time (simple version for background)
-    final nextTime = DateTime.now().add(Duration(days: reminderDays));
-    final delay = nextTime.difference(DateTime.now());
-
-    if (delay.isNegative) return;
-
-    // Schedule next WorkManager task
-    await Workmanager().registerOneOffTask(
-      "reminder_$friendId",
-      "send_reminder",
-      initialDelay: delay,
-      inputData: {
-        'friendId': friendId,
-        'friendName': friendName,
-        'reminderDays': reminderDays,
-      },
-      constraints: Constraints(
-        networkType: NetworkType.not_required,
-        requiresBatteryNotLow: false,
-        requiresCharging: false,
-        requiresDeviceIdle: false,
-        requiresStorageNotLow: false,
-      ),
-    );
-
-    print("✅ Next reminder scheduled for: $nextTime");
-
-  } catch (e) {
-    print("❌ Next reminder scheduling error: $e");
+    // Silent error handling
   }
 }
 
@@ -154,7 +105,7 @@ class NotificationService {
     if (_isInitialized) return;
 
     try {
-      print("\n🚀 INITIALIZING FIXED HYBRID SYSTEM");
+      print("\n🚀 INITIALIZING NOTIFICATION SYSTEM WITH DAY SELECTION");
 
       // Initialize timezone
       tz_data.initializeTimeZones();
@@ -189,16 +140,15 @@ class NotificationService {
 
       await _createNotificationChannels();
 
-      // Initialize WorkManager with simplified callback
       if (Platform.isAndroid) {
-        await Workmanager().initialize(callbackDispatcher, isInDebugMode: false); // Enable debug for now
-        print("🔄 WorkManager initialized with fixed callback");
+        await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
+        print("🔄 WorkManager initialized");
       }
 
       await _requestPermissions();
 
       _isInitialized = true;
-      print("✅ FIXED HYBRID SYSTEM READY\n");
+      print("✅ NOTIFICATION SYSTEM READY WITH DAY SELECTION\n");
     } catch (e) {
       print("❌ INITIALIZATION ERROR: $e");
     }
@@ -212,7 +162,6 @@ class NotificationService {
 
     if (androidPlugin == null) return;
 
-    // High-priority reminder channel
     const reminderChannel = AndroidNotificationChannel(
       'alongside_reminders',
       'Friend Reminders',
@@ -270,24 +219,22 @@ class NotificationService {
     }
   }
 
-  // SIMPLIFIED WORKMANAGER SCHEDULING
+  // UPDATED: Schedule reminder with day selection support
   Future<bool> scheduleReminder(Friend friend) async {
     if (!_isInitialized) {
       await initialize();
     }
 
-    if (friend.reminderDays <= 0) {
-      await cancelReminder(friend.id);
-      return false;
-    }
-
-    print("\n🔄 SIMPLIFIED WORKMANAGER SCHEDULING FOR: ${friend.name}");
+    print("\n🔄 SCHEDULING REMINDER FOR: ${friend.name}");
 
     try {
       await cancelReminder(friend.id);
 
       final nextTime = await _calculateNextReminderTime(friend);
-      if (nextTime == null) return false;
+      if (nextTime == null) {
+        print("❌ Could not calculate next reminder time");
+        return false;
+      }
 
       return await _scheduleWithWorkManager(friend, nextTime);
 
@@ -297,14 +244,91 @@ class NotificationService {
     }
   }
 
+  // UPDATED: Calculate next reminder time with day selection support
+  Future<DateTime?> _calculateNextReminderTime(Friend friend) async {
+    final now = DateTime.now();
+    final prefs = await SharedPreferences.getInstance();
+
+    final timeParts = friend.reminderTime.split(':');
+    final hour = int.tryParse(timeParts[0]) ?? 9;
+    final minute = timeParts.length > 1 ? int.tryParse(timeParts[1]) ?? 0 : 0;
+
+    final lastActionTime = prefs.getInt('last_action_${friend.id}');
+
+    DateTime nextTime;
+
+    // NEW: Use day selection system if available
+    if (friend.usesAdvancedReminders) {
+      try {
+        final daySelectionData = DaySelectionData.fromJson(friend.reminderData!);
+
+        // Calculate from last action time or now
+        final fromTime = lastActionTime != null
+            ? DateTime.fromMillisecondsSinceEpoch(lastActionTime)
+            : now;
+
+        nextTime = daySelectionData.calculateNextReminder(fromTime, hour, minute) ??
+            DateTime(now.year, now.month, now.day + 1, hour, minute);
+
+        print("📅 Next reminder (day selection): $nextTime");
+      } catch (e) {
+        print("❌ Error parsing day selection data: $e");
+        // Fallback to old system
+        return _calculateLegacyReminderTime(friend, now, hour, minute, lastActionTime);
+      }
+    } else {
+      // Fallback to old system
+      return _calculateLegacyReminderTime(friend, now, hour, minute, lastActionTime);
+    }
+
+    // Ensure the time is in the future
+    while (nextTime.isBefore(now.add(Duration(minutes: 1)))) {
+      if (friend.usesAdvancedReminders) {
+        try {
+          final daySelectionData = DaySelectionData.fromJson(friend.reminderData!);
+          nextTime = daySelectionData.calculateNextReminder(nextTime.add(Duration(days: 1)), hour, minute) ??
+              nextTime.add(Duration(days: 1));
+        } catch (e) {
+          nextTime = nextTime.add(Duration(days: friend.reminderDays > 0 ? friend.reminderDays : 7));
+        }
+      } else {
+        nextTime = nextTime.add(Duration(days: friend.reminderDays > 0 ? friend.reminderDays : 7));
+      }
+    }
+
+    return nextTime;
+  }
+
+  // Legacy reminder calculation for backward compatibility
+  Future<DateTime?> _calculateLegacyReminderTime(Friend friend, DateTime now, int hour, int minute, int? lastActionTime) async {
+    if (friend.reminderDays <= 0) return null;
+
+    DateTime nextTime;
+
+    if (lastActionTime == null) {
+      // First time scheduling - start tomorrow at specified time
+      nextTime = DateTime(now.year, now.month, now.day + 1, hour, minute);
+      print("📅 First reminder (legacy): $nextTime");
+    } else {
+      final lastAction = DateTime.fromMillisecondsSinceEpoch(lastActionTime);
+      nextTime = DateTime(
+        lastAction.year,
+        lastAction.month,
+        lastAction.day + friend.reminderDays,
+        hour,
+        minute,
+      );
+      print("📅 Next reminder (legacy): $nextTime");
+    }
+
+    return nextTime;
+  }
+
   Future<bool> _scheduleWithWorkManager(Friend friend, DateTime nextTime) async {
     try {
-      print("\n🔄 WORKMANAGER SCHEDULING");
-
       final now = DateTime.now();
       final delay = nextTime.difference(now);
 
-      print("   Friend: ${friend.name}");
       print("   Next time: $nextTime");
       print("   Delay: $delay");
 
@@ -316,6 +340,11 @@ class NotificationService {
       // Cancel existing
       await Workmanager().cancelByUniqueName("reminder_${friend.id}");
 
+      // Get reminder text
+      String reminderText = friend.usesAdvancedReminders ?
+      'Your scheduled check-in' :
+      'It\'s been ${friend.reminderDays} ${friend.reminderDays == 1 ? 'day' : 'days'}';
+
       // Schedule with WorkManager
       await Workmanager().registerOneOffTask(
         "reminder_${friend.id}",
@@ -324,7 +353,7 @@ class NotificationService {
         inputData: {
           'friendId': friend.id,
           'friendName': friend.name,
-          'reminderDays': friend.reminderDays,
+          'reminderText': reminderText,
         },
         constraints: Constraints(
           networkType: NetworkType.not_required,
@@ -346,42 +375,6 @@ class NotificationService {
       print("❌ WorkManager scheduling failed: $e");
       return false;
     }
-  }
-
-  Future<DateTime?> _calculateNextReminderTime(Friend friend) async {
-    final now = DateTime.now();
-    final prefs = await SharedPreferences.getInstance();
-
-    final timeParts = friend.reminderTime.split(':');
-    final hour = int.tryParse(timeParts[0]) ?? 9;
-    final minute = timeParts.length > 1 ? int.tryParse(timeParts[1]) ?? 0 : 0;
-
-    final lastActionTime = prefs.getInt('last_action_${friend.id}');
-
-    DateTime nextTime;
-
-    if (lastActionTime == null) {
-      nextTime = DateTime(now.year, now.month, now.day, hour, minute);
-      if (nextTime.isBefore(now.add(Duration(minutes: 2)))) {
-        nextTime = nextTime.add(Duration(days: 1));
-      }
-    } else {
-      final lastAction = DateTime.fromMillisecondsSinceEpoch(lastActionTime);
-      nextTime = DateTime(
-        lastAction.year,
-        lastAction.month,
-        lastAction.day + friend.reminderDays,
-        hour,
-        minute,
-      );
-    }
-
-    while (nextTime.isBefore(now.add(Duration(minutes: 1)))) {
-      nextTime = nextTime.add(Duration(days: friend.reminderDays));
-    }
-
-    print("📅 Next reminder calculated: $nextTime");
-    return nextTime;
   }
 
   int _getNotificationId(String friendId) {
@@ -429,11 +422,10 @@ class NotificationService {
     }
   }
 
-  // SIMPLIFIED TEST METHODS
-// REPLACE the scheduleTestIn30Seconds method with this CLEAN version:
+  // Test methods
   Future<void> scheduleTestIn30Seconds() async {
     try {
-      print("\n🧪 CLEAN SCHEDULED TEST IN 30 SECONDS");
+      print("\n🧪 SCHEDULED TEST IN 30 SECONDS");
 
       await Workmanager().cancelByUniqueName("test_30s");
 
@@ -444,7 +436,7 @@ class NotificationService {
         inputData: {
           'friendId': 'test_scheduled',
           'friendName': 'Test Friend',
-          'reminderDays': 3, // Different from immediate test
+          'reminderText': 'Scheduled test notification',
         },
         constraints: Constraints(
           networkType: NetworkType.not_required,
@@ -455,7 +447,7 @@ class NotificationService {
         ),
       );
 
-      print("✅ Clean scheduled test planned");
+      print("✅ Scheduled test planned");
 
     } catch (e) {
       print("❌ Scheduled test error: $e");
@@ -467,7 +459,7 @@ class NotificationService {
       await flutterLocalNotificationsPlugin.show(
         999999,
         'Time to check in with Test Friend',
-        'Immediate test - It\'s been 1 day',
+        'Immediate test notification',
         const NotificationDetails(
           android: AndroidNotificationDetails(
             'alongside_reminders',
@@ -493,13 +485,13 @@ class NotificationService {
         ),
         payload: 'test_immediate',
       );
-      print("📨 Clean immediate test sent");
+      print("📨 Immediate test sent");
     } catch (e) {
       print("❌ Immediate test error: $e");
     }
   }
 
-  // Simplified utility methods
+  // Utility methods
   Future<List<PendingNotificationRequest>> getPendingNotifications() async {
     try {
       return await flutterLocalNotificationsPlugin.pendingNotificationRequests();
@@ -510,7 +502,7 @@ class NotificationService {
 
   Future<void> debugScheduledNotifications() async {
     try {
-      print("\n🔄 FIXED HYBRID DEBUG");
+      print("\n🔄 NOTIFICATION DEBUG");
       print("=" * 50);
 
       final now = DateTime.now();
@@ -525,7 +517,7 @@ class NotificationService {
       final prefs = await SharedPreferences.getInstance();
       final reminderKeys = prefs.getKeys().where((k) => k.startsWith('next_reminder_'));
 
-      print("\n📝 WORKMANAGER REMINDERS:");
+      print("\n📝 SCHEDULED REMINDERS:");
       for (final key in reminderKeys) {
         final time = prefs.getInt(key);
         if (time != null) {

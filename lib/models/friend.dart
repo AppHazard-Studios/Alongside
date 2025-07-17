@@ -1,11 +1,13 @@
-// lib/models/friend.dart - REPLACE ENTIRE FILE
+import '../models/day_selection_data.dart';
+
+// lib/models/friend.dart - UPDATED WITH BETTER REMINDER SYSTEM
 class Friend {
   final String id;
   final String name;
   final String phoneNumber;
   final String profileImage; // Path to image or emoji string
   final bool isEmoji;
-  final int reminderDays; // Reminder frequency in days (0 = no reminder)
+  final int reminderDays; // DEPRECATED: Keep for backward compatibility
   final String reminderTime; // Format: "HH:MM" (24-hour)
   final String? reminderData; // NEW: Stores the DaySelectionData as string
   final bool hasPersistentNotification;
@@ -21,7 +23,7 @@ class Friend {
     required this.isEmoji,
     this.reminderDays = 0,
     this.reminderTime = "09:00",
-    this.reminderData, // NEW
+    this.reminderData,
     this.hasPersistentNotification = false,
     this.isFavorite = false,
     this.helpingWith = '',
@@ -38,7 +40,7 @@ class Friend {
       'isEmoji': isEmoji,
       'reminderDays': reminderDays,
       'reminderTime': reminderTime,
-      'reminderData': reminderData, // NEW
+      'reminderData': reminderData,
       'hasPersistentNotification': hasPersistentNotification,
       'isFavorite': isFavorite,
       'helpingWith': helpingWith,
@@ -55,7 +57,7 @@ class Friend {
       isEmoji: json['isEmoji'],
       reminderDays: json['reminderDays'] ?? 0,
       reminderTime: json['reminderTime'] ?? "09:00",
-      reminderData: json['reminderData'], // NEW
+      reminderData: json['reminderData'],
       hasPersistentNotification: json['hasPersistentNotification'] ?? false,
       isFavorite: json['isFavorite'] ?? false,
       helpingWith: json['helpingWith'] ?? '',
@@ -70,7 +72,7 @@ class Friend {
     bool? isEmoji,
     int? reminderDays,
     String? reminderTime,
-    String? reminderData, // NEW
+    String? reminderData,
     bool? hasPersistentNotification,
     bool? isFavorite,
     String? helpingWith,
@@ -84,7 +86,7 @@ class Friend {
       isEmoji: isEmoji ?? this.isEmoji,
       reminderDays: reminderDays ?? this.reminderDays,
       reminderTime: reminderTime ?? this.reminderTime,
-      reminderData: reminderData ?? this.reminderData, // NEW
+      reminderData: reminderData ?? this.reminderData,
       hasPersistentNotification:
       hasPersistentNotification ?? this.hasPersistentNotification,
       isFavorite: isFavorite ?? this.isFavorite,
@@ -96,5 +98,29 @@ class Friend {
   // Helper method to check if friend has any reminders
   bool get hasReminder {
     return reminderData != null || reminderDays > 0;
+  }
+
+  // NEW: Check if friend uses new day selection system
+  bool get usesAdvancedReminders {
+    return reminderData != null && reminderData!.isNotEmpty;
+  }
+
+  // NEW: Get display text for reminder frequency
+  String get reminderDisplayText {
+    if (usesAdvancedReminders) {
+      try {
+        final data = DaySelectionData.fromJson(reminderData!);
+        return data.getDescription();
+      } catch (e) {
+        return 'Custom reminder';
+      }
+    } else if (reminderDays > 0) {
+      // Fallback to old system
+      if (reminderDays == 1) return 'Daily';
+      if (reminderDays == 7) return 'Weekly';
+      return 'Every $reminderDays days';
+    } else {
+      return 'No reminder';
+    }
   }
 }

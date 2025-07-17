@@ -1,4 +1,4 @@
-// lib/widgets/day_selector_widget.dart - NEW FILE
+// lib/widgets/day_selector_widget.dart - SIMPLIFIED VERSION (REPLACE ENTIRE FILE)
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../models/day_selection_data.dart';
@@ -24,7 +24,7 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
   late Set<int> _selectedDays;
   late RepeatInterval _interval;
   int _customDays = 7;
-  bool _enabled = false;
+  bool _hasReminder = false;
 
   @override
   void initState() {
@@ -33,16 +33,16 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
       _selectedDays = Set<int>.from(widget.initialData!.selectedDays);
       _interval = widget.initialData!.interval;
       _customDays = widget.initialData!.customIntervalDays;
-      _enabled = _selectedDays.isNotEmpty;
+      _hasReminder = _selectedDays.isNotEmpty;
     } else {
       _selectedDays = {};
       _interval = RepeatInterval.weekly;
-      _enabled = false;
+      _hasReminder = false;
     }
   }
 
   void _updateData() {
-    if (_enabled && _selectedDays.isNotEmpty) {
+    if (_hasReminder && _selectedDays.isNotEmpty) {
       widget.onChanged(DaySelectionData(
         selectedDays: _selectedDays,
         interval: _interval,
@@ -55,166 +55,198 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Enable/Disable switch
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: CupertinoColors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: CupertinoColors.systemGrey5,
-              width: 0.5,
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: CupertinoColors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: CupertinoColors.systemGrey5,
+          width: 0.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with reminder toggle
+          Row(
             children: [
-              Row(
-                children: [
-                  Icon(
-                    CupertinoIcons.calendar,
-                    color: AppColors.primary,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'Custom Days',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: '.SF Pro Text',
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: AppColors.warning.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  CupertinoIcons.bell_fill,
+                  color: AppColors.warning,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Reminder Schedule',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: CupertinoColors.label,
+                        fontFamily: '.SF Pro Text',
+                      ),
                     ),
-                  ),
-                ],
+                    Text(
+                      'Choose when to be reminded to check in',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: CupertinoColors.secondaryLabel,
+                        fontFamily: '.SF Pro Text',
+                      ),
+                    ),
+                  ],
+                ),
               ),
               CupertinoSwitch(
-                value: _enabled,
+                value: _hasReminder,
                 onChanged: (value) {
                   setState(() {
-                    _enabled = value;
+                    _hasReminder = value;
                     if (!value) {
                       _selectedDays.clear();
                     }
                     _updateData();
                   });
                 },
-                activeColor: AppColors.primary,
+                activeColor: AppColors.warning,
               ),
             ],
           ),
-        ),
 
-        if (_enabled) ...[
-          const SizedBox(height: 16),
+          if (_hasReminder) ...[
+            const SizedBox(height: 24),
 
-          // Day selector circles
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: CupertinoColors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: CupertinoColors.systemGrey5,
-                width: 0.5,
+            // Day selector
+            const Text(
+              'Select Days',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+                fontFamily: '.SF Pro Text',
               ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                const Text(
-                  'Select Days',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
-                    fontFamily: '.SF Pro Text',
+                _buildDayCircle('M', 1),
+                _buildDayCircle('T', 2),
+                _buildDayCircle('W', 3),
+                _buildDayCircle('T', 4),
+                _buildDayCircle('F', 5),
+                _buildDayCircle('S', 6),
+                _buildDayCircle('S', 7),
+              ],
+            ),
+
+            if (_selectedDays.isNotEmpty) ...[
+              const SizedBox(height: 24),
+
+              // Repeat interval selector
+              const Text(
+                'Repeat',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                  fontFamily: '.SF Pro Text',
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildIntervalSelector(),
+
+              const SizedBox(height: 20),
+
+              // Preview
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.warning.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.warning.withOpacity(0.2),
+                    width: 1,
                   ),
                 ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                child: Row(
                   children: [
-                    _buildDayCircle('M', 1),
-                    _buildDayCircle('T', 2),
-                    _buildDayCircle('W', 3),
-                    _buildDayCircle('T', 4),
-                    _buildDayCircle('F', 5),
-                    _buildDayCircle('S', 6),
-                    _buildDayCircle('S', 7),
+                    Icon(
+                      CupertinoIcons.bell_fill,
+                      color: AppColors.warning,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _getPreviewText(),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: AppColors.warning,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: '.SF Pro Text',
+                            ),
+                          ),
+                          Text(
+                            'At ${widget.reminderTime}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                              fontFamily: '.SF Pro Text',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Interval selector
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: CupertinoColors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: CupertinoColors.systemGrey5,
-                width: 0.5,
               ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Repeat',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
-                    fontFamily: '.SF Pro Text',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _buildIntervalSelector(),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Preview
-          if (_selectedDays.isNotEmpty)
+            ],
+          ] else ...[
+            const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.primaryLight,
+                color: CupertinoColors.systemGrey6,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 children: [
                   Icon(
-                    CupertinoIcons.bell_fill,
-                    color: AppColors.primary,
+                    CupertinoIcons.bell_slash,
+                    color: AppColors.textSecondary,
                     size: 16,
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      _getPreviewText(),
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w500,
-                        fontFamily: '.SF Pro Text',
-                      ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'No reminders will be sent',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppColors.textSecondary,
+                      fontFamily: '.SF Pro Text',
                     ),
                   ),
                 ],
               ),
             ),
+          ],
         ],
-      ],
+      ),
     );
   }
 
@@ -237,10 +269,10 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : CupertinoColors.systemGrey6,
+          color: isSelected ? AppColors.warning : CupertinoColors.systemGrey6,
           shape: BoxShape.circle,
           border: Border.all(
-            color: isSelected ? AppColors.primary : CupertinoColors.systemGrey4,
+            color: isSelected ? AppColors.warning : CupertinoColors.systemGrey4,
             width: 2,
           ),
         ),
@@ -286,10 +318,10 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primaryLight : CupertinoColors.systemGrey6,
+          color: isSelected ? AppColors.warning.withOpacity(0.1) : CupertinoColors.systemGrey6,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected ? AppColors.primary : CupertinoColors.systemGrey5,
+            color: isSelected ? AppColors.warning : CupertinoColors.systemGrey5,
             width: 1,
           ),
         ),
@@ -301,10 +333,10 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected ? AppColors.primary : CupertinoColors.systemGrey3,
+                  color: isSelected ? AppColors.warning : CupertinoColors.systemGrey3,
                   width: 2,
                 ),
-                color: isSelected ? AppColors.primary : CupertinoColors.white,
+                color: isSelected ? AppColors.warning : CupertinoColors.white,
               ),
               child: isSelected
                   ? const Icon(
@@ -320,7 +352,7 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                color: isSelected ? AppColors.warning : AppColors.textPrimary,
                 fontFamily: '.SF Pro Text',
               ),
             ),
@@ -343,10 +375,10 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primaryLight : CupertinoColors.systemGrey6,
+          color: isSelected ? AppColors.warning.withOpacity(0.1) : CupertinoColors.systemGrey6,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected ? AppColors.primary : CupertinoColors.systemGrey5,
+            color: isSelected ? AppColors.warning : CupertinoColors.systemGrey5,
             width: 1,
           ),
         ),
@@ -358,10 +390,10 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected ? AppColors.primary : CupertinoColors.systemGrey3,
+                  color: isSelected ? AppColors.warning : CupertinoColors.systemGrey3,
                   width: 2,
                 ),
-                color: isSelected ? AppColors.primary : CupertinoColors.white,
+                color: isSelected ? AppColors.warning : CupertinoColors.white,
               ),
               child: isSelected
                   ? const Icon(
@@ -390,7 +422,7 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                         decoration: BoxDecoration(
-                          color: AppColors.primary,
+                          color: AppColors.warning,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -415,11 +447,12 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
                       ),
                     ),
                   const SizedBox(width: 8),
-                  const Text(
+                  Text(
                     'days',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
+                      color: isSelected ? AppColors.warning : AppColors.textPrimary,
                       fontFamily: '.SF Pro Text',
                     ),
                   ),
@@ -471,7 +504,7 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
                   365,
                       (index) => Center(
                     child: Text(
-                      '${index + 1} days',
+                      '${index + 1} day${index == 0 ? '' : 's'}',
                       style: const TextStyle(fontSize: 16),
                     ),
                   ),
@@ -491,6 +524,6 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
       customIntervalDays: _customDays,
     );
 
-    return '${data.getDescription()} at ${widget.reminderTime}';
+    return data.getDescription();
   }
 }

@@ -13,6 +13,8 @@ import '../utils/constants.dart';
 import '../utils/colors.dart';
 import '../widgets/no_underline_field.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../widgets/day_selector_widget.dart';
+import '../models/day_selection_data.dart';
 
 class AddFriendScreen extends StatefulWidget {
   final Friend? friend;
@@ -34,6 +36,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   bool _isEmoji = true;
   int _reminderDays = 0;
   bool _hasPersistentNotification = false;
+  DaySelectionData? _daySelectionData;
 
   // Using a string for reminder time to avoid Material TimeOfDay dependency
   String _reminderTimeStr = "09:00"; // Default to 9:00 AM
@@ -68,6 +71,17 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       _helpingThemWithController.text = widget.friend!.helpingWith ?? '';
       _helpingYouWithController.text = widget.friend!.theyHelpingWith ?? '';
       _reminderTimeStr = widget.friend!.reminderTime;
+
+
+      // NEW: Load day selection data
+      if (widget.friend!.reminderData != null && widget.friend!.reminderData!.isNotEmpty) {
+        try {
+          _daySelectionData = DaySelectionData.fromJson(widget.friend!.reminderData!);
+        } catch (e) {
+          print("Error loading day selection data: $e");
+          _daySelectionData = null;
+        }
+      }
     } else {
       // Show contact picker prompt for new friends
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -75,6 +89,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       });
     }
   }
+
 
 // Add this method
   void _showContactPickerPrompt() {
@@ -787,6 +802,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
         isEmoji: _isEmoji,
         reminderDays: _reminderDays,
         reminderTime: _reminderTimeStr,
+        reminderData: _daySelectionData?.toJson(), // NEW: Save day selection data
         hasPersistentNotification: _hasPersistentNotification,
         helpingWith: _helpingThemWithController.text.trim(),
         theyHelpingWith: _helpingYouWithController.text.trim(),
@@ -795,8 +811,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
 
       if (mounted) {
         Navigator.pop(context);
-
-        // Show invite dialog for new friends
         _showInviteDialog(context, newFriend);
       }
     } else {
@@ -808,6 +822,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
         isEmoji: _isEmoji,
         reminderDays: _reminderDays,
         reminderTime: _reminderTimeStr,
+        reminderData: _daySelectionData?.toJson(), // NEW: Save day selection data
         hasPersistentNotification: _hasPersistentNotification,
         helpingWith: _helpingThemWithController.text.trim(),
         theyHelpingWith: _helpingYouWithController.text.trim(),
@@ -1274,7 +1289,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
 
                   const SizedBox(height: 24),
 
-                  // NOTIFICATION SETTINGS section
+                  // NOTIFICATION SETTINGS section header
                   const Padding(
                     padding: EdgeInsets.only(left: 16, bottom: 8),
                     child: Text(
@@ -1288,6 +1303,8 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                       ),
                     ),
                   ),
+
+                  // Reminder time picker (always visible)
                   Container(
                     margin: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
@@ -1298,186 +1315,167 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                         width: 0.5,
                       ),
                     ),
-                    child: Column(
-                      children: [
-                        // Check-in Reminder - Made entire row tappable with GestureDetector
-                        GestureDetector(
-                          onTap: _showReminderPicker,
-                          behavior: HitTestBehavior
-                              .opaque, // Important: Makes entire area tappable
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 16),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Container(
-                                  width: 38,
-                                  height: 38,
-                                  decoration: BoxDecoration(
-                                    color: CupertinoColors.systemOrange
-                                        .withOpacity(0.1),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    CupertinoIcons.bell_fill,
-                                    color: CupertinoColors.systemOrange,
-                                    size: 18,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        'Check-in Reminder',
-                                        style: TextStyle(
-                                          color: CupertinoColors.secondaryLabel,
-                                          fontSize: 14,
-                                          fontFamily: '.SF Pro Text',
-                                        ),
-                                      ),
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            _reminderDays == 0
-                                                ? 'No reminder'
-                                                : _reminderDays == 1
-                                                    ? 'Every day'
-                                                    : 'Every $_reminderDays days',
-                                            style: const TextStyle(
-                                              color: CupertinoColors.label,
-                                              fontSize: 16,
-                                              fontFamily: '.SF Pro Text',
-                                            ),
-                                          ),
-                                          const Icon(
-                                            CupertinoIcons.chevron_down,
-                                            size: 14,
-                                            color:
-                                                CupertinoColors.secondaryLabel,
-                                          ),
-                                        ],
-                                      ),
-                                      if (_reminderDays > 0) ...[
-                                        const SizedBox(height: 4),
-                                        Row(
-                                          children: [
-                                            const Icon(
-                                              CupertinoIcons.time,
-                                              size: 12,
-                                              color: CupertinoColors
-                                                  .secondaryLabel,
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              'At $_formattedReminderTime',
-                                              style: const TextStyle(
-                                                color: CupertinoColors
-                                                    .secondaryLabel,
-                                                fontSize: 13,
-                                                fontFamily: '.SF Pro Text',
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                ),
-                              ],
+                    child: GestureDetector(
+                      onTap: _showTimePicker,
+                      behavior: HitTestBehavior.opaque,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 38,
+                              height: 38,
+                              decoration: BoxDecoration(
+                                color: CupertinoColors.systemBlue.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                CupertinoIcons.time,
+                                color: CupertinoColors.systemBlue,
+                                size: 18,
+                              ),
                             ),
-                          ),
-                        ),
-
-                        Container(
-                          height: 0.5,
-                          color: CupertinoColors.systemGrey5,
-                          margin: const EdgeInsets.only(left: 66),
-                        ),
-
-                        // Show in notification area - Made entire row tappable
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _hasPersistentNotification =
-                                  !_hasPersistentNotification;
-                            });
-                          },
-                          behavior: HitTestBehavior
-                              .opaque, // Important: Makes entire area tappable
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 12),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Container(
-                                  width: 38,
-                                  height: 38,
-                                  decoration: BoxDecoration(
-                                    color: CupertinoColors.systemBlue
-                                        .withOpacity(0.1),
-                                    shape: BoxShape.circle,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Reminder Time',
+                                    style: TextStyle(
+                                      color: CupertinoColors.secondaryLabel,
+                                      fontSize: 14,
+                                      fontFamily: '.SF Pro Text',
+                                    ),
                                   ),
-                                  child: const Icon(
-                                    CupertinoIcons
-                                        .rectangle_stack_badge_person_crop,
-                                    color: CupertinoColors.systemBlue,
-                                    size: 18,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                const Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
-                                        'Show in notification area',
-                                        style: TextStyle(
+                                        _formattedReminderTime,
+                                        style: const TextStyle(
                                           color: CupertinoColors.label,
                                           fontSize: 16,
                                           fontFamily: '.SF Pro Text',
                                         ),
                                       ),
-                                      Text(
-                                        'Keep a quick access notification for this friend',
-                                        style: TextStyle(
-                                          color: CupertinoColors.secondaryLabel,
-                                          fontSize: 14,
-                                          fontFamily: '.SF Pro Text',
-                                        ),
+                                      const Icon(
+                                        CupertinoIcons.chevron_down,
+                                        size: 14,
+                                        color: CupertinoColors.secondaryLabel,
                                       ),
                                     ],
                                   ),
-                                ),
-                                CupertinoSwitch(
-                                  value: _hasPersistentNotification,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _hasPersistentNotification = value;
-                                    });
-                                  },
-                                  activeColor: CupertinoColors.systemBlue,
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
+                          ],
                         ),
-                      ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Day selector widget (main reminder interface)
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    child: DaySelectorWidget(
+                      initialData: _daySelectionData,
+                      reminderTime: _formattedReminderTime,
+                      onChanged: (daySelectionData) {
+                        setState(() {
+                          _daySelectionData = daySelectionData;
+                          // Clear old reminder days when using new system
+                          if (daySelectionData != null) {
+                            _reminderDays = 0;
+                          }
+                        });
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Persistent notification setting (separate from reminders)
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: CupertinoColors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: CupertinoColors.systemGrey5,
+                        width: 0.5,
+                      ),
+                    ),
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _hasPersistentNotification = !_hasPersistentNotification;
+                        });
+                      },
+                      behavior: HitTestBehavior.opaque,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 38,
+                              height: 38,
+                              decoration: BoxDecoration(
+                                color: CupertinoColors.systemBlue.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                CupertinoIcons.rectangle_stack_badge_person_crop,
+                                color: CupertinoColors.systemBlue,
+                                size: 18,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Show in notification area',
+                                    style: TextStyle(
+                                      color: CupertinoColors.label,
+                                      fontSize: 16,
+                                      fontFamily: '.SF Pro Text',
+                                    ),
+                                  ),
+                                  Text(
+                                    'Keep a quick access notification for this friend',
+                                    style: TextStyle(
+                                      color: CupertinoColors.secondaryLabel,
+                                      fontSize: 14,
+                                      fontFamily: '.SF Pro Text',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            CupertinoSwitch(
+                              value: _hasPersistentNotification,
+                              onChanged: (value) {
+                                setState(() {
+                                  _hasPersistentNotification = value;
+                                });
+                              },
+                              activeColor: CupertinoColors.systemBlue,
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
 
                   // Delete friend button (only when editing)
-// Replace the delete friend button section (around line 1240)
-                  const SizedBox(height: 16), // Changed from 32 to 16
+                  const SizedBox(height: 16),
 
-// Delete friend button (only when editing)
                   if (widget.friend != null)
                     Container(
                       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -1509,7 +1507,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                       ),
                     ),
 
-                  const SizedBox(height: 24), // Changed from 32 to 24
+                  const SizedBox(height: 24),
                 ],
               ),
             ),

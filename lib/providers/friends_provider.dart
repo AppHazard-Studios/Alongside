@@ -88,8 +88,7 @@ class FriendsProvider with ChangeNotifier {
 
       // IMPROVED: Handle reminder changes with better validation
       final reminderChanged = oldFriend.reminderDays != updatedFriend.reminderDays ||
-          oldFriend.reminderTime != updatedFriend.reminderTime ||
-          oldFriend.reminderData != updatedFriend.reminderData;
+          oldFriend.reminderTime != updatedFriend.reminderTime;
 
       if (reminderChanged) {
         print("🔄 Reminder settings changed for ${updatedFriend.name}");

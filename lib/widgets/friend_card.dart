@@ -1,4 +1,4 @@
-// lib/widgets/friend_card.dart - Complete updated version with reminder helper
+// lib/widgets/friend_card.dart - Complete updated version with simplified reminders
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
