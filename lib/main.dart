@@ -6,6 +6,7 @@ import 'package:alongside/utils/colors.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'screens/home_screen.dart';
 import 'services/notification_service.dart';
 import 'models/friend.dart';
@@ -296,11 +297,6 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
       routes: {
         '/': (context) => const HomeScreenNew(),
         '/notification': (context) => const NotificationRouterScreen(),
-        '/call': (ctx) {
-          final args = ModalRoute.of(ctx)!.settings.arguments as Map<String, dynamic>;
-          final friend = args['friend'] as Friend;
-          return CallScreen(friend: friend);
-        },
       },
     );
   }
@@ -392,11 +388,11 @@ class _NotificationRouterScreenState extends State<NotificationRouterScreen> {
                 );
                 return;
               } else if (action == 'call') {
-                Navigator.pushReplacementNamed(
-                  context,
-                  '/call',
-                  arguments: {'friend': friend},
-                );
+                // FIXED: Bypass call screen - launch phone directly
+                await _launchPhoneCall(friend);
+
+                // Go to home screen after launching call
+                Navigator.pushReplacementNamed(context, '/');
                 return;
               }
             }
@@ -420,6 +416,36 @@ class _NotificationRouterScreenState extends State<NotificationRouterScreen> {
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/');
       }
+    }
+  }
+
+  // ADDED: Direct phone launch method
+  Future<void> _launchPhoneCall(Friend friend) async {
+    try {
+      final phoneNumber = friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+      final telUri = Uri.parse('tel:$phoneNumber');
+
+      await launchUrl(
+        telUri,
+        mode: LaunchMode.externalApplication,
+      );
+
+      // Track the call made
+      final storageService = Provider.of<FriendsProvider>(context, listen: false).storageService;
+      await storageService.incrementCallsMade();
+
+      // Record action for reminder rescheduling
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('last_action_${friend.id}', DateTime.now().millisecondsSinceEpoch);
+
+      // Reschedule reminder
+      final notificationService = NotificationService();
+      await notificationService.scheduleReminder(friend);
+
+      print("📞 Phone call launched for ${friend.name}");
+
+    } catch (e) {
+      print("❌ Error launching phone call: $e");
     }
   }
 

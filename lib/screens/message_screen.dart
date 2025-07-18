@@ -1,4 +1,4 @@
-// lib/screens/message_screen.dart - Redesigned with better UX and sharing
+// lib/screens/message_screen.dart - Updated with ToastService
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -12,6 +12,7 @@ import '../providers/friends_provider.dart';
 import '../utils/colors.dart';
 import '../utils/responsive_utils.dart';
 import '../services/notification_service.dart';
+import '../services/toast_service.dart'; // ADD THIS IMPORT
 
 class MessageScreenNew extends StatefulWidget {
   final Friend friend;
@@ -144,240 +145,240 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
       ),
       child: _isLoading
           ? const Center(
-              child: CupertinoActivityIndicator(radius: 14),
-            )
+        child: CupertinoActivityIndicator(radius: 14),
+      )
           : SafeArea(
+        child: Column(
+          children: [
+            // Friend info header with alongside details
+            Container(
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: CupertinoColors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: CupertinoColors.systemGrey5,
+                  width: 0.5,
+                ),
+              ),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Friend info header with alongside details
-                  Container(
-                    margin: const EdgeInsets.all(16),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: CupertinoColors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: CupertinoColors.systemGrey5,
-                        width: 0.5,
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Friend basic info
-                        Row(
+                  // Friend basic info
+                  Row(
+                    children: [
+                      _buildProfileImage(),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildProfileImage(),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    widget.friend.name,
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.textPrimary,
-                                      fontFamily: '.SF Pro Text',
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    widget.friend.phoneNumber,
-                                    style: const TextStyle(
-                                      color: AppColors.textSecondary,
-                                      fontSize: 14,
-                                      fontFamily: '.SF Pro Text',
-                                    ),
-                                  ),
-                                ],
+                            Text(
+                              widget.friend.name,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                                fontFamily: '.SF Pro Text',
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              widget.friend.phoneNumber,
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 14,
+                                fontFamily: '.SF Pro Text',
                               ),
                             ),
                           ],
                         ),
-
-                        // Alongside information
-                        if ((widget.friend.helpingWith != null &&
-                                widget.friend.helpingWith!.isNotEmpty) ||
-                            (widget.friend.theyHelpingWith != null &&
-                                widget.friend.theyHelpingWith!.isNotEmpty)) ...[
-                          const SizedBox(height: 16),
-                          Container(
-                            height: 0.5,
-                            color: CupertinoColors.systemGrey5,
-                          ),
-                          const SizedBox(height: 16),
-                        ],
-
-                        // What you're alongside them in
-                        if (widget.friend.helpingWith != null &&
-                            widget.friend.helpingWith!.isNotEmpty) ...[
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primaryLight,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  CupertinoIcons.heart_fill,
-                                  color: AppColors.primary,
-                                  size: 12,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Alongside them in:',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.primary,
-                                        fontFamily: '.SF Pro Text',
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      widget.friend.helpingWith!,
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        color: AppColors.textPrimary,
-                                        fontFamily: '.SF Pro Text',
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (widget.friend.theyHelpingWith != null &&
-                              widget.friend.theyHelpingWith!.isNotEmpty)
-                            const SizedBox(height: 12),
-                        ],
-
-                        // What they're alongside you in
-                        if (widget.friend.theyHelpingWith != null &&
-                            widget.friend.theyHelpingWith!.isNotEmpty) ...[
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color: AppColors.tertiaryLight,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  CupertinoIcons.person_2_fill,
-                                  color: AppColors.tertiary,
-                                  size: 12,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Alongside you in:',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.tertiary,
-                                        fontFamily: '.SF Pro Text',
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      widget.friend.theyHelpingWith!,
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        color: AppColors.textPrimary,
-                                        fontFamily: '.SF Pro Text',
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
 
-                  // Help text for interactions
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                  // Alongside information
+                  if ((widget.friend.helpingWith != null &&
+                      widget.friend.helpingWith!.isNotEmpty) ||
+                      (widget.friend.theyHelpingWith != null &&
+                          widget.friend.theyHelpingWith!.isNotEmpty)) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      height: 0.5,
+                      color: CupertinoColors.systemGrey5,
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // What you're alongside them in
+                  if (widget.friend.helpingWith != null &&
+                      widget.friend.helpingWith!.isNotEmpty) ...[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          Icons.touch_app,
-                          size: 14,
-                          color: AppColors.textSecondary.withOpacity(0.6),
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryLight,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            CupertinoIcons.heart_fill,
+                            color: AppColors.primary,
+                            size: 12,
+                          ),
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Tap to send • Hold for options',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary.withOpacity(0.6),
-                            fontFamily: '.SF Pro Text',
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Alongside them in:',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primary,
+                                  fontFamily: '.SF Pro Text',
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                widget.friend.helpingWith!,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: AppColors.textPrimary,
+                                  fontFamily: '.SF Pro Text',
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
-                  ),
+                    if (widget.friend.theyHelpingWith != null &&
+                        widget.friend.theyHelpingWith!.isNotEmpty)
+                      const SizedBox(height: 12),
+                  ],
 
-                  // Category indicator dots
-                  Container(
-                    height: 40,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(_categories.length, (index) {
-                        return AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
-                          height: 8,
-                          width: _currentPage == index ? 24 : 8,
+                  // What they're alongside you in
+                  if (widget.friend.theyHelpingWith != null &&
+                      widget.friend.theyHelpingWith!.isNotEmpty) ...[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
-                            color: _currentPage == index
-                                ? AppColors.primary
-                                : AppColors.primary.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(4),
+                            color: AppColors.tertiaryLight,
+                            shape: BoxShape.circle,
                           ),
-                        );
-                      }),
+                          child: const Icon(
+                            CupertinoIcons.person_2_fill,
+                            color: AppColors.tertiary,
+                            size: 12,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Alongside you in:',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.tertiary,
+                                  fontFamily: '.SF Pro Text',
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                widget.friend.theyHelpingWith!,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: AppColors.textPrimary,
+                                  fontFamily: '.SF Pro Text',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
+                  ],
+                ],
+              ),
+            ),
 
-                  // Swipeable message pages
-                  Expanded(
-                    child: PageView.builder(
-                      controller: _pageController,
-                      onPageChanged: (index) {
-                        setState(() {
-                          _currentPage = index;
-                        });
-                        HapticFeedback.lightImpact();
-                      },
-                      itemCount: _categories.length,
-                      itemBuilder: (context, index) {
-                        return _buildCategoryPage(index);
-                      },
+            // Help text for interactions
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.touch_app,
+                    size: 14,
+                    color: AppColors.textSecondary.withOpacity(0.6),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Tap to send • Hold for options',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary.withOpacity(0.6),
+                      fontFamily: '.SF Pro Text',
                     ),
                   ),
                 ],
               ),
             ),
+
+            // Category indicator dots
+            Container(
+              height: 40,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(_categories.length, (index) {
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    height: 8,
+                    width: _currentPage == index ? 24 : 8,
+                    decoration: BoxDecoration(
+                      color: _currentPage == index
+                          ? AppColors.primary
+                          : AppColors.primary.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  );
+                }),
+              ),
+            ),
+
+            // Swipeable message pages
+            Expanded(
+              child: PageView.builder(
+                controller: _pageController,
+                onPageChanged: (index) {
+                  setState(() {
+                    _currentPage = index;
+                  });
+                  HapticFeedback.lightImpact();
+                },
+                itemCount: _categories.length,
+                itemBuilder: (context, index) {
+                  return _buildCategoryPage(index);
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -419,7 +420,7 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
   Widget _buildCategoryContent(int categoryIndex) {
     final provider = Provider.of<FriendsProvider>(context, listen: false);
     final categorizedMessages =
-        provider.storageService.getCategorizedMessages();
+    provider.storageService.getCategorizedMessages();
 
     switch (categoryIndex) {
       case 0: // Favorites
@@ -666,11 +667,11 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
   }
 
   Widget _buildMessageCard(
-    String message, {
-    required bool isFavorite,
-    bool isCustom = false,
-    int? customIndex,
-  }) {
+      String message, {
+        required bool isFavorite,
+        bool isCustom = false,
+        int? customIndex,
+      }) {
     return GestureDetector(
       onTap: () => _sendMessage(context, message),
       onLongPress: () => _showMessageOptions(context, message,
@@ -805,7 +806,8 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                   _favoriteMessages.add(message);
                 });
                 _updateFavorites(_favoriteMessages);
-                _showToast('Added to favorites');
+                // REPLACE: _showToast with ToastService.showSuccess
+                ToastService.showSuccess(context, 'Added to favorites');
               },
               child: const Text(
                 'Add to Favorites',
@@ -859,7 +861,8 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                   _favoriteMessages.add(message);
                 });
                 _updateFavorites(_favoriteMessages);
-                _showToast('Added to favorites');
+                // REPLACE: _showToast with ToastService.showSuccess
+                ToastService.showSuccess(context, 'Added to favorites');
               },
               child: const Text(
                 'Add to Favorites',
@@ -915,7 +918,7 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
     final provider = Provider.of<FriendsProvider>(context, listen: false);
     final allMessages = <String>[];
     final categorizedMessages =
-        provider.storageService.getCategorizedMessages();
+    provider.storageService.getCategorizedMessages();
 
     // Add all categorized messages
     categorizedMessages.forEach((category, messages) {
@@ -935,7 +938,8 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
         selectedMessages: selectedMessages,
         onSave: (newFavorites) {
           _updateFavorites(newFavorites);
-          _showToast('Favorites updated');
+          // REPLACE: _showToast with ToastService.showSuccess
+          ToastService.showSuccess(context, 'Favorites updated');
         },
       ),
     );
@@ -948,56 +952,12 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
         message,
         subject: 'Message for ${widget.friend.name}',
         sharePositionOrigin:
-            box != null ? box.localToGlobal(Offset.zero) & box.size : null,
+        box != null ? box.localToGlobal(Offset.zero) & box.size : null,
       );
     } catch (e) {
-      _showToast('Unable to share message');
+      // REPLACE: _showToast with ToastService.showError
+      ToastService.showError(context, 'Unable to share message');
     }
-  }
-
-  void _showToast(String message) {
-    final overlay = Overlay.of(context);
-    final overlayEntry = OverlayEntry(
-      builder: (context) => Positioned(
-        bottom: 100,
-        width: MediaQuery.of(context).size.width,
-        child: Center(
-          child: TweenAnimationBuilder<double>(
-            tween: Tween<double>(begin: 0.0, end: 1.0),
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.elasticOut,
-            builder: (context, value, child) {
-              return Transform.scale(
-                scale: value,
-                child: child,
-              );
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: AppColors.primaryShadow,
-              ),
-              child: Text(
-                message,
-                style: const TextStyle(
-                  color: CupertinoColors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: '.SF Pro Text',
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    overlay.insert(overlayEntry);
-    Future.delayed(const Duration(seconds: 2), () {
-      overlayEntry.remove();
-    });
   }
 
   void _showCustomMessageDialog(BuildContext context) {
@@ -1065,7 +1025,8 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                         .storageService;
                 await storageService.addCustomMessage(textController.text);
                 _loadMessages();
-                _showToast('Message saved! ✨');
+                // REPLACE: _showToast with ToastService.showSuccess
+                ToastService.showSuccess(context, 'Message saved! ✨');
               }
             },
             child: const Text(
@@ -1148,7 +1109,8 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                         .storageService;
                 await storageService.saveCustomMessages(_customMessages);
 
-                _showToast('Message updated! ✨');
+                // REPLACE: _showToast with ToastService.showSuccess
+                ToastService.showSuccess(context, 'Message updated! ✨');
               }
             },
             child: const Text(
@@ -1230,7 +1192,8 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
       await storageService.saveCustomMessages(_customMessages);
       await _updateFavorites(_favoriteMessages);
 
-      _showToast('Message deleted');
+      // REPLACE: _showToast with ToastService.showSuccess
+      ToastService.showSuccess(context, 'Message deleted');
     }
   }
 
@@ -1250,23 +1213,23 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
       ),
       child: widget.friend.isEmoji
           ? Center(
-              child: Text(
-                widget.friend.profileImage,
-                style: const TextStyle(fontSize: 24),
-              ),
-            )
+        child: Text(
+          widget.friend.profileImage,
+          style: const TextStyle(fontSize: 24),
+        ),
+      )
           : ClipOval(
-              child: Image.file(
-                File(widget.friend.profileImage),
-                fit: BoxFit.cover,
-              ),
-            ),
+        child: Image.file(
+          File(widget.friend.profileImage),
+          fit: BoxFit.cover,
+        ),
+      ),
     );
   }
 
   void _sendMessage(BuildContext context, String message) async {
     final phoneNumber =
-        widget.friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+    widget.friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
     try {
       showCupertinoDialog(
         context: context,
@@ -1304,7 +1267,7 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
       await Future.delayed(const Duration(milliseconds: 300));
       await _recordFriendInteraction();
       final smsUri =
-          Uri.parse('sms:$phoneNumber?body=${Uri.encodeComponent(message)}');
+      Uri.parse('sms:$phoneNumber?body=${Uri.encodeComponent(message)}');
       await launchUrl(
         smsUri,
         mode: LaunchMode.externalApplication,
@@ -1513,10 +1476,10 @@ class _FavoritePickerModalState extends State<_FavoritePickerModal> {
                           ),
                           child: isSelected
                               ? const Icon(
-                                  CupertinoIcons.checkmark,
-                                  color: CupertinoColors.white,
-                                  size: 14,
-                                )
+                            CupertinoIcons.checkmark,
+                            color: CupertinoColors.white,
+                            size: 14,
+                          )
                               : null,
                         ),
                         const SizedBox(width: 12),

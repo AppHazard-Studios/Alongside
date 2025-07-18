@@ -1,4 +1,4 @@
-// lib/screens/home_screen.dart - Fixed with comprehensive scaling
+// lib/screens/home_screen.dart - Updated with ToastService
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/friends_provider.dart';
 import '../services/notification_service.dart';
+import '../services/toast_service.dart'; // ADD THIS IMPORT
 import '../utils/responsive_utils.dart';
 import '../widgets/friend_card.dart';
 import '../utils/colors.dart';
@@ -39,9 +40,9 @@ class _HomeScreenNewState extends State<HomeScreenNew>
   String _searchQuery = '';
   bool _isSortedByReminders = false;
   bool _isSorting = false;
-  List<Friend>? _originalFriendsOrder; // ADD THIS LINE
+  List<Friend>? _originalFriendsOrder;
 
-// Track if this is the first launch for onboarding
+  // Track if this is the first launch for onboarding
   bool _shouldShowOnboarding = false;
 
   // Track stats
@@ -311,74 +312,73 @@ class _HomeScreenNewState extends State<HomeScreenNew>
           ),
           onPressed: _toggleSearch,
         ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Sort toggle button
-              if (!_isSearching) ...[
-// Sort toggle button - IMPROVED VERSION
-        CupertinoButton(
-        padding: EdgeInsets.zero,
-        child: Container(
-          width: ResponsiveUtils.scaledContainerSize(context, 32),
-          height: ResponsiveUtils.scaledContainerSize(context, 32),
-          decoration: BoxDecoration(
-            color: _isSortedByReminders
-                ? AppColors.primary
-                : AppColors.background,
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: AppColors.primary.withOpacity(0.3),
-              width: 1,
-            ),
-          ),
-          child: _isSorting
-              ? CupertinoActivityIndicator(
-            radius: 8,
-            color: _isSortedByReminders
-                ? CupertinoColors.white
-                : AppColors.primary,
-          )
-              : Icon(
-            CupertinoIcons.sort_down,
-            size: ResponsiveUtils.scaledIconSize(context, 16),
-            color: _isSortedByReminders
-                ? CupertinoColors.white
-                : AppColors.primary,
-            semanticLabel: _isSortedByReminders
-                ? 'Sorted by next reminder - tap for custom order'
-                : 'Custom order - tap to sort by next reminder',
-          ),
-        ),
-        onPressed: _isSorting ? null : _toggleSort,
-      ),
-                SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
-              ],
-              // Settings button
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Sort toggle button
+            if (!_isSearching) ...[
               CupertinoButton(
                 padding: EdgeInsets.zero,
                 child: Container(
                   width: ResponsiveUtils.scaledContainerSize(context, 32),
                   height: ResponsiveUtils.scaledContainerSize(context, 32),
                   decoration: BoxDecoration(
-                    color: AppColors.background,
+                    color: _isSortedByReminders
+                        ? AppColors.primary
+                        : AppColors.background,
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: AppColors.primary.withOpacity(0.3),
                       width: 1,
                     ),
                   ),
-                  child: Icon(
-                    CupertinoIcons.gear,
+                  child: _isSorting
+                      ? CupertinoActivityIndicator(
+                    radius: 8,
+                    color: _isSortedByReminders
+                        ? CupertinoColors.white
+                        : AppColors.primary,
+                  )
+                      : Icon(
+                    CupertinoIcons.sort_down,
                     size: ResponsiveUtils.scaledIconSize(context, 16),
-                    color: AppColors.primary,
-                    semanticLabel: 'Settings',
+                    color: _isSortedByReminders
+                        ? CupertinoColors.white
+                        : AppColors.primary,
+                    semanticLabel: _isSortedByReminders
+                        ? 'Sorted by next reminder - tap for custom order'
+                        : 'Custom order - tap to sort by next reminder',
                   ),
                 ),
-                onPressed: () => _navigateToSettings(context),
+                onPressed: _isSorting ? null : _toggleSort,
               ),
+              SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
             ],
-          ),
+            // Settings button
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              child: Container(
+                width: ResponsiveUtils.scaledContainerSize(context, 32),
+                height: ResponsiveUtils.scaledContainerSize(context, 32),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.primary.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Icon(
+                  CupertinoIcons.gear,
+                  size: ResponsiveUtils.scaledIconSize(context, 16),
+                  color: AppColors.primary,
+                  semanticLabel: 'Settings',
+                ),
+              ),
+              onPressed: () => _navigateToSettings(context),
+            ),
+          ],
+        ),
       ),
       child: Consumer<FriendsProvider>(
         builder: (context, friendsProvider, child) {
@@ -575,56 +575,55 @@ class _HomeScreenNewState extends State<HomeScreenNew>
                           ),
 
                           // Favorites section
-// Favorites section
-    if (favoriteFriends.isNotEmpty || true) ...[
-    SizedBox(
-    height:
-    ResponsiveUtils.scaledSpacing(context, 16)),
-    Text(
-    'Favorites',
-    style: TextStyle(
-    fontSize:
-    ResponsiveUtils.scaledFontSize(context, 16),
-    fontWeight: FontWeight.w600,
-    color: AppColors.primary,
-    fontFamily: '.SF Pro Text',
-    ),
-    ),
-    SizedBox(
-    height:
-    ResponsiveUtils.scaledSpacing(context, 10)),
-    SizedBox(
-    height: ResponsiveUtils.scaledContainerSize(context, 80),
-    child: ListView.builder(
-    scrollDirection: Axis.horizontal,
-    padding: EdgeInsets.symmetric(
-    horizontal: ResponsiveUtils.scaledSpacing(context, 8)),
-    physics: const BouncingScrollPhysics(),
-    itemCount: favoriteFriends.length + 1,
-    itemBuilder: (context, index) {
-    if (index < favoriteFriends.length) {
-    final friend = favoriteFriends[index];
-    return Padding(
-    padding: EdgeInsets.only(
-    right: ResponsiveUtils.scaledSpacing(context, 8),
-    left: index == 0
-    ? ResponsiveUtils.scaledSpacing(context, 4)
-        : 0,
-    ),
-    child: _buildCompactFavoriteStory(friend),
-    );
-    } else {
-    return Padding(
-    padding: EdgeInsets.only(
-    right: ResponsiveUtils.scaledSpacing(context, 4),
-    left: 0),
-    child: _buildCompactAddFavoriteButton(),
-    );
-    }
-    },
-    ),
-    ),
-    ],
+                          if (favoriteFriends.isNotEmpty || true) ...[
+                            SizedBox(
+                                height:
+                                ResponsiveUtils.scaledSpacing(context, 16)),
+                            Text(
+                              'Favorites',
+                              style: TextStyle(
+                                fontSize:
+                                ResponsiveUtils.scaledFontSize(context, 16),
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primary,
+                                fontFamily: '.SF Pro Text',
+                              ),
+                            ),
+                            SizedBox(
+                                height:
+                                ResponsiveUtils.scaledSpacing(context, 10)),
+                            SizedBox(
+                              height: ResponsiveUtils.scaledContainerSize(context, 80),
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: ResponsiveUtils.scaledSpacing(context, 8)),
+                                physics: const BouncingScrollPhysics(),
+                                itemCount: favoriteFriends.length + 1,
+                                itemBuilder: (context, index) {
+                                  if (index < favoriteFriends.length) {
+                                    final friend = favoriteFriends[index];
+                                    return Padding(
+                                      padding: EdgeInsets.only(
+                                        right: ResponsiveUtils.scaledSpacing(context, 8),
+                                        left: index == 0
+                                            ? ResponsiveUtils.scaledSpacing(context, 4)
+                                            : 0,
+                                      ),
+                                      child: _buildCompactFavoriteStory(friend),
+                                    );
+                                  } else {
+                                    return Padding(
+                                      padding: EdgeInsets.only(
+                                          right: ResponsiveUtils.scaledSpacing(context, 4),
+                                          left: 0),
+                                      child: _buildCompactAddFavoriteButton(),
+                                    );
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -853,7 +852,6 @@ class _HomeScreenNewState extends State<HomeScreenNew>
       ],
     );
   }
-
 
   Widget _buildCompactStat({
     required IconData icon,
@@ -1237,7 +1235,8 @@ class _HomeScreenNewState extends State<HomeScreenNew>
     final provider = Provider.of<FriendsProvider>(context, listen: false);
     final updatedFriend = friend.copyWith(isFavorite: true);
     provider.updateFriend(updatedFriend);
-    _showSuccessToast(context, '${friend.name} added to favorites');
+    // REPLACE: _showSuccessToast with ToastService.showSuccess
+    ToastService.showSuccess(context, '${friend.name} added to favorites');
   }
 
   void _removeFavorite(BuildContext context, Friend friend) {
@@ -1287,8 +1286,8 @@ class _HomeScreenNewState extends State<HomeScreenNew>
               Provider.of<FriendsProvider>(context, listen: false);
               final updatedFriend = friend.copyWith(isFavorite: false);
               provider.updateFriend(updatedFriend);
-              _showSuccessToast(
-                  context, '${friend.name} removed from favorites');
+              // REPLACE: _showSuccessToast with ToastService.showSuccess
+              ToastService.showSuccess(context, '${friend.name} removed from favorites');
             },
             child: Text(
               'Remove',
@@ -1303,65 +1302,6 @@ class _HomeScreenNewState extends State<HomeScreenNew>
         ],
       ),
     );
-  }
-
-  void _showSuccessToast(BuildContext context, String message) {
-    final overlay = Overlay.of(context);
-    final overlayEntry = OverlayEntry(
-      builder: (context) => Positioned(
-        bottom: 100,
-        width: MediaQuery.of(context).size.width,
-        child: Center(
-          child: TweenAnimationBuilder<double>(
-            tween: Tween<double>(begin: 0.0, end: 1.0),
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.elasticOut,
-            builder: (context, value, child) {
-              return Transform.scale(
-                scale: value,
-                child: child,
-              );
-            },
-            child: Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: ResponsiveUtils.scaledSpacing(context, 20),
-                vertical: ResponsiveUtils.scaledSpacing(context, 12),
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: AppColors.primaryShadow,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    CupertinoIcons.checkmark_circle_fill,
-                    color: CupertinoColors.white,
-                    size: ResponsiveUtils.scaledIconSize(context, 20),
-                  ),
-                  SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
-                  Text(
-                    message,
-                    style: TextStyle(
-                      color: CupertinoColors.white,
-                      fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-                      fontWeight: FontWeight.w600,
-                      fontFamily: '.SF Pro Text',
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    overlay.insert(overlayEntry);
-    Future.delayed(const Duration(seconds: 2), () {
-      overlayEntry.remove();
-    });
   }
 
   Widget _buildEmptyState(BuildContext context) {
@@ -1624,9 +1564,6 @@ class _HomeScreenNewState extends State<HomeScreenNew>
     return await notificationService.getNextReminderTime(friend.id);
   }
 
-  // Optimized sorting method using bulk lookup
-// IMPROVED sorting method with better logic and debugging
-// SIMPLIFIED sorting method with cleaner debug output
   Future<List<Friend>> _sortFriendsByReminderProximity(List<Friend> friends) async {
     if (friends.isEmpty) return friends;
 
@@ -1684,12 +1621,6 @@ class _HomeScreenNewState extends State<HomeScreenNew>
     return sortedFriends;
   }
 
-  // Toggle sort method
-// Store original order
-
-  // Toggle sort method
-// IMPROVED toggle sort method with better feedback
-// IMPROVED toggle sort method with simple, clear messages
   Future<void> _toggleSort() async {
     setState(() => _isSorting = true);
 
@@ -1700,7 +1631,8 @@ class _HomeScreenNewState extends State<HomeScreenNew>
       // Reset to original order
       if (_originalFriendsOrder != null) {
         provider.reorderFriends(_originalFriendsOrder!);
-        _showSuccessToast(context, 'Custom order');
+        // REPLACE: _showSuccessToast with ToastService.showSuccess
+        ToastService.showSuccess(context, 'Custom order');
       }
       setState(() {
         _isSortedByReminders = false;
@@ -1715,7 +1647,8 @@ class _HomeScreenNewState extends State<HomeScreenNew>
       final sortedFriends = await _sortFriendsByReminderProximity(provider.friends);
       provider.reorderFriends(sortedFriends);
 
-      _showSuccessToast(context, 'Sorted by next reminder');
+      // REPLACE: _showSuccessToast with ToastService.showSuccess
+      ToastService.showSuccess(context, 'Sorted by next reminder');
 
       setState(() {
         _isSortedByReminders = true;
@@ -1837,7 +1770,8 @@ class _HomeScreenNewState extends State<HomeScreenNew>
         _isSortedByReminders = false;
         _originalFriendsOrder = null;
       });
-      _showSuccessToast(context, 'Switched to custom order');
+      // REPLACE: _showSuccessToast with ToastService.showSuccess
+      ToastService.showSuccess(context, 'Switched to custom order');
     }
   }
 }

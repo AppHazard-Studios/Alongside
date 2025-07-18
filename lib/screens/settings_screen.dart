@@ -1,6 +1,7 @@
-// lib/screens/settings_screen.dart - Enhanced with debug features
+// lib/screens/settings_screen.dart - COMPLETE ENHANCED VERSION
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/colors.dart';
@@ -99,7 +100,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 const SizedBox(height: 16),
 
-                // REPLACE the NOTIFICATIONS section with this PRODUCTION-READY version:
+                // NOTIFICATIONS section
                 _buildSectionTitle('NOTIFICATIONS'),
                 Container(
                   decoration: BoxDecoration(
@@ -194,7 +195,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
 
                 const SizedBox(height: 24),
-
 
                 // Backup & Restore section
                 _buildSectionTitle('BACKUP & RESTORE'),
@@ -383,32 +383,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ADD this new clean test method to the SettingsScreen class
-
-  // NEW: Show scheduled notifications
-// REPLACE the _showScheduledNotifications method with this
-// REPLACE the _showScheduledNotifications method with this PRODUCTION version
-// FIXED: Show scheduled notifications method
+  // Show scheduled notifications method
   void _showScheduledNotifications(BuildContext context) async {
     final notificationService = NotificationService();
-
-    // Get data for UI (remove debug console logging)
     final provider = Provider.of<FriendsProvider>(context, listen: false);
     final friends = provider.friends;
 
     List<Widget> notificationWidgets = [];
 
     for (final friend in friends) {
-      // FIXED: Use hasReminder instead of reminderDays > 0
       if (friend.hasReminder) {
         final nextTime = await notificationService.getNextReminderTime(friend.id);
         final now = DateTime.now();
 
-        // Check if scheduled time has passed
         final isPastDue = nextTime != null && nextTime.isBefore(now);
         final isScheduled = nextTime != null;
 
-        // Determine status
         String statusText;
         Color statusColor;
         IconData statusIcon;
@@ -445,7 +435,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             child: Row(
               children: [
-                // Friend info
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -460,7 +449,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        // FIXED: Use new reminder display text
                         '${friend.reminderDisplayText} at ${friend.reminderTime}',
                         style: const TextStyle(
                           fontSize: 14,
@@ -482,7 +470,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ],
                   ),
                 ),
-                // Status
                 Column(
                   children: [
                     Icon(
@@ -606,11 +593,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
-  // NEW: Check permissions
-// REPLACE the _checkPermissions method with this CLEAN sliding modal version
-// REPLACE the _checkPermissions method with this FINAL clean version
+
+  // Check permissions method
   void _checkPermissions(BuildContext context) async {
-    // Check individual permissions
     final hasNotification = await Permission.notification.isGranted;
     final hasExactAlarm = await Permission.scheduleExactAlarm.isGranted;
     final hasBatteryOptimisation = await Permission.ignoreBatteryOptimizations.isGranted;
@@ -627,7 +612,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         child: Column(
           children: [
-            // Handle for swiping
             Container(
               margin: const EdgeInsets.only(top: 8, bottom: 16),
               width: 40,
@@ -637,8 +621,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-
-            // Title
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 20),
               child: Text(
@@ -651,10 +633,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
             ),
-
             const SizedBox(height: 24),
-
-            // Permission items - clean and simple
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -668,7 +647,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                     const Spacer(),
 
-                    // Only show settings button if something needs attention
                     if (!allPermissionsGood)
                       CupertinoButton(
                         color: AppColors.primary,
@@ -691,7 +669,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
             ),
-
             const SizedBox(height: 20),
           ],
         ),
@@ -699,7 +676,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // REPLACE the _buildCleanPermissionRow helper with this cleaner version
   Widget _buildPermissionRow(String name, bool granted) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -754,195 +730,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildCleanPermissionRow(String name, bool granted) {
-    return Row(
-      children: [
-        Container(
-          width: 20,
-          height: 20,
-          decoration: BoxDecoration(
-            color: granted ? AppColors.success : AppColors.error,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            granted ? CupertinoIcons.checkmark : CupertinoIcons.xmark,
-            color: Colors.white,
-            size: 12,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            name,
-            style: const TextStyle(
-              fontSize: 16,
-              fontFamily: '.SF Pro Text',
-            ),
-          ),
-        ),
-        Text(
-          granted ? 'Enabled' : 'Disabled',
-          style: TextStyle(
-            fontSize: 14,
-            color: granted ? AppColors.success : AppColors.error,
-            fontWeight: FontWeight.w500,
-            fontFamily: '.SF Pro Text',
-          ),
-        ),
-      ],
-    );
-  }
-
-// NEW: Reschedule all reminders
-// REPLACE the _rescheduleAllReminders method with this
-  void _rescheduleAllReminders(BuildContext context) async {
-    showCupertinoDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => Center(
-        child: Container(
-          width: 140,
-          height: 140,
-          decoration: BoxDecoration(
-            color: CupertinoColors.black.withOpacity(0.8),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: const Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CupertinoActivityIndicator(
-                color: CupertinoColors.white,
-                radius: 16,
-              ),
-              SizedBox(height: 16),
-              Text(
-                'NUCLEAR\nRESCHEDULE',
-                style: TextStyle(
-                  color: CupertinoColors.white,
-                  fontSize: 14,
-                  fontFamily: '.SF Pro Text',
-                  fontWeight: FontWeight.w600,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-
-    final provider = Provider.of<FriendsProvider>(context, listen: false);
-    final notificationService = NotificationService();
-
-    print("\n🚀 STARTING NUCLEAR RESCHEDULE");
-
-    int attempted = 0;
-    int succeeded = 0;
-    int failed = 0;
-
-    for (final friend in provider.friends) {
-      if (friend.reminderDays > 0) {
-        attempted++;
-        print("\n--- RESCHEDULING ${friend.name} ---");
-
-        // Cancel first
-        await notificationService.cancelReminder(friend.id);
-
-        // Try to schedule
-        final success = await notificationService.scheduleReminder(friend);
-
-        if (success) {
-          succeeded++;
-          print("✅ SUCCESS: ${friend.name}");
-        } else {
-          failed++;
-          print("❌ FAILED: ${friend.name}");
-        }
-
-        // Small delay between each
-        await Future.delayed(Duration(milliseconds: 200));
-      }
-    }
-
-    print("\n🏁 NUCLEAR RESCHEDULE COMPLETE");
-    print("   Attempted: $attempted");
-    print("   Succeeded: $succeeded");
-    print("   Failed: $failed");
-
-    if (context.mounted) {
-      Navigator.pop(context); // Close loading
-
-      showCupertinoDialog(
-        context: context,
-        builder: (context) => CupertinoAlertDialog(
-          title: Text(
-            'Nuclear Reschedule Complete',
-            style: TextStyle(
-              color: succeeded == attempted ? AppColors.success : AppColors.warning,
-              fontWeight: FontWeight.w700,
-              fontSize: 18,
-              fontFamily: '.SF Pro Text',
-            ),
-          ),
-          content: Padding(
-            padding: const EdgeInsets.only(top: 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Results:',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    height: 1.4,
-                    color: CupertinoColors.label,
-                    fontFamily: '.SF Pro Text',
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '✅ Succeeded: $succeeded\n❌ Failed: $failed\n📊 Total: $attempted',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    height: 1.4,
-                    color: CupertinoColors.label,
-                    fontFamily: '.SF Pro Text',
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                if (failed > 0) ...[
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Check console logs for detailed error information.',
-                    style: TextStyle(
-                      fontSize: 12,
-                      height: 1.4,
-                      color: AppColors.textSecondary,
-                      fontFamily: '.SF Pro Text',
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ],
-            ),
-          ),
-          actions: [
-            CupertinoDialogAction(
-              onPressed: () => Navigator.pop(context),
-              child: const Text(
-                'OK',
-                style: TextStyle(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: '.SF Pro Text',
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-  }
   // Show cooldown picker
   void _showCooldownPicker() {
     final options = [0, 1, 5, 10, 15, 30, 60];
@@ -1001,7 +788,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // All the existing helper methods remain the same...
+  // Helper methods
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.only(left: 8, bottom: 8),
@@ -1158,7 +945,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // All existing action methods remain the same...
+  // ENHANCED: App lock toggle
   void _toggleAppLock(bool enable) async {
     if (enable) {
       _showLockMethodPicker();
@@ -1222,6 +1009,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  // ENHANCED: Lock method picker with better descriptions
   void _showLockMethodPicker() async {
     final biometricAvailable = await _lockService.isBiometricAvailable();
 
@@ -1236,18 +1024,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
             fontFamily: '.SF Pro Text',
           ),
         ),
+        message: const Text(
+          'Select how you want to secure the app',
+          style: TextStyle(
+            fontSize: 14,
+            color: CupertinoColors.secondaryLabel,
+            fontFamily: '.SF Pro Text',
+          ),
+        ),
         actions: [
           if (biometricAvailable)
             CupertinoActionSheetAction(
-              onPressed: () async {
+              onPressed: () {
                 Navigator.pop(context);
-                final Object? result = await _lockService.enableBiometricLock();
-                final bool success = result is bool ? result : false;
-                if (success) {
-                  await _loadSettings();
-                } else {
-                  _showErrorSnackBar('Failed to enable biometric lock');
-                }
+                _setupBiometric();
               },
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -1259,7 +1049,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   SizedBox(width: 8),
                   Text(
-                    'Biometric Lock',
+                    'Biometric Lock (Fingerprint/Face)',
                     style: TextStyle(
                       fontSize: 16,
                       fontFamily: '.SF Pro Text',
@@ -1283,7 +1073,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 SizedBox(width: 8),
                 Text(
-                  'PIN Lock',
+                  'PIN Lock (4-8 digits)',
                   style: TextStyle(
                     fontSize: 16,
                     fontFamily: '.SF Pro Text',
@@ -1292,6 +1082,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
             ),
           ),
+          if (!biometricAvailable)
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(context);
+                _showDetailedErrorDialog(
+                  'Biometric Not Available',
+                  'Your device does not support biometric authentication or no biometric data is enrolled. Please set up fingerprint or face authentication in your device settings first.',
+                );
+              },
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    CupertinoIcons.lock_shield,
+                    color: CupertinoColors.systemGrey,
+                    size: 20,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Biometric Lock (Not Available)',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: CupertinoColors.systemGrey,
+                      fontFamily: '.SF Pro Text',
+                    ),
+                  ),
+                ],
+              ),
+            ),
         ],
         cancelButton: CupertinoActionSheetAction(
           onPressed: () => Navigator.pop(context),
@@ -1308,9 +1127,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  // ENHANCED: PIN setup with proper number input
   void _showPinSetup() {
     final pinController = TextEditingController();
     final confirmController = TextEditingController();
+    final pinFocusNode = FocusNode();
+    final confirmFocusNode = FocusNode();
 
     showCupertinoDialog(
       context: context,
@@ -1328,28 +1150,74 @@ class _SettingsScreenState extends State<SettingsScreen> {
           padding: const EdgeInsets.only(top: 16),
           child: Column(
             children: [
+              // PIN input
               CupertinoTextField(
                 controller: pinController,
+                focusNode: pinFocusNode,
                 placeholder: 'Enter PIN (min 4 digits)',
-                keyboardType: TextInputType.number,
+                keyboardType: TextInputType.number, // Force number keyboard
                 obscureText: true,
                 maxLength: 8,
+                autofocus: true,
+                textAlign: TextAlign.center,
+                inputFormatters: [
+                  // CRITICAL: Only allow digits
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
+                style: const TextStyle(
+                  fontSize: 18,
+                  letterSpacing: 4,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: '.SF Pro Text',
+                ),
                 decoration: BoxDecoration(
                   color: CupertinoColors.systemGrey6,
                   borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: CupertinoColors.systemGrey4,
+                    width: 1,
+                  ),
                 ),
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                onSubmitted: (_) {
+                  // Move to confirm field
+                  confirmFocusNode.requestFocus();
+                },
               ),
               const SizedBox(height: 12),
+              // Confirm PIN input
               CupertinoTextField(
                 controller: confirmController,
+                focusNode: confirmFocusNode,
                 placeholder: 'Confirm PIN',
-                keyboardType: TextInputType.number,
+                keyboardType: TextInputType.number, // Force number keyboard
                 obscureText: true,
                 maxLength: 8,
+                textAlign: TextAlign.center,
+                inputFormatters: [
+                  // CRITICAL: Only allow digits
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
+                style: const TextStyle(
+                  fontSize: 18,
+                  letterSpacing: 4,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: '.SF Pro Text',
+                ),
                 decoration: BoxDecoration(
                   color: CupertinoColors.systemGrey6,
                   borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: CupertinoColors.systemGrey4,
+                    width: 1,
+                  ),
                 ),
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                onSubmitted: (_) {
+                  // Try to set PIN when done
+                  _processPinSetup(pinController.text, confirmController.text);
+                  Navigator.pop(context);
+                },
               ),
             ],
           ),
@@ -1367,27 +1235,264 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           CupertinoDialogAction(
-            onPressed: () async {
-              if (pinController.text.length < 4) {
-                _showErrorSnackBar('PIN must be at least 4 digits');
-                return;
-              }
-              if (pinController.text != confirmController.text) {
-                _showErrorSnackBar('PINs do not match');
-                return;
-              }
-
+            onPressed: () {
+              _processPinSetup(pinController.text, confirmController.text);
               Navigator.pop(context);
-              final success =
-              await _lockService.enablePinLock(pinController.text);
-              if (success) {
-                await _loadSettings();
-              } else {
-                _showErrorSnackBar('Failed to set PIN');
-              }
             },
             child: const Text(
               'Set PIN',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600,
+                fontFamily: '.SF Pro Text',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    // Focus the first field after dialog opens
+    Future.delayed(const Duration(milliseconds: 300), () {
+      pinFocusNode.requestFocus();
+    });
+  }
+
+  // ENHANCED: Process PIN setup with enhanced validation
+  void _processPinSetup(String pin, String confirmPin) async {
+    // Validation
+    if (pin.length < 4) {
+      _showErrorSnackBar('PIN must be at least 4 digits');
+      return;
+    }
+
+    if (pin.length > 8) {
+      _showErrorSnackBar('PIN cannot be longer than 8 digits');
+      return;
+    }
+
+    // Ensure PIN contains only digits
+    if (!RegExp(r'^\d+$').hasMatch(pin)) {
+      _showErrorSnackBar('PIN must contain only numbers');
+      return;
+    }
+
+    if (pin != confirmPin) {
+      _showErrorSnackBar('PINs do not match');
+      return;
+    }
+
+    // Show loading
+    showCupertinoDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Center(
+        child: Container(
+          width: 120,
+          height: 120,
+          decoration: BoxDecoration(
+            color: CupertinoColors.black.withOpacity(0.8),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: const Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CupertinoActivityIndicator(
+                color: CupertinoColors.white,
+                radius: 14,
+              ),
+              SizedBox(height: 16),
+              Text(
+                'Setting PIN...',
+                style: TextStyle(
+                  color: CupertinoColors.white,
+                  fontSize: 14,
+                  fontFamily: '.SF Pro Text',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    try {
+      final success = await _lockService.enablePinLock(pin);
+
+      if (mounted) {
+        Navigator.pop(context); // Close loading
+
+        if (success) {
+          await _loadSettings();
+          _showSuccessSnackBar('PIN lock enabled successfully');
+        } else {
+          _showErrorSnackBar('Failed to set PIN');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Close loading
+        _showErrorSnackBar('Error setting PIN: ${e.toString()}');
+      }
+    }
+  }
+
+  // ENHANCED: Biometric setup with better error handling
+  void _setupBiometric() async {
+    // Show loading
+    showCupertinoDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Center(
+        child: Container(
+          width: 140,
+          height: 140,
+          decoration: BoxDecoration(
+            color: CupertinoColors.black.withOpacity(0.8),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: const Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CupertinoActivityIndicator(
+                color: CupertinoColors.white,
+                radius: 16,
+              ),
+              SizedBox(height: 16),
+              Text(
+                'Setting up\nBiometric Lock',
+                style: TextStyle(
+                  color: CupertinoColors.white,
+                  fontSize: 14,
+                  fontFamily: '.SF Pro Text',
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    try {
+      final result = await _lockService.enableBiometricLock();
+
+      if (mounted) {
+        Navigator.pop(context); // Close loading
+
+        if (result.success) {
+          await _loadSettings();
+          _showSuccessSnackBar('Biometric lock enabled successfully');
+        } else {
+          _showDetailedErrorDialog(
+            'Biometric Setup Failed',
+            result.error ?? 'Unknown error occurred',
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Close loading
+        _showDetailedErrorDialog(
+          'Biometric Setup Error',
+          'Failed to set up biometric lock: ${e.toString()}',
+        );
+      }
+    }
+  }
+
+  // ENHANCED: Detailed error display with more context
+  void _showDetailedErrorDialog(String title, String message) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text(
+          title,
+          style: const TextStyle(
+            color: AppColors.error,
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+            fontFamily: '.SF Pro Text',
+          ),
+        ),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: Text(
+            message,
+            style: const TextStyle(
+              fontSize: 16,
+              height: 1.4,
+              color: CupertinoColors.label,
+              fontFamily: '.SF Pro Text',
+            ),
+          ),
+        ),
+        actions: [
+          if (message.contains('biometric') || message.contains('fingerprint')) ...[
+            CupertinoDialogAction(
+              onPressed: () {
+                Navigator.pop(context);
+                _showPinSetup(); // Offer PIN as alternative
+              },
+              child: const Text(
+                'Use PIN Instead',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: '.SF Pro Text',
+                ),
+              ),
+            ),
+          ],
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'OK',
+              style: TextStyle(
+                color: AppColors.secondary,
+                fontWeight: FontWeight.w600,
+                fontFamily: '.SF Pro Text',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Success feedback
+  void _showSuccessSnackBar(String message) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text(
+          'Success',
+          style: TextStyle(
+            color: AppColors.success,
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+            fontFamily: '.SF Pro Text',
+          ),
+        ),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: Text(
+            message,
+            style: const TextStyle(
+              fontSize: 16,
+              height: 1.4,
+              color: CupertinoColors.label,
+              fontFamily: '.SF Pro Text',
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'OK',
               style: TextStyle(
                 color: AppColors.primary,
                 fontWeight: FontWeight.w600,
@@ -1521,11 +1626,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _loadSettings();
   }
 
-// REPLACE the _showBatteryOptimization method with this SMART version
-// REPLACE the _showBatteryOptimization method with this CLEANER version
-// REPLACE the _showBatteryOptimization method with this FINAL clean version
   void _showBatteryOptimization(BuildContext context) async {
-    // Check current battery optimisation status
     final hasPermission = await Permission.ignoreBatteryOptimizations.isGranted;
 
     showCupertinoModalPopup(
@@ -1538,7 +1639,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         child: Column(
           children: [
-            // Handle for swiping
             Container(
               margin: const EdgeInsets.only(top: 8, bottom: 16),
               width: 40,
@@ -1548,8 +1648,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-
-            // Title with clear status
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
@@ -1595,16 +1693,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ],
               ),
             ),
-
             const SizedBox(height: 20),
-
-            // Content - no extra spacing
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   children: [
-                    // Clear explanation
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
@@ -1647,13 +1741,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       BatteryOptimizationService.buildBatteryOptimizationGuide(context),
                     ],
 
-                    const Spacer(), // This pushes buttons to bottom
+                    const Spacer(),
                   ],
                 ),
               ),
             ),
-
-            // Action buttons at bottom
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
               child: Column(
@@ -1782,8 +1874,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               );
 
-              final provider =
-              Provider.of<FriendsProvider>(context, listen: false);
+              final provider = Provider.of<FriendsProvider>(context, listen: false);
               final storageService = provider.storageService;
 
               await storageService.saveFriends([]);
@@ -1795,8 +1886,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               final notificationService = NotificationService();
               for (final friend in provider.friends) {
                 await notificationService.cancelReminder(friend.id);
-                await notificationService
-                    .removePersistentNotification(friend.id);
+                await notificationService.removePersistentNotification(friend.id);
               }
 
               await provider.reloadFriends();
@@ -1833,8 +1923,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       CupertinoDialogAction(
                         onPressed: () {
                           Navigator.pop(context);
-                          Navigator.of(context)
-                              .popUntil((route) => route.isFirst);
+                          Navigator.of(context).popUntil((route) => route.isFirst);
                         },
                         child: const Text(
                           'OK',
@@ -2112,7 +2201,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 }
 
-// ADD this comprehensive test method to the SettingsScreen class
 // Enhanced test method for the settings screen
 void _testAllNotifications(BuildContext context) async {
   showCupertinoDialog(
@@ -2183,7 +2271,7 @@ void _testAllNotifications(BuildContext context) async {
     scheduledSuccess = true;
     print("✅ Scheduled notification test completed");
 
-    // Test 3: FIXED - Test friend reminders using hasReminder
+    // Test 3: Test friend reminders using hasReminder
     for (final friend in provider.friends) {
       if (friend.hasReminder) {
         friendsWithReminders++;
