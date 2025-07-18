@@ -1,4 +1,4 @@
-// lib/main.dart - SIMPLIFIED VERSION WITHOUT FOREGROUND SERVICE
+// lib/main.dart - FIXED LOCK SCREEN FLOW AND NOTIFICATION ROUTING
 import 'dart:async';
 import 'package:alongside/screens/lock_screen.dart';
 import 'package:alongside/services/lock_service.dart';
@@ -44,7 +44,7 @@ void main() async {
   );
 }
 
-// Global notification handler
+// FIXED: Global notification handler that respects lock screen flow
 void _handleNotificationAction(String friendId, String action) async {
   print("🔔 Notification action: Friend=$friendId, Action=$action");
 
@@ -60,11 +60,13 @@ void _handleNotificationAction(String friendId, String action) async {
     return;
   }
 
-  // Store action to process
+  // Store the intended action for after lock screen (if needed)
   final prefs = await SharedPreferences.getInstance();
   await prefs.setString('pending_notification_action', '$friendId|$action');
 
-  // Navigate
+  print("💾 Stored pending action: $friendId|$action");
+
+  // Navigate to notification router (which will handle lock screen flow)
   navigatorKey.currentState!.popUntil((route) => route.isFirst);
   navigatorKey.currentState!.pushNamed('/notification');
 }
@@ -88,14 +90,12 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    // FIXED: Don't set lock state immediately - check it properly
-    _lockChecked = false;  // Start as unchecked
-    _isLocked = false;     // Will be set by lock check
+    // FIXED: Start with proper initial states
+    _lockChecked = false;
+    _isLocked = false;
 
-    // Initialize app after first frame
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initializeApp();
-    });
+    // CRITICAL: Check lock immediately on start
+    _checkLockOnStart();
   }
 
   @override
@@ -119,8 +119,6 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
       case AppLifecycleState.resumed:
         print("📱 App resumed");
         _checkIfShouldLock();
-
-        // Check and extend notification schedules when app resumes
         _checkNotificationSchedules();
         break;
 
@@ -128,6 +126,39 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
       case AppLifecycleState.detached:
       case AppLifecycleState.hidden:
         break;
+    }
+  }
+
+  // FIXED: Immediate lock check on app start
+  Future<void> _checkLockOnStart() async {
+    try {
+      print("🔒 Checking lock on app start...");
+
+      final shouldLock = await _lockService.shouldShowLockScreen();
+
+      if (mounted) {
+        setState(() {
+          _isLocked = shouldLock;
+          _lockChecked = true;
+        });
+
+        if (shouldLock) {
+          print("🔒 Lock screen required on start");
+        } else {
+          print("🔓 No lock required on start - initializing app");
+          await _lockService.clearBackgroundTime();
+          _initializeAppFeatures();
+        }
+      }
+    } catch (e) {
+      print("❌ Error checking lock on start: $e");
+      if (mounted) {
+        setState(() {
+          _isLocked = false;
+          _lockChecked = true;
+        });
+        _initializeAppFeatures();
+      }
     }
   }
 
@@ -147,70 +178,34 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
     }
   }
 
-  Future<void> _initializeApp() async {
-    print("🚀 Initializing app...");
+  // FIXED: Separate app feature initialization
+  Future<void> _initializeAppFeatures() async {
+    print("🚀 Initializing app features...");
 
     try {
-      // CRITICAL: Check if lock screen should be shown on cold start
-      await _checkLockOnColdStart();
-
-      // Only continue with other initialization if not locked
-      if (!_isLocked) {
-        // Check battery optimization after delay
-        Future.delayed(const Duration(seconds: 5), () {
-          if (mounted) {
-            BatteryOptimizationService.requestBatteryOptimization(context);
-          }
-        });
-
-        // Setup periodic schedule checks (every 6 hours)
-        _scheduleCheckTimer = Timer.periodic(
-          const Duration(hours: 6),
-              (_) => _checkNotificationSchedules(),
-        );
-
-        // Initial schedule check
-        await _checkNotificationSchedules();
-
-        // Debug notifications
-        Future.delayed(const Duration(seconds: 3), () async {
-          final notificationService = NotificationService();
-          await notificationService.debugScheduledNotifications();
-        });
-      }
-    } catch (e) {
-      print("❌ Error initializing app: $e");
-    }
-  }
-
-  Future<void> _checkLockOnColdStart() async {
-    try {
-      print("🔒 Checking lock on cold start...");
-
-      final shouldLock = await _lockService.shouldShowLockScreen();
-
-      if (shouldLock && mounted) {
-        print("🔒 Lock screen required on cold start");
-        setState(() {
-          _isLocked = true;
-          _lockChecked = true;
-        });
-      } else {
-        print("🔓 No lock required on cold start");
-        setState(() {
-          _isLocked = false;
-          _lockChecked = true;
-        });
-        // Clear any background time since we're starting fresh
-        await _lockService.clearBackgroundTime();
-      }
-    } catch (e) {
-      print("❌ Error checking lock on cold start: $e");
-      // If error, default to not locked but mark as checked
-      setState(() {
-        _isLocked = false;
-        _lockChecked = true;
+      // Check battery optimization after delay
+      Future.delayed(const Duration(seconds: 5), () {
+        if (mounted) {
+          BatteryOptimizationService.requestBatteryOptimization(context);
+        }
       });
+
+      // Setup periodic schedule checks (every 6 hours)
+      _scheduleCheckTimer = Timer.periodic(
+        const Duration(hours: 6),
+            (_) => _checkNotificationSchedules(),
+      );
+
+      // Initial schedule check
+      await _checkNotificationSchedules();
+
+      // Debug notifications
+      Future.delayed(const Duration(seconds: 3), () async {
+        final notificationService = NotificationService();
+        await notificationService.debugScheduledNotifications();
+      });
+    } catch (e) {
+      print("❌ Error initializing app features: $e");
     }
   }
 
@@ -226,7 +221,7 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
 
   @override
   Widget build(BuildContext context) {
-    // Show loading while checking lock status
+    // FIXED: Show loading only while checking lock status
     if (!_lockChecked) {
       return CupertinoApp(
         title: 'Alongside',
@@ -270,18 +265,23 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
       );
     }
 
-    // Show lock screen if locked
+    // FIXED: Show lock screen immediately if locked
     if (_isLocked) {
       return CupertinoApp(
         title: 'Alongside',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.cupertinoTheme,
         home: LockScreen(
-          onUnlocked: () {
+          onUnlocked: () async {
             setState(() {
               _isLocked = false;
             });
-            _lockService.clearBackgroundTime();
+            await _lockService.clearBackgroundTime();
+
+            // FIXED: Initialize app features only after unlock
+            if (!_scheduleCheckTimer!.isActive ?? true) {
+              _initializeAppFeatures();
+            }
           },
         ),
       );
@@ -306,7 +306,7 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
   }
 }
 
-// Notification router screen
+// FIXED: Notification router screen with proper lock screen integration
 class NotificationRouterScreen extends StatefulWidget {
   const NotificationRouterScreen({Key? key}) : super(key: key);
 
@@ -322,53 +322,104 @@ class _NotificationRouterScreenState extends State<NotificationRouterScreen> {
   }
 
   Future<void> _processNotification() async {
-    print("🔔 Processing notification...");
+    print("🔔 Processing notification in router...");
 
-    final prefs = await SharedPreferences.getInstance();
-    final pendingAction = prefs.getString('pending_notification_action');
+    try {
+      // FIXED: Check if lock screen should be shown first
+      final lockService = LockService();
+      final shouldShowLock = await lockService.shouldShowLockScreen();
 
-    if (pendingAction != null) {
-      await prefs.remove('pending_notification_action');
-      final parts = pendingAction.split('|');
+      if (shouldShowLock) {
+        print("🔒 Lock required - showing lock screen first");
 
-      if (parts.length == 2 && mounted) {
-        final friendId = parts[0];
-        final action = parts[1];
+        if (mounted) {
+          // Show lock screen and wait for unlock
+          final unlocked = await Navigator.push<bool>(
+            context,
+            CupertinoPageRoute(
+              builder: (context) => LockScreen(
+                onUnlocked: () {
+                  Navigator.pop(context, true);
+                },
+              ),
+            ),
+          );
 
-        final provider = Provider.of<FriendsProvider>(context, listen: false);
-        final friend = provider.getFriendById(friendId);
-
-        if (friend != null) {
-          // CRITICAL FIX: Record interaction time using notification service
-          final notificationService = NotificationService();
-          await notificationService.recordFriendInteraction(friendId);
-
-          print("✅ Recorded notification interaction for ${friend.name}");
-
-          if (mounted) {
-            if (action == 'message') {
-              Navigator.pushReplacement(
-                context,
-                CupertinoPageRoute(
-                  builder: (context) => MessageScreenNew(friend: friend),
-                ),
-              );
-              return;
-            } else if (action == 'call') {
-              Navigator.pushReplacementNamed(
-                context,
-                '/call',
-                arguments: {'friend': friend},
-              );
-              return;
+          if (unlocked != true) {
+            // User didn't unlock - go to home
+            if (mounted) {
+              Navigator.pushReplacementNamed(context, '/');
             }
+            return;
           }
+
+          // Clear background time after successful unlock
+          await lockService.clearBackgroundTime();
         }
       }
-    }
 
-    if (mounted) {
-      Navigator.pushReplacementNamed(context, '/');
+      // Process the pending notification action
+      final prefs = await SharedPreferences.getInstance();
+      final pendingAction = prefs.getString('pending_notification_action');
+
+      if (pendingAction != null && mounted) {
+        await prefs.remove('pending_notification_action');
+        final parts = pendingAction.split('|');
+
+        if (parts.length == 2) {
+          final friendId = parts[0];
+          final action = parts[1];
+
+          print("🔔 Processing action: $action for friend: $friendId");
+
+          final provider = Provider.of<FriendsProvider>(context, listen: false);
+          final friend = provider.getFriendById(friendId);
+
+          if (friend != null) {
+            // CRITICAL: Record interaction time using notification service
+            final notificationService = NotificationService();
+            await notificationService.recordFriendInteraction(friendId);
+
+            print("✅ Recorded notification interaction for ${friend.name}");
+
+            if (mounted) {
+              if (action == 'message') {
+                Navigator.pushReplacement(
+                  context,
+                  CupertinoPageRoute(
+                    builder: (context) => MessageScreenNew(friend: friend),
+                  ),
+                );
+                return;
+              } else if (action == 'call') {
+                Navigator.pushReplacementNamed(
+                  context,
+                  '/call',
+                  arguments: {'friend': friend},
+                );
+                return;
+              }
+            }
+          } else {
+            print("❌ Friend not found for ID: $friendId");
+          }
+        } else {
+          print("❌ Invalid pending action format: $pendingAction");
+        }
+      } else {
+        print("🔔 No pending notification action found");
+      }
+
+      // Default: go to home screen
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/');
+      }
+
+    } catch (e) {
+      print("❌ Error processing notification: $e");
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/');
+      }
     }
   }
 
@@ -377,7 +428,21 @@ class _NotificationRouterScreenState extends State<NotificationRouterScreen> {
     return const CupertinoPageScaffold(
       backgroundColor: AppColors.background,
       child: Center(
-        child: CupertinoActivityIndicator(),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CupertinoActivityIndicator(radius: 14),
+            SizedBox(height: 16),
+            Text(
+              'Opening...',
+              style: TextStyle(
+                fontSize: 16,
+                color: AppColors.textSecondary,
+                fontFamily: '.SF Pro Text',
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

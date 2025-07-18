@@ -1,4 +1,4 @@
-// lib/services/notification_service.dart - FIXED FOR NEW REMINDER SYSTEM
+// lib/services/notification_service.dart - FIXED WITH PROPER ACTION ROUTING
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -37,7 +37,7 @@ void callbackDispatcher() {
   });
 }
 
-// CLEAN background notification
+// FIXED: Background notification with proper payload format
 Future<void> _sendCleanBackgroundNotification(String friendId, String friendName, String reminderText) async {
   try {
     final notificationPlugin = FlutterLocalNotificationsPlugin();
@@ -52,7 +52,7 @@ Future<void> _sendCleanBackgroundNotification(String friendId, String friendName
       notificationId,
       'Time to check in with $friendName',
       reminderText,
-      const NotificationDetails(
+      NotificationDetails(
         android: AndroidNotificationDetails(
           'alongside_reminders',
           'Friend Reminders',
@@ -78,7 +78,7 @@ Future<void> _sendCleanBackgroundNotification(String friendId, String friendName
           ],
         ),
       ),
-      payload: friendId,
+      payload: '$friendId|reminder', // FIXED: Consistent payload format
     );
   } catch (e) {
     // Silent error handling
@@ -215,6 +215,7 @@ class NotificationService {
     print("🔔 BACKGROUND: ${response.payload}");
   }
 
+  // FIXED: Proper notification response handling with consistent payload parsing
   void _handleNotificationResponse(NotificationResponse response) {
     print("🔔 FOREGROUND: ${response.payload}, Action: ${response.actionId}");
 
@@ -223,12 +224,14 @@ class NotificationService {
 
     if (payload == null || payload.isEmpty) return;
 
-    final parts = payload.split(";");
-    if (parts.isEmpty) return;
-
+    // Parse payload - handle both formats: "friendId|type" and just "friendId"
+    final parts = payload.split('|');
     final friendId = parts[0];
+
     if (friendId.isNotEmpty) {
-      _actionCallback?.call(friendId, actionId ?? "tap");
+      final action = actionId ?? "tap"; // Use actionId if available, otherwise default to "tap"
+      print("🔔 Calling callback with friendId: $friendId, action: $action");
+      _actionCallback?.call(friendId, action);
     }
   }
 
@@ -566,7 +569,7 @@ class NotificationService {
             ],
           ),
         ),
-        payload: 'test_immediate',
+        payload: 'test_immediate|reminder',
       );
       print("📨 Immediate test sent");
     } catch (e) {
@@ -622,7 +625,7 @@ class NotificationService {
     print("🔍 WorkManager handles scheduling automatically");
   }
 
-  // Persistent notifications (unchanged)
+  // FIXED: Persistent notifications with proper action buttons
   Future<void> showPersistentNotification(Friend friend) async {
     if (!friend.hasPersistentNotification) return;
 
@@ -632,7 +635,7 @@ class NotificationService {
         id,
         'Alongside ${friend.name}',
         'Tap to check in',
-        const NotificationDetails(
+        NotificationDetails(
           android: AndroidNotificationDetails(
             'alongside_persistent',
             'Quick Access',
@@ -640,10 +643,25 @@ class NotificationService {
             priority: Priority.low,
             ongoing: true,
             autoCancel: false,
+            actions: <AndroidNotificationAction>[
+              AndroidNotificationAction(
+                'message',
+                'Message',
+                showsUserInterface: true,
+                cancelNotification: false, // Don't cancel persistent notifications
+              ),
+              AndroidNotificationAction(
+                'call',
+                'Call',
+                showsUserInterface: true,
+                cancelNotification: false, // Don't cancel persistent notifications
+              ),
+            ],
           ),
         ),
-        payload: '${friend.id};${friend.phoneNumber}',
+        payload: '${friend.id}|persistent', // FIXED: Consistent payload format
       );
+      print("📌 Persistent notification shown for ${friend.name}");
     } catch (e) {
       print("❌ Persistent error: $e");
     }
@@ -653,6 +671,7 @@ class NotificationService {
     try {
       final id = _persistentOffset + _getNotificationId(friendId);
       await flutterLocalNotificationsPlugin.cancel(id);
+      print("🗑️ Persistent notification removed for $friendId");
     } catch (e) {
       print("❌ Remove persistent error: $e");
     }
