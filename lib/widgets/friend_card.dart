@@ -1,4 +1,4 @@
-// lib/widgets/friend_card.dart - Complete updated version with dynamic reminder display
+// lib/widgets/friend_card.dart - FIXED reminder display issues
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -61,8 +61,6 @@ class _FriendCardNewState extends State<FriendCardNew>
     _loadNextReminderTime();
   }
 
-  // Load next reminder time
-// Load next reminder time - FIXED VERSION
   // Load next reminder time - FIXED VERSION
   Future<void> _loadNextReminderTime() async {
     // FIXED: Use hasReminder instead of reminderDays > 0
@@ -198,8 +196,10 @@ class _FriendCardNewState extends State<FriendCardNew>
     if (widget.isExpanded != oldWidget.isExpanded) {
       widget.isExpanded ? _controller.forward() : _controller.reverse();
     }
-    if (widget.friend.reminderDays != oldWidget.friend.reminderDays ||
-        widget.friend.reminderTime != oldWidget.friend.reminderTime) {
+    // FIXED: Check both old and new reminder systems for changes
+    if (widget.friend.hasReminder != oldWidget.friend.hasReminder ||
+        widget.friend.reminderTime != oldWidget.friend.reminderTime ||
+        widget.friend.reminderData != oldWidget.friend.reminderData) {
       _loadNextReminderTime();
     }
   }
@@ -252,31 +252,28 @@ class _FriendCardNewState extends State<FriendCardNew>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Friend name row with dynamic reminder badge
-// REPLACE this section in lib/widgets/friend_card.dart
-// Find this part in the Row with friend name (around line 140):
-
-// Friend name row with dynamic reminder badge
-                    Row(
-                    children: [
-                    Expanded(
-                    child: Text(
-                      widget.friend.name,
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: '.SF Pro Text',
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (widget.friend.reminderDays > 0 && !widget.isExpanded) ...[
-                    const SizedBox(width: 8),
-                    _buildCollapsedReminderBadge(),
-                  ],
-                ],
-              ),
+                        // FIXED: Friend name row with dynamic reminder badge
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                widget.friend.name,
+                                style: const TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w600,
+                                  fontFamily: '.SF Pro Text',
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            // FIXED: Use hasReminder instead of reminderDays > 0
+                            if (widget.friend.hasReminder && !widget.isExpanded) ...[
+                              const SizedBox(width: 8),
+                              _buildCollapsedReminderBadge(),
+                            ],
+                          ],
+                        ),
 
                         // "Alongside them in" info
                         if (widget.friend.helpingWith != null &&
@@ -418,74 +415,63 @@ class _FriendCardNewState extends State<FriendCardNew>
                           const SizedBox(height: 16),
                         ],
 
-                        // Reminder info with next reminder time
-                        if (widget.friend.reminderDays > 0) ...[
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: AppColors.warning.withOpacity(0.1),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  CupertinoIcons.bell_fill,
-                                  color: AppColors.warning,
-                                  size: 12,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Reminder ${AppConstants.formatReminderOption(widget.friend.reminderDays).toLowerCase()}',
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.warning,
-                                        fontFamily: '.SF Pro Text',
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Row(
-                                      children: [
-                                        const Icon(
-                                          CupertinoIcons.time,
-                                          size: 12,
-                                          color: CupertinoColors.secondaryLabel,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          _formatTimeString(
-                                              widget.friend.reminderTime),
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            color:
-                                            CupertinoColors.secondaryLabel,
-                                            fontFamily: '.SF Pro Text',
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      _getNextReminderText(_nextReminderTime),
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: _getBadgeColor(_nextReminderTime),
-                                        fontFamily: '.SF Pro Text',
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                        // FIXED: Reminder info with next reminder time
+// Reminder info with next reminder time
+                  if (widget.friend.hasReminder) ...[
+              Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: AppColors.warning.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    CupertinoIcons.bell_fill,
+                    color: AppColors.warning,
+                    size: 12,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.friend.reminderDisplayText,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.warning,
+                          fontFamily: '.SF Pro Text',
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(
+                            CupertinoIcons.time,
+                            size: 12,
+                            color: CupertinoColors.secondaryLabel,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _formatTimeString(widget.friend.reminderTime),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: CupertinoColors.secondaryLabel,
+                              fontFamily: '.SF Pro Text',
+                            ),
                           ),
                         ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
                       ],
                     ),
                   ),
@@ -627,7 +613,6 @@ class _FriendCardNewState extends State<FriendCardNew>
   }
 
   // Build the collapsed reminder badge with dynamic time display
-// Build the collapsed reminder badge with dynamic time display - IMPROVED VERSION
   Widget _buildCollapsedReminderBadge() {
     if (_isLoadingReminderTime) {
       return Container(
@@ -636,10 +621,21 @@ class _FriendCardNewState extends State<FriendCardNew>
           color: CupertinoColors.systemGrey6,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: const SizedBox(
-          width: 12,
-          height: 12,
-          child: CupertinoActivityIndicator(radius: 6),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              CupertinoIcons.bell,
+              size: 12,
+              color: CupertinoColors.systemGrey,
+            ),
+            SizedBox(width: 4),
+            SizedBox(
+              width: 12,
+              height: 12,
+              child: CupertinoActivityIndicator(radius: 6),
+            ),
+          ],
         ),
       );
     }
@@ -650,18 +646,19 @@ class _FriendCardNewState extends State<FriendCardNew>
     Color backgroundColor;
 
     if (_nextReminderTime != null) {
-      badgeText = _getCollapsedReminderText(_nextReminderTime);
+      badgeText = 'Reminder in ${_getCollapsedReminderText(_nextReminderTime)}';
       badgeColor = _getBadgeColor(_nextReminderTime);
       backgroundColor = _getBadgeBackgroundColor(_nextReminderTime);
     } else {
       // Fallback to static interval display
-      badgeText = widget.friend.reminderDays <= 30
+      String timeText = widget.friend.reminderDays <= 30
           ? '${widget.friend.reminderDays}d'
           : widget.friend.reminderDays == 60
           ? '2mo'
           : widget.friend.reminderDays == 90
           ? '3mo'
           : '6mo';
+      badgeText = 'Reminder in $timeText';
       badgeColor = AppColors.primary;
       backgroundColor = AppColors.primaryLight;
     }
@@ -672,14 +669,25 @@ class _FriendCardNewState extends State<FriendCardNew>
         color: backgroundColor,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(
-        badgeText,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: badgeColor,
-          fontFamily: '.SF Pro Text',
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            CupertinoIcons.bell_fill,
+            size: 12,
+            color: badgeColor,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            badgeText,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: badgeColor,
+              fontFamily: '.SF Pro Text',
+            ),
+          ),
+        ],
       ),
     );
   }

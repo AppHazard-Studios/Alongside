@@ -575,83 +575,56 @@ class _HomeScreenNewState extends State<HomeScreenNew>
                           ),
 
                           // Favorites section
-                          if (favoriteFriends.isNotEmpty || true) ...[
-                            SizedBox(
-                                height:
-                                ResponsiveUtils.scaledSpacing(context, 16)),
-                            Text(
-                              'Favorites',
-                              style: TextStyle(
-                                fontSize:
-                                ResponsiveUtils.scaledFontSize(context, 16),
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.primary,
-                                fontFamily: '.SF Pro Text',
-                              ),
-                            ),
-                            SizedBox(
-                                height:
-                                ResponsiveUtils.scaledSpacing(context, 10)),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: SizedBox(
-                                height: ResponsiveUtils.scaledContainerSize(
-                                    context, 80),
-                                child: ShaderMask(
-                                  shaderCallback: (Rect bounds) {
-                                    return LinearGradient(
-                                      begin: Alignment.centerLeft,
-                                      end: Alignment.centerRight,
-                                      colors: const [
-                                        Colors.transparent,
-                                        Colors.white,
-                                        Colors.white,
-                                        Colors.transparent,
-                                      ],
-                                      stops: const [0.0, 0.05, 0.95, 1.0],
-                                    ).createShader(bounds);
-                                  },
-                                  blendMode: BlendMode.dstIn,
-                                  child: ListView.builder(
-                                    scrollDirection: Axis.horizontal,
-                                    padding: EdgeInsets.symmetric(
-                                        horizontal:
-                                        ResponsiveUtils.scaledSpacing(
-                                            context, 4)),
-                                    physics: const BouncingScrollPhysics(),
-                                    itemCount: favoriteFriends.length + 1,
-                                    itemBuilder: (context, index) {
-                                      if (index < favoriteFriends.length) {
-                                        final friend = favoriteFriends[index];
-                                        return Padding(
-                                          padding: EdgeInsets.only(
-                                            right: ResponsiveUtils.scaledSpacing(
-                                                context, 8),
-                                            left: index == 0
-                                                ? ResponsiveUtils.scaledSpacing(
-                                                context, 4)
-                                                : 0,
-                                          ),
-                                          child: _buildCompactFavoriteStory(
-                                              friend),
-                                        );
-                                      } else {
-                                        return Padding(
-                                          padding: EdgeInsets.only(
-                                              right:
-                                              ResponsiveUtils.scaledSpacing(
-                                                  context, 4),
-                                              left: 0),
-                                          child:
-                                          _buildCompactAddFavoriteButton(),
-                                        );
-                                      }
-                                    },
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+// Favorites section
+    if (favoriteFriends.isNotEmpty || true) ...[
+    SizedBox(
+    height:
+    ResponsiveUtils.scaledSpacing(context, 16)),
+    Text(
+    'Favorites',
+    style: TextStyle(
+    fontSize:
+    ResponsiveUtils.scaledFontSize(context, 16),
+    fontWeight: FontWeight.w600,
+    color: AppColors.primary,
+    fontFamily: '.SF Pro Text',
+    ),
+    ),
+    SizedBox(
+    height:
+    ResponsiveUtils.scaledSpacing(context, 10)),
+    SizedBox(
+    height: ResponsiveUtils.scaledContainerSize(context, 80),
+    child: ListView.builder(
+    scrollDirection: Axis.horizontal,
+    padding: EdgeInsets.symmetric(
+    horizontal: ResponsiveUtils.scaledSpacing(context, 8)),
+    physics: const BouncingScrollPhysics(),
+    itemCount: favoriteFriends.length + 1,
+    itemBuilder: (context, index) {
+    if (index < favoriteFriends.length) {
+    final friend = favoriteFriends[index];
+    return Padding(
+    padding: EdgeInsets.only(
+    right: ResponsiveUtils.scaledSpacing(context, 8),
+    left: index == 0
+    ? ResponsiveUtils.scaledSpacing(context, 4)
+        : 0,
+    ),
+    child: _buildCompactFavoriteStory(friend),
+    );
+    } else {
+    return Padding(
+    padding: EdgeInsets.only(
+    right: ResponsiveUtils.scaledSpacing(context, 4),
+    left: 0),
+    child: _buildCompactAddFavoriteButton(),
+    );
+    }
+    },
+    ),
+    ),
+    ],
                         ],
                       ),
                     ),

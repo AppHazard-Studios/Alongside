@@ -388,6 +388,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // NEW: Show scheduled notifications
 // REPLACE the _showScheduledNotifications method with this
 // REPLACE the _showScheduledNotifications method with this PRODUCTION version
+// FIXED: Show scheduled notifications method
   void _showScheduledNotifications(BuildContext context) async {
     final notificationService = NotificationService();
 
@@ -398,7 +399,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     List<Widget> notificationWidgets = [];
 
     for (final friend in friends) {
-      if (friend.reminderDays > 0) {
+      // FIXED: Use hasReminder instead of reminderDays > 0
+      if (friend.hasReminder) {
         final nextTime = await notificationService.getNextReminderTime(friend.id);
         final now = DateTime.now();
 
@@ -458,7 +460,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Every ${friend.reminderDays} day${friend.reminderDays == 1 ? '' : 's'} at ${friend.reminderTime}',
+                        // FIXED: Use new reminder display text
+                        '${friend.reminderDisplayText} at ${friend.reminderTime}',
                         style: const TextStyle(
                           fontSize: 14,
                           color: AppColors.textSecondary,
@@ -603,7 +606,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
-// NEW: Check permissions
+  // NEW: Check permissions
 // REPLACE the _checkPermissions method with this CLEAN sliding modal version
 // REPLACE the _checkPermissions method with this FINAL clean version
   void _checkPermissions(BuildContext context) async {
@@ -2110,14 +2113,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
 }
 
 // ADD this comprehensive test method to the SettingsScreen class
+// Enhanced test method for the settings screen
 void _testAllNotifications(BuildContext context) async {
   showCupertinoDialog(
     context: context,
     barrierDismissible: false,
     builder: (ctx) => Center(
       child: Container(
-        width: 180,
-        height: 160,
+        width: 200,
+        height: 180,
         decoration: BoxDecoration(
           color: CupertinoColors.black.withOpacity(0.8),
           borderRadius: BorderRadius.circular(16),
@@ -2142,7 +2146,7 @@ void _testAllNotifications(BuildContext context) async {
             ),
             SizedBox(height: 8),
             Text(
-              'Immediate + Scheduled',
+              'All reminder systems',
               style: TextStyle(
                 color: CupertinoColors.white,
                 fontSize: 12,
@@ -2157,9 +2161,13 @@ void _testAllNotifications(BuildContext context) async {
   );
 
   final notificationService = NotificationService();
+  final provider = Provider.of<FriendsProvider>(context, listen: false);
 
   bool immediateSuccess = false;
   bool scheduledSuccess = false;
+  bool friendReminderSuccess = false;
+  int friendsWithReminders = 0;
+  int friendsScheduledSuccessfully = 0;
 
   try {
     // Test 1: Immediate notification
@@ -2175,6 +2183,24 @@ void _testAllNotifications(BuildContext context) async {
     scheduledSuccess = true;
     print("✅ Scheduled notification test completed");
 
+    // Test 3: FIXED - Test friend reminders using hasReminder
+    for (final friend in provider.friends) {
+      if (friend.hasReminder) {
+        friendsWithReminders++;
+        print("🔄 Testing reminder for ${friend.name} (${friend.usesAdvancedReminders ? 'Advanced' : 'Legacy'})");
+
+        final success = await notificationService.scheduleReminder(friend);
+        if (success) {
+          friendsScheduledSuccessfully++;
+          print("✅ Successfully scheduled for ${friend.name}");
+        } else {
+          print("❌ Failed to schedule for ${friend.name}");
+        }
+      }
+    }
+
+    friendReminderSuccess = friendsWithReminders == friendsScheduledSuccessfully;
+
   } catch (e) {
     print("❌ Error during notification tests: $e");
   }
@@ -2186,9 +2212,11 @@ void _testAllNotifications(BuildContext context) async {
       context: context,
       builder: (context) => CupertinoAlertDialog(
         title: Text(
-          'Notification Tests Started',
+          'Notification Tests Complete',
           style: TextStyle(
-            color: immediateSuccess && scheduledSuccess ? AppColors.success : AppColors.warning,
+            color: immediateSuccess && scheduledSuccess && friendReminderSuccess
+                ? AppColors.success
+                : AppColors.warning,
             fontWeight: FontWeight.w700,
             fontSize: 18,
             fontFamily: '.SF Pro Text',
@@ -2199,8 +2227,10 @@ void _testAllNotifications(BuildContext context) async {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Immediate test
               Container(
                 padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 8),
                 decoration: BoxDecoration(
                   color: immediateSuccess ? AppColors.success.withOpacity(0.1) : AppColors.error.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
@@ -2217,7 +2247,7 @@ void _testAllNotifications(BuildContext context) async {
                       child: Text(
                         'Immediate notification',
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 14,
                           fontFamily: '.SF Pro Text',
                         ),
                       ),
@@ -2225,9 +2255,11 @@ void _testAllNotifications(BuildContext context) async {
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
+
+              // Scheduled test
               Container(
                 padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 8),
                 decoration: BoxDecoration(
                   color: scheduledSuccess ? AppColors.success.withOpacity(0.1) : AppColors.error.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
@@ -2242,9 +2274,9 @@ void _testAllNotifications(BuildContext context) async {
                     const SizedBox(width: 12),
                     const Expanded(
                       child: Text(
-                        'Scheduled notification (in 30s)',
+                        'Scheduled notification (30s)',
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 14,
                           fontFamily: '.SF Pro Text',
                         ),
                       ),
@@ -2252,15 +2284,42 @@ void _testAllNotifications(BuildContext context) async {
                   ],
                 ),
               ),
+
+              // Friend reminders test
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: friendReminderSuccess ? AppColors.success.withOpacity(0.1) : AppColors.warning.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      friendReminderSuccess ? CupertinoIcons.person_alt_circle : CupertinoIcons.exclamationmark_triangle,
+                      color: friendReminderSuccess ? AppColors.success : AppColors.warning,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Friend reminders ($friendsScheduledSuccessfully/$friendsWithReminders)',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontFamily: '.SF Pro Text',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
               const SizedBox(height: 16),
               Text(
-                immediateSuccess && scheduledSuccess
-                    ? 'You should have received an immediate test notification. The scheduled test will arrive in 30 seconds.'
-                    : scheduledSuccess
-                    ? 'Scheduled test was set up, but immediate notification failed. Check notification permissions.'
-                    : immediateSuccess
-                    ? 'Immediate test worked, but scheduled test failed. This may indicate power management issues.'
-                    : 'Both tests failed to start. Check your notification permissions.',
+                immediateSuccess && scheduledSuccess && friendReminderSuccess
+                    ? 'All tests passed! You should receive notifications as expected.'
+                    : friendsWithReminders == 0
+                    ? 'Basic tests passed. Add friends with reminders to test the full system.'
+                    : 'Some tests had issues. Check notification permissions and battery optimization settings.',
                 style: const TextStyle(
                   fontSize: 14,
                   height: 1.4,
