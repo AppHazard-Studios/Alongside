@@ -150,6 +150,11 @@ class _HomeScreenNewState extends State<HomeScreenNew>
         });
       }
     }
+
+    // Force reload stats when returning from other screens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadStats();
+    });
   }
 
   @override
@@ -807,11 +812,7 @@ class _HomeScreenNewState extends State<HomeScreenNew>
               ),
               SizedBox(height: ResponsiveUtils.scaledSpacing(context, 2)),
               Text(
-                allFriends.isEmpty
-                    ? "Ready to walk alongside"
-                    : allFriends.length == 1
-                    ? "Walking alongside 1 friend"
-                    : "Walking alongside ${allFriends.length} friends",
+                "Lorem ipsum dolor sit",
                 style: TextStyle(
                   fontSize:
                   ResponsiveUtils.scaledFontSize(context, 14, maxScale: 1.3),
@@ -1564,6 +1565,7 @@ class _HomeScreenNewState extends State<HomeScreenNew>
     return await notificationService.getNextReminderTime(friend.id);
   }
 
+// FIXED: Reliable sorting method without on-the-fly scheduling
   Future<List<Friend>> _sortFriendsByReminderProximity(List<Friend> friends) async {
     if (friends.isEmpty) return friends;
 
@@ -1572,19 +1574,14 @@ class _HomeScreenNewState extends State<HomeScreenNew>
     final notificationService = NotificationService();
     List<MapEntry<Friend, DateTime?>> friendsWithTimes = [];
 
-    // Get reminder times for each friend and ensure they're scheduled
+    // First pass: collect all reminder times (don't schedule during sorting)
     for (Friend friend in friends) {
       DateTime? nextTime;
 
-      if (friend.reminderDays > 0) {
-        // Try to get existing reminder time
+      if (friend.hasReminder) {
+        // Just get the stored time - don't schedule here
         nextTime = await notificationService.getNextReminderTime(friend.id);
-
-        // If no reminder scheduled, schedule one
-        if (nextTime == null) {
-          await notificationService.scheduleReminder(friend);
-          nextTime = await notificationService.getNextReminderTime(friend.id);
-        }
+        print('DEBUG: ${friend.name} - Stored reminder: $nextTime');
       }
 
       friendsWithTimes.add(MapEntry(friend, nextTime));
@@ -1592,7 +1589,6 @@ class _HomeScreenNewState extends State<HomeScreenNew>
 
     // Sort by reminder proximity
     friendsWithTimes.sort((a, b) {
-      // FIXED: Use hasReminder instead of reminderDays > 0
       final aHasReminder = a.key.hasReminder;
       final bHasReminder = b.key.hasReminder;
 
@@ -1604,50 +1600,127 @@ class _HomeScreenNewState extends State<HomeScreenNew>
       if (!bHasReminder) return -1;
 
       // Both have reminders - sort by next reminder time
-      if (a.value == null && b.value == null) {
+      final aTime = a.value;
+      final bTime = b.value;
+
+      // Handle null times (put them at end of reminder group)
+      if (aTime == null && bTime == null) {
         return a.key.name.compareTo(b.key.name);
       }
-      if (a.value == null) return 1;
-      if (b.value == null) return -1;
+      if (aTime == null) return 1;
+      if (bTime == null) return -1;
 
-      return a.value!.compareTo(b.value!);
+      // Sort by actual time (earliest first)
+      return aTime.compareTo(bTime);
     });
 
     final sortedFriends = friendsWithTimes.map((entry) => entry.key).toList();
-    final friendsWithReminders = sortedFriends.where((f) => f.reminderDays > 0).length;
 
-    print('✅ Sorted complete - $friendsWithReminders friends have reminders');
+    // Debug output to see the actual sorted order
+    print('✅ Sorted order:');
+    for (int i = 0; i < sortedFriends.length; i++) {
+      final friend = sortedFriends[i];
+      final timeEntry = friendsWithTimes.firstWhere((entry) => entry.key.id == friend.id);
+      final timeStr = timeEntry.value != null
+          ? 'Next: ${timeEntry.value}'
+          : 'No reminder';
+      print('   ${i + 1}. ${friend.name} - $timeStr');
+    }
 
     return sortedFriends;
   }
 
+  // NEW: Method to ensure all friends with reminders have proper times calculated
+  Future<void> _ensureAllReminderTimesCalculated() async {
+    final provider = Provider.of<FriendsProvider>(context, listen: false);
+    final notificationService = NotificationService();
+
+    print('🔄 Ensuring all reminder times are calculated...');
+
+    for (Friend friend in provider.friends) {
+      if (friend.hasReminder) {
+        final existingTime = await notificationService.getNextReminderTime(friend.id);
+
+        if (existingTime == null) {
+          print('⚠️ ${friend.name} missing reminder time, scheduling...');
+          await notificationService.scheduleReminder(friend);
+        } else {
+          print('✅ ${friend.name} has reminder time: $existingTime');
+        }
+      }
+    }
+
+    print('✅ All reminder times ensured');
+  }
+
+// IMPROVED toggle sort method with proper reminder time calculation
+// FIXED toggle sort method with proper handling of newly added friends
   Future<void> _toggleSort() async {
     setState(() => _isSorting = true);
 
     final provider = Provider.of<FriendsProvider>(context, listen: false);
+    final currentFriends = provider.friends;
 
     if (_isSortedByReminders) {
       print('🔄 RESETTING TO CUSTOM ORDER');
-      // Reset to original order
+      print('   Current friends count: ${currentFriends.length}');
+      print('   Original order count: ${_originalFriendsOrder?.length ?? 0}');
+
+      // FIXED: Check if we have new friends that aren't in original order
       if (_originalFriendsOrder != null) {
-        provider.reorderFriends(_originalFriendsOrder!);
-        // REPLACE: _showSuccessToast with ToastService.showSuccess
-        ToastService.showSuccess(context, 'Custom order');
+        final originalIds = _originalFriendsOrder!.map((f) => f.id).toSet();
+        final currentIds = currentFriends.map((f) => f.id).toSet();
+        final newFriendIds = currentIds.difference(originalIds);
+
+        if (newFriendIds.isNotEmpty) {
+          print('   Found ${newFriendIds.length} new friends, updating original order');
+          // Add new friends to the end of original order
+          final newFriends = currentFriends.where((f) => newFriendIds.contains(f.id)).toList();
+          _originalFriendsOrder!.addAll(newFriends);
+        }
+
+        // Ensure we only include friends that still exist
+        final validOriginalOrder = _originalFriendsOrder!
+            .where((f) => currentIds.contains(f.id))
+            .toList();
+
+        print('   Restoring to custom order with ${validOriginalOrder.length} friends');
+        provider.reorderFriends(validOriginalOrder);
+      } else {
+        // Fallback: use current order as-is
+        print('   No original order stored, keeping current order');
       }
+
+      ToastService.showSuccess(context, 'Sorted by custom order');
+
       setState(() {
         _isSortedByReminders = false;
         _originalFriendsOrder = null;
       });
     } else {
       print('🔄 SORTING BY NEXT REMINDER');
-      // Store original order before sorting
-      _originalFriendsOrder = List<Friend>.from(provider.friends);
+      print('   Current friends count: ${currentFriends.length}');
 
-      // Sort by reminders
-      final sortedFriends = await _sortFriendsByReminderProximity(provider.friends);
+      // FIXED: Always capture the current order (including any new friends)
+      _originalFriendsOrder = List<Friend>.from(currentFriends);
+      print('   Stored original order with ${_originalFriendsOrder!.length} friends');
+
+      // Ensure all reminder times are calculated first
+      await _ensureAllReminderTimesCalculated();
+
+      // Small delay to ensure all calculations are complete
+      await Future.delayed(Duration(milliseconds: 200));
+
+      // Get current friends again (in case provider was updated)
+      final latestFriends = provider.friends;
+      print('   Latest friends count: ${latestFriends.length}');
+
+      // Now sort with reliable data
+      final sortedFriends = await _sortFriendsByReminderProximity(latestFriends);
+      print('   Sorted friends count: ${sortedFriends.length}');
+
       provider.reorderFriends(sortedFriends);
 
-      // REPLACE: _showSuccessToast with ToastService.showSuccess
       ToastService.showSuccess(context, 'Sorted by next reminder');
 
       setState(() {
@@ -1656,6 +1729,27 @@ class _HomeScreenNewState extends State<HomeScreenNew>
     }
 
     setState(() => _isSorting = false);
+  }
+
+  // NEW: Call this whenever a friend is added to handle sorting state
+  void _handleFriendAdded() {
+    // If we're in sorted mode, we need to update our tracking
+    if (_isSortedByReminders) {
+      print('🔄 Friend added while in sorted mode, maintaining sort');
+      // Don't reset to custom order, just re-sort with the new friend included
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (mounted) {
+          final provider = Provider.of<FriendsProvider>(context, listen: false);
+
+          // Ensure the new friend has reminder time calculated
+          await _ensureAllReminderTimesCalculated();
+
+          // Re-sort including the new friend
+          final sortedFriends = await _sortFriendsByReminderProximity(provider.friends);
+          provider.reorderFriends(sortedFriends);
+        }
+      });
+    }
   }
 
   void _showReorderOptions(
@@ -1764,14 +1858,13 @@ class _HomeScreenNewState extends State<HomeScreenNew>
     provider.reorderFriends(reorderedFriends);
     HapticFeedback.lightImpact();
 
-    // If we're in sorted mode, exit it since user manually reordered
+    // FIXED: If we're in sorted mode, exit it and update original order
     if (_isSortedByReminders) {
       setState(() {
         _isSortedByReminders = false;
-        _originalFriendsOrder = null;
+        _originalFriendsOrder = reorderedFriends; // Use the manually reordered list as new baseline
       });
-      // REPLACE: _showSuccessToast with ToastService.showSuccess
-      ToastService.showSuccess(context, 'Switched to custom order');
+      ToastService.showSuccess(context, 'Custom order');
     }
   }
 }

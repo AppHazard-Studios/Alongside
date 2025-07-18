@@ -1877,22 +1877,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
               final provider = Provider.of<FriendsProvider>(context, listen: false);
               final storageService = provider.storageService;
 
+              // Clear friends and messages
               await storageService.saveFriends([]);
               await storageService.saveCustomMessages([]);
 
+              // Clear all SharedPreferences including stats
               final prefs = await SharedPreferences.getInstance();
               await prefs.clear();
 
+              // Cancel all notifications
               final notificationService = NotificationService();
               for (final friend in provider.friends) {
                 await notificationService.cancelReminder(friend.id);
                 await notificationService.removePersistentNotification(friend.id);
               }
 
+              // Reload provider data
               await provider.reloadFriends();
 
               if (mounted) {
-                Navigator.pop(context);
+                Navigator.pop(context); // Close loading
 
                 showCupertinoDialog(
                   context: context,
@@ -1923,6 +1927,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       CupertinoDialogAction(
                         onPressed: () {
                           Navigator.pop(context);
+                          // Pop back to home screen and trigger a reload
                           Navigator.of(context).popUntil((route) => route.isFirst);
                         },
                         child: const Text(
