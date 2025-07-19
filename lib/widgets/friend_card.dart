@@ -110,60 +110,67 @@ class _FriendCardNewState extends State<FriendCardNew>
   }
 
   // Helper method to format next reminder text for expanded view
+// Helper method to format next reminder text for expanded view
   String _getNextReminderText(DateTime? nextReminder) {
     if (nextReminder == null) return 'No reminder scheduled';
 
     final now = DateTime.now();
     final difference = nextReminder.difference(now);
 
+    // Don't show overdue or negative times
     if (difference.isNegative) {
-      return 'Reminder overdue';
+      return 'Reminder is now';
     } else if (difference.inDays > 1) {
       return 'Next reminder in ${difference.inDays} days';
     } else if (difference.inDays == 1) {
-      return 'Next reminder tomorrow';
-    } else if (difference.inHours > 1) {
+      return 'Next reminder in 1 day';
+    } else if (difference.inHours >= 1) {
       return 'Next reminder in ${difference.inHours} hours';
-    } else if (difference.inMinutes > 1) {
+    } else if (difference.inMinutes >= 1) {
       return 'Next reminder in ${difference.inMinutes} minutes';
     } else {
-      return 'Reminder coming soon';
+      return 'Reminder is now';
     }
   }
-
   // Helper method to format concise reminder text for collapsed view badge
+// Helper method to format concise reminder text for collapsed view badge
+// Helper method to format concise reminder text for collapsed view badge
   String _getCollapsedReminderText(DateTime? nextReminder) {
     if (nextReminder == null) return 'No reminder';
 
     final now = DateTime.now();
     final difference = nextReminder.difference(now);
 
+    // If time has passed, don't show the badge (let it refresh to next occurrence)
     if (difference.isNegative) {
-      return 'Overdue';
+      return '';
     } else if (difference.inDays > 30) {
       final months = (difference.inDays / 30).round();
       return '${months}mo';
     } else if (difference.inDays > 1) {
       return '${difference.inDays}d';
     } else if (difference.inDays == 1) {
-      return 'Tomorrow';
-    } else if (difference.inHours > 1) {
+      return '1d';
+    } else if (difference.inHours >= 1) {
       return '${difference.inHours}h';
+    } else if (difference.inMinutes >= 1) {
+      return '${difference.inMinutes}m';
     } else {
-      return 'Soon';
+      return '';
     }
   }
 
   // Get badge color based on reminder urgency
+// Get badge color based on reminder urgency
+// Get badge color based on reminder urgency
   Color _getBadgeColor(DateTime? nextReminder) {
     if (nextReminder == null) return CupertinoColors.systemGrey;
 
     final now = DateTime.now();
     final difference = nextReminder.difference(now);
 
-    if (difference.isNegative) {
-      return CupertinoColors.systemRed;
-    } else if (difference.inDays == 0) {
+    // Don't show different colors for passed times, just treat as normal
+    if (difference.inDays == 0 && difference.inHours <= 1) {
       return AppColors.warning;
     } else if (difference.inDays <= 1) {
       return AppColors.primary;
@@ -173,15 +180,16 @@ class _FriendCardNewState extends State<FriendCardNew>
   }
 
   // Get badge background color based on reminder urgency
+// Get badge background color based on reminder urgency
+// Get badge background color based on reminder urgency
   Color _getBadgeBackgroundColor(DateTime? nextReminder) {
     if (nextReminder == null) return CupertinoColors.systemGrey6;
 
     final now = DateTime.now();
     final difference = nextReminder.difference(now);
 
-    if (difference.isNegative) {
-      return CupertinoColors.systemRed.withOpacity(0.1);
-    } else if (difference.inDays == 0) {
+    // Don't show different colors for passed times, just treat as normal
+    if (difference.inDays == 0 && difference.inHours <= 1) {
       return AppColors.warning.withOpacity(0.1);
     } else if (difference.inDays <= 1) {
       return AppColors.primaryLight;
@@ -613,6 +621,7 @@ class _FriendCardNewState extends State<FriendCardNew>
   }
 
   // Build the collapsed reminder badge with dynamic time display
+// Build the collapsed reminder badge with dynamic time display
   Widget _buildCollapsedReminderBadge() {
     if (_isLoadingReminderTime) {
       return Container(
@@ -646,19 +655,23 @@ class _FriendCardNewState extends State<FriendCardNew>
     Color backgroundColor;
 
     if (_nextReminderTime != null) {
-      badgeText = 'Reminder in ${_getCollapsedReminderText(_nextReminderTime)}';
+      final timeText = _getCollapsedReminderText(_nextReminderTime);
+
+      // If time has passed (empty string), don't show badge and refresh
+      if (timeText.isEmpty) {
+        // Trigger refresh of reminder time to get next occurrence
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _loadNextReminderTime();
+        });
+        return const SizedBox.shrink();
+      }
+
+      badgeText = timeText;
       badgeColor = _getBadgeColor(_nextReminderTime);
       backgroundColor = _getBadgeBackgroundColor(_nextReminderTime);
     } else {
       // Fallback to static interval display
-      String timeText = widget.friend.reminderDays <= 30
-          ? '${widget.friend.reminderDays}d'
-          : widget.friend.reminderDays == 60
-          ? '2mo'
-          : widget.friend.reminderDays == 90
-          ? '3mo'
-          : '6mo';
-      badgeText = 'Reminder in $timeText';
+      badgeText = widget.friend.reminderDisplayText.replaceAll('Every ', '').replaceAll(' on', '');
       badgeColor = AppColors.primary;
       backgroundColor = AppColors.primaryLight;
     }

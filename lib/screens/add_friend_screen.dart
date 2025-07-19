@@ -1109,15 +1109,14 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                         });
                         print("🕐 Time updated to: $newTime"); // Debug log
                       },
-                      onChanged: (daySelectionData) {
-                        setState(() {
-                          _daySelectionData = daySelectionData;
-                          if (daySelectionData != null) {
+                        onChanged: (daySelectionData) {
+                          setState(() {
+                            _daySelectionData = daySelectionData;
+                            // FIXED: Always clear reminderDays when using new system, whether null or not
                             _reminderDays = 0;
-                          }
-                        });
-                        print("📅 Day selection updated: ${daySelectionData?.getDescription()}"); // Debug log
-                      },
+                          });
+                          print("📅 Day selection updated: ${daySelectionData?.getDescription()}"); // Debug log
+                        },
                     ),
                   ),
 
