@@ -37,51 +37,86 @@ void callbackDispatcher() {
   });
 }
 
-// FIXED: Background notification with proper payload format
+// BULLETPROOF: Background notification with comprehensive error handling
 Future<void> _sendCleanBackgroundNotification(String friendId, String friendName, String reminderText) async {
   try {
+    // Validate inputs
+    if (friendId.isEmpty || friendName.isEmpty) {
+      print("❌ Invalid notification inputs: friendId='$friendId', friendName='$friendName'");
+      return;
+    }
+
     final notificationPlugin = FlutterLocalNotificationsPlugin();
 
+    // Initialize with timeout
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const initSettings = InitializationSettings(android: androidSettings);
-    await notificationPlugin.initialize(initSettings);
 
+    try {
+      await notificationPlugin.initialize(initSettings).timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          print("❌ Notification initialization timeout");
+          return false;
+        },
+      );
+    } catch (e) {
+      print("❌ Notification initialization failed: $e");
+      return;
+    }
+
+    // Generate safe notification ID
     final notificationId = friendName.hashCode.abs() % 999999 + 100000;
 
-    await notificationPlugin.show(
-      notificationId,
-      'Time to check in with $friendName',
-      reminderText,
-      NotificationDetails(
-        android: AndroidNotificationDetails(
-          'alongside_reminders',
-          'Friend Reminders',
-          channelDescription: 'Reminders to check in with friends',
-          importance: Importance.high,
-          priority: Priority.high,
-          icon: '@mipmap/ic_launcher',
-          autoCancel: true,
-          showWhen: true,
-          actions: <AndroidNotificationAction>[
-            AndroidNotificationAction(
-              'message',
-              'Message',
-              showsUserInterface: true,
-              cancelNotification: true,
-            ),
-            AndroidNotificationAction(
-              'call',
-              'Call',
-              showsUserInterface: true,
-              cancelNotification: true,
-            ),
-          ],
+    // Sanitize text inputs
+    final safeReminderText = reminderText.isNotEmpty ? reminderText : 'Time to check in';
+    final safeFriendName = friendName.length > 50 ? friendName.substring(0, 50) : friendName;
+
+    try {
+      await notificationPlugin.show(
+        notificationId,
+        'Time to check in with $safeFriendName',
+        safeReminderText,
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            'alongside_reminders',
+            'Friend Reminders',
+            channelDescription: 'Reminders to check in with friends',
+            importance: Importance.high,
+            priority: Priority.high,
+            icon: '@mipmap/ic_launcher',
+            autoCancel: true,
+            showWhen: true,
+            actions: <AndroidNotificationAction>[
+              AndroidNotificationAction(
+                'message',
+                'Message',
+                showsUserInterface: true,
+                cancelNotification: true,
+              ),
+              AndroidNotificationAction(
+                'call',
+                'Call',
+                showsUserInterface: true,
+                cancelNotification: true,
+              ),
+            ],
+          ),
         ),
-      ),
-      payload: '$friendId|reminder', // FIXED: Consistent payload format
-    );
+        payload: '$friendId|reminder',
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          print("❌ Notification show timeout for $friendId");
+        },
+      );
+
+      print("✅ Background notification sent for $safeFriendName");
+    } catch (e) {
+      print("❌ Failed to show notification for $friendId: $e");
+    }
   } catch (e) {
-    // Silent error handling
+    print("❌ Critical error in background notification: $e");
   }
 }
 
@@ -216,22 +251,66 @@ class NotificationService {
   }
 
   // FIXED: Proper notification response handling with consistent payload parsing
+// FIXED: Proper notification response handling with default to message
+// BULLETPROOF: Notification response handling with comprehensive validation
   void _handleNotificationResponse(NotificationResponse response) {
-    print("🔔 FOREGROUND: ${response.payload}, Action: ${response.actionId}");
+    try {
+      print("🔔 FOREGROUND: ${response.payload}, Action: ${response.actionId}");
 
-    final String? payload = response.payload;
-    final String? actionId = response.actionId;
+      // Validate callback exists
+      if (_actionCallback == null) {
+        print("❌ No action callback set - cannot handle notification");
+        return;
+      }
 
-    if (payload == null || payload.isEmpty) return;
+      // Validate payload
+      final String? payload = response.payload;
+      if (payload == null || payload.isEmpty || payload.trim().isEmpty) {
+        print("❌ Invalid or empty payload");
+        return;
+      }
 
-    // Parse payload - handle both formats: "friendId|type" and just "friendId"
-    final parts = payload.split('|');
-    final friendId = parts[0];
+      // Parse payload safely
+      final parts = payload.split('|');
+      if (parts.isEmpty) {
+        print("❌ Malformed payload: $payload");
+        return;
+      }
 
-    if (friendId.isNotEmpty) {
-      final action = actionId ?? "tap"; // Use actionId if available, otherwise default to "tap"
-      print("🔔 Calling callback with friendId: $friendId, action: $action");
-      _actionCallback?.call(friendId, action);
+      final friendId = parts[0].trim();
+      if (friendId.isEmpty) {
+        print("❌ Empty friendId in payload: $payload");
+        return;
+      }
+
+      // Validate and sanitize action
+      final String? actionId = response.actionId;
+      String finalAction;
+
+      if (actionId != null && actionId.isNotEmpty) {
+        // Validate known actions
+        if (actionId == 'call' || actionId == 'message') {
+          finalAction = actionId;
+        } else {
+          print("⚠️ Unknown actionId '$actionId', defaulting to message");
+          finalAction = 'message';
+        }
+      } else {
+        // Default to message for tap without action button
+        finalAction = 'message';
+      }
+
+      print("🔔 Calling callback with friendId: $friendId, action: $finalAction");
+
+      // Call with timeout protection
+      try {
+        _actionCallback!(friendId, finalAction);
+      } catch (e) {
+        print("❌ Error in notification callback: $e");
+      }
+
+    } catch (e) {
+      print("❌ Critical error handling notification response: $e");
     }
   }
 

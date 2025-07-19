@@ -46,30 +46,86 @@ void main() async {
 }
 
 // FIXED: Global notification handler that respects lock screen flow
+// FIXED: Global notification handler that respects lock screen flow and defaults to message
+// BULLETPROOF: Global notification handler with comprehensive error handling
 void _handleNotificationAction(String friendId, String action) async {
-  print("🔔 Notification action: Friend=$friendId, Action=$action");
+  try {
+    print("🔔 Notification action: Friend=$friendId, Action=$action");
 
-  // Wait for navigator
-  int attempts = 0;
-  while (navigatorKey.currentState == null && attempts < 50) {
-    await Future.delayed(const Duration(milliseconds: 100));
-    attempts++;
+    // Validate inputs
+    if (friendId.isEmpty) {
+      print("❌ Empty friendId - cannot process notification");
+      return;
+    }
+
+    // Sanitize action with whitelist
+    String finalAction;
+    if (action == 'call' || action == 'message') {
+      finalAction = action;
+    } else {
+      print("🔄 Action '$action' not recognized, defaulting to 'message'");
+      finalAction = 'message';
+    }
+
+    // Wait for navigator with timeout and retry logic
+    int attempts = 0;
+    const maxAttempts = 100; // 10 seconds max wait
+    const delayMs = 100;
+
+    while (navigatorKey.currentState == null && attempts < maxAttempts) {
+      await Future.delayed(const Duration(milliseconds: delayMs));
+      attempts++;
+
+      if (attempts % 20 == 0) {
+        print("⏳ Still waiting for navigator... attempt $attempts");
+      }
+    }
+
+    if (navigatorKey.currentState == null) {
+      print("❌ Navigator not ready after ${maxAttempts * delayMs}ms - aborting notification action");
+      return;
+    }
+
+    // Store pending action with error handling
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('pending_notification_action', '$friendId|$finalAction');
+      print("💾 Stored pending action: $friendId|$finalAction");
+    } catch (e) {
+      print("❌ Failed to store pending action: $e");
+      // Continue anyway - we'll try to handle without stored action
+    }
+
+    // Navigate with error handling
+    try {
+      final navigator = navigatorKey.currentState!;
+
+      // Safely pop to first route
+      try {
+        navigator.popUntil((route) => route.isFirst);
+      } catch (e) {
+        print("⚠️ Error popping routes: $e");
+        // Continue to push notification route anyway
+      }
+
+      // Push notification route
+      await navigator.pushNamed('/notification');
+      print("✅ Navigated to notification router");
+
+    } catch (e) {
+      print("❌ Navigation failed: $e");
+
+      // Fallback: try to at least get to home screen
+      try {
+        navigatorKey.currentState?.pushNamedAndRemoveUntil('/', (route) => false);
+      } catch (fallbackError) {
+        print("❌ Fallback navigation also failed: $fallbackError");
+      }
+    }
+
+  } catch (e) {
+    print("❌ Critical error in notification action handler: $e");
   }
-
-  if (navigatorKey.currentState == null) {
-    print("❌ Navigator not ready");
-    return;
-  }
-
-  // Store the intended action for after lock screen (if needed)
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.setString('pending_notification_action', '$friendId|$action');
-
-  print("💾 Stored pending action: $friendId|$action");
-
-  // Navigate to notification router (which will handle lock screen flow)
-  navigatorKey.currentState!.popUntil((route) => route.isFirst);
-  navigatorKey.currentState!.pushNamed('/notification');
 }
 
 class AlongsideApp extends StatefulWidget {
@@ -321,100 +377,172 @@ class _NotificationRouterScreenState extends State<NotificationRouterScreen> {
     print("🔔 Processing notification in router...");
 
     try {
-      // FIXED: Check if lock screen should be shown first
-      final lockService = LockService();
-      final shouldShowLock = await lockService.shouldShowLockScreen();
+      // Handle lock screen with timeout
+      try {
+        final lockService = LockService();
+        final shouldShowLock = await lockService.shouldShowLockScreen().timeout(
+          const Duration(seconds: 5),
+          onTimeout: () {
+            print("⚠️ Lock check timeout - assuming no lock needed");
+            return false;
+          },
+        );
 
-      if (shouldShowLock) {
-        print("🔒 Lock required - showing lock screen first");
+        if (shouldShowLock && mounted) {
+          print("🔒 Lock required - showing lock screen first");
 
-        if (mounted) {
-          // Show lock screen and wait for unlock
-          final unlocked = await Navigator.push<bool>(
-            context,
-            CupertinoPageRoute(
-              builder: (context) => LockScreen(
-                onUnlocked: () {
-                  Navigator.pop(context, true);
-                },
+          try {
+            final unlocked = await Navigator.push<bool>(
+              context,
+              CupertinoPageRoute(
+                builder: (context) => LockScreen(
+                  onUnlocked: () {
+                    Navigator.pop(context, true);
+                  },
+                ),
               ),
-            ),
-          );
+            );
 
-          if (unlocked != true) {
-            // User didn't unlock - go to home
-            if (mounted) {
-              Navigator.pushReplacementNamed(context, '/');
+            if (unlocked != true) {
+              print("🔒 User cancelled unlock - going to home");
+              if (mounted) {
+                Navigator.pushReplacementNamed(context, '/');
+              }
+              return;
             }
-            return;
-          }
 
-          // Clear background time after successful unlock
-          await lockService.clearBackgroundTime();
+            // Clear background time after successful unlock
+            try {
+              await lockService.clearBackgroundTime();
+            } catch (e) {
+              print("⚠️ Failed to clear background time: $e");
+            }
+          } catch (e) {
+            print("❌ Lock screen error: $e - proceeding without lock");
+          }
         }
+      } catch (e) {
+        print("❌ Lock service error: $e - proceeding without lock check");
       }
 
-      // Process the pending notification action
-      final prefs = await SharedPreferences.getInstance();
-      final pendingAction = prefs.getString('pending_notification_action');
+      // Process pending action with comprehensive error handling
+      String? friendId;
+      String? action;
 
-      if (pendingAction != null && mounted) {
-        await prefs.remove('pending_notification_action');
-        final parts = pendingAction.split('|');
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final pendingAction = prefs.getString('pending_notification_action');
 
-        if (parts.length == 2) {
-          final friendId = parts[0];
-          final action = parts[1];
+        if (pendingAction != null && pendingAction.isNotEmpty) {
+          // Clean up immediately to prevent reprocessing
+          try {
+            await prefs.remove('pending_notification_action');
+          } catch (e) {
+            print("⚠️ Failed to remove pending action: $e");
+          }
 
-          print("🔔 Processing action: $action for friend: $friendId");
+          final parts = pendingAction.split('|');
+          if (parts.length >= 2 && parts[0].isNotEmpty) {
+            friendId = parts[0].trim();
+            action = parts[1].trim();
 
+            // Validate action
+            if (action != 'call' && action != 'message') {
+              print("🔄 Invalid action '$action', defaulting to 'message'");
+              action = 'message';
+            }
+
+            print("🔔 Processing action: $action for friend: $friendId");
+          } else {
+            print("❌ Invalid pending action format: $pendingAction");
+          }
+        } else {
+          print("🔔 No pending notification action found");
+        }
+      } catch (e) {
+        print("❌ Error reading pending action: $e");
+      }
+
+      // Handle the action if we have valid data
+      if (friendId != null && action != null && mounted) {
+        try {
           final provider = Provider.of<FriendsProvider>(context, listen: false);
           final friend = provider.getFriendById(friendId);
 
           if (friend != null) {
-            // CRITICAL: Record interaction time using notification service
-            final notificationService = NotificationService();
-            await notificationService.recordFriendInteraction(friendId);
-
-            print("✅ Recorded notification interaction for ${friend.name}");
+            // Record interaction with error handling
+            try {
+              final notificationService = NotificationService();
+              await notificationService.recordFriendInteraction(friendId);
+              print("✅ Recorded notification interaction for ${friend.name}");
+            } catch (e) {
+              print("⚠️ Failed to record interaction: $e");
+            }
 
             if (mounted) {
-              if (action == 'message') {
-                Navigator.pushReplacement(
-                  context,
-                  CupertinoPageRoute(
-                    builder: (context) => MessageScreenNew(friend: friend),
-                  ),
-                );
-                return;
-              } else if (action == 'call') {
-                // FIXED: Bypass call screen - launch phone directly
-                await _launchPhoneCall(friend);
+              if (action == 'call') {
+                // Handle call action
+                try {
+                  await _launchPhoneCall(friend);
+                  print("📞 Phone call launched for ${friend.name}");
+                } catch (e) {
+                  print("❌ Failed to launch phone call: $e");
+                }
 
-                // Go to home screen after launching call
-                Navigator.pushReplacementNamed(context, '/');
+                // Always go to home after call attempt
+                if (mounted) {
+                  Navigator.pushReplacementNamed(context, '/');
+                }
                 return;
+
+              } else {
+                // Handle message action (default)
+                try {
+                  Navigator.pushReplacement(
+                    context,
+                    CupertinoPageRoute(
+                      builder: (context) => MessageScreenNew(friend: friend),
+                    ),
+                  );
+                  return;
+                } catch (e) {
+                  print("❌ Failed to navigate to message screen: $e");
+                }
               }
             }
           } else {
             print("❌ Friend not found for ID: $friendId");
           }
-        } else {
-          print("❌ Invalid pending action format: $pendingAction");
+        } catch (e) {
+          print("❌ Error processing friend action: $e");
         }
-      } else {
-        print("🔔 No pending notification action found");
       }
 
-      // Default: go to home screen
+      // Fallback: always try to get to a safe state
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/');
+        try {
+          Navigator.pushReplacementNamed(context, '/');
+        } catch (e) {
+          print("❌ Final fallback navigation failed: $e");
+          // Last resort: pop current route
+          try {
+            Navigator.of(context).pop();
+          } catch (popError) {
+            print("❌ Even pop failed: $popError");
+          }
+        }
       }
 
     } catch (e) {
-      print("❌ Error processing notification: $e");
+      print("❌ Critical error processing notification: $e");
+
+      // Emergency fallback
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/');
+        try {
+          Navigator.pushReplacementNamed(context, '/');
+        } catch (emergencyError) {
+          print("❌ Emergency navigation failed: $emergencyError");
+        }
       }
     }
   }
