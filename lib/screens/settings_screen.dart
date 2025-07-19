@@ -100,51 +100,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 const SizedBox(height: 16),
 
-                // NOTIFICATIONS section
-                _buildSectionTitle('NOTIFICATIONS'),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: CupertinoColors.systemGrey5,
-                      width: 0.5,
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      _buildSettingsItem(
-                        context,
-                        icon: CupertinoIcons.bell_circle,
-                        iconColor: AppColors.primary,
-                        title: 'Test Notifications',
-                        subtitle: 'Test immediate and scheduled reminders',
-                        onTap: () => _testAllNotifications(context),
-                        showChevron: false,
-                      ),
-                      _buildDivider(),
-                      _buildSettingsItem(
-                        context,
-                        icon: CupertinoIcons.calendar,
-                        iconColor: AppColors.secondary,
-                        title: 'View Scheduled Reminders',
-                        subtitle: 'See upcoming friend reminders',
-                        onTap: () => _showScheduledNotifications(context),
-                      ),
-                      _buildDivider(),
-                      _buildSettingsItem(
-                        context,
-                        icon: CupertinoIcons.checkmark_shield,
-                        iconColor: AppColors.success,
-                        title: 'Check Permissions',
-                        subtitle: 'Verify notification settings',
-                        onTap: () => _checkPermissions(context),
-                      ),
-                    ],
-                  ),
-                ),
 
-                const SizedBox(height: 24),
 
                 // Security section
                 _buildSectionTitle('SECURITY'),
