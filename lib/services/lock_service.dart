@@ -1,4 +1,4 @@
-// lib/services/lock_service.dart - REPLACE ENTIRE FILE
+// COMPLETE REPLACEMENT for lib/services/lock_service.dart
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:local_auth/local_auth.dart';
@@ -85,7 +85,49 @@ class LockService {
     return shouldLock;
   }
 
-  // Enable biometric lock with proper authentication check
+  // FIXED: Enable biometric lock without immediate authentication test
+  Future<BiometricSetupResult> enableBiometricLockWithoutTest() async {
+    try {
+      // Check if biometric is available
+      final isAvailable = await _localAuth.canCheckBiometrics;
+      final isDeviceSupported = await _localAuth.isDeviceSupported();
+
+      if (!isAvailable || !isDeviceSupported) {
+        return BiometricSetupResult(
+          success: false,
+          error: 'Biometric authentication is not available on this device',
+        );
+      }
+
+      // Get available biometrics
+      final availableBiometrics = await _localAuth.getAvailableBiometrics();
+
+      if (availableBiometrics.isEmpty) {
+        return BiometricSetupResult(
+          success: false,
+          error: 'No biometric data enrolled. Please set up Face ID or Touch ID in device settings',
+        );
+      }
+
+      // FIXED: Don't authenticate during setup - just enable it
+      // Save settings directly without authentication test
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_lockEnabledKey, true);
+      await prefs.setString(_lockTypeKey, 'biometric');
+
+      print("🔐 Biometric lock enabled without authentication test");
+      return BiometricSetupResult(success: true);
+
+    } catch (e) {
+      print("🔐 Biometric setup error: $e");
+      return BiometricSetupResult(
+        success: false,
+        error: 'Failed to set up biometric lock: ${e.toString()}',
+      );
+    }
+  }
+
+  // Enable biometric lock with proper authentication check (original method)
   Future<BiometricSetupResult> enableBiometricLock() async {
     try {
       // Check if biometric is available
@@ -109,13 +151,13 @@ class LockService {
         );
       }
 
-      // Authenticate to confirm biometric setup - THIS IS THE KEY FIX
+      // Authenticate to confirm biometric setup
       try {
         final authenticated = await _localAuth.authenticate(
           localizedReason: 'Authenticate to enable biometric lock for Alongside',
           options: const AuthenticationOptions(
             stickyAuth: true,
-            biometricOnly: false, // CHANGED: Allow fallback to device credential
+            biometricOnly: false, // Allow fallback to device credential
             sensitiveTransaction: true,
             useErrorDialogs: true,
           ),
@@ -170,15 +212,26 @@ class LockService {
     }
   }
 
-  // Enable PIN lock
+  // UPDATED: Enhanced PIN validation for exactly 4 digits
   Future<bool> enablePinLock(String pin) async {
-    if (pin.length < 4) return false;
+    // Strict validation: exactly 4 digits
+    if (pin.length != 4 || !RegExp(r'^\d{4}$').hasMatch(pin)) {
+      print("🔐 Invalid PIN format: must be exactly 4 digits");
+      return false;
+    }
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_lockEnabledKey, true);
-    await prefs.setString(_lockTypeKey, 'pin');
-    await prefs.setString(_lockPinKey, pin);
-    return true;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_lockEnabledKey, true);
+      await prefs.setString(_lockTypeKey, 'pin');
+      await prefs.setString(_lockPinKey, pin);
+
+      print("🔐 4-digit PIN lock enabled successfully");
+      return true;
+    } catch (e) {
+      print("🔐 Error enabling PIN lock: $e");
+      return false;
+    }
   }
 
   // Disable lock
@@ -190,7 +243,7 @@ class LockService {
     await prefs.remove(_backgroundTimeKey);
   }
 
-  // Authenticate with biometric - FIXED
+  // Authenticate with biometric - FIXED for Android
   Future<bool> authenticateBiometric() async {
     try {
       // Check if biometric is available first
@@ -209,12 +262,12 @@ class LockService {
         return false;
       }
 
-      // Authenticate with proper options
+      // Authenticate with Android-friendly options
       final authenticated = await _localAuth.authenticate(
-        localizedReason: 'Authenticate to access Alongside',
+        localizedReason: 'Authenticate to unlock Alongside',
         options: const AuthenticationOptions(
           stickyAuth: true,
-          biometricOnly: false, // Allow fallback to device credential
+          biometricOnly: false, // CRITICAL: Allow fallback on Android
           useErrorDialogs: true,
           sensitiveTransaction: false,
         ),

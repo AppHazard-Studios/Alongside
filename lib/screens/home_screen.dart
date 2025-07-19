@@ -761,72 +761,477 @@ class _HomeScreenNewState extends State<HomeScreenNew>
     );
   }
 
+  Widget _buildFloatingActionButton() {
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 600),
+      curve: Curves.elasticOut,
+      builder: (context, value, child) {
+        return Transform.scale(
+          scale: value,
+          child: child,
+        );
+      },
+      child: Container(
+        width: ResponsiveUtils.scaledContainerSize(context, 64),
+        height: ResponsiveUtils.scaledContainerSize(context, 64),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.primary,
+              AppColors.primary.withOpacity(0.8),
+            ],
+          ),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withOpacity(0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+              spreadRadius: 2,
+            ),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: CupertinoButton(
+          padding: EdgeInsets.zero,
+          onPressed: () => _navigateToAddFriend(context),
+          child: Icon(
+            CupertinoIcons.add,
+            size: ResponsiveUtils.scaledIconSize(context, 30),
+            color: CupertinoColors.white,
+            semanticLabel: 'Add new friend',
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMainGreetingCard(List<Friend> allFriends, List<Friend> favoriteFriends) {
+    final hour = DateTime.now().hour;
+    String greeting;
+    IconData iconData;
+    Color greetingColor;
+
+    if (hour < 12) {
+      greeting = "Good morning";
+      iconData = CupertinoIcons.sun_max_fill;
+      greetingColor = AppColors.morningColor;
+    } else if (hour < 17) {
+      greeting = "Good afternoon";
+      iconData = CupertinoIcons.sun_min_fill;
+      greetingColor = AppColors.afternoonColor;
+    } else {
+      greeting = "Good evening";
+      iconData = CupertinoIcons.moon_stars_fill;
+      greetingColor = AppColors.eveningColor;
+    }
+
+    return Container(
+      margin: EdgeInsets.only(
+          bottom: ResponsiveUtils.scaledSpacing(context, 20)),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            CupertinoColors.white,
+            CupertinoColors.white.withOpacity(0.95),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+            spreadRadius: 2,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(
+          color: AppColors.primary.withOpacity(0.1),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Greeting and stats section
+          ResponsiveUtils.needsCompactLayout(context)
+              ? Column(
+            children: [
+              _buildGreetingSection(
+                  greeting, iconData, greetingColor,
+                  allFriends: allFriends),
+              SizedBox(
+                  height: ResponsiveUtils.scaledSpacing(
+                      context, 20)),
+              _buildStatsRow(allFriends),
+            ],
+          )
+              : Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: _buildGreetingSection(
+                      greeting, iconData, greetingColor,
+                      allFriends: allFriends),
+                ),
+                const SizedBox(width: 20),
+                Column(
+                  children: [
+                    _buildStatsRow(allFriends),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // Favorites section with enhanced design
+          if (favoriteFriends.isNotEmpty) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Container(
+                height: 1,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.transparent,
+                      AppColors.primary.withOpacity(0.2),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppColors.warning.withOpacity(0.8),
+                              AppColors.warning,
+                            ],
+                          ),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          CupertinoIcons.star_fill,
+                          size: 16,
+                          color: CupertinoColors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Favorites',
+                        style: TextStyle(
+                          fontSize:
+                          ResponsiveUtils.scaledFontSize(context, 18),
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                          fontFamily: '.SF Pro Text',
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(
+                      height:
+                      ResponsiveUtils.scaledSpacing(context, 16)),
+                  SizedBox(
+                    height: ResponsiveUtils.scaledContainerSize(context, 85),
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: EdgeInsets.symmetric(
+                          horizontal: ResponsiveUtils.scaledSpacing(context, 4)),
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: favoriteFriends.length + 1,
+                      itemBuilder: (context, index) {
+                        if (index < favoriteFriends.length) {
+                          final friend = favoriteFriends[index];
+                          return Padding(
+                            padding: EdgeInsets.only(
+                              right: ResponsiveUtils.scaledSpacing(context, 12),
+                            ),
+                            child: _buildEnhancedFavoriteStory(friend),
+                          );
+                        } else {
+                          return _buildEnhancedAddFavoriteButton();
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEnhancedFavoriteStory(Friend friend) {
+    final firstName = friend.name.split(' ').first;
+    final containerSize = ResponsiveUtils.scaledContainerSize(context, 64);
+    final iconSize = ResponsiveUtils.scaledIconSize(context, 28);
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        _showFavoriteOptions(context, friend);
+      },
+      child: SizedBox(
+        width: containerSize + 16,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: containerSize,
+              height: containerSize,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.primary,
+                    AppColors.primary.withOpacity(0.8),
+                  ],
+                ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Container(
+                margin: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  color: friend.isEmoji
+                      ? CupertinoColors.systemGrey6
+                      : CupertinoColors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: ClipOval(
+                  child: friend.isEmoji
+                      ? Center(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Padding(
+                        padding: const EdgeInsets.all(6),
+                        child: Text(
+                          friend.profileImage,
+                          style: TextStyle(fontSize: iconSize),
+                          semanticsLabel: 'Profile emoji',
+                        ),
+                      ),
+                    ),
+                  )
+                      : Image.file(
+                    File(friend.profileImage),
+                    fit: BoxFit.cover,
+                    semanticLabel: 'Profile picture',
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 8)),
+            Flexible(
+              child: Text(
+                firstName,
+                style: TextStyle(
+                  fontSize: ResponsiveUtils.scaledFontSize(context, 13,
+                      maxScale: 1.2),
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                  fontFamily: '.SF Pro Text',
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                semanticsLabel: 'Friend name: ${friend.name}',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+// NEW: Enhanced add favorite button
+  Widget _buildEnhancedAddFavoriteButton() {
+    final containerSize = ResponsiveUtils.scaledContainerSize(context, 64);
+    final iconSize = ResponsiveUtils.scaledIconSize(context, 28);
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        final provider = Provider.of<FriendsProvider>(context, listen: false);
+        _showAddFavoriteDialog(context, provider.friends);
+      },
+      child: SizedBox(
+        width: containerSize + 16,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: containerSize,
+              height: containerSize,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    CupertinoColors.systemGrey6,
+                    CupertinoColors.systemGrey5,
+                  ],
+                ),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.primary.withOpacity(0.3),
+                  width: 2,
+                  style: BorderStyle.solid,
+                ),
+              ),
+              child: Icon(
+                CupertinoIcons.add,
+                color: AppColors.primary,
+                size: iconSize,
+              ),
+            ),
+            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 8)),
+            Flexible(
+              child: Text(
+                'Add',
+                style: TextStyle(
+                  fontSize: ResponsiveUtils.scaledFontSize(context, 13,
+                      maxScale: 1.2),
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                  fontFamily: '.SF Pro Text',
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+// UPDATED: Enhanced greeting section with gradient and better styling
   Widget _buildGreetingSection(
       String greeting, IconData iconData, Color greetingColor,
       {required List<Friend> allFriends}) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: ResponsiveUtils.scaledContainerSize(context, 40),
-          height: ResponsiveUtils.scaledContainerSize(context, 40),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                greetingColor.withOpacity(0.7),
-                greetingColor,
+    return Container(
+      padding: ResponsiveUtils.scaledPadding(
+        context,
+        const EdgeInsets.all(20),
+      ),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            greetingColor.withOpacity(0.05),
+            greetingColor.withOpacity(0.15),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: greetingColor.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Enhanced icon with gradient background
+          Container(
+            width: ResponsiveUtils.scaledContainerSize(context, 48),
+            height: ResponsiveUtils.scaledContainerSize(context, 48),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  greetingColor.withOpacity(0.8),
+                  greetingColor,
+                ],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: greetingColor.withOpacity(0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
               ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: greetingColor.withOpacity(0.3),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
+            child: Icon(
+              iconData,
+              color: CupertinoColors.white,
+              size: ResponsiveUtils.scaledIconSize(context, 24),
+              semanticLabel: greeting,
+            ),
           ),
-          child: Icon(
-            iconData,
-            color: CupertinoColors.white,
-            size: ResponsiveUtils.scaledIconSize(context, 20),
-            semanticLabel: greeting,
-          ),
-        ),
-        SizedBox(width: ResponsiveUtils.scaledSpacing(context, 12)),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                greeting,
-                style: TextStyle(
-                  fontSize: ResponsiveUtils.scaledFontSize(context, 20,
-                      maxScale: 1.4),
-                  fontWeight: FontWeight.w700,
-                  color: CupertinoColors.label,
-                  fontFamily: '.SF Pro Text',
+          SizedBox(width: ResponsiveUtils.scaledSpacing(context, 16)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  greeting,
+                  style: TextStyle(
+                    fontSize: ResponsiveUtils.scaledFontSize(context, 22,
+                        maxScale: 1.4),
+                    fontWeight: FontWeight.w800,
+                    color: CupertinoColors.label,
+                    fontFamily: '.SF Pro Text',
+                  ),
                 ),
-              ),
-              SizedBox(height: ResponsiveUtils.scaledSpacing(context, 2)),
-              Text(
-                "Lorem ipsum dolor sit",
-                style: TextStyle(
-                  fontSize:
-                  ResponsiveUtils.scaledFontSize(context, 14, maxScale: 1.3),
-                  color: AppColors.textSecondary,
-                  fontFamily: '.SF Pro Text',
-                  height: 1.2,
+                SizedBox(height: ResponsiveUtils.scaledSpacing(context, 4)),
+                Text(
+                  "Ready to reach out to someone today?",
+                  style: TextStyle(
+                    fontSize:
+                    ResponsiveUtils.scaledFontSize(context, 15, maxScale: 1.3),
+                    color: AppColors.textSecondary,
+                    fontFamily: '.SF Pro Text',
+                    height: 1.3,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -859,33 +1264,51 @@ class _HomeScreenNewState extends State<HomeScreenNew>
     required String value,
     required Color color,
   }) {
-    final iconSize = ResponsiveUtils.scaledIconSize(context, 16);
-    final fontSize = ResponsiveUtils.scaledFontSize(context, 16, maxScale: 1.3);
+    final iconSize = ResponsiveUtils.scaledIconSize(context, 18);
+    final fontSize = ResponsiveUtils.scaledFontSize(context, 18, maxScale: 1.3);
     final padding = ResponsiveUtils.scaledPadding(
       context,
-      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     );
 
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(10),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            color.withOpacity(0.08),
+            color.withOpacity(0.15),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: color.withOpacity(0.2),
+          width: 1,
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            color: color,
-            size: iconSize,
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              color: color,
+              size: iconSize,
+            ),
           ),
-          SizedBox(height: ResponsiveUtils.scaledSpacing(context, 2)),
+          SizedBox(height: ResponsiveUtils.scaledSpacing(context, 6)),
           Text(
             value,
             style: TextStyle(
               fontSize: fontSize,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w800,
               color: color,
               fontFamily: '.SF Pro Text',
             ),

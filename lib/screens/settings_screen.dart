@@ -999,13 +999,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    CupertinoIcons.lock_shield_fill,
+                    CupertinoIcons.lock_shield,
                     color: CupertinoColors.systemBlue,
                     size: 20,
                   ),
                   SizedBox(width: 8),
                   Text(
-                    'Biometric Lock (Fingerprint/Face)',
+                    'Biometric Lock (Face ID / Touch ID)',
                     style: TextStyle(
                       fontSize: 16,
                       fontFamily: '.SF Pro Text',
@@ -1029,7 +1029,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 SizedBox(width: 8),
                 Text(
-                  'PIN Lock (4-8 digits)',
+                  'PIN Lock (4 digits)',
                   style: TextStyle(
                     fontSize: 16,
                     fontFamily: '.SF Pro Text',
@@ -1044,7 +1044,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Navigator.pop(context);
                 _showDetailedErrorDialog(
                   'Biometric Not Available',
-                  'Your device does not support biometric authentication or no biometric data is enrolled. Please set up fingerprint or face authentication in your device settings first.',
+                  'Your device does not support biometric authentication or no biometric data is enrolled. Please set up Face ID or Touch ID in your device settings first.',
                 );
               },
               child: const Row(
@@ -1094,7 +1094,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) => CupertinoAlertDialog(
         title: const Text(
-          'Set PIN',
+          'Set 4-Digit PIN',
           style: TextStyle(
             color: AppColors.primary,
             fontWeight: FontWeight.w700,
@@ -1110,15 +1110,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
               CupertinoTextField(
                 controller: pinController,
                 focusNode: pinFocusNode,
-                placeholder: 'Enter PIN (min 4 digits)',
-                keyboardType: TextInputType.number, // Force number keyboard
+                placeholder: 'Enter 4-digit PIN',
+                keyboardType: TextInputType.number,
                 obscureText: true,
-                maxLength: 8,
+                maxLength: 4,
                 autofocus: true,
                 textAlign: TextAlign.center,
                 inputFormatters: [
-                  // CRITICAL: Only allow digits
                   FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(4),
                 ],
                 style: const TextStyle(
                   fontSize: 18,
@@ -1135,9 +1135,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                onSubmitted: (_) {
-                  // Move to confirm field
-                  confirmFocusNode.requestFocus();
+                onChanged: (value) {
+                  // Auto-move to confirm field when 4 digits entered
+                  if (value.length == 4) {
+                    confirmFocusNode.requestFocus();
+                  }
                 },
               ),
               const SizedBox(height: 12),
@@ -1146,13 +1148,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 controller: confirmController,
                 focusNode: confirmFocusNode,
                 placeholder: 'Confirm PIN',
-                keyboardType: TextInputType.number, // Force number keyboard
+                keyboardType: TextInputType.number,
                 obscureText: true,
-                maxLength: 8,
+                maxLength: 4,
                 textAlign: TextAlign.center,
                 inputFormatters: [
-                  // CRITICAL: Only allow digits
                   FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(4),
                 ],
                 style: const TextStyle(
                   fontSize: 18,
@@ -1170,7 +1172,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                 onSubmitted: (_) {
-                  // Try to set PIN when done
                   _processPinSetup(pinController.text, confirmController.text);
                   Navigator.pop(context);
                 },
@@ -1216,19 +1217,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   // ENHANCED: Process PIN setup with enhanced validation
   void _processPinSetup(String pin, String confirmPin) async {
-    // Validation
-    if (pin.length < 4) {
-      _showErrorSnackBar('PIN must be at least 4 digits');
-      return;
-    }
-
-    if (pin.length > 8) {
-      _showErrorSnackBar('PIN cannot be longer than 8 digits');
+    // Enhanced validation for exactly 4 digits
+    if (pin.length != 4) {
+      _showErrorSnackBar('PIN must be exactly 4 digits');
       return;
     }
 
     // Ensure PIN contains only digits
-    if (!RegExp(r'^\d+$').hasMatch(pin)) {
+    if (!RegExp(r'^\d{4}$').hasMatch(pin)) {
       _showErrorSnackBar('PIN must contain only numbers');
       return;
     }
@@ -1280,7 +1276,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
         if (success) {
           await _loadSettings();
-          _showSuccessSnackBar('PIN lock enabled successfully');
+          _showSuccessSnackBar('4-digit PIN enabled successfully');
         } else {
           _showErrorSnackBar('Failed to set PIN');
         }
@@ -1332,18 +1328,87 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     try {
-      final result = await _lockService.enableBiometricLock();
+      // First, just check if biometric is available
+      final isAvailable = await _lockService.isBiometricAvailable();
+
+      if (!isAvailable) {
+        if (mounted) {
+          Navigator.pop(context); // Close loading
+          _showDetailedErrorDialog(
+            'Biometric Not Available',
+            'Your device does not support biometric authentication or no biometric data is enrolled. Please set up Face ID or Touch ID in your device settings first.',
+          );
+        }
+        return;
+      }
+
+      // If available, enable it WITHOUT immediate authentication test
+      final result = await _lockService.enableBiometricLockWithoutTest();
 
       if (mounted) {
         Navigator.pop(context); // Close loading
 
         if (result.success) {
           await _loadSettings();
-          _showSuccessSnackBar('Biometric lock enabled successfully');
+
+          // Show success and offer to test
+          showCupertinoDialog(
+            context: context,
+            builder: (context) => CupertinoAlertDialog(
+              title: const Text(
+                'Biometric Lock Enabled',
+                style: TextStyle(
+                  color: AppColors.success,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 18,
+                  fontFamily: '.SF Pro Text',
+                ),
+              ),
+              content: const Padding(
+                padding: EdgeInsets.only(top: 16),
+                child: Text(
+                  'Biometric authentication has been enabled successfully. Would you like to test it now?',
+                  style: TextStyle(
+                    fontSize: 16,
+                    height: 1.4,
+                    color: CupertinoColors.label,
+                    fontFamily: '.SF Pro Text',
+                  ),
+                ),
+              ),
+              actions: [
+                CupertinoDialogAction(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    'Later',
+                    style: TextStyle(
+                      color: AppColors.secondary,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: '.SF Pro Text',
+                    ),
+                  ),
+                ),
+                CupertinoDialogAction(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _testBiometricAuthentication();
+                  },
+                  child: const Text(
+                    'Test Now',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: '.SF Pro Text',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
         } else {
           _showDetailedErrorDialog(
             'Biometric Setup Failed',
-            result.error ?? 'Unknown error occurred',
+            result.error ?? 'Unknown error occurred while setting up biometric authentication.',
           );
         }
       }
@@ -1353,6 +1418,103 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _showDetailedErrorDialog(
           'Biometric Setup Error',
           'Failed to set up biometric lock: ${e.toString()}',
+        );
+      }
+    }
+  }
+
+// NEW: Test biometric authentication separately
+  void _testBiometricAuthentication() async {
+    try {
+      showCupertinoDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => Center(
+          child: Container(
+            width: 140,
+            height: 120,
+            decoration: BoxDecoration(
+              color: CupertinoColors.black.withOpacity(0.8),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CupertinoActivityIndicator(
+                  color: CupertinoColors.white,
+                  radius: 14,
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Testing biometric\nauthentication...',
+                  style: TextStyle(
+                    color: CupertinoColors.white,
+                    fontSize: 14,
+                    fontFamily: '.SF Pro Text',
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      final authenticated = await _lockService.authenticateBiometric();
+
+      if (mounted) {
+        Navigator.pop(context); // Close loading
+
+        if (authenticated) {
+          _showSuccessSnackBar('Biometric authentication test successful! ✅');
+        } else {
+          showCupertinoDialog(
+            context: context,
+            builder: (context) => CupertinoAlertDialog(
+              title: const Text(
+                'Authentication Failed',
+                style: TextStyle(
+                  color: AppColors.warning,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 18,
+                  fontFamily: '.SF Pro Text',
+                ),
+              ),
+              content: const Padding(
+                padding: EdgeInsets.only(top: 16),
+                child: Text(
+                  'Biometric authentication failed, but the lock is still enabled. You may need to authenticate using your device passcode when the app locks.',
+                  style: TextStyle(
+                    fontSize: 16,
+                    height: 1.4,
+                    color: CupertinoColors.label,
+                    fontFamily: '.SF Pro Text',
+                  ),
+                ),
+              ),
+              actions: [
+                CupertinoDialogAction(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    'OK',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: '.SF Pro Text',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Close loading
+        _showDetailedErrorDialog(
+          'Test Failed',
+          'Could not test biometric authentication: ${e.toString()}',
         );
       }
     }
