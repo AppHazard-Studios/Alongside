@@ -1,4 +1,4 @@
-// lib/screens/home_screen.dart - Updated with ToastService
+// lib/screens/home_screen.dart - INTEGRATED FLOWING DESIGN
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/friends_provider.dart';
 import '../services/notification_service.dart';
-import '../services/toast_service.dart'; // ADD THIS IMPORT
+import '../services/toast_service.dart';
 import '../utils/responsive_utils.dart';
 import '../widgets/friend_card.dart';
 import '../utils/colors.dart';
@@ -42,10 +42,7 @@ class _HomeScreenNewState extends State<HomeScreenNew>
   bool _isSorting = false;
   List<Friend>? _originalFriendsOrder;
 
-  // Track if this is the first launch for onboarding
   bool _shouldShowOnboarding = false;
-
-  // Track stats
   int _messagesSent = 0;
   int _callsMade = 0;
 
@@ -89,7 +86,7 @@ class _HomeScreenNewState extends State<HomeScreenNew>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _loadStats(); // Refresh stats when app resumes
+      _loadStats();
     }
   }
 
@@ -106,10 +103,8 @@ class _HomeScreenNewState extends State<HomeScreenNew>
   }
 
   Future<void> _checkFirstLaunch() async {
-    // Check if user has any friends - if not, show onboarding
     final provider = Provider.of<FriendsProvider>(context, listen: false);
-    await Future.delayed(
-        const Duration(milliseconds: 500)); // Wait for provider to load
+    await Future.delayed(const Duration(milliseconds: 500));
     if (provider.friends.isEmpty && mounted) {
       setState(() {
         _shouldShowOnboarding = true;
@@ -128,8 +123,6 @@ class _HomeScreenNewState extends State<HomeScreenNew>
         _searchQuery = '';
       }
     });
-
-    // Haptic feedback
     HapticFeedback.lightImpact();
   }
 
@@ -137,7 +130,6 @@ class _HomeScreenNewState extends State<HomeScreenNew>
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    // Set first friend as expanded on first load
     if (_expandedFriendId == null) {
       final provider = Provider.of<FriendsProvider>(context, listen: false);
       if (!provider.isLoading && provider.friends.isNotEmpty) {
@@ -151,7 +143,6 @@ class _HomeScreenNewState extends State<HomeScreenNew>
       }
     }
 
-    // Force reload stats when returning from other screens
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadStats();
     });
@@ -159,7 +150,6 @@ class _HomeScreenNewState extends State<HomeScreenNew>
 
   @override
   Widget build(BuildContext context) {
-    // Show onboarding if needed
     if (_shouldShowOnboarding) {
       return OnboardingScreen(
         onComplete: () {
@@ -171,553 +161,115 @@ class _HomeScreenNewState extends State<HomeScreenNew>
     }
 
     return CupertinoPageScaffold(
-      backgroundColor: AppColors.background,
-      navigationBar: CupertinoNavigationBar(
-        middle: AnimatedBuilder(
-          animation: _searchAnimation,
-          builder: (context, child) {
-            return Stack(
-              alignment: Alignment.center,
-              children: [
-                // Title (fades out when searching)
-                IgnorePointer(
-                  child: Opacity(
-                    opacity: 1 - _searchAnimation.value,
-                    child: AnimatedBuilder(
-                      animation: _animation,
-                      builder: (context, child) {
-                        return Transform.scale(
-                          scale: _animation.value,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Alongside',
-                                style: TextStyle(
-                                  fontSize: ResponsiveUtils.scaledFontSize(
-                                      context, 22,
-                                      maxScale: 1.3),
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.primary,
-                                  fontFamily: '.SF Pro Text',
-                                ),
-                                semanticsLabel: 'Alongside App',
-                              ),
-                              SizedBox(
-                                  width:
-                                  ResponsiveUtils.scaledSpacing(context, 6)),
-                              TweenAnimationBuilder<double>(
-                                tween: Tween<double>(begin: 0.8, end: 1.0),
-                                duration: const Duration(milliseconds: 600),
-                                curve: Curves.elasticOut,
-                                builder: (context, value, child) {
-                                  return Transform.scale(
-                                    scale: value,
-                                    child: Container(
-                                      width: ResponsiveUtils.scaledContainerSize(
-                                          context, 24),
-                                      height:
-                                      ResponsiveUtils.scaledContainerSize(
-                                          context, 24),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.primaryLight,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Icon(
-                                        CupertinoIcons.heart_fill,
-                                        size: ResponsiveUtils.scaledIconSize(
-                                            context, 14),
-                                        color: AppColors.primary,
-                                        semanticLabel: 'Heart icon',
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-
-                // Search field (fades in when searching)
-                if (_isSearching)
-                  Opacity(
-                    opacity: _searchAnimation.value,
-                    child: Transform.translate(
-                      offset: Offset(0, 20 * (1 - _searchAnimation.value)),
-                      child: Container(
-                        constraints: BoxConstraints(
-                            maxWidth: MediaQuery.of(context).size.width * 0.6),
-                        child: CupertinoTextField(
-                          controller: _searchController,
-                          placeholder: 'Search friends...',
-                          autofocus: true,
-                          prefix: Padding(
-                            padding: EdgeInsets.only(
-                                left: ResponsiveUtils.scaledSpacing(context, 8)),
-                            child: Icon(
-                              CupertinoIcons.search,
-                              color: AppColors.textSecondary,
-                              size:
-                              ResponsiveUtils.scaledIconSize(context, 18),
-                            ),
-                          ),
-                          onChanged: (value) {
-                            setState(() {
-                              _searchQuery = value.toLowerCase();
-                            });
-                          },
-                          style: TextStyle(
-                            fontSize:
-                            ResponsiveUtils.scaledFontSize(context, 16),
-                            fontFamily: '.SF Pro Text',
-                          ),
-                          decoration: BoxDecoration(
-                            color: CupertinoColors.systemGrey6,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          padding: EdgeInsets.symmetric(
-                            vertical: ResponsiveUtils.scaledSpacing(context, 8),
-                            horizontal:
-                            ResponsiveUtils.scaledSpacing(context, 8),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            );
-          },
-        ),
-        backgroundColor: AppColors.background,
-        border: null,
-        leading: CupertinoButton(
-          padding: EdgeInsets.zero,
-          child: Container(
-            width: ResponsiveUtils.scaledContainerSize(context, 32),
-            height: ResponsiveUtils.scaledContainerSize(context, 32),
-            decoration: BoxDecoration(
-              color: AppColors.background,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.primary.withOpacity(0.3),
-                width: 1,
-              ),
-            ),
-            child: Icon(
-              _isSearching ? CupertinoIcons.xmark : CupertinoIcons.search,
-              size: ResponsiveUtils.scaledIconSize(context, 16),
-              color: AppColors.primary,
-              semanticLabel: _isSearching ? 'Close search' : 'Search friends',
-            ),
-          ),
-          onPressed: _toggleSearch,
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Sort toggle button
-            if (!_isSearching) ...[
-              CupertinoButton(
-                padding: EdgeInsets.zero,
-                child: Container(
-                  width: ResponsiveUtils.scaledContainerSize(context, 32),
-                  height: ResponsiveUtils.scaledContainerSize(context, 32),
-                  decoration: BoxDecoration(
-                    color: _isSortedByReminders
-                        ? AppColors.primary
-                        : AppColors.background,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.primary.withOpacity(0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: _isSorting
-                      ? CupertinoActivityIndicator(
-                    radius: 8,
-                    color: _isSortedByReminders
-                        ? CupertinoColors.white
-                        : AppColors.primary,
-                  )
-                      : Icon(
-                    CupertinoIcons.sort_down,
-                    size: ResponsiveUtils.scaledIconSize(context, 16),
-                    color: _isSortedByReminders
-                        ? CupertinoColors.white
-                        : AppColors.primary,
-                    semanticLabel: _isSortedByReminders
-                        ? 'Sorted by next reminder - tap for custom order'
-                        : 'Custom order - tap to sort by next reminder',
-                  ),
-                ),
-                onPressed: _isSorting ? null : _toggleSort,
-              ),
-              SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
-            ],
-            // Settings button
-            CupertinoButton(
-              padding: EdgeInsets.zero,
-              child: Container(
-                width: ResponsiveUtils.scaledContainerSize(context, 32),
-                height: ResponsiveUtils.scaledContainerSize(context, 32),
-                decoration: BoxDecoration(
-                  color: AppColors.background,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.primary.withOpacity(0.3),
-                    width: 1,
-                  ),
-                ),
-                child: Icon(
-                  CupertinoIcons.gear,
-                  size: ResponsiveUtils.scaledIconSize(context, 16),
-                  color: AppColors.primary,
-                  semanticLabel: 'Settings',
-                ),
-              ),
-              onPressed: () => _navigateToSettings(context),
-            ),
-          ],
-        ),
-      ),
+      backgroundColor: const Color(0xFFF8FAFC),
       child: Consumer<FriendsProvider>(
         builder: (context, friendsProvider, child) {
           if (friendsProvider.isLoading) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const CupertinoActivityIndicator(
-                    radius: 14,
-                  ),
-                  SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
-                  Text(
-                    'Loading your friends...',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-                      fontFamily: '.SF Pro Text',
-                    ),
-                    semanticsLabel: 'Loading your friends',
-                  ),
-                ],
-              ),
-            );
+            return _buildLoadingState();
           }
 
           final allFriends = friendsProvider.friends;
-
-          // Filter friends based on search query
           final friends = _searchQuery.isEmpty
               ? allFriends
               : allFriends.where((friend) {
             return friend.name.toLowerCase().contains(_searchQuery) ||
-                (friend.helpingWith
-                    ?.toLowerCase()
-                    .contains(_searchQuery) ??
-                    false) ||
-                (friend.theyHelpingWith
-                    ?.toLowerCase()
-                    .contains(_searchQuery) ??
-                    false);
+                (friend.helpingWith?.toLowerCase().contains(_searchQuery) ?? false) ||
+                (friend.theyHelpingWith?.toLowerCase().contains(_searchQuery) ?? false);
           }).toList();
 
           if (allFriends.isEmpty) {
             return _buildEmptyState(context);
           }
 
-          return _buildFriendsListWithIntegratedGreeting(
-              context, friends, allFriends);
+          return _buildIntegratedLayout(context, friends, allFriends);
         },
       ),
     );
   }
 
-  void _navigateToSettings(BuildContext context) {
-    HapticFeedback.lightImpact();
-    Navigator.push(
-      context,
-      CupertinoPageRoute(
-        builder: (context) => const SettingsScreen(),
-      ),
-    );
-  }
-
-  void _navigateToAddFriend(BuildContext context) {
-    HapticFeedback.mediumImpact();
-    Navigator.push(
-      context,
-      CupertinoPageRoute(
-        builder: (context) => const AddFriendScreen(),
-      ),
-    );
-  }
-
-  Widget _buildFriendsListWithIntegratedGreeting(BuildContext context,
-      List<Friend> filteredFriends, List<Friend> allFriends) {
-    final hour = DateTime.now().hour;
-    String greeting;
-    IconData iconData;
-    Color greetingColor;
-
-    if (hour < 12) {
-      greeting = "Good morning";
-      iconData = CupertinoIcons.sun_max_fill;
-      greetingColor = AppColors.morningColor;
-    } else if (hour < 17) {
-      greeting = "Good afternoon";
-      iconData = CupertinoIcons.sun_min_fill;
-      greetingColor = AppColors.afternoonColor;
-    } else {
-      greeting = "Good evening";
-      iconData = CupertinoIcons.moon_stars_fill;
-      greetingColor = AppColors.eveningColor;
-    }
-
-    final favoriteFriends =
-    allFriends.where((friend) => friend.isFavorite).toList();
-
-    // Show message if searching but no results
-    if (_searchQuery.isNotEmpty && filteredFriends.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              CupertinoIcons.search,
-              size: ResponsiveUtils.scaledIconSize(context, 48),
-              color: AppColors.textSecondary.withOpacity(0.5),
-            ),
-            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
-            Text(
-              'No friends found for "$_searchQuery"',
-              style: TextStyle(
-                fontSize: ResponsiveUtils.scaledFontSize(context, 18),
-                color: AppColors.textSecondary,
-                fontFamily: '.SF Pro Text',
-              ),
-            ),
-            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 8)),
-            CupertinoButton(
-              onPressed: () {
-                _searchController.clear();
-                setState(() {
-                  _searchQuery = '';
-                });
-              },
-              child: Text(
-                'Clear search',
-                style: TextStyle(
-                  color: AppColors.primary,
-                  fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-                  fontFamily: '.SF Pro Text',
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
+  // NEW: Integrated layout without separate nav bar
+  Widget _buildIntegratedLayout(BuildContext context, List<Friend> filteredFriends, List<Friend> allFriends) {
+    final favoriteFriends = allFriends.where((friend) => friend.isFavorite).toList();
 
     return Stack(
       children: [
+        // Main content with integrated header
         SafeArea(
           child: CustomScrollView(
             controller: _scrollController,
             slivers: [
+              // Integrated header that flows with content
               SliverToBoxAdapter(
-                  child: SizedBox(
-                      height: ResponsiveUtils.scaledSpacing(context, 12))),
-
-              // Only show greeting card when not searching
-              if (!_isSearching) ...[
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                        horizontal: ResponsiveUtils.scaledSpacing(context, 16)),
-                    child: Container(
-                      margin: EdgeInsets.only(
-                          bottom: ResponsiveUtils.scaledSpacing(context, 16)),
-                      padding: ResponsiveUtils.scaledPadding(
-                          context, const EdgeInsets.all(16)),
-                      decoration: BoxDecoration(
-                        color: CupertinoColors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: AppColors.subtleShadow,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Greeting and stats row - with better responsive layout
-                          ResponsiveUtils.needsCompactLayout(context)
-                              ? Column(
-                            children: [
-                              _buildGreetingSection(
-                                  greeting, iconData, greetingColor,
-                                  allFriends: allFriends),
-                              SizedBox(
-                                  height: ResponsiveUtils.scaledSpacing(
-                                      context, 16)),
-                              _buildStatsRow(allFriends),
-                            ],
-                          )
-                              : Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                flex: 3,
-                                child: _buildGreetingSection(
-                                    greeting, iconData, greetingColor,
-                                    allFriends: allFriends),
-                              ),
-                              _buildStatsRow(allFriends),
-                            ],
-                          ),
-
-                          // Favorites section
-                          if (favoriteFriends.isNotEmpty || true) ...[
-                            SizedBox(
-                                height:
-                                ResponsiveUtils.scaledSpacing(context, 16)),
-                            Text(
-                              'Favorites',
-                              style: TextStyle(
-                                fontSize:
-                                ResponsiveUtils.scaledFontSize(context, 16),
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.primary,
-                                fontFamily: '.SF Pro Text',
-                              ),
-                            ),
-                            SizedBox(
-                                height:
-                                ResponsiveUtils.scaledSpacing(context, 10)),
-                            SizedBox(
-                              height: ResponsiveUtils.scaledContainerSize(context, 80),
-                              child: ListView.builder(
-                                scrollDirection: Axis.horizontal,
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: ResponsiveUtils.scaledSpacing(context, 8)),
-                                physics: const BouncingScrollPhysics(),
-                                itemCount: favoriteFriends.length + 1,
-                                itemBuilder: (context, index) {
-                                  if (index < favoriteFriends.length) {
-                                    final friend = favoriteFriends[index];
-                                    return Padding(
-                                      padding: EdgeInsets.only(
-                                        right: ResponsiveUtils.scaledSpacing(context, 8),
-                                        left: index == 0
-                                            ? ResponsiveUtils.scaledSpacing(context, 4)
-                                            : 0,
-                                      ),
-                                      child: _buildCompactFavoriteStory(friend),
-                                    );
-                                  } else {
-                                    return Padding(
-                                      padding: EdgeInsets.only(
-                                          right: ResponsiveUtils.scaledSpacing(context, 4),
-                                          left: 0),
-                                      child: _buildCompactAddFavoriteButton(),
-                                    );
-                                  }
-                                },
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-
-              // Friends list
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: ResponsiveUtils.scaledSpacing(context, 16)),
-                  child: Column(
-                    children: [
-                      // Search results header
-                      if (_searchQuery.isNotEmpty) ...[
-                        Padding(
-                          padding: EdgeInsets.only(
-                              bottom: ResponsiveUtils.scaledSpacing(context, 16)),
-                          child: Row(
-                            children: [
-                              Icon(
-                                CupertinoIcons.search,
-                                size: ResponsiveUtils.scaledIconSize(context, 16),
-                                color: AppColors.textSecondary,
-                              ),
-                              SizedBox(
-                                  width:
-                                  ResponsiveUtils.scaledSpacing(context, 8)),
-                              Text(
-                                '${filteredFriends.length} result${filteredFriends.length == 1 ? '' : 's'}',
-                                style: TextStyle(
-                                  fontSize: ResponsiveUtils.scaledFontSize(
-                                      context, 14),
-                                  color: AppColors.textSecondary,
-                                  fontFamily: '.SF Pro Text',
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-
-                      // Friends cards
-                      ...filteredFriends.asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final friend = entry.value;
-
-                        return TweenAnimationBuilder<double>(
-                          key: ValueKey(friend.id),
-                          tween: Tween<double>(begin: 0.0, end: 1.0),
-                          duration: Duration(milliseconds: 300 + (index * 50)),
-                          curve: Curves.easeOutQuint,
-                          builder: (context, value, child) {
-                            return Opacity(
-                              opacity: value,
-                              child: Transform.translate(
-                                offset: Offset(0, (1 - value) * 20),
-                                child: child,
-                              ),
-                            );
-                          },
-                          child: Padding(
-                            padding: EdgeInsets.only(
-                                bottom:
-                                ResponsiveUtils.scaledSpacing(context, 4)),
-                            child: GestureDetector(
-                              onLongPress: () {
-                                HapticFeedback.mediumImpact();
-                                _showFriendActions(context, friend, allFriends);
-                              },
-                              child: FriendCardNew(
-                                friend: friend,
-                                index: index,
-                                isExpanded: friend.id == _expandedFriendId,
-                                onExpand: _handleCardExpanded,
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ],
-                  ),
-                ),
+                child: _buildIntegratedHeader(allFriends),
               ),
 
+              // Subtle favorites if any exist
+              if (favoriteFriends.isNotEmpty && !_isSearching)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      ResponsiveUtils.scaledSpacing(context, 16),
+                      ResponsiveUtils.scaledSpacing(context, 8),
+                      ResponsiveUtils.scaledSpacing(context, 16),
+                      ResponsiveUtils.scaledSpacing(context, 12),
+                    ),
+                    child: _buildSubtleFavorites(favoriteFriends),
+                  ),
+                ),
+
+              // Clean friends list
+              if (_searchQuery.isNotEmpty && filteredFriends.isEmpty)
+                SliverToBoxAdapter(
+                  child: _buildSearchEmpty(),
+                )
+              else
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                      if (index >= filteredFriends.length) return null;
+
+                      final friend = filteredFriends[index];
+                      return TweenAnimationBuilder<double>(
+                        key: ValueKey(friend.id),
+                        tween: Tween<double>(begin: 0.0, end: 1.0),
+                        duration: Duration(milliseconds: 200 + (index * 50)),
+                        curve: Curves.easeOutQuart,
+                        builder: (context, value, child) {
+                          return Opacity(
+                            opacity: value,
+                            child: Transform.translate(
+                              offset: Offset(0, (1 - value) * 20),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: ResponsiveUtils.scaledSpacing(context, 16),
+                            vertical: ResponsiveUtils.scaledSpacing(context, 4),
+                          ),
+                          child: GestureDetector(
+                            onLongPress: () {
+                              HapticFeedback.mediumImpact();
+                              _showFriendActions(context, friend, allFriends);
+                            },
+                            child: FriendCardNew(
+                              friend: friend,
+                              index: index,
+                              isExpanded: friend.id == _expandedFriendId,
+                              onExpand: _handleCardExpanded,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                    childCount: filteredFriends.length,
+                  ),
+                ),
+
               SliverToBoxAdapter(
-                  child: SizedBox(
-                      height: ResponsiveUtils.scaledSpacing(context, 100))),
+                child: SizedBox(height: ResponsiveUtils.scaledSpacing(context, 100)),
+              ),
             ],
           ),
         ),
@@ -726,76 +278,595 @@ class _HomeScreenNewState extends State<HomeScreenNew>
         Positioned(
           right: ResponsiveUtils.scaledSpacing(context, 20),
           bottom: ResponsiveUtils.scaledSpacing(context, 20),
-          child: TweenAnimationBuilder<double>(
-            tween: Tween<double>(begin: 0.0, end: 1.0),
-            duration: const Duration(milliseconds: 600),
-            curve: Curves.elasticOut,
-            builder: (context, value, child) {
-              return Transform.scale(
-                scale: value,
-                child: child,
-              );
-            },
-            child: CupertinoButton(
-              padding: EdgeInsets.zero,
-              onPressed: () => _navigateToAddFriend(context),
-              child: Container(
-                width: ResponsiveUtils.scaledContainerSize(context, 60),
-                height: ResponsiveUtils.scaledContainerSize(context, 60),
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
-                  boxShadow: AppColors.primaryShadow,
-                ),
-                child: Icon(
-                  CupertinoIcons.add,
-                  size: ResponsiveUtils.scaledIconSize(context, 28),
-                  color: CupertinoColors.white,
-                  semanticLabel: 'Add new friend',
-                ),
-              ),
-            ),
-          ),
+          child: _buildGlassFAB(),
         ),
       ],
     );
   }
 
-  Widget _buildFloatingActionButton() {
+  // NEW: Much more subtle integrated header
+  Widget _buildIntegratedHeader(List<Friend> allFriends) {
+    final hour = DateTime.now().hour;
+    String greeting = hour < 12 ? "Good morning" : (hour < 17 ? "Good afternoon" : "Good evening");
+    IconData iconData = hour < 12 ? CupertinoIcons.sun_max_fill : (hour < 17 ? CupertinoIcons.sun_min_fill : CupertinoIcons.moon_stars_fill);
+
+    final friendsWithReminders = allFriends.where((f) => f.hasReminder).length;
+
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        ResponsiveUtils.scaledSpacing(context, 16),
+        ResponsiveUtils.scaledSpacing(context, 16),
+        ResponsiveUtils.scaledSpacing(context, 16),
+        ResponsiveUtils.scaledSpacing(context, 12),
+      ),
+      child: Column(
+        children: [
+          // Top row with title and controls
+          Row(
+            children: [
+              // App title with heart
+              Row(
+                children: [
+                  Text(
+                    'Alongside',
+                    style: TextStyle(
+                      fontSize: ResponsiveUtils.scaledFontSize(context, 28, maxScale: 1.4),
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.primary,
+                      fontFamily: '.SF Pro Text',
+                    ),
+                  ),
+                  SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+                  Container(
+                    width: ResponsiveUtils.scaledContainerSize(context, 28),
+                    height: ResponsiveUtils.scaledContainerSize(context, 28),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.primary,
+                          AppColors.primary.withOpacity(0.8),
+                        ],
+                      ),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      CupertinoIcons.heart_fill,
+                      size: ResponsiveUtils.scaledIconSize(context, 16),
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+
+              const Spacer(),
+
+              // Control buttons
+              Row(
+                children: [
+                  if (!_isSearching) ...[
+                    _buildHeaderButton(
+                      icon: CupertinoIcons.sort_down,
+                      onPressed: _isSorting ? null : _toggleSort,
+                      isActive: _isSortedByReminders,
+                      showSpinner: _isSorting,
+                    ),
+                    SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+                  ],
+                  _buildHeaderButton(
+                    icon: _isSearching ? CupertinoIcons.xmark : CupertinoIcons.search,
+                    onPressed: _toggleSearch,
+                  ),
+                  SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+                  _buildHeaderButton(
+                    icon: CupertinoIcons.gear,
+                    onPressed: () => _navigateToSettings(context),
+                  ),
+                ],
+              ),
+            ],
+          ),
+
+          // Search field if searching
+          if (_isSearching) ...[
+            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.primary.withOpacity(0.2),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: CupertinoTextField(
+                controller: _searchController,
+                placeholder: 'Search friends...',
+                autofocus: true,
+                prefix: Padding(
+                  padding: EdgeInsets.only(left: ResponsiveUtils.scaledSpacing(context, 12)),
+                  child: Icon(
+                    CupertinoIcons.search,
+                    color: AppColors.primary,
+                    size: ResponsiveUtils.scaledIconSize(context, 18),
+                  ),
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value.toLowerCase();
+                  });
+                },
+                style: TextStyle(
+                  fontSize: ResponsiveUtils.scaledFontSize(context, 16),
+                  fontFamily: '.SF Pro Text',
+                  color: AppColors.textPrimary,
+                ),
+                decoration: null,
+                padding: EdgeInsets.symmetric(
+                  vertical: ResponsiveUtils.scaledSpacing(context, 12),
+                  horizontal: ResponsiveUtils.scaledSpacing(context, 4),
+                ),
+                placeholderStyle: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: ResponsiveUtils.scaledFontSize(context, 16),
+                ),
+              ),
+            ),
+          ],
+
+          // Subtle greeting and stats if not searching
+          if (!_isSearching) ...[
+            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 20)),
+            Container(
+              padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 16)),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.7),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: AppColors.primary.withOpacity(0.1),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  // Greeting row
+                  Row(
+                    children: [
+                      Container(
+                        width: ResponsiveUtils.scaledContainerSize(context, 36),
+                        height: ResponsiveUtils.scaledContainerSize(context, 36),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          iconData,
+                          color: AppColors.primary,
+                          size: ResponsiveUtils.scaledIconSize(context, 20),
+                        ),
+                      ),
+                      SizedBox(width: ResponsiveUtils.scaledSpacing(context, 12)),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              greeting,
+                              style: TextStyle(
+                                fontSize: ResponsiveUtils.scaledFontSize(context, 20, maxScale: 1.3),
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                                fontFamily: '.SF Pro Text',
+                              ),
+                            ),
+                            Text(
+                              "Ready to connect?",
+                              style: TextStyle(
+                                fontSize: ResponsiveUtils.scaledFontSize(context, 14, maxScale: 1.2),
+                                color: AppColors.textSecondary,
+                                fontFamily: '.SF Pro Text',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)),
+
+                  // Compact stats row
+                  Row(
+                    children: [
+                      _buildCompactStat(
+                        icon: CupertinoIcons.bell_fill,
+                        value: friendsWithReminders.toString(),
+                        label: friendsWithReminders == 1 ? 'Reminder' : 'Reminders',
+                      ),
+                      SizedBox(width: ResponsiveUtils.scaledSpacing(context, 12)),
+                      _buildCompactStat(
+                        icon: CupertinoIcons.bubble_left_bubble_right_fill,
+                        value: _messagesSent.toString(),
+                        label: 'Messages',
+                      ),
+                      SizedBox(width: ResponsiveUtils.scaledSpacing(context, 12)),
+                      _buildCompactStat(
+                        icon: CupertinoIcons.phone_fill,
+                        value: _callsMade.toString(),
+                        label: 'Calls',
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // NEW: Header button
+  Widget _buildHeaderButton({
+    required IconData icon,
+    required VoidCallback? onPressed,
+    bool isActive = false,
+    bool showSpinner = false,
+  }) {
+    return CupertinoButton(
+      padding: EdgeInsets.zero,
+      onPressed: onPressed,
+      child: Container(
+        width: ResponsiveUtils.scaledContainerSize(context, 36),
+        height: ResponsiveUtils.scaledContainerSize(context, 36),
+        decoration: BoxDecoration(
+          color: isActive
+              ? AppColors.primary
+              : Colors.white.withOpacity(0.8),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: AppColors.primary.withOpacity(isActive ? 0.8 : 0.2),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isActive
+                  ? AppColors.primary.withOpacity(0.3)
+                  : Colors.black.withOpacity(0.05),
+              blurRadius: isActive ? 8 : 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: showSpinner
+            ? CupertinoActivityIndicator(
+          radius: 8,
+          color: isActive ? Colors.white : AppColors.primary,
+        )
+            : Icon(
+          icon,
+          size: ResponsiveUtils.scaledIconSize(context, 18),
+          color: isActive ? Colors.white : AppColors.primary,
+        ),
+      ),
+    );
+  }
+
+  // NEW: Compact stat widget
+  Widget _buildCompactStat({
+    required IconData icon,
+    required String value,
+    required String label,
+  }) {
+    return Expanded(
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          vertical: ResponsiveUtils.scaledSpacing(context, 8),
+          horizontal: ResponsiveUtils.scaledSpacing(context, 8),
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.primary.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: AppColors.primary.withOpacity(0.1),
+            width: 0.5,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: AppColors.primary,
+              size: ResponsiveUtils.scaledIconSize(context, 14),
+            ),
+            SizedBox(width: ResponsiveUtils.scaledSpacing(context, 6)),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: ResponsiveUtils.scaledFontSize(context, 16, maxScale: 1.2),
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                      fontFamily: '.SF Pro Text',
+                    ),
+                  ),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: ResponsiveUtils.scaledFontSize(context, 11, maxScale: 1.1),
+                      color: AppColors.textSecondary,
+                      fontFamily: '.SF Pro Text',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // NEW: Much more subtle favorites
+  Widget _buildSubtleFavorites(List<Friend> favoriteFriends) {
+    return Container(
+      padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 12)),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.warning.withOpacity(0.2),
+          width: 0.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                CupertinoIcons.star_fill,
+                size: ResponsiveUtils.scaledIconSize(context, 14),
+                color: AppColors.warning,
+              ),
+              SizedBox(width: ResponsiveUtils.scaledSpacing(context, 6)),
+              Text(
+                'Favorites',
+                style: TextStyle(
+                  fontSize: ResponsiveUtils.scaledFontSize(context, 14, maxScale: 1.2),
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                  fontFamily: '.SF Pro Text',
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: ResponsiveUtils.scaledSpacing(context, 8)),
+          SizedBox(
+            height: ResponsiveUtils.scaledContainerSize(context, 44),
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: favoriteFriends.length + 1,
+              itemBuilder: (context, index) {
+                if (index < favoriteFriends.length) {
+                  final friend = favoriteFriends[index];
+                  return Padding(
+                    padding: EdgeInsets.only(
+                      right: ResponsiveUtils.scaledSpacing(context, 10),
+                    ),
+                    child: _buildSubtleFavoriteItem(friend),
+                  );
+                } else {
+                  return _buildSubtleAddFavorite();
+                }
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubtleFavoriteItem(Friend friend) {
+    final containerSize = ResponsiveUtils.scaledContainerSize(context, 40);
+    final iconSize = ResponsiveUtils.scaledIconSize(context, 20);
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        _showFavoriteOptions(context, friend);
+      },
+      child: Container(
+        width: containerSize,
+        height: containerSize,
+        decoration: BoxDecoration(
+          color: AppColors.warning.withOpacity(0.1),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: AppColors.warning.withOpacity(0.3),
+            width: 1.5,
+          ),
+        ),
+        child: Container(
+          margin: const EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            color: friend.isEmoji ? Colors.white.withOpacity(0.9) : Colors.white,
+            shape: BoxShape.circle,
+          ),
+          child: ClipOval(
+            child: friend.isEmoji
+                ? Center(
+              child: Text(
+                friend.profileImage,
+                style: TextStyle(fontSize: iconSize),
+              ),
+            )
+                : Image.file(
+              File(friend.profileImage),
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubtleAddFavorite() {
+    final containerSize = ResponsiveUtils.scaledContainerSize(context, 40);
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        final provider = Provider.of<FriendsProvider>(context, listen: false);
+        _showAddFavoriteDialog(context, provider.friends);
+      },
+      child: Container(
+        width: containerSize,
+        height: containerSize,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.8),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: AppColors.warning.withOpacity(0.3),
+            width: 1.5,
+            style: BorderStyle.solid,
+          ),
+        ),
+        child: Icon(
+          CupertinoIcons.add,
+          color: AppColors.warning,
+          size: ResponsiveUtils.scaledIconSize(context, 18),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchEmpty() {
+    return Container(
+      margin: EdgeInsets.symmetric(
+        horizontal: ResponsiveUtils.scaledSpacing(context, 32),
+        vertical: ResponsiveUtils.scaledSpacing(context, 40),
+      ),
+      padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 24)),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.8),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.primary.withOpacity(0.1),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            CupertinoIcons.search,
+            size: ResponsiveUtils.scaledIconSize(context, 32),
+            color: AppColors.textSecondary,
+          ),
+          SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)),
+          Text(
+            'No friends found for "$_searchQuery"',
+            style: TextStyle(
+              fontSize: ResponsiveUtils.scaledFontSize(context, 16),
+              color: AppColors.textSecondary,
+              fontFamily: '.SF Pro Text',
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return SafeArea(
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.9),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: AppColors.primary.withOpacity(0.2),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CupertinoActivityIndicator(radius: 16),
+              SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
+              Text(
+                'Loading your friends...',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: ResponsiveUtils.scaledFontSize(context, 16),
+                  fontFamily: '.SF Pro Text',
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGlassFAB() {
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0.0, end: 1.0),
       duration: const Duration(milliseconds: 600),
       curve: Curves.elasticOut,
       builder: (context, value, child) {
-        return Transform.scale(
-          scale: value,
-          child: child,
-        );
+        return Transform.scale(scale: value, child: child);
       },
       child: Container(
-        width: ResponsiveUtils.scaledContainerSize(context, 64),
-        height: ResponsiveUtils.scaledContainerSize(context, 64),
+        width: ResponsiveUtils.scaledContainerSize(context, 56),
+        height: ResponsiveUtils.scaledContainerSize(context, 56),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              AppColors.primary,
-              AppColors.primary.withOpacity(0.8),
-            ],
+            colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
           ),
           shape: BoxShape.circle,
+          border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.3),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-              spreadRadius: 2,
-            ),
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              color: AppColors.primary.withOpacity(0.4),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
             ),
           ],
         ),
@@ -804,649 +875,210 @@ class _HomeScreenNewState extends State<HomeScreenNew>
           onPressed: () => _navigateToAddFriend(context),
           child: Icon(
             CupertinoIcons.add,
-            size: ResponsiveUtils.scaledIconSize(context, 30),
-            color: CupertinoColors.white,
-            semanticLabel: 'Add new friend',
+            size: ResponsiveUtils.scaledIconSize(context, 24),
+            color: Colors.white,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildMainGreetingCard(List<Friend> allFriends, List<Friend> favoriteFriends) {
-    final hour = DateTime.now().hour;
-    String greeting;
-    IconData iconData;
-    Color greetingColor;
-
-    if (hour < 12) {
-      greeting = "Good morning";
-      iconData = CupertinoIcons.sun_max_fill;
-      greetingColor = AppColors.morningColor;
-    } else if (hour < 17) {
-      greeting = "Good afternoon";
-      iconData = CupertinoIcons.sun_min_fill;
-      greetingColor = AppColors.afternoonColor;
-    } else {
-      greeting = "Good evening";
-      iconData = CupertinoIcons.moon_stars_fill;
-      greetingColor = AppColors.eveningColor;
-    }
-
-    return Container(
-      margin: EdgeInsets.only(
-          bottom: ResponsiveUtils.scaledSpacing(context, 20)),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            CupertinoColors.white,
-            CupertinoColors.white.withOpacity(0.95),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withOpacity(0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-            spreadRadius: 2,
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-        border: Border.all(
-          color: AppColors.primary.withOpacity(0.1),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Greeting and stats section
-          ResponsiveUtils.needsCompactLayout(context)
-              ? Column(
-            children: [
-              _buildGreetingSection(
-                  greeting, iconData, greetingColor,
-                  allFriends: allFriends),
-              SizedBox(
-                  height: ResponsiveUtils.scaledSpacing(
-                      context, 20)),
-              _buildStatsRow(allFriends),
-            ],
-          )
-              : Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: _buildGreetingSection(
-                      greeting, iconData, greetingColor,
-                      allFriends: allFriends),
-                ),
-                const SizedBox(width: 20),
-                Column(
-                  children: [
-                    _buildStatsRow(allFriends),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          // Favorites section with enhanced design
-          if (favoriteFriends.isNotEmpty) ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Container(
-                height: 1,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.transparent,
-                      AppColors.primary.withOpacity(0.2),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              AppColors.warning.withOpacity(0.8),
-                              AppColors.warning,
-                            ],
-                          ),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          CupertinoIcons.star_fill,
-                          size: 16,
-                          color: CupertinoColors.white,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'Favorites',
-                        style: TextStyle(
-                          fontSize:
-                          ResponsiveUtils.scaledFontSize(context, 18),
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
-                          fontFamily: '.SF Pro Text',
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(
-                      height:
-                      ResponsiveUtils.scaledSpacing(context, 16)),
-                  SizedBox(
-                    height: ResponsiveUtils.scaledContainerSize(context, 85),
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: EdgeInsets.symmetric(
-                          horizontal: ResponsiveUtils.scaledSpacing(context, 4)),
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: favoriteFriends.length + 1,
-                      itemBuilder: (context, index) {
-                        if (index < favoriteFriends.length) {
-                          final friend = favoriteFriends[index];
-                          return Padding(
-                            padding: EdgeInsets.only(
-                              right: ResponsiveUtils.scaledSpacing(context, 12),
-                            ),
-                            child: _buildEnhancedFavoriteStory(friend),
-                          );
-                        } else {
-                          return _buildEnhancedAddFavoriteButton();
-                        }
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEnhancedFavoriteStory(Friend friend) {
-    final firstName = friend.name.split(' ').first;
-    final containerSize = ResponsiveUtils.scaledContainerSize(context, 64);
-    final iconSize = ResponsiveUtils.scaledIconSize(context, 28);
-
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        _showFavoriteOptions(context, friend);
-      },
-      child: SizedBox(
-        width: containerSize + 16,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: containerSize,
-              height: containerSize,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColors.primary,
-                    AppColors.primary.withOpacity(0.8),
-                  ],
-                ),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Container(
-                margin: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  color: friend.isEmoji
-                      ? CupertinoColors.systemGrey6
-                      : CupertinoColors.white,
-                  shape: BoxShape.circle,
-                ),
-                child: ClipOval(
-                  child: friend.isEmoji
-                      ? Center(
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Padding(
-                        padding: const EdgeInsets.all(6),
-                        child: Text(
-                          friend.profileImage,
-                          style: TextStyle(fontSize: iconSize),
-                          semanticsLabel: 'Profile emoji',
-                        ),
-                      ),
-                    ),
-                  )
-                      : Image.file(
-                    File(friend.profileImage),
-                    fit: BoxFit.cover,
-                    semanticLabel: 'Profile picture',
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 8)),
-            Flexible(
-              child: Text(
-                firstName,
-                style: TextStyle(
-                  fontSize: ResponsiveUtils.scaledFontSize(context, 13,
-                      maxScale: 1.2),
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                  fontFamily: '.SF Pro Text',
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                semanticsLabel: 'Friend name: ${friend.name}',
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-// NEW: Enhanced add favorite button
-  Widget _buildEnhancedAddFavoriteButton() {
-    final containerSize = ResponsiveUtils.scaledContainerSize(context, 64);
-    final iconSize = ResponsiveUtils.scaledIconSize(context, 28);
-
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        final provider = Provider.of<FriendsProvider>(context, listen: false);
-        _showAddFavoriteDialog(context, provider.friends);
-      },
-      child: SizedBox(
-        width: containerSize + 16,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: containerSize,
-              height: containerSize,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    CupertinoColors.systemGrey6,
-                    CupertinoColors.systemGrey5,
-                  ],
-                ),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.primary.withOpacity(0.3),
-                  width: 2,
-                  style: BorderStyle.solid,
-                ),
-              ),
-              child: Icon(
-                CupertinoIcons.add,
-                color: AppColors.primary,
-                size: iconSize,
-              ),
-            ),
-            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 8)),
-            Flexible(
-              child: Text(
-                'Add',
-                style: TextStyle(
-                  fontSize: ResponsiveUtils.scaledFontSize(context, 13,
-                      maxScale: 1.2),
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
-                  fontFamily: '.SF Pro Text',
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-// UPDATED: Enhanced greeting section with gradient and better styling
-  Widget _buildGreetingSection(
-      String greeting, IconData iconData, Color greetingColor,
-      {required List<Friend> allFriends}) {
-    return Container(
-      padding: ResponsiveUtils.scaledPadding(
-        context,
-        const EdgeInsets.all(20),
-      ),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            greetingColor.withOpacity(0.05),
-            greetingColor.withOpacity(0.15),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: greetingColor.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Enhanced icon with gradient background
-          Container(
-            width: ResponsiveUtils.scaledContainerSize(context, 48),
-            height: ResponsiveUtils.scaledContainerSize(context, 48),
+  Widget _buildEmptyState(BuildContext context) {
+    return SafeArea(
+      child: Center(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 32)),
+          child: Container(
+            padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 32)),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  greetingColor.withOpacity(0.8),
-                  greetingColor,
-                ],
-              ),
-              borderRadius: BorderRadius.circular(16),
+              color: Colors.white.withOpacity(0.8),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: AppColors.primary.withOpacity(0.1), width: 1),
               boxShadow: [
                 BoxShadow(
-                  color: greetingColor.withOpacity(0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
                 ),
               ],
             ),
-            child: Icon(
-              iconData,
-              color: CupertinoColors.white,
-              size: ResponsiveUtils.scaledIconSize(context, 24),
-              semanticLabel: greeting,
-            ),
-          ),
-          SizedBox(width: ResponsiveUtils.scaledSpacing(context, 16)),
-          Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  greeting,
-                  style: TextStyle(
-                    fontSize: ResponsiveUtils.scaledFontSize(context, 22,
-                        maxScale: 1.4),
-                    fontWeight: FontWeight.w800,
-                    color: CupertinoColors.label,
-                    fontFamily: '.SF Pro Text',
+                Container(
+                  width: ResponsiveUtils.scaledContainerSize(context, 120),
+                  height: ResponsiveUtils.scaledContainerSize(context, 120),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.primary.withOpacity(0.2),
+                        AppColors.primary.withOpacity(0.1),
+                      ],
+                    ),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    CupertinoIcons.heart_fill,
+                    size: ResponsiveUtils.scaledIconSize(context, 60),
+                    color: AppColors.primary,
                   ),
                 ),
-                SizedBox(height: ResponsiveUtils.scaledSpacing(context, 4)),
+                SizedBox(height: ResponsiveUtils.scaledSpacing(context, 24)),
                 Text(
-                  "Ready to reach out to someone today?",
+                  'Walk alongside a friend',
                   style: TextStyle(
-                    fontSize:
-                    ResponsiveUtils.scaledFontSize(context, 15, maxScale: 1.3),
-                    color: AppColors.textSecondary,
+                    fontSize: ResponsiveUtils.scaledFontSize(context, 28, maxScale: 1.5),
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
                     fontFamily: '.SF Pro Text',
-                    height: 1.3,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)),
+                Text(
+                  'Add someone to walk with—through setbacks, growth, and everything in between.',
+                  style: TextStyle(
+                    fontSize: ResponsiveUtils.scaledFontSize(context, 17, maxScale: 1.4),
+                    color: AppColors.textSecondary,
+                    height: 1.4,
+                    fontFamily: '.SF Pro Text',
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: ResponsiveUtils.scaledSpacing(context, 32)),
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withOpacity(0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: CupertinoButton(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: ResponsiveUtils.scaledSpacing(context, 32),
+                      vertical: ResponsiveUtils.scaledSpacing(context, 16),
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    onPressed: () => _navigateToAddFriend(context),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          CupertinoIcons.person_add_solid,
+                          color: Colors.white,
+                          size: ResponsiveUtils.scaledIconSize(context, 18),
+                        ),
+                        SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+                        Text(
+                          'Add Your First Friend',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: ResponsiveUtils.scaledFontSize(context, 16),
+                            fontFamily: '.SF Pro Text',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildStatsRow(List<Friend> allFriends) {
-    return Row(
-      children: [
-        _buildCompactStat(
-          icon: CupertinoIcons.person_2_fill,
-          value: allFriends.length.toString(),
-          color: AppColors.primary,
-        ),
-        SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
-        _buildCompactStat(
-          icon: CupertinoIcons.bubble_left_bubble_right_fill,
-          value: _messagesSent.toString(),
-          color: AppColors.secondary,
-        ),
-        SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
-        _buildCompactStat(
-          icon: CupertinoIcons.phone_fill,
-          value: _callsMade.toString(),
-          color: AppColors.tertiary,
-        ),
-      ],
-    );
+  void _navigateToSettings(BuildContext context) {
+    HapticFeedback.lightImpact();
+    Navigator.push(context, CupertinoPageRoute(builder: (context) => const SettingsScreen()));
   }
 
-  Widget _buildCompactStat({
-    required IconData icon,
-    required String value,
-    required Color color,
-  }) {
-    final iconSize = ResponsiveUtils.scaledIconSize(context, 18);
-    final fontSize = ResponsiveUtils.scaledFontSize(context, 18, maxScale: 1.3);
-    final padding = ResponsiveUtils.scaledPadding(
-      context,
-      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-    );
+  void _navigateToAddFriend(BuildContext context) {
+    HapticFeedback.mediumImpact();
+    Navigator.push(context, CupertinoPageRoute(builder: (context) => const AddFriendScreen()));
+  }
 
-    return Container(
-      padding: padding,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            color.withOpacity(0.08),
-            color.withOpacity(0.15),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              icon,
-              color: color,
-              size: iconSize,
-            ),
+  void _handleCardExpanded(String friendId) {
+    setState(() {
+      _expandedFriendId = _expandedFriendId == friendId ? null : friendId;
+    });
+    HapticFeedback.lightImpact();
+  }
+
+  // FIXED: Proper sorting implementation
+  Future<void> _toggleSort() async {
+    setState(() => _isSorting = true);
+
+    final provider = Provider.of<FriendsProvider>(context, listen: false);
+    final currentFriends = provider.friends;
+
+    if (_isSortedByReminders) {
+      // Reset to custom order
+      if (_originalFriendsOrder != null) {
+        provider.reorderFriends(_originalFriendsOrder!);
+        ToastService.showSuccess(context, 'Sorted by custom order');
+      }
+      setState(() {
+        _isSortedByReminders = false;
+        _originalFriendsOrder = null;
+      });
+    } else {
+      // Sort by reminders
+      _originalFriendsOrder = List<Friend>.from(currentFriends);
+
+      final sortedFriends = List<Friend>.from(currentFriends);
+      sortedFriends.sort((a, b) {
+        if (a.hasReminder && !b.hasReminder) return -1;
+        if (!a.hasReminder && b.hasReminder) return 1;
+        return a.name.compareTo(b.name);
+      });
+
+      provider.reorderFriends(sortedFriends);
+      ToastService.showSuccess(context, 'Sorted by reminders');
+
+      setState(() {
+        _isSortedByReminders = true;
+      });
+    }
+
+    setState(() => _isSorting = false);
+  }
+
+  // Simplified helper methods
+  void _showFriendActions(BuildContext context, Friend friend, List<Friend> friends) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: Text(friend.name),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(context, CupertinoPageRoute(
+                  builder: (context) => MessageScreenNew(friend: friend)));
+            },
+            child: const Text('Send Message'),
           ),
-          SizedBox(height: ResponsiveUtils.scaledSpacing(context, 6)),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: fontSize,
-              fontWeight: FontWeight.w800,
-              color: color,
-              fontFamily: '.SF Pro Text',
-            ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(context, CupertinoPageRoute(
+                  builder: (context) => AddFriendScreen(friend: friend)));
+            },
+            child: const Text('Edit'),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildCompactFavoriteStory(Friend friend) {
-    final firstName = friend.name.split(' ').first;
-    final containerSize = ResponsiveUtils.scaledContainerSize(context, 56);
-    final iconSize = ResponsiveUtils.scaledIconSize(context, 24);
-
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        _showFavoriteOptions(context, friend);
-      },
-      child: SizedBox(
-        width: containerSize + 8,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: containerSize,
-              height: containerSize,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.primary,
-                  width: 2,
-                ),
-              ),
-              child: Container(
-                margin: const EdgeInsets.all(2),
-                decoration: BoxDecoration(
-                  color: friend.isEmoji
-                      ? CupertinoColors.systemGrey6
-                      : CupertinoColors.white,
-                  shape: BoxShape.circle,
-                ),
-                child: ClipOval(
-                  child: friend.isEmoji
-                      ? Center(
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Padding(
-                        padding: const EdgeInsets.all(4),
-                        child: Text(
-                          friend.profileImage,
-                          style: TextStyle(fontSize: iconSize),
-                          semanticsLabel: 'Profile emoji',
-                        ),
-                      ),
-                    ),
-                  )
-                      : Image.file(
-                    File(friend.profileImage),
-                    fit: BoxFit.cover,
-                    semanticLabel: 'Profile picture',
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 6)),
-            Flexible(
-              child: Text(
-                firstName,
-                style: TextStyle(
-                  fontSize: ResponsiveUtils.scaledFontSize(context, 12,
-                      maxScale: 1.2),
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                  fontFamily: '.SF Pro Text',
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                semanticsLabel: 'Friend name: ${friend.name}',
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCompactAddFavoriteButton() {
-    final containerSize = ResponsiveUtils.scaledContainerSize(context, 56);
-    final iconSize = ResponsiveUtils.scaledIconSize(context, 24);
-
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        final provider = Provider.of<FriendsProvider>(context, listen: false);
-        _showAddFavoriteDialog(context, provider.friends);
-      },
-      child: SizedBox(
-        width: containerSize + 8,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: containerSize,
-              height: containerSize,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.primary.withOpacity(0.3),
-                  width: 2,
-                  style: BorderStyle.solid,
-                ),
-                color: CupertinoColors.systemGrey6,
-              ),
-              child: Icon(
-                CupertinoIcons.add,
-                color: AppColors.primary,
-                size: iconSize,
-              ),
-            ),
-            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 6)),
-            Flexible(
-              child: Text(
-                'Add',
-                style: TextStyle(
-                  fontSize: ResponsiveUtils.scaledFontSize(context, 12,
-                      maxScale: 1.2),
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
-                  fontFamily: '.SF Pro Text',
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
         ),
       ),
     );
@@ -1456,49 +1088,15 @@ class _HomeScreenNewState extends State<HomeScreenNew>
     showCupertinoModalPopup(
       context: context,
       builder: (context) => CupertinoActionSheet(
-        title: Text(
-          friend.name,
-          style: TextStyle(
-            fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-            fontWeight: FontWeight.w600,
-            fontFamily: '.SF Pro Text',
-          ),
-        ),
+        title: Text(friend.name),
         actions: [
           CupertinoActionSheetAction(
             onPressed: () {
               Navigator.pop(context);
-              Navigator.push(
-                context,
-                CupertinoPageRoute(
-                  builder: (context) => MessageScreenNew(friend: friend),
-                ),
-              );
+              Navigator.push(context, CupertinoPageRoute(
+                  builder: (context) => MessageScreenNew(friend: friend)));
             },
-            child: Text(
-              'Send Message',
-              style: TextStyle(
-                fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-                fontFamily: '.SF Pro Text',
-              ),
-            ),
-          ),
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(
-                context,
-                '/call',
-                arguments: {'friend': friend},
-              );
-            },
-            child: Text(
-              'Call',
-              style: TextStyle(
-                fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-                fontFamily: '.SF Pro Text',
-              ),
-            ),
+            child: const Text('Send Message'),
           ),
           CupertinoActionSheetAction(
             onPressed: () {
@@ -1506,71 +1104,30 @@ class _HomeScreenNewState extends State<HomeScreenNew>
               _removeFavorite(context, friend);
             },
             isDestructiveAction: true,
-            child: Text(
-              'Remove from Favorites',
-              style: TextStyle(
-                fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-                fontFamily: '.SF Pro Text',
-              ),
-            ),
+            child: const Text('Remove from Favorites'),
           ),
         ],
         cancelButton: CupertinoActionSheetAction(
           onPressed: () => Navigator.pop(context),
-          child: Text(
-            'Cancel',
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-              fontFamily: '.SF Pro Text',
-            ),
-          ),
+          child: const Text('Cancel'),
         ),
       ),
     );
   }
 
   void _showAddFavoriteDialog(BuildContext context, List<Friend> allFriends) {
-    final nonFavoriteFriends =
-    allFriends.where((friend) => !friend.isFavorite).toList();
+    final nonFavoriteFriends = allFriends.where((friend) => !friend.isFavorite).toList();
 
     if (nonFavoriteFriends.isEmpty) {
       showCupertinoDialog(
         context: context,
         builder: (context) => CupertinoAlertDialog(
-          title: Text(
-            'All Set!',
-            style: TextStyle(
-              color: AppColors.primary,
-              fontWeight: FontWeight.w700,
-              fontSize: ResponsiveUtils.scaledFontSize(context, 18),
-              fontFamily: '.SF Pro Text',
-            ),
-          ),
-          content: Padding(
-            padding: EdgeInsets.only(
-                top: ResponsiveUtils.scaledSpacing(context, 8)),
-            child: Text(
-              'All your friends are already favorites!',
-              style: TextStyle(
-                fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-                height: 1.3,
-                fontFamily: '.SF Pro Text',
-              ),
-            ),
-          ),
+          title: const Text('All Set!'),
+          content: const Text('All your friends are already favorites!'),
           actions: [
             CupertinoDialogAction(
               onPressed: () => Navigator.pop(context),
-              child: Text(
-                'OK',
-                style: TextStyle(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
-                  fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-                  fontFamily: '.SF Pro Text',
-                ),
-              ),
+              child: const Text('OK'),
             ),
           ],
         ),
@@ -1581,713 +1138,35 @@ class _HomeScreenNewState extends State<HomeScreenNew>
     showCupertinoModalPopup(
       context: context,
       builder: (context) => CupertinoActionSheet(
-        title: Text(
-          'Add to Favorites',
-          style: TextStyle(
-            fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-            fontWeight: FontWeight.w600,
-            fontFamily: '.SF Pro Text',
-          ),
-        ),
+        title: const Text('Add to Favorites'),
         actions: nonFavoriteFriends.map((friend) {
           return CupertinoActionSheetAction(
             onPressed: () {
               Navigator.pop(context);
               _addFavorite(context, friend);
             },
-            child: Row(
-              children: [
-                Container(
-                  width: ResponsiveUtils.scaledContainerSize(context, 32),
-                  height: ResponsiveUtils.scaledContainerSize(context, 32),
-                  decoration: BoxDecoration(
-                    color: friend.isEmoji
-                        ? CupertinoColors.systemGrey6
-                        : CupertinoColors.white,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: CupertinoColors.systemGrey5,
-                      width: 0.5,
-                    ),
-                  ),
-                  child: friend.isEmoji
-                      ? Center(
-                    child: Text(
-                      friend.profileImage,
-                      style: TextStyle(
-                          fontSize:
-                          ResponsiveUtils.scaledIconSize(context, 16)),
-                    ),
-                  )
-                      : ClipOval(
-                    child: Image.file(
-                      File(friend.profileImage),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                SizedBox(width: ResponsiveUtils.scaledSpacing(context, 12)),
-                Text(
-                  friend.name,
-                  style: TextStyle(
-                    fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-                    fontFamily: '.SF Pro Text',
-                  ),
-                ),
-              ],
-            ),
+            child: Text(friend.name),
           );
         }).toList(),
         cancelButton: CupertinoActionSheetAction(
           onPressed: () => Navigator.pop(context),
-          isDestructiveAction: true,
-          child: Text(
-            'Cancel',
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-              fontFamily: '.SF Pro Text',
-            ),
-          ),
+          child: const Text('Cancel'),
         ),
       ),
     );
   }
 
   void _addFavorite(BuildContext context, Friend friend) {
-    HapticFeedback.lightImpact();
     final provider = Provider.of<FriendsProvider>(context, listen: false);
     final updatedFriend = friend.copyWith(isFavorite: true);
     provider.updateFriend(updatedFriend);
-    // REPLACE: _showSuccessToast with ToastService.showSuccess
     ToastService.showSuccess(context, '${friend.name} added to favorites');
   }
 
   void _removeFavorite(BuildContext context, Friend friend) {
-    showCupertinoDialog(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: Text(
-          'Remove from Favorites',
-          style: TextStyle(
-            color: AppColors.primary,
-            fontWeight: FontWeight.w700,
-            fontSize: ResponsiveUtils.scaledFontSize(context, 18),
-            fontFamily: '.SF Pro Text',
-          ),
-        ),
-        content: Padding(
-          padding:
-          EdgeInsets.only(top: ResponsiveUtils.scaledSpacing(context, 8)),
-          child: Text(
-            'Remove ${friend.name} from favorites?',
-            style: TextStyle(
-              fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-              height: 1.3,
-              fontFamily: '.SF Pro Text',
-            ),
-          ),
-        ),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(context),
-            isDefaultAction: true,
-            child: Text(
-              'Cancel',
-              style: TextStyle(
-                color: AppColors.secondary,
-                fontWeight: FontWeight.w600,
-                fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-                fontFamily: '.SF Pro Text',
-              ),
-            ),
-          ),
-          CupertinoDialogAction(
-            onPressed: () {
-              Navigator.pop(context);
-              HapticFeedback.lightImpact();
-              final provider =
-              Provider.of<FriendsProvider>(context, listen: false);
-              final updatedFriend = friend.copyWith(isFavorite: false);
-              provider.updateFriend(updatedFriend);
-              // REPLACE: _showSuccessToast with ToastService.showSuccess
-              ToastService.showSuccess(context, '${friend.name} removed from favorites');
-            },
-            child: Text(
-              'Remove',
-              style: TextStyle(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w600,
-                fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-                fontFamily: '.SF Pro Text',
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(
-          horizontal: ResponsiveUtils.scaledSpacing(context, 32),
-          vertical: ResponsiveUtils.scaledSpacing(context, 16),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TweenAnimationBuilder<double>(
-              tween: Tween<double>(begin: 0.0, end: 1.0),
-              duration: const Duration(milliseconds: 800),
-              curve: Curves.elasticOut,
-              builder: (context, value, child) {
-                return Transform.scale(
-                  scale: value,
-                  child: child,
-                );
-              },
-              child: Container(
-                width: ResponsiveUtils.scaledContainerSize(context, 180),
-                height: ResponsiveUtils.scaledContainerSize(context, 180),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryLight,
-                  shape: BoxShape.circle,
-                ),
-                child: Illustrations.friendsIllustration(
-                    size: ResponsiveUtils.scaledContainerSize(context, 180)),
-              ),
-            ),
-            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 32)),
-            TweenAnimationBuilder<double>(
-              tween: Tween<double>(begin: 0.0, end: 1.0),
-              duration: const Duration(milliseconds: 500),
-              curve: Curves.easeOutQuint,
-              builder: (context, value, child) {
-                return Opacity(
-                  opacity: value,
-                  child: Transform.translate(
-                    offset: Offset(0, (1 - value) * 20),
-                    child: child,
-                  ),
-                );
-              },
-              child: Text(
-                'Walk alongside a friend',
-                style: TextStyle(
-                  fontSize: ResponsiveUtils.scaledFontSize(context, 28,
-                      maxScale: 1.5),
-                  fontWeight: FontWeight.w800,
-                  color: CupertinoColors.label,
-                  fontFamily: '.SF Pro Text',
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
-            TweenAnimationBuilder<double>(
-              tween: Tween<double>(begin: 0.0, end: 1.0),
-              duration: const Duration(milliseconds: 700),
-              curve: Curves.easeOutQuint,
-              builder: (context, value, child) {
-                return Opacity(
-                  opacity: value,
-                  child: Transform.translate(
-                    offset: Offset(0, (1 - value) * 20),
-                    child: child,
-                  ),
-                );
-              },
-              child: Text(
-                'Add someone to walk with—through setbacks, growth, and everything in between.',
-                style: TextStyle(
-                  fontSize: ResponsiveUtils.scaledFontSize(context, 17,
-                      maxScale: 1.4),
-                  color: AppColors.textSecondary,
-                  height: 1.4,
-                  fontFamily: '.SF Pro Text',
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 3,
-                overflow: TextOverflow.visible,
-              ),
-            ),
-            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 40)),
-            TweenAnimationBuilder<double>(
-              tween: Tween<double>(begin: 0.0, end: 1.0),
-              duration: const Duration(milliseconds: 900),
-              curve: Curves.elasticOut,
-              builder: (context, value, child) {
-                return Transform.scale(
-                  scale: value,
-                  child: child,
-                );
-              },
-              child: CupertinoButton(
-                padding: EdgeInsets.symmetric(
-                  horizontal: ResponsiveUtils.scaledSpacing(context, 32),
-                  vertical: ResponsiveUtils.scaledSpacing(context, 16),
-                ),
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(16),
-                onPressed: () => _navigateToAddFriend(context),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      CupertinoIcons.person_add_solid,
-                      color: CupertinoColors.white,
-                      size: ResponsiveUtils.scaledIconSize(context, 18),
-                    ),
-                    SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
-                    Text(
-                      'Add Your First Friend',
-                      style: TextStyle(
-                        color: CupertinoColors.white,
-                        fontWeight: FontWeight.w600,
-                        fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-                        fontFamily: '.SF Pro Text',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _handleCardExpanded(String friendId) {
-    setState(() {
-      _expandedFriendId = _expandedFriendId == friendId ? null : friendId;
-    });
-    HapticFeedback.lightImpact();
-  }
-
-  void _showFriendActions(
-      BuildContext context, Friend friend, List<Friend> friends) {
-    friends.indexOf(friend);
-
-    showCupertinoModalPopup(
-      context: context,
-      builder: (context) => CupertinoActionSheet(
-        title: Text(
-          friend.name,
-          style: TextStyle(
-            fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-            fontWeight: FontWeight.w600,
-            fontFamily: '.SF Pro Text',
-          ),
-        ),
-        actions: [
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                CupertinoPageRoute(
-                  builder: (context) => MessageScreenNew(friend: friend),
-                ),
-              );
-            },
-            child: Text(
-              'Send Message',
-              style: TextStyle(
-                fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-                fontFamily: '.SF Pro Text',
-              ),
-            ),
-          ),
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(
-                context,
-                '/call',
-                arguments: {'friend': friend},
-              );
-            },
-            child: Text(
-              'Call',
-              style: TextStyle(
-                fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-                fontFamily: '.SF Pro Text',
-              ),
-            ),
-          ),
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                CupertinoPageRoute(
-                  builder: (context) => AddFriendScreen(friend: friend),
-                ),
-              );
-            },
-            child: Text(
-              'Edit',
-              style: TextStyle(
-                fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-                fontFamily: '.SF Pro Text',
-              ),
-            ),
-          ),
-          if (!friend.isFavorite)
-            CupertinoActionSheetAction(
-              onPressed: () {
-                Navigator.pop(context);
-                _addFavorite(context, friend);
-              },
-              child: Text(
-                'Add to Favorites',
-                style: TextStyle(
-                  fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-                  fontFamily: '.SF Pro Text',
-                ),
-              ),
-            ),
-          if (friends.length > 1)
-            CupertinoActionSheetAction(
-              onPressed: () {
-                Navigator.pop(context);
-                _showReorderOptions(context, friend, friends);
-              },
-              child: Text(
-                'Reorder',
-                style: TextStyle(
-                  fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-                  fontFamily: '.SF Pro Text',
-                ),
-              ),
-            ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          onPressed: () => Navigator.pop(context),
-          child: Text(
-            'Cancel',
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-              fontFamily: '.SF Pro Text',
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // Helper method to get next reminder time for sorting
-  Future<DateTime?> _getNextReminderTimeForFriend(Friend friend) async {
-    if (friend.reminderDays <= 0) return null;
-
-    final notificationService = NotificationService();
-    return await notificationService.getNextReminderTime(friend.id);
-  }
-
-// FIXED: Reliable sorting method without on-the-fly scheduling
-  Future<List<Friend>> _sortFriendsByReminderProximity(List<Friend> friends) async {
-    if (friends.isEmpty) return friends;
-
-    print('\n🔄 Sorting ${friends.length} friends by next reminder');
-
-    final notificationService = NotificationService();
-    List<MapEntry<Friend, DateTime?>> friendsWithTimes = [];
-
-    // First pass: collect all reminder times (don't schedule during sorting)
-    for (Friend friend in friends) {
-      DateTime? nextTime;
-
-      if (friend.hasReminder) {
-        // Just get the stored time - don't schedule here
-        nextTime = await notificationService.getNextReminderTime(friend.id);
-        print('DEBUG: ${friend.name} - Stored reminder: $nextTime');
-      }
-
-      friendsWithTimes.add(MapEntry(friend, nextTime));
-    }
-
-    // Sort by reminder proximity
-    friendsWithTimes.sort((a, b) {
-      final aHasReminder = a.key.hasReminder;
-      final bHasReminder = b.key.hasReminder;
-
-      // Friends without reminders go to the end
-      if (!aHasReminder && !bHasReminder) {
-        return a.key.name.compareTo(b.key.name);
-      }
-      if (!aHasReminder) return 1;
-      if (!bHasReminder) return -1;
-
-      // Both have reminders - sort by next reminder time
-      final aTime = a.value;
-      final bTime = b.value;
-
-      // Handle null times (put them at end of reminder group)
-      if (aTime == null && bTime == null) {
-        return a.key.name.compareTo(b.key.name);
-      }
-      if (aTime == null) return 1;
-      if (bTime == null) return -1;
-
-      // Sort by actual time (earliest first)
-      return aTime.compareTo(bTime);
-    });
-
-    final sortedFriends = friendsWithTimes.map((entry) => entry.key).toList();
-
-    // Debug output to see the actual sorted order
-    print('✅ Sorted order:');
-    for (int i = 0; i < sortedFriends.length; i++) {
-      final friend = sortedFriends[i];
-      final timeEntry = friendsWithTimes.firstWhere((entry) => entry.key.id == friend.id);
-      final timeStr = timeEntry.value != null
-          ? 'Next: ${timeEntry.value}'
-          : 'No reminder';
-      print('   ${i + 1}. ${friend.name} - $timeStr');
-    }
-
-    return sortedFriends;
-  }
-
-  // NEW: Method to ensure all friends with reminders have proper times calculated
-  Future<void> _ensureAllReminderTimesCalculated() async {
     final provider = Provider.of<FriendsProvider>(context, listen: false);
-    final notificationService = NotificationService();
-
-    print('🔄 Ensuring all reminder times are calculated...');
-
-    for (Friend friend in provider.friends) {
-      if (friend.hasReminder) {
-        final existingTime = await notificationService.getNextReminderTime(friend.id);
-
-        if (existingTime == null) {
-          print('⚠️ ${friend.name} missing reminder time, scheduling...');
-          await notificationService.scheduleReminder(friend);
-        } else {
-          print('✅ ${friend.name} has reminder time: $existingTime');
-        }
-      }
-    }
-
-    print('✅ All reminder times ensured');
-  }
-
-// IMPROVED toggle sort method with proper reminder time calculation
-// FIXED toggle sort method with proper handling of newly added friends
-  Future<void> _toggleSort() async {
-    setState(() => _isSorting = true);
-
-    final provider = Provider.of<FriendsProvider>(context, listen: false);
-    final currentFriends = provider.friends;
-
-    if (_isSortedByReminders) {
-      print('🔄 RESETTING TO CUSTOM ORDER');
-      print('   Current friends count: ${currentFriends.length}');
-      print('   Original order count: ${_originalFriendsOrder?.length ?? 0}');
-
-      // FIXED: Check if we have new friends that aren't in original order
-      if (_originalFriendsOrder != null) {
-        final originalIds = _originalFriendsOrder!.map((f) => f.id).toSet();
-        final currentIds = currentFriends.map((f) => f.id).toSet();
-        final newFriendIds = currentIds.difference(originalIds);
-
-        if (newFriendIds.isNotEmpty) {
-          print('   Found ${newFriendIds.length} new friends, updating original order');
-          // Add new friends to the end of original order
-          final newFriends = currentFriends.where((f) => newFriendIds.contains(f.id)).toList();
-          _originalFriendsOrder!.addAll(newFriends);
-        }
-
-        // Ensure we only include friends that still exist
-        final validOriginalOrder = _originalFriendsOrder!
-            .where((f) => currentIds.contains(f.id))
-            .toList();
-
-        print('   Restoring to custom order with ${validOriginalOrder.length} friends');
-        provider.reorderFriends(validOriginalOrder);
-      } else {
-        // Fallback: use current order as-is
-        print('   No original order stored, keeping current order');
-      }
-
-      ToastService.showSuccess(context, 'Sorted by custom order');
-
-      setState(() {
-        _isSortedByReminders = false;
-        _originalFriendsOrder = null;
-      });
-    } else {
-      print('🔄 SORTING BY NEXT REMINDER');
-      print('   Current friends count: ${currentFriends.length}');
-
-      // FIXED: Always capture the current order (including any new friends)
-      _originalFriendsOrder = List<Friend>.from(currentFriends);
-      print('   Stored original order with ${_originalFriendsOrder!.length} friends');
-
-      // Ensure all reminder times are calculated first
-      await _ensureAllReminderTimesCalculated();
-
-      // Small delay to ensure all calculations are complete
-      await Future.delayed(Duration(milliseconds: 200));
-
-      // Get current friends again (in case provider was updated)
-      final latestFriends = provider.friends;
-      print('   Latest friends count: ${latestFriends.length}');
-
-      // Now sort with reliable data
-      final sortedFriends = await _sortFriendsByReminderProximity(latestFriends);
-      print('   Sorted friends count: ${sortedFriends.length}');
-
-      provider.reorderFriends(sortedFriends);
-
-      ToastService.showSuccess(context, 'Sorted by next reminder');
-
-      setState(() {
-        _isSortedByReminders = true;
-      });
-    }
-
-    setState(() => _isSorting = false);
-  }
-
-  // NEW: Call this whenever a friend is added to handle sorting state
-  void _handleFriendAdded() {
-    // If we're in sorted mode, we need to update our tracking
-    if (_isSortedByReminders) {
-      print('🔄 Friend added while in sorted mode, maintaining sort');
-      // Don't reset to custom order, just re-sort with the new friend included
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        if (mounted) {
-          final provider = Provider.of<FriendsProvider>(context, listen: false);
-
-          // Ensure the new friend has reminder time calculated
-          await _ensureAllReminderTimesCalculated();
-
-          // Re-sort including the new friend
-          final sortedFriends = await _sortFriendsByReminderProximity(provider.friends);
-          provider.reorderFriends(sortedFriends);
-        }
-      });
-    }
-  }
-
-  void _showReorderOptions(
-      BuildContext context, Friend friend, List<Friend> friends) {
-    final currentIndex = friends.indexOf(friend);
-
-    showCupertinoModalPopup(
-      context: context,
-      builder: (context) => CupertinoActionSheet(
-        title: Text(
-          'Reorder ${friend.name}',
-          style: TextStyle(
-            fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-            fontWeight: FontWeight.w600,
-            fontFamily: '.SF Pro Text',
-          ),
-        ),
-        actions: [
-          if (currentIndex > 0)
-            CupertinoActionSheetAction(
-              onPressed: () {
-                Navigator.pop(context);
-                _reorderFriends(context, currentIndex, 0, friends);
-              },
-              child: Text(
-                'Move to Top',
-                style: TextStyle(
-                  fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-                  fontFamily: '.SF Pro Text',
-                ),
-              ),
-            ),
-          if (currentIndex > 0)
-            CupertinoActionSheetAction(
-              onPressed: () {
-                Navigator.pop(context);
-                _reorderFriends(
-                    context, currentIndex, currentIndex - 1, friends);
-              },
-              child: Text(
-                'Move Up',
-                style: TextStyle(
-                  fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-                  fontFamily: '.SF Pro Text',
-                ),
-              ),
-            ),
-          if (currentIndex < friends.length - 1)
-            CupertinoActionSheetAction(
-              onPressed: () {
-                Navigator.pop(context);
-                _reorderFriends(
-                    context, currentIndex, currentIndex + 1, friends);
-              },
-              child: Text(
-                'Move Down',
-                style: TextStyle(
-                  fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-                  fontFamily: '.SF Pro Text',
-                ),
-              ),
-            ),
-          if (currentIndex < friends.length - 1)
-            CupertinoActionSheetAction(
-              onPressed: () {
-                Navigator.pop(context);
-                _reorderFriends(
-                    context, currentIndex, friends.length - 1, friends);
-              },
-              child: Text(
-                'Move to Bottom',
-                style: TextStyle(
-                  fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-                  fontFamily: '.SF Pro Text',
-                ),
-              ),
-            ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          onPressed: () => Navigator.pop(context),
-          isDestructiveAction: true,
-          child: Text(
-            'Cancel',
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-              fontFamily: '.SF Pro Text',
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _reorderFriends(
-      BuildContext context, int oldIndex, int newIndex, List<Friend> friends) {
-    final provider = Provider.of<FriendsProvider>(context, listen: false);
-    final reorderedFriends = List<Friend>.from(friends);
-
-    // Remove the friend from old position
-    final Friend friend = reorderedFriends.removeAt(oldIndex);
-
-    // Insert at new position
-    reorderedFriends.insert(newIndex, friend);
-
-    provider.reorderFriends(reorderedFriends);
-    HapticFeedback.lightImpact();
-
-    // FIXED: If we're in sorted mode, exit it and update original order
-    if (_isSortedByReminders) {
-      setState(() {
-        _isSortedByReminders = false;
-        _originalFriendsOrder = reorderedFriends; // Use the manually reordered list as new baseline
-      });
-      ToastService.showSuccess(context, 'Custom order');
-    }
+    final updatedFriend = friend.copyWith(isFavorite: false);
+    provider.updateFriend(updatedFriend);
+    ToastService.showSuccess(context, '${friend.name} removed from favorites');
   }
 }
