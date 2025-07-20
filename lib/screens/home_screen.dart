@@ -1008,7 +1008,7 @@ class _HomeScreenNewState extends State<HomeScreenNew>
 
   void _handleCardExpanded(String friendId) {
     setState(() {
-      _expandedFriendId = _expandedFriendId == friendId ? null : friendId;
+      _expandedFriendId = friendId; // Always keep one expanded
     });
     HapticFeedback.lightImpact();
   }
