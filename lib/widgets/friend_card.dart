@@ -180,74 +180,24 @@ class _FriendCardNewState extends State<FriendCardNew>
           CupertinoActionSheetAction(
             onPressed: () {
               Navigator.pop(context);
-              _navigateToMessageScreen(context);
+              _navigateToEditScreen(context);
             },
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            child: Row(
               children: [
-                Icon(
-                  CupertinoIcons.bubble_left_fill,
-                  color: AppColors.primary,
-                  size: 22,
-                ),
-                SizedBox(width: 12),
-                Text(
-                  'Send Message',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w400,
-                    color: AppColors.primary,
-                    fontFamily: '.SF Pro Text',
-                  ),
-                ),
-              ],
-            ),
-          ),
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(context);
-              _callFriend(context);
-            },
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  CupertinoIcons.phone_fill,
-                  color: AppColors.tertiary,
-                  size: 22,
-                ),
-                SizedBox(width: 12),
-                Text(
-                  'Call',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w400,
-                    color: AppColors.tertiary,
-                    fontFamily: '.SF Pro Text',
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Single reorder option (only show if more than 1 friend)
-          if (totalFriends > 1)
-            CupertinoActionSheetAction(
-              onPressed: () {
-                Navigator.pop(context);
-                _showReorderMenu();
-              },
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    CupertinoIcons.arrow_up_arrow_down,
+                // Fixed width for icon area to ensure alignment
+                const SizedBox(
+                  width: 60,
+                  child: Icon(
+                    CupertinoIcons.pencil,
                     color: AppColors.primary,
                     size: 22,
                   ),
-                  SizedBox(width: 12),
-                  Text(
-                    'Reorder',
+                ),
+                // Expanded text area to center the text
+                const Expanded(
+                  child: Text(
+                    'Edit',
+                    textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w400,
@@ -255,36 +205,47 @@ class _FriendCardNewState extends State<FriendCardNew>
                       fontFamily: '.SF Pro Text',
                     ),
                   ),
-                ],
-              ),
-            ),
-
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(context);
-              _navigateToEditScreen(context);
-            },
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  CupertinoIcons.pencil,
-                  color: AppColors.primary,
-                  size: 22,
                 ),
-                SizedBox(width: 12),
-                Text(
-                  'Edit',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w400,
-                    color: AppColors.primary,
-                    fontFamily: '.SF Pro Text',
-                  ),
-                ),
+                // Matching width spacer on the right for perfect centering
+                const SizedBox(width: 60),
               ],
             ),
           ),
+          if (totalFriends > 1)
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(context);
+                _showReorderMenu();
+              },
+              child: Row(
+                children: [
+                  // Fixed width for icon area to ensure alignment
+                  const SizedBox(
+                    width: 60,
+                    child: Icon(
+                      CupertinoIcons.arrow_up_arrow_down,
+                      color: AppColors.primary,
+                      size: 22,
+                    ),
+                  ),
+                  // Expanded text area to center the text
+                  const Expanded(
+                    child: Text(
+                      'Reorder',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.primary,
+                        fontFamily: '.SF Pro Text',
+                      ),
+                    ),
+                  ),
+                  // Matching width spacer on the right for perfect centering
+                  const SizedBox(width: 60),
+                ],
+              ),
+            ),
         ],
         cancelButton: CupertinoActionSheetAction(
           onPressed: () => Navigator.pop(context),
