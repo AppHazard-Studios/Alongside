@@ -85,8 +85,20 @@ class _HomeScreenNewState extends State<HomeScreenNew>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
     if (state == AppLifecycleState.resumed) {
       _loadStats();
+    }
+  }
+
+  Future<void> _checkFirstLaunch() async {
+    final provider = Provider.of<FriendsProvider>(context, listen: false);
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (provider.friends.isEmpty && mounted) {
+      setState(() {
+        _shouldShowOnboarding = true;
+      });
     }
   }
 
@@ -98,16 +110,6 @@ class _HomeScreenNewState extends State<HomeScreenNew>
       setState(() {
         _messagesSent = messages;
         _callsMade = calls;
-      });
-    }
-  }
-
-  Future<void> _checkFirstLaunch() async {
-    final provider = Provider.of<FriendsProvider>(context, listen: false);
-    await Future.delayed(const Duration(milliseconds: 500));
-    if (provider.friends.isEmpty && mounted) {
-      setState(() {
-        _shouldShowOnboarding = true;
       });
     }
   }
@@ -130,22 +132,7 @@ class _HomeScreenNewState extends State<HomeScreenNew>
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    if (_expandedFriendId == null) {
-      final provider = Provider.of<FriendsProvider>(context, listen: false);
-      if (!provider.isLoading && provider.friends.isNotEmpty) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted && _expandedFriendId == null) {
-            setState(() {
-              _expandedFriendId = provider.friends.first.id;
-            });
-          }
-        });
-      }
-    }
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadStats();
-    });
+    // Ensure one card is always expanded
   }
 
   @override
@@ -162,28 +149,40 @@ class _HomeScreenNewState extends State<HomeScreenNew>
 
     return CupertinoPageScaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      child: Consumer<FriendsProvider>(
-        builder: (context, friendsProvider, child) {
-          if (friendsProvider.isLoading) {
-            return _buildLoadingState();
-          }
+        child: Consumer<FriendsProvider>(
+          builder: (context, friendsProvider, child) {
+            if (friendsProvider.isLoading) {
+              return _buildLoadingState();
+            }
 
-          final allFriends = friendsProvider.friends;
-          final friends = _searchQuery.isEmpty
-              ? allFriends
-              : allFriends.where((friend) {
-            return friend.name.toLowerCase().contains(_searchQuery) ||
-                (friend.helpingWith?.toLowerCase().contains(_searchQuery) ?? false) ||
-                (friend.theyHelpingWith?.toLowerCase().contains(_searchQuery) ?? false);
-          }).toList();
+            final allFriends = friendsProvider.friends;
 
-          if (allFriends.isEmpty) {
-            return _buildEmptyState(context);
-          }
+            // CRITICAL: Set first card as expanded when friends load
+            if (allFriends.isNotEmpty && _expandedFriendId == null) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  setState(() {
+                    _expandedFriendId = allFriends.first.id;
+                  });
+                }
+              });
+            }
 
-          return _buildIntegratedLayout(context, friends, allFriends);
-        },
-      ),
+            final friends = _searchQuery.isEmpty
+                ? allFriends
+                : allFriends.where((friend) {
+              return friend.name.toLowerCase().contains(_searchQuery) ||
+                  (friend.helpingWith?.toLowerCase().contains(_searchQuery) ?? false) ||
+                  (friend.theyHelpingWith?.toLowerCase().contains(_searchQuery) ?? false);
+            }).toList();
+
+            if (allFriends.isEmpty) {
+              return _buildEmptyState(context);
+            }
+
+            return _buildIntegratedLayout(context, friends, allFriends);
+          },
+        ),
     );
   }
 

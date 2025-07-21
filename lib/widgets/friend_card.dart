@@ -161,6 +161,9 @@ class _FriendCardNewState extends State<FriendCardNew>
 
   void _showActionMenu() {
     HapticFeedback.mediumImpact();
+    final provider = Provider.of<FriendsProvider>(context, listen: false);
+    final totalFriends = provider.friends.length;
+
     showCupertinoModalPopup(
       context: context,
       builder: (context) => CupertinoActionSheet(
@@ -226,6 +229,36 @@ class _FriendCardNewState extends State<FriendCardNew>
               ],
             ),
           ),
+
+          // Single reorder option (only show if more than 1 friend)
+          if (totalFriends > 1)
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(context);
+                _showReorderMenu();
+              },
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    CupertinoIcons.arrow_up_arrow_down,
+                    color: AppColors.primary,
+                    size: 22,
+                  ),
+                  SizedBox(width: 12),
+                  Text(
+                    'Reorder',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.primary,
+                      fontFamily: '.SF Pro Text',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
           CupertinoActionSheetAction(
             onPressed: () {
               Navigator.pop(context);
@@ -267,6 +300,190 @@ class _FriendCardNewState extends State<FriendCardNew>
         ),
       ),
     );
+  }
+
+  void _showReorderMenu() {
+    final provider = Provider.of<FriendsProvider>(context, listen: false);
+    final totalFriends = provider.friends.length;
+    final isFirst = widget.index == 0;
+    final isLast = widget.index == totalFriends - 1;
+
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: Text(
+          'Reorder ${widget.friend.name}',
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+            fontFamily: '.SF Pro Text',
+          ),
+        ),
+        actions: [
+          if (!isFirst)
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(context);
+                _moveToTop();
+              },
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    CupertinoIcons.arrow_up_to_line,
+                    color: AppColors.primary,
+                    size: 22,
+                  ),
+                  SizedBox(width: 12),
+                  Text(
+                    'Move to Top',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.primary,
+                      fontFamily: '.SF Pro Text',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (!isFirst)
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(context);
+                _moveUp();
+              },
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    CupertinoIcons.arrow_up,
+                    color: AppColors.primary,
+                    size: 22,
+                  ),
+                  SizedBox(width: 12),
+                  Text(
+                    'Move Up',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.primary,
+                      fontFamily: '.SF Pro Text',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (!isLast)
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(context);
+                _moveDown();
+              },
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    CupertinoIcons.arrow_down,
+                    color: AppColors.primary,
+                    size: 22,
+                  ),
+                  SizedBox(width: 12),
+                  Text(
+                    'Move Down',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.primary,
+                      fontFamily: '.SF Pro Text',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (!isLast)
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(context);
+                _moveToBottom();
+              },
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    CupertinoIcons.arrow_down_to_line,
+                    color: AppColors.primary,
+                    size: 22,
+                  ),
+                  SizedBox(width: 12),
+                  Text(
+                    'Move to Bottom',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.primary,
+                      fontFamily: '.SF Pro Text',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.pop(context),
+          child: const Text(
+            'Cancel',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: AppColors.primary,
+              fontFamily: '.SF Pro Text',
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _moveToTop() {
+    final provider = Provider.of<FriendsProvider>(context, listen: false);
+    final currentFriends = List<Friend>.from(provider.friends);
+    final friend = currentFriends.removeAt(widget.index);
+    currentFriends.insert(0, friend);
+    provider.reorderFriends(currentFriends);
+    HapticFeedback.lightImpact();
+  }
+
+  void _moveUp() {
+    if (widget.index > 0) {
+      final provider = Provider.of<FriendsProvider>(context, listen: false);
+      final currentFriends = List<Friend>.from(provider.friends);
+      final friend = currentFriends.removeAt(widget.index);
+      currentFriends.insert(widget.index - 1, friend);
+      provider.reorderFriends(currentFriends);
+      HapticFeedback.lightImpact();
+    }
+  }
+
+  void _moveDown() {
+    final provider = Provider.of<FriendsProvider>(context, listen: false);
+    if (widget.index < provider.friends.length - 1) {
+      final currentFriends = List<Friend>.from(provider.friends);
+      final friend = currentFriends.removeAt(widget.index);
+      currentFriends.insert(widget.index + 1, friend);
+      provider.reorderFriends(currentFriends);
+      HapticFeedback.lightImpact();
+    }
+  }
+
+  void _moveToBottom() {
+    final provider = Provider.of<FriendsProvider>(context, listen: false);
+    final currentFriends = List<Friend>.from(provider.friends);
+    final friend = currentFriends.removeAt(widget.index);
+    currentFriends.add(friend);
+    provider.reorderFriends(currentFriends);
+    HapticFeedback.lightImpact();
   }
 
   @override
@@ -545,40 +762,49 @@ class _FriendCardNewState extends State<FriendCardNew>
     final reminderText = _getFixedWidthReminderText(_nextReminderTime);
     final reminderColor = _getReminderColor(_nextReminderTime);
 
-    return RichText(
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      text: TextSpan(
-        children: [
-          TextSpan(
-            text: widget.friend.name,
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            widget.friend.name,
             style: TextStyle(
               fontSize: ResponsiveUtils.scaledFontSize(context, 20, maxScale: 1.3),
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
               fontFamily: '.SF Pro Text',
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          TextSpan(
-            text: ' • ',
-            style: TextStyle(
-              fontSize: ResponsiveUtils.scaledFontSize(context, 20, maxScale: 1.3),
-              fontWeight: FontWeight.w400,
-              color: AppColors.textSecondary,
-              fontFamily: '.SF Pro Text',
+        ),
+        SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+
+        // Smaller, better positioned reminder indicator
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              width: ResponsiveUtils.scaledContainerSize(context, 4),
+              height: ResponsiveUtils.scaledContainerSize(context, 4),
+              decoration: BoxDecoration(
+                color: reminderColor.withOpacity(0.6),
+                shape: BoxShape.circle,
+              ),
             ),
-          ),
-          TextSpan(
-            text: reminderText,
-            style: TextStyle(
-              fontSize: ResponsiveUtils.scaledFontSize(context, 16, maxScale: 1.2),
-              fontWeight: FontWeight.w600,
-              color: reminderColor,
-              fontFamily: '.SF Pro Text',
+            SizedBox(width: ResponsiveUtils.scaledSpacing(context, 6)),
+            Text(
+              reminderText,
+              style: TextStyle(
+                fontSize: ResponsiveUtils.scaledFontSize(context, 13, maxScale: 1.1),
+                fontWeight: FontWeight.w600,
+                color: reminderColor,
+                fontFamily: '.SF Pro Text',
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
+      ],
     );
   }
 
