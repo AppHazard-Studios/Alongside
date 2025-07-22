@@ -1,4 +1,4 @@
-// lib/screens/add_friend_screen.dart - UPDATED WITH INTEGRATED TIME PICKER
+// lib/screens/add_friend_screen.dart - UPDATED TO MATCH HOME/SETTINGS DESIGN
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -11,10 +11,12 @@ import '../providers/friends_provider.dart';
 import '../models/friend.dart';
 import '../utils/constants.dart';
 import '../utils/colors.dart';
+import '../utils/responsive_utils.dart';
 import '../widgets/no_underline_field.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../widgets/day_selector_widget.dart';
 import '../models/day_selection_data.dart';
+import '../utils/text_styles.dart';
 
 class AddFriendScreen extends StatefulWidget {
   final Friend? friend;
@@ -93,13 +95,10 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text(
+        title: Text(
           'Add from Contacts?',
-          style: TextStyle(
+          style: AppTextStyles.dialogTitle.copyWith(
             color: AppColors.primary,
-            fontWeight: FontWeight.w700,
-            fontSize: 18,
-            fontFamily: '.SF Pro Text',
           ),
         ),
         content: const Padding(
@@ -109,7 +108,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             style: TextStyle(
               fontSize: 16,
               height: 1.4,
-              color: CupertinoColors.label,
+              color: AppColors.textPrimary,
               fontFamily: '.SF Pro Text',
             ),
             textAlign: TextAlign.center,
@@ -222,7 +221,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
         title: Text(
           'Choose Phone Number for ${contact.displayName}',
           style: const TextStyle(
-            color: CupertinoColors.systemBlue,
+            color: AppColors.primary,
             fontSize: 16,
             fontWeight: FontWeight.w600,
             fontFamily: '.SF Pro Text',
@@ -232,7 +231,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
           'This contact has multiple phone numbers. Which one would you like to use?',
           style: TextStyle(
             fontSize: 14,
-            color: CupertinoColors.secondaryLabel,
+            color: AppColors.textSecondary,
             fontFamily: '.SF Pro Text',
           ),
         ),
@@ -284,7 +283,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                 Text(
                   phone.number,
                   style: const TextStyle(
-                    color: CupertinoColors.label,
+                    color: AppColors.textPrimary,
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                     fontFamily: '.SF Pro Text',
@@ -294,7 +293,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                   Text(
                     labelText,
                     style: const TextStyle(
-                      color: CupertinoColors.secondaryLabel,
+                      color: AppColors.textSecondary,
                       fontSize: 13,
                       fontFamily: '.SF Pro Text',
                     ),
@@ -309,7 +308,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
           child: const Text(
             'Cancel',
             style: TextStyle(
-              color: CupertinoColors.destructiveRed,
+              color: AppColors.error,
               fontWeight: FontWeight.w600,
               fontFamily: '.SF Pro Text',
             ),
@@ -326,7 +325,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
         title: const Text(
           'Error',
           style: TextStyle(
-            color: CupertinoColors.destructiveRed,
+            color: AppColors.error,
             fontWeight: FontWeight.w600,
             fontSize: 18,
             fontFamily: '.SF Pro Text',
@@ -335,7 +334,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
         content: Text(
           message,
           style: const TextStyle(
-            color: CupertinoColors.label,
+            color: AppColors.textPrimary,
             fontSize: 16,
             fontFamily: '.SF Pro Text',
           ),
@@ -346,7 +345,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             child: const Text(
               'OK',
               style: TextStyle(
-                color: CupertinoColors.systemBlue,
+                color: AppColors.primary,
                 fontWeight: FontWeight.w600,
                 fontFamily: '.SF Pro Text',
               ),
@@ -361,13 +360,10 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     showCupertinoModalPopup(
       context: context,
       builder: (context) => CupertinoActionSheet(
-        title: const Text(
+        title: Text(
           'Choose Profile Image',
-          style: TextStyle(
-            color: CupertinoColors.systemBlue,
-            fontWeight: FontWeight.w600,
-            fontSize: 18,
-            fontFamily: '.SF Pro Text',
+          style: AppTextStyles.headline.copyWith(
+            color: AppColors.primary,
           ),
         ),
         actions: [
@@ -379,7 +375,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             child: const Text(
               'Choose Emoji',
               style: TextStyle(
-                color: CupertinoColors.systemBlue,
+                color: AppColors.primary,
                 fontSize: 16,
                 fontFamily: '.SF Pro Text',
               ),
@@ -393,7 +389,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             child: const Text(
               'Take Photo',
               style: TextStyle(
-                color: CupertinoColors.systemBlue,
+                color: AppColors.primary,
                 fontSize: 16,
                 fontFamily: '.SF Pro Text',
               ),
@@ -407,7 +403,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             child: const Text(
               'Choose from Library',
               style: TextStyle(
-                color: CupertinoColors.systemBlue,
+                color: AppColors.primary,
                 fontSize: 16,
                 fontFamily: '.SF Pro Text',
               ),
@@ -420,7 +416,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
           child: const Text(
             'Cancel',
             style: TextStyle(
-              color: CupertinoColors.destructiveRed,
+              color: AppColors.error,
               fontWeight: FontWeight.w600,
               fontFamily: '.SF Pro Text',
             ),
@@ -450,7 +446,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               title: const Text(
                 'Camera Permission Required',
                 style: TextStyle(
-                  color: CupertinoColors.systemBlue,
+                  color: AppColors.primary,
                   fontWeight: FontWeight.w700,
                   fontSize: 18,
                   fontFamily: '.SF Pro Text',
@@ -473,7 +469,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                   child: const Text(
                     'Cancel',
                     style: TextStyle(
-                      color: CupertinoColors.systemBlue,
+                      color: AppColors.secondary,
                       fontFamily: '.SF Pro Text',
                     ),
                   ),
@@ -486,7 +482,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                   child: const Text(
                     'Open Settings',
                     style: TextStyle(
-                      color: CupertinoColors.systemBlue,
+                      color: AppColors.primary,
                       fontWeight: FontWeight.w600,
                       fontFamily: '.SF Pro Text',
                     ),
@@ -529,9 +525,23 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       builder: (context) => Container(
         height: MediaQuery.of(context).size.height * 0.4,
         padding: const EdgeInsets.all(16),
-        color: CupertinoColors.systemBackground,
+        decoration: const BoxDecoration(
+          color: Color(0xFFF8FAFC), // Match home screen background
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
         child: Column(
           children: [
+            // Drag handle
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.textSecondary.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -540,7 +550,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                   child: const Text(
                     'Cancel',
                     style: TextStyle(
-                      color: CupertinoColors.systemBlue,
+                      color: AppColors.secondary,
                       fontFamily: '.SF Pro Text',
                     ),
                   ),
@@ -551,7 +561,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    color: CupertinoColors.label,
+                    color: AppColors.primary,
                     fontFamily: '.SF Pro Text',
                   ),
                 ),
@@ -560,7 +570,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                   child: const Text(
                     'Done',
                     style: TextStyle(
-                      color: CupertinoColors.systemBlue,
+                      color: AppColors.primary,
                       fontWeight: FontWeight.w600,
                       fontFamily: '.SF Pro Text',
                     ),
@@ -590,8 +600,19 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                     },
                     child: Container(
                       decoration: BoxDecoration(
-                        color: CupertinoColors.systemGrey6,
-                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.white.withOpacity(0.8),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.primary.withOpacity(0.1),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Center(
                         child: Text(
@@ -682,7 +703,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             style: const TextStyle(
               fontSize: 16,
               height: 1.4,
-              color: CupertinoColors.label,
+              color: AppColors.textPrimary,
               fontFamily: '.SF Pro Text',
             ),
             textAlign: TextAlign.center,
@@ -735,13 +756,10 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text(
+        title: Text(
           'Remove Friend',
-          style: TextStyle(
-            color: CupertinoColors.destructiveRed,
-            fontWeight: FontWeight.w700,
-            fontSize: 18,
-            fontFamily: '.SF Pro Text',
+          style: AppTextStyles.scaledButton(context).copyWith(
+            color: AppColors.error,
           ),
         ),
         content: Padding(
@@ -762,7 +780,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             child: const Text(
               'Cancel',
               style: TextStyle(
-                color: CupertinoColors.systemBlue,
+                color: AppColors.secondary,
                 fontWeight: FontWeight.w600,
                 fontFamily: '.SF Pro Text',
               ),
@@ -783,7 +801,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             child: const Text(
               'Remove',
               style: TextStyle(
-                color: CupertinoColors.destructiveRed,
+                color: AppColors.error,
                 fontWeight: FontWeight.w600,
                 fontFamily: '.SF Pro Text',
               ),
@@ -796,468 +814,506 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      child: CupertinoApp(
-        debugShowCheckedModeBanner: false,
-        theme: const CupertinoThemeData(
-          brightness: Brightness.light,
-          primaryColor: CupertinoColors.systemBlue,
-        ),
-        home: CupertinoPageScaffold(
-          backgroundColor: CupertinoColors.systemGroupedBackground,
-          navigationBar: CupertinoNavigationBar(
-            middle: Text(
-              widget.friend == null ? 'Add Friend' : 'Edit Friend',
-              style: const TextStyle(
-                color: CupertinoColors.systemBlue,
-                fontWeight: FontWeight.w700,
-                fontSize: 18,
-                fontFamily: '.SF Pro Text',
-              ),
-            ),
-            backgroundColor: CupertinoColors.systemGroupedBackground,
-            leading: CupertinoButton(
-              padding: const EdgeInsets.only(left: 4),
+    return CupertinoPageScaffold(
+      backgroundColor: const Color(0xFFF8FAFC), // Match home screen background
+      child: SafeArea(
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // INTEGRATED HEADER matching home/settings design
+            SliverToBoxAdapter(
               child: Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: CupertinoColors.systemGroupedBackground,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: CupertinoColors.systemBlue.withOpacity(0.3),
-                    width: 1,
-                  ),
+                padding: EdgeInsets.fromLTRB(
+                  ResponsiveUtils.scaledSpacing(context, 16),
+                  ResponsiveUtils.scaledSpacing(context, 16),
+                  ResponsiveUtils.scaledSpacing(context, 16),
+                  ResponsiveUtils.scaledSpacing(context, 12),
                 ),
-                child: const Icon(
-                  CupertinoIcons.chevron_left,
-                  size: 16,
-                  color: CupertinoColors.systemBlue,
-                ),
-              ),
-              onPressed: () => Navigator.pop(context),
-            ),
-            trailing: CupertinoButton(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: const Text(
-                'Save',
-                style: TextStyle(
-                  color: CupertinoColors.systemBlue,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                  fontFamily: '.SF Pro Text',
-                ),
-              ),
-              onPressed: _saveFriend,
-            ),
-            border: null,
-          ),
-          child: SafeArea(
-            child: Form(
-              key: _formKey,
-              child: ListView(
-                padding: const EdgeInsets.only(top: 16),
-                children: [
-                  // Profile image selection
-                  Center(
-                    child: Column(
-                      children: [
-                        GestureDetector(
-                          onTap: _showProfileOptions,
-                          child: Container(
-                            width: 100,
-                            height: 100,
-                            decoration: BoxDecoration(
-                              color: CupertinoColors.white,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: CupertinoColors.systemGrey5,
-                                width: 0.5,
-                              ),
-                            ),
-                            child: _isEmoji
-                                ? Center(
-                              child: Text(
-                                _profileImage,
-                                style: const TextStyle(fontSize: 50),
-                              ),
-                            )
-                                : ClipOval(
-                              child: Image.file(
-                                File(_profileImage),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
+                child: Row(
+                  children: [
+                    // Back button (rounded square like settings X button)
+                    CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      child: Container(
+                        width: ResponsiveUtils.scaledContainerSize(context, 36),
+                        height: ResponsiveUtils.scaledContainerSize(context, 36),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.8),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: AppColors.primary.withOpacity(0.2),
+                            width: 1,
                           ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 12),
-                        CupertinoButton(
-                          padding: EdgeInsets.zero,
-                          onPressed: _showProfileOptions,
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                CupertinoIcons.camera,
-                                color: CupertinoColors.systemBlue,
-                                size: 16,
-                              ),
-                              SizedBox(width: 6),
-                              Text(
-                                'Change Profile',
-                                style: TextStyle(
-                                  color: CupertinoColors.systemBlue,
-                                  fontWeight: FontWeight.w500,
-                                  fontFamily: '.SF Pro Text',
-                                  fontSize: 15,
-                                ),
-                              ),
-                            ],
-                          ),
+                        child: Icon(
+                          CupertinoIcons.chevron_left,
+                          size: ResponsiveUtils.scaledIconSize(context, 18),
+                          color: AppColors.primary,
                         ),
-                      ],
+                      ),
+                      onPressed: () => Navigator.pop(context),
                     ),
-                  ),
 
-                  const SizedBox(height: 24),
+                    const Spacer(),
 
-                  // Basic info section
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: CupertinoColors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: CupertinoColors.systemGrey5,
-                        width: 0.5,
+                    // Title
+                    Text(
+                      widget.friend == null ? 'Add Friend' : 'Edit Friend',
+                      style: AppTextStyles.scaledHeadline(context).copyWith(
+                        color: AppColors.primary,
                       ),
                     ),
-                    child: Column(
-                      children: [
-                        // Name field
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Container(
-                                width: 38,
-                                height: 38,
-                                decoration: BoxDecoration(
-                                  color: CupertinoColors.systemBlue.withOpacity(0.1),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  CupertinoIcons.person_fill,
-                                  color: CupertinoColors.systemBlue,
-                                  size: 18,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: NoUnderlineField(
-                                  controller: _nameController,
-                                  label: 'Name',
-                                  placeholder: 'Enter name',
-                                  textCapitalization: TextCapitalization.words,
-                                ),
-                              ),
-                            ],
+
+                    const Spacer(),
+
+                    // Save button (rounded square matching back button)
+                    CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: _saveFriend,
+                      child: Container(
+                        width: ResponsiveUtils.scaledContainerSize(context, 60),
+                        height: ResponsiveUtils.scaledContainerSize(context, 36),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Save',
+                            style: AppTextStyles.scaledButton(context),
                           ),
                         ),
-
-                        Container(
-                          height: 0.5,
-                          color: CupertinoColors.systemGrey5,
-                          margin: const EdgeInsets.only(left: 66),
-                        ),
-
-                        // Phone Number field
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Container(
-                                width: 38,
-                                height: 38,
-                                decoration: BoxDecoration(
-                                  color: CupertinoColors.systemGreen.withOpacity(0.1),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  CupertinoIcons.phone_fill,
-                                  color: CupertinoColors.systemGreen,
-                                  size: 18,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: NoUnderlineField(
-                                  controller: _phoneController,
-                                  label: 'Phone Number',
-                                  placeholder: 'Enter phone number',
-                                  keyboardType: TextInputType.phone,
-                                  textCapitalization: TextCapitalization.words,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // "Alongside" information section
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: CupertinoColors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: CupertinoColors.systemGrey5,
-                        width: 0.5,
                       ),
                     ),
-                    child: Column(
+                  ],
+                ),
+              ),
+            ),
+
+            // Main content
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: ResponsiveUtils.scaledSpacing(context, 16),
+                ),
+                child: Column(
+                  children: [
+                    // Profile image selection
+                    Center(
+                      child: Column(
+                        children: [
+                          GestureDetector(
+                            onTap: _showProfileOptions,
+                            child: Container(
+                              width: ResponsiveUtils.scaledContainerSize(context, 100),
+                              height: ResponsiveUtils.scaledContainerSize(context, 100),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.9),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: AppColors.primary.withOpacity(0.2),
+                                  width: 2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.06),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: _isEmoji
+                                  ? Center(
+                                child: Text(
+                                  _profileImage,
+                                  style: TextStyle(fontSize: ResponsiveUtils.scaledFontSize(context, 50)),
+                                ),
+                              )
+                                  : ClipOval(
+                                child: Image.file(
+                                  File(_profileImage),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)),
+                          CupertinoButton(
+                            padding: EdgeInsets.zero,
+                            onPressed: _showProfileOptions,
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: ResponsiveUtils.scaledSpacing(context, 12),
+                                vertical: ResponsiveUtils.scaledSpacing(context, 8),
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: AppColors.primary.withOpacity(0.2),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    CupertinoIcons.camera,
+                                    color: AppColors.primary,
+                                    size: ResponsiveUtils.scaledIconSize(context, 16),
+                                  ),
+                                  SizedBox(width: ResponsiveUtils.scaledSpacing(context, 6)),
+                                  Text(
+                                    'Change Profile',
+                                    style: AppTextStyles.scaledBody(context).copyWith(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 24)),
+
+                    // Basic info section
+                    _buildSection(
                       children: [
-                        // What are you alongside them in?
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Container(
-                                width: 38,
-                                height: 38,
-                                decoration: BoxDecoration(
-                                  color: CupertinoColors.systemBlue.withOpacity(0.1),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  CupertinoIcons.heart_fill,
-                                  color: CupertinoColors.systemBlue,
-                                  size: 18,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: NoUnderlineField(
-                                  controller: _helpingThemWithController,
-                                  label: 'What are you alongside them in?',
-                                  placeholder: 'e.g., "Accountability for exercise"',
-                                  textCapitalization: TextCapitalization.sentences,
-                                ),
-                              ),
-                            ],
+                        _buildFormRow(
+                          icon: CupertinoIcons.person_fill,
+                          iconColor: AppColors.primary,
+                          child: NoUnderlineField(
+                            controller: _nameController,
+                            label: 'Name',
+                            placeholder: 'Enter name',
+                            textCapitalization: TextCapitalization.words,
                           ),
                         ),
-
-                        Container(
-                          height: 0.5,
-                          color: CupertinoColors.systemGrey5,
-                          margin: const EdgeInsets.only(left: 66),
-                        ),
-
-                        // What are they alongside you in?
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Container(
-                                width: 38,
-                                height: 38,
-                                decoration: BoxDecoration(
-                                  color: CupertinoColors.systemBlue.withOpacity(0.1),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  CupertinoIcons.person_2_fill,
-                                  color: CupertinoColors.systemBlue,
-                                  size: 18,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: NoUnderlineField(
-                                  controller: _helpingYouWithController,
-                                  label: 'What are they alongside you in?',
-                                  placeholder: 'e.g., "Prayer for family issues"',
-                                  textCapitalization: TextCapitalization.sentences,
-                                ),
-                              ),
-                            ],
+                        _buildDivider(),
+                        _buildFormRow(
+                          icon: CupertinoIcons.phone_fill,
+                          iconColor: AppColors.success,
+                          child: NoUnderlineField(
+                            controller: _phoneController,
+                            label: 'Phone Number',
+                            placeholder: 'Enter phone number',
+                            keyboardType: TextInputType.phone,
                           ),
                         ),
                       ],
                     ),
-                  ),
 
-                  const SizedBox(height: 24),
+                    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
 
-                  // Day selector widget with integrated time picker
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
-                    child: DaySelectorWidget(
+                    // "Alongside" information section
+                    _buildSection(
+                      children: [
+                        _buildFormRow(
+                          icon: CupertinoIcons.heart_fill,
+                          iconColor: AppColors.primary,
+                          child: NoUnderlineField(
+                            controller: _helpingThemWithController,
+                            label: 'What are you alongside them in?',
+                            placeholder: 'e.g., "Accountability for exercise"',
+                            textCapitalization: TextCapitalization.sentences,
+                          ),
+                        ),
+                        _buildDivider(),
+                        _buildFormRow(
+                          icon: CupertinoIcons.person_2_fill,
+                          iconColor: AppColors.primary,
+                          child: NoUnderlineField(
+                            controller: _helpingYouWithController,
+                            label: 'What are they alongside you in?',
+                            placeholder: 'e.g., "Prayer for family issues"',
+                            textCapitalization: TextCapitalization.sentences,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 24)),
+
+                    // Day selector widget with integrated time picker
+                    DaySelectorWidget(
                       initialData: _daySelectionData,
                       reminderTime: _reminderTimeStr,
                       onTimeChanged: (newTime) {
                         setState(() {
                           _reminderTimeStr = newTime;
                         });
-                        print("🕐 Time updated to: $newTime"); // Debug log
+                        print("🕐 Time updated to: $newTime");
                       },
-                        onChanged: (daySelectionData) {
-                          setState(() {
-                            _daySelectionData = daySelectionData;
-                            // FIXED: Always clear reminderDays when using new system, whether null or not
-                            _reminderDays = 0;
-                          });
-                          print("📅 Day selection updated: ${daySelectionData?.getDescription()}"); // Debug log
-                        },
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // NOTIFICATION SETTINGS section header
-                  const Padding(
-                    padding: EdgeInsets.only(left: 16, bottom: 8),
-                    child: Text(
-                      'NOTIFICATION SETTINGS',
-                      style: TextStyle(
-                        color: CupertinoColors.secondaryLabel,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.5,
-                        fontFamily: '.SF Pro Text',
-                      ),
-                    ),
-                  ),
-
-                  // Persistent notification setting
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: CupertinoColors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: CupertinoColors.systemGrey5,
-                        width: 0.5,
-                      ),
-                    ),
-                    child: GestureDetector(
-                      onTap: () {
+                      onChanged: (daySelectionData) {
                         setState(() {
-                          _hasPersistentNotification = !_hasPersistentNotification;
+                          _daySelectionData = daySelectionData;
+                          _reminderDays = 0;
                         });
+                        print("📅 Day selection updated: ${daySelectionData?.getDescription()}");
                       },
-                      behavior: HitTestBehavior.opaque,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 38,
-                              height: 38,
-                              decoration: BoxDecoration(
-                                color: CupertinoColors.systemBlue.withOpacity(0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                CupertinoIcons.rectangle_stack_badge_person_crop,
-                                color: CupertinoColors.systemBlue,
-                                size: 18,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            const Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Show in notification area',
-                                    style: TextStyle(
-                                      color: CupertinoColors.label,
-                                      fontSize: 16,
-                                      fontFamily: '.SF Pro Text',
-                                    ),
-                                  ),
-                                  Text(
-                                    'Keep a quick access notification for this friend',
-                                    style: TextStyle(
-                                      color: CupertinoColors.secondaryLabel,
-                                      fontSize: 14,
-                                      fontFamily: '.SF Pro Text',
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            CupertinoSwitch(
-                              value: _hasPersistentNotification,
-                              onChanged: (value) {
-                                setState(() {
-                                  _hasPersistentNotification = value;
-                                });
-                              },
-                              activeColor: CupertinoColors.systemBlue,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Delete friend button (only when editing)
-                  if (widget.friend != null)
-                    Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 16),
-                      child: CupertinoButton(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        color: CupertinoColors.destructiveRed.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(16),
-                        onPressed: () => _showDeleteConfirmation(context),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              CupertinoIcons.delete,
-                              color: CupertinoColors.destructiveRed,
-                              size: 18,
-                            ),
-                            SizedBox(width: 8),
-                            Text(
-                              'Remove Friend',
-                              style: TextStyle(
-                                color: CupertinoColors.destructiveRed,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 16,
-                                fontFamily: '.SF Pro Text',
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                     ),
 
-                  const SizedBox(height: 24),
-                ],
+                    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 24)),
+
+                    // NOTIFICATION SETTINGS section header
+                    _buildSectionHeader('NOTIFICATION SETTINGS'),
+
+                    // Persistent notification setting
+                    _buildSection(
+                      children: [
+                        _buildSwitchRow(
+                          icon: CupertinoIcons.rectangle_stack_badge_person_crop,
+                          iconColor: AppColors.primary,
+                          title: 'Show in notification area',
+                          subtitle: 'Keep a quick access notification for this friend',
+                          value: _hasPersistentNotification,
+                          onChanged: (value) {
+                            setState(() {
+                              _hasPersistentNotification = value;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+
+                    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
+
+                    // Delete friend button (only when editing)
+                    if (widget.friend != null)
+                      Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: AppColors.error.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppColors.error.withOpacity(0.2),
+                            width: 1,
+                          ),
+                        ),
+                        child: CupertinoButton(
+                          padding: EdgeInsets.symmetric(
+                            vertical: ResponsiveUtils.scaledSpacing(context, 16),
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          onPressed: () => _showDeleteConfirmation(context),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                CupertinoIcons.delete,
+                                color: AppColors.error,
+                                size: ResponsiveUtils.scaledIconSize(context, 18),
+                              ),
+                              SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+                              Text(
+                                'Remove Friend',
+                                style: TextStyle(
+                                  color: AppColors.error,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: ResponsiveUtils.scaledFontSize(context, 16),
+                                  fontFamily: '.SF Pro Text',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 32)),
+                  ],
+                ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
   }
+
+  // Helper method to build sections matching home/settings style
+  Widget _buildSection({required List<Widget> children}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.primary.withOpacity(0.1),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(children: children),
+    );
+  }
+
+  // Helper method for section headers
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: EdgeInsets.only(
+        left: ResponsiveUtils.scaledSpacing(context, 8),
+        bottom: ResponsiveUtils.scaledSpacing(context, 8),
+      ),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          title,
+          style: AppTextStyles.sectionTitle,
+        ),
+      ),
+    );
+  }
+
+  // Helper method for form rows with rounded square icons
+  // FIXED: Helper method for form rows with proper iOS text alignment
+  Widget _buildFormRow({
+    required IconData icon,
+    required Color iconColor,
+    required Widget child,
+  }) {
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: ResponsiveUtils.scaledSpacing(context, 16),
+        vertical: ResponsiveUtils.scaledSpacing(context, 12),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: ResponsiveUtils.scaledContainerSize(context, 38),
+            height: ResponsiveUtils.scaledContainerSize(context, 38),
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10), // Rounded square like settings
+              border: Border.all(
+                color: iconColor.withOpacity(0.2),
+                width: 1,
+              ),
+            ),
+            child: Icon(
+              icon,
+              color: iconColor,
+              size: ResponsiveUtils.scaledIconSize(context, 18),
+            ),
+          ),
+          SizedBox(width: ResponsiveUtils.scaledSpacing(context, 12)),
+          // FIXED: Remove crossAxisAlignment.center and let the child handle its own alignment
+          // This allows the NoUnderlineField to center its content properly with the icon
+          Expanded(child: child),
+        ],
+      ),
+    );
+  }
+
+  // FIXED: Consistent divider with proper opacity for visibility
+  // FIXED: Consistent divider with proper opacity (matches add friend screen)
+  Widget _buildDivider() {
+    return Container(
+      height: 0.5,
+      width: double.infinity,
+      color: AppColors.primary.withOpacity(0.15), // INCREASED opacity for better visibility
+      margin: EdgeInsets.zero,
+    );
+  }
+
+  // Helper method for switch rows
+  Widget _buildSwitchRow({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    required bool value,
+    required Function(bool) onChanged,
+  }) {
+    return GestureDetector(
+      onTap: () => onChanged(!value),
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: ResponsiveUtils.scaledSpacing(context, 16),
+          vertical: ResponsiveUtils.scaledSpacing(context, 12),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              width: ResponsiveUtils.scaledContainerSize(context, 38),
+              height: ResponsiveUtils.scaledContainerSize(context, 38),
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10), // Rounded square like settings
+                border: Border.all(
+                  color: iconColor.withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              child: Icon(
+                icon,
+                color: iconColor,
+                size: ResponsiveUtils.scaledIconSize(context, 18),
+              ),
+            ),
+            SizedBox(width: ResponsiveUtils.scaledSpacing(context, 12)),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: AppTextStyles.scaledBody(context).copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: AppTextStyles.scaledBody(context).copyWith(
+                      color: AppColors.textSecondary,
+                      fontSize: ResponsiveUtils.scaledFontSize(context, 15), // iOS subhead size
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            CupertinoSwitch(
+              value: value,
+              onChanged: onChanged,
+              activeColor: AppColors.primary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Helper method for dividers matching settings style
+
 }
 
-// Contact picker widget with search functionality
+// Contact picker widget with search functionality - Updated with new styling
 class _ContactPickerWithSearch extends StatefulWidget {
   final List<Contact> contacts;
   final Function(Contact) onContactSelected;
@@ -1331,7 +1387,7 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
     return Container(
       height: MediaQuery.of(context).size.height * 0.8,
       decoration: const BoxDecoration(
-        color: CupertinoColors.systemBackground,
+        color: Color(0xFFF8FAFC), // Match home screen background
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
@@ -1342,7 +1398,7 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: CupertinoColors.systemGrey3,
+              color: AppColors.textSecondary.withOpacity(0.3),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -1358,7 +1414,7 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
                   child: const Text(
                     'Cancel',
                     style: TextStyle(
-                      color: CupertinoColors.systemBlue,
+                      color: AppColors.secondary,
                       fontWeight: FontWeight.w600,
                       fontFamily: '.SF Pro Text',
                     ),
@@ -1371,7 +1427,7 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: CupertinoColors.label,
+                      color: AppColors.primary,
                       fontFamily: '.SF Pro Text',
                     ),
                   ),
@@ -1384,38 +1440,60 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
           // Search field
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: CupertinoTextField(
-              controller: _searchController,
-              placeholder: 'Search contacts...',
-              prefix: const Padding(
-                padding: EdgeInsets.only(left: 8),
-                child: Icon(
-                  CupertinoIcons.search,
-                  color: CupertinoColors.systemGrey,
-                  size: 18,
-                ),
-              ),
-              suffix: _searchController.text.isNotEmpty
-                  ? CupertinoButton(
-                padding: EdgeInsets.zero,
-                minSize: 0,
-                onPressed: () => _searchController.clear(),
-                child: const Icon(
-                  CupertinoIcons.clear_circled,
-                  color: CupertinoColors.systemGrey,
-                  size: 18,
-                ),
-              )
-                  : null,
-              style: const TextStyle(
-                fontSize: 16,
-                fontFamily: '.SF Pro Text',
-              ),
+            child: Container(
               decoration: BoxDecoration(
-                color: CupertinoColors.systemGrey6,
-                borderRadius: BorderRadius.circular(10),
+                color: Colors.white.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.primary.withOpacity(0.2),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+              child: CupertinoTextField(
+                controller: _searchController,
+                placeholder: 'Search contacts...',
+                prefix: Padding(
+                  padding: const EdgeInsets.only(left: 12),
+                  child: Icon(
+                    CupertinoIcons.search,
+                    color: AppColors.primary,
+                    size: 18,
+                  ),
+                ),
+                suffix: _searchController.text.isNotEmpty
+                    ? CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  minSize: 0,
+                  onPressed: () => _searchController.clear(),
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: Icon(
+                      CupertinoIcons.clear_circled,
+                      color: AppColors.textSecondary,
+                      size: 18,
+                    ),
+                  ),
+                )
+                    : null,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontFamily: '.SF Pro Text',
+                  color: AppColors.textPrimary,
+                ),
+                decoration: null,
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                placeholderStyle: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 16,
+                ),
+              ),
             ),
           ),
 
@@ -1424,21 +1502,21 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
           // Contact list
           Expanded(
             child: _filteredContacts.isEmpty
-                ? const Center(
+                ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
                     CupertinoIcons.person_3,
                     size: 48,
-                    color: CupertinoColors.systemGrey,
+                    color: AppColors.textSecondary,
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Text(
                     'No contacts found',
                     style: TextStyle(
                       fontSize: 16,
-                      color: CupertinoColors.systemGrey,
+                      color: AppColors.textSecondary,
                       fontFamily: '.SF Pro Text',
                     ),
                   ),
@@ -1451,12 +1529,13 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
                 itemBuilder: (context, index) {
                   final contact = _filteredContacts[index];
                   return Container(
-                    decoration: const BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: CupertinoColors.separator,
-                          width: 0.5,
-                        ),
+                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.8),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.primary.withOpacity(0.1),
+                        width: 0.5,
                       ),
                     ),
                     child: CupertinoListTile(
@@ -1465,6 +1544,7 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
                         style: const TextStyle(
                           fontSize: 16,
                           fontFamily: '.SF Pro Text',
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       subtitle: contact.phones.isNotEmpty
@@ -1474,7 +1554,7 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
                             : '${contact.phones.length} phone numbers',
                         style: const TextStyle(
                           fontSize: 14,
-                          color: CupertinoColors.secondaryLabel,
+                          color: AppColors.textSecondary,
                           fontFamily: '.SF Pro Text',
                         ),
                       )
@@ -1482,7 +1562,7 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
                         'No phone number',
                         style: TextStyle(
                           fontSize: 14,
-                          color: CupertinoColors.systemGrey,
+                          color: AppColors.textSecondary,
                           fontFamily: '.SF Pro Text',
                         ),
                       ),
@@ -1492,8 +1572,12 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
                         decoration: BoxDecoration(
                           color: contact.photo != null && contact.photo!.isNotEmpty
                               ? null
-                              : CupertinoColors.systemBlue.withOpacity(0.1),
+                              : AppColors.primary.withOpacity(0.1),
                           shape: BoxShape.circle,
+                          border: Border.all(
+                            color: AppColors.primary.withOpacity(0.2),
+                            width: 1,
+                          ),
                         ),
                         child: contact.photo != null && contact.photo!.isNotEmpty
                             ? ClipOval(
@@ -1501,24 +1585,24 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
                             contact.photo!,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
-                              return const Icon(
+                              return Icon(
                                 CupertinoIcons.person,
-                                color: CupertinoColors.systemBlue,
+                                color: AppColors.primary,
                                 size: 20,
                               );
                             },
                           ),
                         )
-                            : const Icon(
+                            : Icon(
                           CupertinoIcons.person,
-                          color: CupertinoColors.systemBlue,
+                          color: AppColors.primary,
                           size: 20,
                         ),
                       ),
                       trailing: contact.phones.isNotEmpty
-                          ? const Icon(
+                          ? Icon(
                         CupertinoIcons.chevron_right,
-                        color: CupertinoColors.systemGrey,
+                        color: AppColors.textSecondary,
                         size: 16,
                       )
                           : null,

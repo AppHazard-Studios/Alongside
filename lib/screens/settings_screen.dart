@@ -103,6 +103,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             onTap: () => _changeLockMethod(),
                           ),
                           _buildDivider(),
+                          _buildDivider(),
                           _buildSettingsItem(
                             context,
                             icon: CupertinoIcons.timer,
@@ -129,6 +130,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           subtitle: 'Save friends and messages to file',
                           onTap: () => _exportData(context),
                         ),
+                        _buildDivider(),
                         _buildDivider(),
                         _buildSettingsItem(
                           context,
@@ -180,6 +182,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           onTap: () => _showBatteryOptimization(context),
                         ),
                         _buildDivider(),
+                        _buildDivider(),
                         _buildSettingsItem(
                           context,
                           icon: CupertinoIcons.trash,
@@ -207,6 +210,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           onTap: () => _showAboutDialog(context),
                         ),
                         _buildDivider(),
+                        _buildDivider(),
                         _buildSettingsItem(
                           context,
                           icon: CupertinoIcons.lock,
@@ -215,6 +219,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           subtitle: 'All data stays on your device',
                           onTap: () => _showPrivacyInfo(context),
                         ),
+                        _buildDivider(),
                         _buildDivider(),
                         _buildSettingsItem(
                           context,
@@ -244,6 +249,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   // FIXED: Header with X button on right, title left-aligned like home screen
+// FIXED: Header with primary color settings icon matching home screen style
   Widget _buildIntegratedHeader() {
     return Container(
       padding: EdgeInsets.fromLTRB(
@@ -276,14 +282,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          AppColors.secondary,
-                          AppColors.secondary.withOpacity(0.8),
+                          AppColors.primary,
+                          AppColors.primary.withOpacity(0.8),
                         ],
                       ),
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.secondary.withOpacity(0.3),
+                          color: AppColors.primary.withOpacity(0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -443,14 +449,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+// FIXED: Full-width solid divider like iOS standard
   Widget _buildDivider() {
     return Container(
       height: 0.5,
-      color: CupertinoColors.systemGrey5,
-      // FIXED: Full width divider, no indentation
+      width: double.infinity,
+      color: AppColors.primary.withOpacity(0.1),
+      margin: EdgeInsets.zero, // No margin to ensure full width
     );
   }
-
   // FIXED: Icons now use rounded squares (like home screen) instead of circles
   Widget _buildSettingsItem(
       BuildContext context, {
@@ -1321,6 +1328,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   // FIXED: More iOS-native picker with better fonts and styling
+// IMPROVED: More precise iOS-native picker styling
+// IMPROVED: More precise iOS-native picker styling
   void _showCooldownPicker() {
     final options = [0, 1, 5, 10, 15, 30, 60];
     int selectedMinutes = _lockCooldownMinutes;
@@ -1328,21 +1337,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showCupertinoModalPopup(
       context: context,
       builder: (context) => Container(
-        height: 280, // Increased height for better iOS feel
+        height: 300, // Slightly taller for better proportions
         decoration: const BoxDecoration(
           color: CupertinoColors.systemBackground,
           borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
         ),
         child: Column(
           children: [
-            // iOS-style header
+            // iOS-style header - exact iOS dimensions
             Container(
-              height: 56,
+              height: 64, // More standard iOS header height
               decoration: const BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
                     color: CupertinoColors.separator,
-                    width: 0.5,
+                    width: 0.33, // iOS standard separator thickness
                   ),
                 ),
               ),
@@ -1364,7 +1373,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const Text(
                     'Lock Cooldown',
                     style: TextStyle(
-                      fontSize: 17,
+                      fontSize: 18, // Slightly larger for better hierarchy
                       fontWeight: FontWeight.w600,
                       color: CupertinoColors.label,
                       fontFamily: '.SF Pro Text',
@@ -1394,7 +1403,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             Expanded(
               child: CupertinoPicker(
-                itemExtent: 44, // iOS standard picker item height
+                itemExtent: 44, // Exact iOS standard picker item height
                 scrollController: FixedExtentScrollController(
                   initialItem: options.indexOf(_lockCooldownMinutes),
                 ),
@@ -1408,9 +1417,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ? 'Immediately'
                           : '$minutes minute${minutes == 1 ? '' : 's'}',
                       style: const TextStyle(
-                        fontSize: 20, // iOS standard picker text size
+                        fontSize: 20, // Adjusted to better match your app's sizing
                         fontFamily: '.SF Pro Text',
                         color: CupertinoColors.label,
+                        fontWeight: FontWeight.w400, // iOS default weight
                       ),
                     ),
                   );
@@ -1422,7 +1432,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
-
   void _exportData(BuildContext context) async {
     final filePath = await BackupService.exportData(context);
     if (filePath != null) {
@@ -1446,168 +1455,202 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     showCupertinoModalPopup(
       context: context,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.65,
-        decoration: const BoxDecoration(
-          color: CupertinoColors.systemBackground,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          children: [
-            Container(
-              margin: const EdgeInsets.only(top: 8, bottom: 16),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: CupertinoColors.systemGrey3,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Battery Optimisations',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
-                        fontFamily: '.SF Pro Text',
-                      ),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: hasPermission ? AppColors.success : AppColors.warning,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          hasPermission ? CupertinoIcons.checkmark : CupertinoIcons.exclamationmark,
-                          color: Colors.white,
-                          size: 16,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          hasPermission ? 'Unrestricted' : 'Restricted',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontFamily: '.SF Pro Text',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+      builder: (context) => DraggableScrollableSheet(
+        // CONTENT-AWARE HEIGHT - like real iOS apps
+        initialChildSize: hasPermission ? 0.4 : 0.65, // Smaller when unrestricted, larger when restricted
+        minChildSize: 0.25,
+        maxChildSize: 0.85,
+        expand: false,
+        builder: (context, scrollController) => Container(
+          decoration: const BoxDecoration(
+            color: CupertinoColors.systemBackground,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.only(bottom: 8),
                 child: Column(
                   children: [
+                    // Drag handle
                     Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
+                      margin: const EdgeInsets.only(top: 8, bottom: 16),
+                      width: 40,
+                      height: 4,
                       decoration: BoxDecoration(
-                        color: hasPermission ? AppColors.success.withOpacity(0.1) : AppColors.warning.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
+                        color: CupertinoColors.systemGrey3,
+                        borderRadius: BorderRadius.circular(2),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    ),
+
+                    // Header with status badge
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Row(
                         children: [
-                          Text(
-                            hasPermission
-                                ? 'Alongside runs without battery restrictions'
-                                : 'Alongside has battery restrictions',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: hasPermission ? AppColors.success : AppColors.warning,
-                              fontFamily: '.SF Pro Text',
+                          const Expanded(
+                            child: Text(
+                              'Battery Optimisations',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primary,
+                                fontFamily: '.SF Pro Text',
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            hasPermission
-                                ? 'Your friend reminders will work reliably, even when the app is closed.'
-                                : 'Android may prevent Alongside from sending scheduled reminders to save battery. This can cause notifications to be delayed or missed.',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: AppColors.textSecondary,
-                              fontFamily: '.SF Pro Text',
-                              height: 1.4,
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: hasPermission ? AppColors.success : AppColors.warning,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: (hasPermission ? AppColors.success : AppColors.warning).withOpacity(0.3),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  hasPermission ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.exclamationmark_triangle_fill,
+                                  color: Colors.white,
+                                  size: 14,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  hasPermission ? 'Unrestricted' : 'Restricted',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: '.SF Pro Text',
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
                     ),
-
-                    if (!hasPermission) ...[
-                      const SizedBox(height: 20),
-                      BatteryOptimizationService.buildBatteryOptimizationGuide(context),
-                    ],
-
-                    const Spacer(),
                   ],
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-              child: Column(
-                children: [
-                  if (!hasPermission) ...[
-                    CupertinoButton(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(12),
-                      onPressed: () async {
-                        Navigator.pop(context);
-                        await BatteryOptimizationService.requestBatteryOptimization(context);
-                      },
-                      child: const Text(
-                        'Remove Battery Restrictions',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                          fontFamily: '.SF Pro Text',
+
+              // Content - sizes naturally
+              Flexible(
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min, // Key: don't take more space than needed
+                    children: [
+                      // Status container
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: hasPermission
+                              ? AppColors.success.withOpacity(0.1)
+                              : AppColors.warning.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: hasPermission
+                                ? AppColors.success.withOpacity(0.2)
+                                : AppColors.warning.withOpacity(0.2),
+                            width: 1,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              hasPermission
+                                  ? 'Alongside runs without battery restrictions'
+                                  : 'Alongside has battery restrictions',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: hasPermission ? AppColors.success : AppColors.warning,
+                                fontFamily: '.SF Pro Text',
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              hasPermission
+                                  ? 'Your friend reminders will work reliably, even when the app is closed.'
+                                  : 'Android may prevent Alongside from sending scheduled reminders to save battery. This can cause notifications to be delayed or missed.',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: AppColors.textSecondary,
+                                fontFamily: '.SF Pro Text',
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                  ] else ...[
-                    CupertinoButton(
-                      color: AppColors.secondary,
-                      borderRadius: BorderRadius.circular(12),
-                      onPressed: () {
-                        Navigator.pop(context);
-                        openAppSettings();
-                      },
-                      child: const Text(
-                        'View App Settings',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                          fontFamily: '.SF Pro Text',
+
+                      // Only show guide when restricted (saves space when unrestricted)
+                      if (!hasPermission) ...[
+                        const SizedBox(height: 16),
+                        BatteryOptimizationService.buildBatteryOptimizationGuide(context),
+                      ],
+
+                      const SizedBox(height: 16),
+
+                      // Action button
+                      SizedBox(
+                        width: double.infinity,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primary.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: CupertinoButton(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            borderRadius: BorderRadius.circular(12),
+                            onPressed: () async {
+                              Navigator.pop(context);
+                              if (hasPermission) {
+                                openAppSettings();
+                              } else {
+                                await BatteryOptimizationService.requestBatteryOptimization(context);
+                              }
+                            },
+                            child: Text(
+                              hasPermission ? 'View App Settings' : 'Remove Battery Restrictions',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                                fontFamily: '.SF Pro Text',
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-                ],
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -1772,76 +1815,96 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _showTroubleshooting(BuildContext context) {
     showCupertinoModalPopup(
       context: context,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.8,
-        decoration: const BoxDecoration(
-          color: CupertinoColors.systemBackground,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          children: [
-            Container(
-              margin: const EdgeInsets.only(top: 8, bottom: 16),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: CupertinoColors.systemGrey3,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: Text(
-                'Troubleshooting Guide',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
-                  fontFamily: '.SF Pro Text',
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.65,
+        minChildSize: 0.3,
+        maxChildSize: 0.85,
+        expand: false,
+        builder: (context, scrollController) => Container(
+          decoration: const BoxDecoration(
+            color: CupertinoColors.systemBackground,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Simple header - let DraggableScrollableSheet handle all drag functionality
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.only(bottom: 8),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildTroubleshootingSection(
-                      'Not receiving notifications?',
-                      [
-                        '1. Check that notifications are enabled in your device settings',
-                        '2. Disable battery optimisation for Alongside',
-                        '3. Make sure Do Not Disturb is off',
-                        '4. Try the test notification feature',
-                        '5. Check permissions in Notification Debug section',
-                        '6. Try "Reschedule All Reminders" option',
-                      ],
+                    // Drag handle
+                    Container(
+                      margin: const EdgeInsets.only(top: 8, bottom: 16),
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: CupertinoColors.systemGrey3,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
-                    _buildTroubleshootingSection(
-                      'App crashes or freezes?',
-                      [
-                        '1. Force close the app and restart',
-                        '2. Check for app updates',
-                        '3. Restart your device',
-                        '4. Export your data and reinstall if needed',
-                      ],
+
+                    // Header
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      child: Text(
+                        'Troubleshooting Guide',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                          fontFamily: '.SF Pro Text',
+                        ),
+                      ),
                     ),
-                    _buildTroubleshootingSection(
-                      'Can\'t send messages or make calls?',
-                      [
-                        '1. Check that phone numbers are entered correctly',
-                        '2. Ensure you have a default messaging/phone app set',
-                        '3. Check app permissions for phone and SMS',
-                      ],
-                    ),
-                    const SizedBox(height: 40),
                   ],
                 ),
               ),
-            ),
-          ],
+
+              // Scrollable content
+              Flexible(
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildTroubleshootingSection(
+                        'Not receiving notifications?',
+                        [
+                          '1. Check that notifications are enabled in your device settings',
+                          '2. Disable battery optimisation for Alongside',
+                          '3. Make sure Do Not Disturb is off',
+                          '4. Try the test notification feature',
+                          '5. Check permissions in Notification Debug section',
+                          '6. Try "Reschedule All Reminders" option',
+                        ],
+                      ),
+                      _buildTroubleshootingSection(
+                        'App crashes or freezes?',
+                        [
+                          '1. Force close the app and restart',
+                          '2. Check for app updates',
+                          '3. Restart your device',
+                          '4. Export your data and reinstall if needed',
+                        ],
+                      ),
+                      _buildTroubleshootingSection(
+                        'Can\'t send messages or make calls?',
+                        [
+                          '1. Check that phone numbers are entered correctly',
+                          '2. Ensure you have a default messaging/phone app set',
+                          '3. Check app permissions for phone and SMS',
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1849,35 +1912,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildTroubleshootingSection(String title, List<String> steps) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: CupertinoColors.label,
-              fontFamily: '.SF Pro Text',
-            ),
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.8),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppColors.primary.withOpacity(0.1),
+            width: 1,
           ),
-          const SizedBox(height: 8),
-          ...steps
-              .map((step) => Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Text(
-              step,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
               style: const TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondary,
+                fontSize: 16, // Match your app's sizing
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
                 fontFamily: '.SF Pro Text',
-                height: 1.4,
               ),
             ),
-          ))
-              .toList(),
-        ],
+            const SizedBox(height: 12),
+            ...steps
+                .map((step) => Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Text(
+                step,
+                style: const TextStyle(
+                  fontSize: 14, // Match your app's sizing
+                  color: AppColors.textSecondary,
+                  fontFamily: '.SF Pro Text',
+                  height: 1.4,
+                ),
+              ),
+            ))
+                .toList(),
+          ],
+        ),
       ),
     );
   }
