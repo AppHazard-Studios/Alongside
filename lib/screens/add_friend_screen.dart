@@ -1030,7 +1030,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                         _buildDivider(),
                         _buildFormRow(
                           icon: CupertinoIcons.phone_fill,
-                          iconColor: AppColors.success,
+                          iconColor: AppColors.primary,
                           child: NoUnderlineField(
                             controller: _phoneController,
                             label: 'Phone Number',
