@@ -1,4 +1,4 @@
-// lib/utils/text_styles.dart - FIXED iOS STANDARD FONT SIZES WITH RESTRICTED SCALING
+// lib/utils/text_styles.dart - FIXED with CONSISTENT EXTREMELY RESTRICTIVE SCALING
 import 'package:flutter/material.dart';
 import 'responsive_utils.dart';
 
@@ -200,94 +200,93 @@ class AppTextStyles {
     color: _textColor,
   );
 
-  // RESPONSIVE SCALING WITH MUCH MORE RESTRICTIONS
+  // RESPONSIVE SCALING WITH EXTREMELY RESTRICTIVE VALUES
 
-  // Scale text with VERY restricted scaling to prevent breaking
+  // Scale text with EXTREMELY restricted scaling to prevent any noticeable changes
   static TextStyle scaledTextStyle(
       BuildContext context,
-      TextStyle baseStyle, {
-        double maxScale = 1.1, // MUCH more restricted
-      }) {
+      TextStyle baseStyle) {
+    // Use ResponsiveUtils directly - no more maxScale overrides!
     return baseStyle.copyWith(
       fontSize: ResponsiveUtils.scaledFontSize(
         context,
         baseStyle.fontSize ?? 17, // Default to iOS body size
-        maxScale: maxScale,
+        // Using default values from ResponsiveUtils (maxScale: 1.02)
       ),
     );
   }
 
-  // Specific scaled styles for common use cases - all very restricted
+  // All scaled styles now use consistent extremely restrictive scaling
   static TextStyle scaledBody(BuildContext context) {
-    return scaledTextStyle(context, body, maxScale: 1.1);
+    return scaledTextStyle(context, body);
   }
 
   static TextStyle scaledHeadline(BuildContext context) {
-    return scaledTextStyle(context, headline, maxScale: 1.08); // Even more restricted for headers
+    return scaledTextStyle(context, headline);
   }
 
   static TextStyle scaledNavTitle(BuildContext context) {
-    return scaledTextStyle(context, navTitle, maxScale: 1.05); // Very restricted for nav titles
+    return scaledTextStyle(context, navTitle);
   }
 
   static TextStyle scaledAppTitle(BuildContext context) {
-    return scaledTextStyle(context, appTitle, maxScale: 1.05); // Very restricted for main titles
+    return scaledTextStyle(context, appTitle);
   }
 
   static TextStyle scaledFormLabel(BuildContext context) {
-    return scaledTextStyle(context, formLabel, maxScale: 1.1);
+    return scaledTextStyle(context, formLabel);
   }
 
   static TextStyle scaledFormInput(BuildContext context) {
-    return scaledTextStyle(context, formInput, maxScale: 1.1);
+    return scaledTextStyle(context, formInput);
   }
 
   static TextStyle scaledButton(BuildContext context) {
-    return scaledTextStyle(context, button, maxScale: 1.05); // Very restricted for buttons
+    return scaledTextStyle(context, button);
   }
 
   static TextStyle scaledCaption(BuildContext context) {
-    return scaledTextStyle(context, caption, maxScale: 1.15); // Allow slightly more scaling for small text
+    return scaledTextStyle(context, caption);
   }
 
   static TextStyle scaledSectionHeader(BuildContext context) {
-    return scaledTextStyle(context, sectionHeader, maxScale: 1.1);
+    return scaledTextStyle(context, sectionHeader);
   }
 
   static TextStyle scaledCardTitle(BuildContext context) {
-    return scaledTextStyle(context, cardTitle, maxScale: 1.08);
+    return scaledTextStyle(context, cardTitle);
   }
 
   static TextStyle scaledDialogTitle(BuildContext context) {
-    return scaledTextStyle(context, dialogTitle, maxScale: 1.08);
+    return scaledTextStyle(context, dialogTitle);
   }
 
   static TextStyle scaledSubhead(BuildContext context) {
-    return scaledTextStyle(context, subhead, maxScale: 1.1);
+    return scaledTextStyle(context, subhead);
   }
 
   static TextStyle scaledCallout(BuildContext context) {
-    return scaledTextStyle(context, callout, maxScale: 1.1);
+    return scaledTextStyle(context, callout);
   }
 
   static TextStyle scaledFootnote(BuildContext context) {
-    return scaledTextStyle(context, footnote, maxScale: 1.1);
+    return scaledTextStyle(context, footnote);
   }
 
   static TextStyle scaledScreenHeader(BuildContext context) {
-    return scaledTextStyle(context, title3, maxScale: 1.05); // Use Title 3 for screen headers
+    return scaledTextStyle(context, title3); // Use Title 3 for screen headers
   }
 
   static TextStyle scaledCaption2(BuildContext context) {
-    return scaledTextStyle(context, caption2, maxScale: 1.15);
+    return scaledTextStyle(context, caption2);
   }
 
   static TextStyle scaledTitle1(BuildContext context) {
-    return scaledTextStyle(context, title1, maxScale: 1.05); // Very restricted for large titles
+    return scaledTextStyle(context, title1);
   }
 
   static TextStyle scaledTitle3(BuildContext context) {
-    return scaledTextStyle(context, title3, maxScale: 1.05); // Very restricted for titles
+    return scaledTextStyle(context, title3);
   }
 
   // BACKWARD COMPATIBILITY ALIASES
@@ -299,4 +298,10 @@ class AppTextStyles {
     fontFamily: _fontFamily,
     color: _primaryColor,
   );
+
+  // NEW: Debug method to track text scaling
+  static void debugTextStyle(BuildContext context, String styleName, TextStyle style) {
+    ResponsiveUtils.debugTextScaling(context, styleName);
+    debugPrint('[$styleName] Base fontSize: ${style.fontSize}');
+  }
 }
