@@ -1,12 +1,14 @@
-// lib/widgets/day_selector_widget.dart - FIXED TIME SYNCHRONIZATION
+// lib/widgets/day_selector_widget.dart - FIXED CONSISTENT TEXT SCALING
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../models/day_selection_data.dart';
+import '../utils/text_styles.dart'; // FIXED: Ensure text_styles import
+import '../utils/colors.dart';
 
 class DaySelectorWidget extends StatefulWidget {
   final DaySelectionData? initialData;
   final Function(DaySelectionData?) onChanged;
-  final String reminderTime; // Time from parent
+  final String reminderTime;
   final Function(String) onTimeChanged;
 
   const DaySelectorWidget({
@@ -37,10 +39,8 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
     }
   }
 
-  // Use the parent's reminder time directly
   String get _reminderTimeStr => widget.reminderTime;
 
-  // Parse time for display in 12-hour format
   String get _formattedReminderTime {
     final parts = _reminderTimeStr.split(':');
     if (parts.length == 2) {
@@ -68,12 +68,10 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
   }
 
   void _showTimePicker() {
-    // Extract current hours and minutes from string
     final parts = _reminderTimeStr.split(':');
     int currentHour = int.tryParse(parts[0]) ?? 9;
     int currentMinute = int.tryParse(parts[1]) ?? 0;
 
-    // Create initial DateTime for the picker
     final initialDateTime = DateTime(
       DateTime.now().year,
       DateTime.now().month,
@@ -93,22 +91,22 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 CupertinoButton(
-                  child: const Text(
+                  child: Text(
                     'Cancel',
-                    style: TextStyle(
+                    // FIXED: Use proper scaled button instead of raw TextStyle
+                    style: AppTextStyles.scaledButton(context).copyWith(
                       color: CupertinoColors.systemBlue,
-                      fontFamily: '.SF Pro Text',
                     ),
                   ),
                   onPressed: () => Navigator.pop(context),
                 ),
                 CupertinoButton(
-                  child: const Text(
+                  child: Text(
                     'Done',
-                    style: TextStyle(
+                    // FIXED: Use proper scaled button instead of raw TextStyle
+                    style: AppTextStyles.scaledButton(context).copyWith(
                       color: CupertinoColors.systemBlue,
                       fontWeight: FontWeight.w600,
-                      fontFamily: '.SF Pro Text',
                     ),
                   ),
                   onPressed: () {
@@ -122,7 +120,6 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
                 mode: CupertinoDatePickerMode.time,
                 initialDateTime: initialDateTime,
                 onDateTimeChanged: (dateTime) {
-                  // Update time string in HH:MM format and notify parent
                   final newTimeStr = '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
                   widget.onTimeChanged(newTimeStr);
                 },
@@ -150,7 +147,6 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           Row(
             children: [
               Container(
@@ -167,24 +163,22 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Reminder Schedule',
-                      style: TextStyle(
+                      // FIXED: Use proper scaled callout instead of raw TextStyle
+                      style: AppTextStyles.scaledCallout(context).copyWith(
                         color: CupertinoColors.label,
-                        fontSize: 16,
-                        fontFamily: '.SF Pro Text',
                       ),
                     ),
                     Text(
                       'Choose when to be reminded to check in',
-                      style: TextStyle(
-                        fontSize: 14,
+                      // FIXED: Use proper scaled subhead instead of raw TextStyle
+                      style: AppTextStyles.scaledSubhead(context).copyWith(
                         color: CupertinoColors.secondaryLabel,
-                        fontFamily: '.SF Pro Text',
                       ),
                     ),
                   ],
@@ -195,13 +189,11 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
 
           const SizedBox(height: 24),
 
-          // Day selector
-          const Text(
+          Text(
             'Select Days',
-            style: TextStyle(
+            // FIXED: Use proper scaled subhead instead of raw TextStyle
+            style: AppTextStyles.scaledSubhead(context).copyWith(
               color: CupertinoColors.secondaryLabel,
-              fontSize: 14,
-              fontFamily: '.SF Pro Text',
             ),
           ),
           const SizedBox(height: 12),
@@ -221,13 +213,11 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
           if (_selectedDays.isNotEmpty) ...[
             const SizedBox(height: 24),
 
-            // Time picker (now integrated)
-            const Text(
+            Text(
               'Reminder Time',
-              style: TextStyle(
+              // FIXED: Use proper scaled subhead instead of raw TextStyle
+              style: AppTextStyles.scaledSubhead(context).copyWith(
                 color: CupertinoColors.secondaryLabel,
-                fontSize: 14,
-                fontFamily: '.SF Pro Text',
               ),
             ),
             const SizedBox(height: 12),
@@ -248,10 +238,9 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
                   children: [
                     Text(
                       _formattedReminderTime,
-                      style: const TextStyle(
-                        fontSize: 16,
+                      // FIXED: Use proper scaled callout instead of raw TextStyle
+                      style: AppTextStyles.scaledCallout(context).copyWith(
                         color: CupertinoColors.label,
-                        fontFamily: '.SF Pro Text',
                       ),
                     ),
                     const Icon(
@@ -266,13 +255,11 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
 
             const SizedBox(height: 24),
 
-            // Repeat interval selector
-            const Text(
+            Text(
               'Repeat',
-              style: TextStyle(
+              // FIXED: Use proper scaled subhead instead of raw TextStyle
+              style: AppTextStyles.scaledSubhead(context).copyWith(
                 color: CupertinoColors.secondaryLabel,
-                fontSize: 14,
-                fontFamily: '.SF Pro Text',
               ),
             ),
             const SizedBox(height: 12),
@@ -280,7 +267,6 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
 
             const SizedBox(height: 20),
 
-            // Preview
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -305,19 +291,17 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
                       children: [
                         Text(
                           _getPreviewText(),
-                          style: const TextStyle(
-                            fontSize: 14,
+                          // FIXED: Use proper scaled subhead instead of raw TextStyle
+                          style: AppTextStyles.scaledSubhead(context).copyWith(
                             color: CupertinoColors.systemBlue,
                             fontWeight: FontWeight.w600,
-                            fontFamily: '.SF Pro Text',
                           ),
                         ),
                         Text(
                           'At $_formattedReminderTime',
-                          style: const TextStyle(
-                            fontSize: 12,
+                          // FIXED: Use proper scaled caption instead of raw TextStyle
+                          style: AppTextStyles.scaledCaption(context).copyWith(
                             color: CupertinoColors.secondaryLabel,
-                            fontFamily: '.SF Pro Text',
                           ),
                         ),
                       ],
@@ -334,20 +318,19 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
                 color: CupertinoColors.systemGrey6,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(
+                  const Icon(
                     CupertinoIcons.bell_slash,
                     color: CupertinoColors.secondaryLabel,
                     size: 16,
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Text(
                     'No reminders will be sent',
-                    style: TextStyle(
-                      fontSize: 14,
+                    // FIXED: Use proper scaled subhead instead of raw TextStyle
+                    style: AppTextStyles.scaledSubhead(context).copyWith(
                       color: CupertinoColors.secondaryLabel,
-                      fontFamily: '.SF Pro Text',
                     ),
                   ),
                 ],
@@ -388,11 +371,10 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
         child: Center(
           child: Text(
             letter,
-            style: TextStyle(
-              fontSize: 16,
+            // FIXED: Use proper scaled callout instead of raw TextStyle
+            style: AppTextStyles.scaledCallout(context).copyWith(
               fontWeight: FontWeight.w600,
               color: isSelected ? CupertinoColors.white : CupertinoColors.label,
-              fontFamily: '.SF Pro Text',
             ),
           ),
         ),
@@ -460,11 +442,10 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
             const SizedBox(width: 12),
             Text(
               title,
-              style: TextStyle(
-                fontSize: 16,
+              // FIXED: Use proper scaled callout instead of raw TextStyle
+              style: AppTextStyles.scaledCallout(context).copyWith(
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                 color: isSelected ? CupertinoColors.systemBlue : CupertinoColors.label,
-                fontFamily: '.SF Pro Text',
               ),
             ),
           ],

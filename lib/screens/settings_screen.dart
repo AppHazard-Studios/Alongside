@@ -1,4 +1,4 @@
-// lib/screens/settings_screen.dart - COMPLETE UPDATED FILE WITH ALL DESIGN FIXES
+// lib/screens/settings_screen.dart - FIXED CONSISTENT TEXT SCALING
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/colors.dart';
 import '../utils/responsive_utils.dart';
+import '../utils/text_styles.dart'; // FIXED: Ensure text_styles import
 import '../widgets/illustrations.dart';
 import '../services/battery_optimization_service.dart';
 import '../services/backup_service.dart';
@@ -57,17 +58,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
-      backgroundColor: const Color(0xFFF8FAFC), // Match home screen background
+      backgroundColor: const Color(0xFFF8FAFC),
       child: SafeArea(
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
-            // FIXED: Integrated header with X button on right, title left-aligned
             SliverToBoxAdapter(
               child: _buildIntegratedHeader(),
             ),
 
-            // Main settings content
             SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.symmetric(
@@ -77,7 +76,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   children: [
                     SizedBox(height: ResponsiveUtils.scaledSpacing(context, 8)),
 
-                    // Security section
                     _buildSection(
                       title: 'SECURITY',
                       children: [
@@ -118,7 +116,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                     SizedBox(height: ResponsiveUtils.scaledSpacing(context, 24)),
 
-                    // Backup & Restore section
                     _buildSection(
                       title: 'BACKUP & RESTORE',
                       children: [
@@ -154,10 +151,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
                                 Text(
                                   'Last backup: $_lastBackupDate',
-                                  style: TextStyle(
-                                    fontSize: ResponsiveUtils.scaledFontSize(context, 14),
+                                  // FIXED: Use proper scaled subhead instead of raw TextStyle
+                                  style: AppTextStyles.scaledSubhead(context).copyWith(
                                     color: AppColors.textSecondary,
-                                    fontFamily: '.SF Pro Text',
                                   ),
                                 ),
                               ],
@@ -169,14 +165,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                     SizedBox(height: ResponsiveUtils.scaledSpacing(context, 24)),
 
-                    // Advanced section
                     _buildSection(
                       title: 'ADVANCED',
                       children: [
                         _buildSettingsItem(
                           context,
                           icon: CupertinoIcons.battery_25,
-                          iconColor: AppColors.primary, // FIXED: Changed from warning to primary
+                          iconColor: AppColors.primary,
                           title: 'Battery Optimisation',
                           subtitle: 'Ensure notifications work properly',
                           onTap: () => _showBatteryOptimization(context),
@@ -197,7 +192,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                     SizedBox(height: ResponsiveUtils.scaledSpacing(context, 24)),
 
-                    // About section
                     _buildSection(
                       title: 'ABOUT',
                       children: [
@@ -234,7 +228,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                     SizedBox(height: ResponsiveUtils.scaledSpacing(context, 32)),
 
-                    // App info footer (matches home screen style)
                     _buildAppInfoFooter(),
 
                     SizedBox(height: ResponsiveUtils.scaledSpacing(context, 32)),
@@ -248,8 +241,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // FIXED: Header with X button on right, title left-aligned like home screen
-// FIXED: Header with primary color settings icon matching home screen style
   Widget _buildIntegratedHeader() {
     return Container(
       padding: EdgeInsets.fromLTRB(
@@ -260,20 +251,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       child: Column(
         children: [
-          // Top row with title left-aligned and X button on right
           Row(
             children: [
-              // Title with icon (left-aligned like home screen)
               Row(
                 children: [
                   Text(
                     'Settings',
-                    style: TextStyle(
-                      fontSize: ResponsiveUtils.scaledFontSize(context, 28, maxScale: 1.4),
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.primary,
-                      fontFamily: '.SF Pro Text',
-                    ),
+                    // FIXED: Use proper scaled app title instead of bypassing restrictions
+                    style: AppTextStyles.scaledAppTitle(context),
                   ),
                   SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
                   Container(
@@ -306,7 +291,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               const Spacer(),
 
-              // X button on right (matches home screen button style)
               CupertinoButton(
                 padding: EdgeInsets.zero,
                 child: Container(
@@ -314,7 +298,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   height: ResponsiveUtils.scaledContainerSize(context, 36),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.8),
-                    borderRadius: BorderRadius.circular(10), // Rounded square like home screen
+                    borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: AppColors.primary.withOpacity(0.2),
                       width: 1,
@@ -342,7 +326,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // NEW: Section builder matching home screen style
   Widget _buildSection({
     required String title,
     required List<Widget> children,
@@ -350,7 +333,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section header
         Padding(
           padding: EdgeInsets.only(
             left: ResponsiveUtils.scaledSpacing(context, 8),
@@ -358,17 +340,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           child: Text(
             title,
-            style: TextStyle(
-              fontSize: ResponsiveUtils.scaledFontSize(context, 13),
-              fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
-              letterSpacing: 0.5,
-              fontFamily: '.SF Pro Text',
-            ),
+            // FIXED: Use proper scaled section header instead of raw TextStyle
+            style: AppTextStyles.scaledSectionHeader(context),
           ),
         ),
 
-        // Section container (matches home screen card style)
         Container(
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.9),
@@ -391,7 +367,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // NEW: App info footer matching home screen style
   Widget _buildAppInfoFooter() {
     return Container(
       padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 24)),
@@ -428,20 +403,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
           SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)),
           Text(
             'Alongside',
-            style: TextStyle(
-              fontSize: ResponsiveUtils.scaledFontSize(context, 18),
+            // FIXED: Use proper scaled headline instead of raw TextStyle
+            style: AppTextStyles.scaledHeadline(context).copyWith(
               fontWeight: FontWeight.w700,
               color: AppColors.primary,
-              fontFamily: '.SF Pro Text',
             ),
           ),
           SizedBox(height: ResponsiveUtils.scaledSpacing(context, 4)),
           Text(
             'Version 1.0.0',
-            style: TextStyle(
-              fontSize: ResponsiveUtils.scaledFontSize(context, 14),
+            // FIXED: Use proper scaled subhead instead of raw TextStyle
+            style: AppTextStyles.scaledSubhead(context).copyWith(
               color: AppColors.textSecondary,
-              fontFamily: '.SF Pro Text',
             ),
           ),
         ],
@@ -449,16 +422,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-// FIXED: Full-width solid divider like iOS standard
   Widget _buildDivider() {
     return Container(
       height: 0.5,
       width: double.infinity,
       color: AppColors.primary.withOpacity(0.1),
-      margin: EdgeInsets.zero, // No margin to ensure full width
+      margin: EdgeInsets.zero,
     );
   }
-  // FIXED: Icons now use rounded squares (like home screen) instead of circles
+
   Widget _buildSettingsItem(
       BuildContext context, {
         required IconData icon,
@@ -479,13 +451,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         child: Row(
           children: [
-            // FIXED: Changed from circle to rounded square like home screen
             Container(
               width: ResponsiveUtils.scaledContainerSize(context, 38),
               height: ResponsiveUtils.scaledContainerSize(context, 38),
               decoration: BoxDecoration(
                 color: iconColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10), // Rounded square instead of circle
+                borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color: iconColor.withOpacity(0.2),
                   width: 1,
@@ -504,20 +475,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   Text(
                     title,
-                    style: TextStyle(
+                    // FIXED: Use proper scaled callout instead of raw TextStyle
+                    style: AppTextStyles.scaledCallout(context).copyWith(
                       color: isDestructive ? AppColors.error : CupertinoColors.label,
-                      fontSize: ResponsiveUtils.scaledFontSize(context, 16),
                       fontWeight: FontWeight.w500,
-                      fontFamily: '.SF Pro Text',
                     ),
                   ),
                   SizedBox(height: ResponsiveUtils.scaledSpacing(context, 2)),
                   Text(
                     subtitle,
-                    style: TextStyle(
+                    // FIXED: Use proper scaled subhead instead of raw TextStyle
+                    style: AppTextStyles.scaledSubhead(context).copyWith(
                       color: AppColors.textSecondary,
-                      fontSize: ResponsiveUtils.scaledFontSize(context, 14),
-                      fontFamily: '.SF Pro Text',
                     ),
                   ),
                 ],
@@ -535,7 +504,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // FIXED: Icons now use rounded squares (like home screen) instead of circles
   Widget _buildToggleItem(
       BuildContext context, {
         required IconData icon,
@@ -552,13 +520,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       child: Row(
         children: [
-          // FIXED: Changed from circle to rounded square like home screen
           Container(
             width: ResponsiveUtils.scaledContainerSize(context, 38),
             height: ResponsiveUtils.scaledContainerSize(context, 38),
             decoration: BoxDecoration(
               color: iconColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10), // Rounded square instead of circle
+              borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: iconColor.withOpacity(0.2),
                 width: 1,
@@ -577,20 +544,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Text(
                   title,
-                  style: TextStyle(
+                  // FIXED: Use proper scaled callout instead of raw TextStyle
+                  style: AppTextStyles.scaledCallout(context).copyWith(
                     color: CupertinoColors.label,
-                    fontSize: ResponsiveUtils.scaledFontSize(context, 16),
                     fontWeight: FontWeight.w500,
-                    fontFamily: '.SF Pro Text',
                   ),
                 ),
                 SizedBox(height: ResponsiveUtils.scaledSpacing(context, 2)),
                 Text(
                   subtitle,
-                  style: TextStyle(
+                  // FIXED: Use proper scaled subhead instead of raw TextStyle
+                  style: AppTextStyles.scaledSubhead(context).copyWith(
                     color: AppColors.textSecondary,
-                    fontSize: ResponsiveUtils.scaledFontSize(context, 14),
-                    fontFamily: '.SF Pro Text',
                   ),
                 ),
               ],
@@ -613,24 +578,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
       showCupertinoDialog(
         context: context,
         builder: (context) => CupertinoAlertDialog(
-          title: const Text(
+          title: Text(
             'Disable App Lock',
-            style: TextStyle(
+            // FIXED: Use proper scaled dialog title instead of raw TextStyle
+            style: AppTextStyles.scaledDialogTitle(context).copyWith(
               color: AppColors.primary,
               fontWeight: FontWeight.w700,
-              fontSize: 18,
-              fontFamily: '.SF Pro Text',
             ),
           ),
-          content: const Padding(
-            padding: EdgeInsets.only(top: 16),
+          content: Padding(
+            padding: const EdgeInsets.only(top: 16),
             child: Text(
               'Are you sure you want to disable app lock?',
-              style: TextStyle(
-                fontSize: 16,
+              // FIXED: Use proper scaled callout instead of raw TextStyle
+              style: AppTextStyles.scaledCallout(context).copyWith(
                 height: 1.4,
                 color: CupertinoColors.label,
-                fontFamily: '.SF Pro Text',
               ),
               textAlign: TextAlign.center,
             ),
@@ -638,12 +601,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           actions: [
             CupertinoDialogAction(
               onPressed: () => Navigator.pop(context),
-              child: const Text(
+              child: Text(
                 'Cancel',
-                style: TextStyle(
+                // FIXED: Use proper scaled button instead of raw TextStyle
+                style: AppTextStyles.scaledButton(context).copyWith(
                   color: AppColors.secondary,
                   fontWeight: FontWeight.w600,
-                  fontFamily: '.SF Pro Text',
                 ),
               ),
             ),
@@ -654,12 +617,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 await _loadSettings();
               },
               isDestructiveAction: true,
-              child: const Text(
+              child: Text(
                 'Disable',
-                style: TextStyle(
+                // FIXED: Use proper scaled button instead of raw TextStyle
+                style: AppTextStyles.scaledButton(context).copyWith(
                   color: AppColors.error,
                   fontWeight: FontWeight.w600,
-                  fontFamily: '.SF Pro Text',
                 ),
               ),
             ),
@@ -675,20 +638,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showCupertinoModalPopup(
       context: context,
       builder: (context) => CupertinoActionSheet(
-        title: const Text(
+        title: Text(
           'Choose Lock Method',
-          style: TextStyle(
-            fontSize: 16,
+          // FIXED: Use proper scaled callout instead of raw TextStyle
+          style: AppTextStyles.scaledCallout(context).copyWith(
             fontWeight: FontWeight.w600,
-            fontFamily: '.SF Pro Text',
           ),
         ),
-        message: const Text(
+        message: Text(
           'Select how you want to secure the app',
-          style: TextStyle(
-            fontSize: 14,
+          // FIXED: Use proper scaled subhead instead of raw TextStyle
+          style: AppTextStyles.scaledSubhead(context).copyWith(
             color: CupertinoColors.secondaryLabel,
-            fontFamily: '.SF Pro Text',
           ),
         ),
         actions: [
@@ -698,21 +659,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Navigator.pop(context);
                 _setupBiometric();
               },
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  const Icon(
                     CupertinoIcons.lock_shield,
                     color: CupertinoColors.systemBlue,
                     size: 20,
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Text(
                     'Biometric Lock (Face ID / Touch ID)',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontFamily: '.SF Pro Text',
-                    ),
+                    // FIXED: Use proper scaled callout instead of raw TextStyle
+                    style: AppTextStyles.scaledCallout(context),
                   ),
                 ],
               ),
@@ -722,21 +681,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Navigator.pop(context);
               _showPinSetup();
             },
-            child: const Row(
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
+                const Icon(
                   CupertinoIcons.number,
                   color: CupertinoColors.systemBlue,
                   size: 20,
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Text(
                   'PIN Lock (4 digits)',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontFamily: '.SF Pro Text',
-                  ),
+                  // FIXED: Use proper scaled callout instead of raw TextStyle
+                  style: AppTextStyles.scaledCallout(context),
                 ),
               ],
             ),
@@ -745,11 +702,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         cancelButton: CupertinoActionSheetAction(
           onPressed: () => Navigator.pop(context),
           isDestructiveAction: true,
-          child: const Text(
+          child: Text(
             'Cancel',
-            style: TextStyle(
+            // FIXED: Use proper scaled button instead of raw TextStyle
+            style: AppTextStyles.scaledButton(context).copyWith(
               fontWeight: FontWeight.w600,
-              fontFamily: '.SF Pro Text',
             ),
           ),
         ),
@@ -766,13 +723,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text(
+        title: Text(
           'Set 4-Digit PIN',
-          style: TextStyle(
+          // FIXED: Use proper scaled dialog title instead of raw TextStyle
+          style: AppTextStyles.scaledDialogTitle(context).copyWith(
             color: AppColors.primary,
             fontWeight: FontWeight.w700,
-            fontSize: 18,
-            fontFamily: '.SF Pro Text',
           ),
         ),
         content: Padding(
@@ -792,11 +748,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   FilteringTextInputFormatter.digitsOnly,
                   LengthLimitingTextInputFormatter(4),
                 ],
-                style: const TextStyle(
-                  fontSize: 18,
+                // FIXED: Use proper scaled headline instead of raw TextStyle
+                style: AppTextStyles.scaledHeadline(context).copyWith(
                   letterSpacing: 4,
                   fontWeight: FontWeight.w600,
-                  fontFamily: '.SF Pro Text',
                 ),
                 decoration: BoxDecoration(
                   color: CupertinoColors.systemGrey6,
@@ -826,11 +781,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   FilteringTextInputFormatter.digitsOnly,
                   LengthLimitingTextInputFormatter(4),
                 ],
-                style: const TextStyle(
-                  fontSize: 18,
+                // FIXED: Use proper scaled headline instead of raw TextStyle
+                style: AppTextStyles.scaledHeadline(context).copyWith(
                   letterSpacing: 4,
                   fontWeight: FontWeight.w600,
-                  fontFamily: '.SF Pro Text',
                 ),
                 decoration: BoxDecoration(
                   color: CupertinoColors.systemGrey6,
@@ -852,12 +806,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
+            child: Text(
               'Cancel',
-              style: TextStyle(
+              // FIXED: Use proper scaled button instead of raw TextStyle
+              style: AppTextStyles.scaledButton(context).copyWith(
                 color: AppColors.secondary,
                 fontWeight: FontWeight.w600,
-                fontFamily: '.SF Pro Text',
               ),
             ),
           ),
@@ -866,12 +820,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _processPinSetup(pinController.text, confirmController.text);
               Navigator.pop(context);
             },
-            child: const Text(
+            child: Text(
               'Set PIN',
-              style: TextStyle(
+              // FIXED: Use proper scaled button instead of raw TextStyle
+              style: AppTextStyles.scaledButton(context).copyWith(
                 color: AppColors.primary,
                 fontWeight: FontWeight.w600,
-                fontFamily: '.SF Pro Text',
               ),
             ),
           ),
@@ -911,20 +865,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
             color: CupertinoColors.black.withOpacity(0.8),
             borderRadius: BorderRadius.circular(16),
           ),
-          child: const Column(
+          child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CupertinoActivityIndicator(
+              const CupertinoActivityIndicator(
                 color: CupertinoColors.white,
                 radius: 14,
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Text(
                 'Setting PIN...',
-                style: TextStyle(
+                // FIXED: Use proper scaled subhead instead of raw TextStyle
+                style: AppTextStyles.scaledSubhead(context).copyWith(
                   color: CupertinoColors.white,
-                  fontSize: 14,
-                  fontFamily: '.SF Pro Text',
                 ),
               ),
             ],
@@ -966,20 +919,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
             color: CupertinoColors.black.withOpacity(0.8),
             borderRadius: BorderRadius.circular(16),
           ),
-          child: const Column(
+          child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CupertinoActivityIndicator(
+              const CupertinoActivityIndicator(
                 color: CupertinoColors.white,
                 radius: 16,
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Text(
                 'Setting up\nBiometric Lock',
-                style: TextStyle(
+                // FIXED: Use proper scaled subhead instead of raw TextStyle
+                style: AppTextStyles.scaledSubhead(context).copyWith(
                   color: CupertinoColors.white,
-                  fontSize: 14,
-                  fontFamily: '.SF Pro Text',
                   fontWeight: FontWeight.w600,
                 ),
                 textAlign: TextAlign.center,
@@ -1015,36 +967,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
           showCupertinoDialog(
             context: context,
             builder: (context) => CupertinoAlertDialog(
-              title: const Text(
+              title: Text(
                 'Biometric Lock Enabled',
-                style: TextStyle(
+                // FIXED: Use proper scaled dialog title instead of raw TextStyle
+                style: AppTextStyles.scaledDialogTitle(context).copyWith(
                   color: AppColors.success,
                   fontWeight: FontWeight.w700,
-                  fontSize: 18,
-                  fontFamily: '.SF Pro Text',
                 ),
               ),
-              content: const Padding(
-                padding: EdgeInsets.only(top: 16),
+              content: Padding(
+                padding: const EdgeInsets.only(top: 16),
                 child: Text(
                   'Biometric authentication has been enabled successfully. Would you like to test it now?',
-                  style: TextStyle(
-                    fontSize: 16,
+                  // FIXED: Use proper scaled callout instead of raw TextStyle
+                  style: AppTextStyles.scaledCallout(context).copyWith(
                     height: 1.4,
                     color: CupertinoColors.label,
-                    fontFamily: '.SF Pro Text',
                   ),
                 ),
               ),
               actions: [
                 CupertinoDialogAction(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text(
+                  child: Text(
                     'Later',
-                    style: TextStyle(
+                    // FIXED: Use proper scaled button instead of raw TextStyle
+                    style: AppTextStyles.scaledButton(context).copyWith(
                       color: AppColors.secondary,
                       fontWeight: FontWeight.w600,
-                      fontFamily: '.SF Pro Text',
                     ),
                   ),
                 ),
@@ -1053,12 +1003,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Navigator.pop(context);
                     _testBiometricAuthentication();
                   },
-                  child: const Text(
+                  child: Text(
                     'Test Now',
-                    style: TextStyle(
+                    // FIXED: Use proper scaled button instead of raw TextStyle
+                    style: AppTextStyles.scaledButton(context).copyWith(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w600,
-                      fontFamily: '.SF Pro Text',
                     ),
                   ),
                 ),
@@ -1096,20 +1046,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
               color: CupertinoColors.black.withOpacity(0.8),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Column(
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CupertinoActivityIndicator(
+                const CupertinoActivityIndicator(
                   color: CupertinoColors.white,
                   radius: 14,
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 Text(
                   'Testing biometric\nauthentication...',
-                  style: TextStyle(
+                  // FIXED: Use proper scaled subhead instead of raw TextStyle
+                  style: AppTextStyles.scaledSubhead(context).copyWith(
                     color: CupertinoColors.white,
-                    fontSize: 14,
-                    fontFamily: '.SF Pro Text',
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -1130,36 +1079,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
           showCupertinoDialog(
             context: context,
             builder: (context) => CupertinoAlertDialog(
-              title: const Text(
+              title: Text(
                 'Authentication Failed',
-                style: TextStyle(
+                // FIXED: Use proper scaled dialog title instead of raw TextStyle
+                style: AppTextStyles.scaledDialogTitle(context).copyWith(
                   color: AppColors.warning,
                   fontWeight: FontWeight.w700,
-                  fontSize: 18,
-                  fontFamily: '.SF Pro Text',
                 ),
               ),
-              content: const Padding(
-                padding: EdgeInsets.only(top: 16),
+              content: Padding(
+                padding: const EdgeInsets.only(top: 16),
                 child: Text(
                   'Biometric authentication failed, but the lock is still enabled. You may need to authenticate using your device passcode when the app locks.',
-                  style: TextStyle(
-                    fontSize: 16,
+                  // FIXED: Use proper scaled callout instead of raw TextStyle
+                  style: AppTextStyles.scaledCallout(context).copyWith(
                     height: 1.4,
                     color: CupertinoColors.label,
-                    fontFamily: '.SF Pro Text',
                   ),
                 ),
               ),
               actions: [
                 CupertinoDialogAction(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text(
+                  child: Text(
                     'OK',
-                    style: TextStyle(
+                    // FIXED: Use proper scaled button instead of raw TextStyle
+                    style: AppTextStyles.scaledButton(context).copyWith(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w600,
-                      fontFamily: '.SF Pro Text',
                     ),
                   ),
                 ),
@@ -1185,22 +1132,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (context) => CupertinoAlertDialog(
         title: Text(
           title,
-          style: const TextStyle(
+          // FIXED: Use proper scaled dialog title instead of raw TextStyle
+          style: AppTextStyles.scaledDialogTitle(context).copyWith(
             color: AppColors.error,
             fontWeight: FontWeight.w700,
-            fontSize: 18,
-            fontFamily: '.SF Pro Text',
           ),
         ),
         content: Padding(
           padding: const EdgeInsets.only(top: 16),
           child: Text(
             message,
-            style: const TextStyle(
-              fontSize: 16,
+            // FIXED: Use proper scaled callout instead of raw TextStyle
+            style: AppTextStyles.scaledCallout(context).copyWith(
               height: 1.4,
               color: CupertinoColors.label,
-              fontFamily: '.SF Pro Text',
             ),
           ),
         ),
@@ -1211,24 +1156,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Navigator.pop(context);
                 _showPinSetup();
               },
-              child: const Text(
+              child: Text(
                 'Use PIN Instead',
-                style: TextStyle(
+                // FIXED: Use proper scaled button instead of raw TextStyle
+                style: AppTextStyles.scaledButton(context).copyWith(
                   color: AppColors.primary,
                   fontWeight: FontWeight.w600,
-                  fontFamily: '.SF Pro Text',
                 ),
               ),
             ),
           ],
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
+            child: Text(
               'OK',
-              style: TextStyle(
+              // FIXED: Use proper scaled button instead of raw TextStyle
+              style: AppTextStyles.scaledButton(context).copyWith(
                 color: AppColors.secondary,
                 fontWeight: FontWeight.w600,
-                fontFamily: '.SF Pro Text',
               ),
             ),
           ),
@@ -1241,24 +1186,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text(
+        title: Text(
           'Success',
-          style: TextStyle(
+          // FIXED: Use proper scaled dialog title instead of raw TextStyle
+          style: AppTextStyles.scaledDialogTitle(context).copyWith(
             color: AppColors.success,
             fontWeight: FontWeight.w700,
-            fontSize: 18,
-            fontFamily: '.SF Pro Text',
           ),
         ),
         content: Padding(
           padding: const EdgeInsets.only(top: 16),
           child: Text(
             message,
-            style: const TextStyle(
-              fontSize: 16,
+            // FIXED: Use proper scaled callout instead of raw TextStyle
+            style: AppTextStyles.scaledCallout(context).copyWith(
               height: 1.4,
               color: CupertinoColors.label,
-              fontFamily: '.SF Pro Text',
             ),
             textAlign: TextAlign.center,
           ),
@@ -1266,12 +1209,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
+            child: Text(
               'OK',
-              style: TextStyle(
+              // FIXED: Use proper scaled button instead of raw TextStyle
+              style: AppTextStyles.scaledButton(context).copyWith(
                 color: AppColors.primary,
                 fontWeight: FontWeight.w600,
-                fontFamily: '.SF Pro Text',
               ),
             ),
           ),
@@ -1288,24 +1231,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text(
+        title: Text(
           'Error',
-          style: TextStyle(
+          // FIXED: Use proper scaled dialog title instead of raw TextStyle
+          style: AppTextStyles.scaledDialogTitle(context).copyWith(
             color: AppColors.error,
             fontWeight: FontWeight.w700,
-            fontSize: 18,
-            fontFamily: '.SF Pro Text',
           ),
         ),
         content: Padding(
           padding: const EdgeInsets.only(top: 16),
           child: Text(
             message,
-            style: const TextStyle(
-              fontSize: 16,
+            // FIXED: Use proper scaled callout instead of raw TextStyle
+            style: AppTextStyles.scaledCallout(context).copyWith(
               height: 1.4,
               color: CupertinoColors.label,
-              fontFamily: '.SF Pro Text',
             ),
             textAlign: TextAlign.center,
           ),
@@ -1313,12 +1254,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
+            child: Text(
               'OK',
-              style: TextStyle(
+              // FIXED: Use proper scaled button instead of raw TextStyle
+              style: AppTextStyles.scaledButton(context).copyWith(
                 color: AppColors.primary,
                 fontWeight: FontWeight.w600,
-                fontFamily: '.SF Pro Text',
               ),
             ),
           ),
@@ -1327,9 +1268,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // FIXED: More iOS-native picker with better fonts and styling
-// IMPROVED: More precise iOS-native picker styling
-// IMPROVED: More precise iOS-native picker styling
   void _showCooldownPicker() {
     final options = [0, 1, 5, 10, 15, 30, 60];
     int selectedMinutes = _lockCooldownMinutes;
@@ -1337,21 +1275,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showCupertinoModalPopup(
       context: context,
       builder: (context) => Container(
-        height: 300, // Slightly taller for better proportions
+        height: 300,
         decoration: const BoxDecoration(
           color: CupertinoColors.systemBackground,
           borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
         ),
         child: Column(
           children: [
-            // iOS-style header - exact iOS dimensions
             Container(
-              height: 64, // More standard iOS header height
+              height: 64,
               decoration: const BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
                     color: CupertinoColors.separator,
-                    width: 0.33, // iOS standard separator thickness
+                    width: 0.33,
                   ),
                 ),
               ),
@@ -1360,34 +1297,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   CupertinoButton(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: const Text(
+                    child: Text(
                       'Cancel',
-                      style: TextStyle(
+                      // FIXED: Use proper scaled headline instead of raw TextStyle
+                      style: AppTextStyles.scaledHeadline(context).copyWith(
                         color: CupertinoColors.systemBlue,
-                        fontSize: 17, // iOS standard
-                        fontFamily: '.SF Pro Text',
                       ),
                     ),
                     onPressed: () => Navigator.pop(context),
                   ),
-                  const Text(
+                  Text(
                     'Lock Cooldown',
-                    style: TextStyle(
-                      fontSize: 18, // Slightly larger for better hierarchy
+                    // FIXED: Use proper scaled headline instead of raw TextStyle
+                    style: AppTextStyles.scaledHeadline(context).copyWith(
                       fontWeight: FontWeight.w600,
                       color: CupertinoColors.label,
-                      fontFamily: '.SF Pro Text',
                     ),
                   ),
                   CupertinoButton(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: const Text(
+                    child: Text(
                       'Done',
-                      style: TextStyle(
+                      // FIXED: Use proper scaled headline instead of raw TextStyle
+                      style: AppTextStyles.scaledHeadline(context).copyWith(
                         color: CupertinoColors.systemBlue,
-                        fontSize: 17,
                         fontWeight: FontWeight.w600,
-                        fontFamily: '.SF Pro Text',
                       ),
                     ),
                     onPressed: () async {
@@ -1403,7 +1337,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             Expanded(
               child: CupertinoPicker(
-                itemExtent: 44, // Exact iOS standard picker item height
+                itemExtent: 44,
                 scrollController: FixedExtentScrollController(
                   initialItem: options.indexOf(_lockCooldownMinutes),
                 ),
@@ -1416,11 +1350,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       minutes == 0
                           ? 'Immediately'
                           : '$minutes minute${minutes == 1 ? '' : 's'}',
-                      style: const TextStyle(
-                        fontSize: 20, // Adjusted to better match your app's sizing
-                        fontFamily: '.SF Pro Text',
+                      // FIXED: Use proper scaled headline instead of raw TextStyle
+                      style: AppTextStyles.scaledHeadline(context).copyWith(
                         color: CupertinoColors.label,
-                        fontWeight: FontWeight.w400, // iOS default weight
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
                   );
@@ -1432,6 +1365,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
+
   void _exportData(BuildContext context) async {
     final filePath = await BackupService.exportData(context);
     if (filePath != null) {
@@ -1456,8 +1390,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showCupertinoModalPopup(
       context: context,
       builder: (context) => DraggableScrollableSheet(
-        // CONTENT-AWARE HEIGHT - like real iOS apps
-        initialChildSize: hasPermission ? 0.4 : 0.65, // Smaller when unrestricted, larger when restricted
+        initialChildSize: hasPermission ? 0.4 : 0.65,
         minChildSize: 0.25,
         maxChildSize: 0.85,
         expand: false,
@@ -1469,13 +1402,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Header
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Column(
                   children: [
-                    // Drag handle
                     Container(
                       margin: const EdgeInsets.only(top: 8, bottom: 16),
                       width: 40,
@@ -1486,19 +1417,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ),
 
-                    // Header with status badge
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Row(
                         children: [
-                          const Expanded(
+                          Expanded(
                             child: Text(
                               'Battery Optimisations',
-                              style: TextStyle(
-                                fontSize: 18,
+                              // FIXED: Use proper scaled headline instead of raw TextStyle
+                              style: AppTextStyles.scaledHeadline(context).copyWith(
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.primary,
-                                fontFamily: '.SF Pro Text',
                               ),
                             ),
                           ),
@@ -1526,11 +1455,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 const SizedBox(width: 6),
                                 Text(
                                   hasPermission ? 'Unrestricted' : 'Restricted',
-                                  style: const TextStyle(
-                                    fontSize: 12,
+                                  // FIXED: Use proper scaled caption instead of raw TextStyle
+                                  style: AppTextStyles.scaledCaption(context).copyWith(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w600,
-                                    fontFamily: '.SF Pro Text',
                                   ),
                                 ),
                               ],
@@ -1543,15 +1471,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
 
-              // Content - sizes naturally
               Flexible(
                 child: SingleChildScrollView(
                   controller: scrollController,
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
                   child: Column(
-                    mainAxisSize: MainAxisSize.min, // Key: don't take more space than needed
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Status container
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(16),
@@ -1574,11 +1500,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               hasPermission
                                   ? 'Alongside runs without battery restrictions'
                                   : 'Alongside has battery restrictions',
-                              style: TextStyle(
-                                fontSize: 16,
+                              // FIXED: Use proper scaled callout instead of raw TextStyle
+                              style: AppTextStyles.scaledCallout(context).copyWith(
                                 fontWeight: FontWeight.w600,
                                 color: hasPermission ? AppColors.success : AppColors.warning,
-                                fontFamily: '.SF Pro Text',
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -1586,10 +1511,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               hasPermission
                                   ? 'Your friend reminders will work reliably, even when the app is closed.'
                                   : 'Android may prevent Alongside from sending scheduled reminders to save battery. This can cause notifications to be delayed or missed.',
-                              style: const TextStyle(
-                                fontSize: 14,
+                              // FIXED: Use proper scaled subhead instead of raw TextStyle
+                              style: AppTextStyles.scaledSubhead(context).copyWith(
                                 color: AppColors.textSecondary,
-                                fontFamily: '.SF Pro Text',
                                 height: 1.4,
                               ),
                             ),
@@ -1597,7 +1521,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                       ),
 
-                      // Only show guide when restricted (saves space when unrestricted)
                       if (!hasPermission) ...[
                         const SizedBox(height: 16),
                         BatteryOptimizationService.buildBatteryOptimizationGuide(context),
@@ -1605,7 +1528,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                       const SizedBox(height: 16),
 
-                      // Action button
                       SizedBox(
                         width: double.infinity,
                         child: Container(
@@ -1635,11 +1557,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             },
                             child: Text(
                               hasPermission ? 'View App Settings' : 'Remove Battery Restrictions',
-                              style: const TextStyle(
+                              // FIXED: Use proper scaled button instead of raw TextStyle
+                              style: AppTextStyles.scaledButton(context).copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w600,
-                                fontSize: 16,
-                                fontFamily: '.SF Pro Text',
                               ),
                             ),
                           ),
@@ -1660,24 +1581,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text(
+        title: Text(
           'Clear All Data',
-          style: TextStyle(
+          // FIXED: Use proper scaled dialog title instead of raw TextStyle
+          style: AppTextStyles.scaledDialogTitle(context).copyWith(
             color: AppColors.error,
             fontWeight: FontWeight.w700,
-            fontSize: 18,
-            fontFamily: '.SF Pro Text',
           ),
         ),
-        content: const Padding(
-          padding: EdgeInsets.only(top: 16),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 16),
           child: Text(
             'This will permanently delete all your friends and custom messages. This action cannot be undone.',
-            style: TextStyle(
-              fontSize: 16,
+            // FIXED: Use proper scaled callout instead of raw TextStyle
+            style: AppTextStyles.scaledCallout(context).copyWith(
               height: 1.4,
               color: CupertinoColors.label,
-              fontFamily: '.SF Pro Text',
             ),
             textAlign: TextAlign.center,
           ),
@@ -1686,12 +1605,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(context),
             isDefaultAction: true,
-            child: const Text(
+            child: Text(
               'Cancel',
-              style: TextStyle(
+              // FIXED: Use proper scaled button instead of raw TextStyle
+              style: AppTextStyles.scaledButton(context).copyWith(
                 color: AppColors.primary,
                 fontWeight: FontWeight.w600,
-                fontFamily: '.SF Pro Text',
               ),
             ),
           ),
@@ -1710,20 +1629,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       color: CupertinoColors.black.withOpacity(0.8),
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Column(
+                    child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        CupertinoActivityIndicator(
+                        const CupertinoActivityIndicator(
                           color: CupertinoColors.white,
                           radius: 14,
                         ),
-                        SizedBox(height: 16),
+                        const SizedBox(height: 16),
                         Text(
                           'Clearing...',
-                          style: TextStyle(
+                          // FIXED: Use proper scaled callout instead of raw TextStyle
+                          style: AppTextStyles.scaledCallout(context).copyWith(
                             color: CupertinoColors.white,
-                            fontSize: 16,
-                            fontFamily: '.SF Pro Text',
                           ),
                         ),
                       ],
@@ -1755,24 +1673,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 showCupertinoDialog(
                   context: context,
                   builder: (context) => CupertinoAlertDialog(
-                    title: const Text(
+                    title: Text(
                       'Data Cleared',
-                      style: TextStyle(
+                      // FIXED: Use proper scaled dialog title instead of raw TextStyle
+                      style: AppTextStyles.scaledDialogTitle(context).copyWith(
                         color: AppColors.success,
                         fontWeight: FontWeight.w700,
-                        fontSize: 18,
-                        fontFamily: '.SF Pro Text',
                       ),
                     ),
-                    content: const Padding(
-                      padding: EdgeInsets.only(top: 16),
+                    content: Padding(
+                      padding: const EdgeInsets.only(top: 16),
                       child: Text(
                         'All app data has been cleared successfully.',
-                        style: TextStyle(
-                          fontSize: 16,
+                        // FIXED: Use proper scaled callout instead of raw TextStyle
+                        style: AppTextStyles.scaledCallout(context).copyWith(
                           height: 1.4,
                           color: CupertinoColors.label,
-                          fontFamily: '.SF Pro Text',
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -1783,12 +1699,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           Navigator.pop(context);
                           Navigator.of(context).popUntil((route) => route.isFirst);
                         },
-                        child: const Text(
+                        child: Text(
                           'OK',
-                          style: TextStyle(
+                          // FIXED: Use proper scaled button instead of raw TextStyle
+                          style: AppTextStyles.scaledButton(context).copyWith(
                             color: AppColors.primary,
                             fontWeight: FontWeight.w600,
-                            fontFamily: '.SF Pro Text',
                           ),
                         ),
                       ),
@@ -1798,12 +1714,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               }
             },
             isDestructiveAction: true,
-            child: const Text(
+            child: Text(
               'Clear All Data',
-              style: TextStyle(
+              // FIXED: Use proper scaled button instead of raw TextStyle
+              style: AppTextStyles.scaledButton(context).copyWith(
                 color: AppColors.error,
                 fontWeight: FontWeight.w600,
-                fontFamily: '.SF Pro Text',
               ),
             ),
           ),
@@ -1828,13 +1744,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Simple header - let DraggableScrollableSheet handle all drag functionality
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Column(
                   children: [
-                    // Drag handle
                     Container(
                       margin: const EdgeInsets.only(top: 8, bottom: 16),
                       width: 40,
@@ -1845,16 +1759,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ),
 
-                    // Header
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Text(
                         'Troubleshooting Guide',
-                        style: TextStyle(
-                          fontSize: 18,
+                        // FIXED: Use proper scaled headline instead of raw TextStyle
+                        style: AppTextStyles.scaledHeadline(context).copyWith(
                           fontWeight: FontWeight.w700,
                           color: AppColors.primary,
-                          fontFamily: '.SF Pro Text',
                         ),
                       ),
                     ),
@@ -1862,7 +1774,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
 
-              // Scrollable content
               Flexible(
                 child: SingleChildScrollView(
                   controller: scrollController,
@@ -1936,11 +1847,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 16, // Match your app's sizing
+              // FIXED: Use proper scaled callout instead of raw TextStyle
+              style: AppTextStyles.scaledCallout(context).copyWith(
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
-                fontFamily: '.SF Pro Text',
               ),
             ),
             const SizedBox(height: 12),
@@ -1949,10 +1859,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               padding: const EdgeInsets.only(bottom: 6),
               child: Text(
                 step,
-                style: const TextStyle(
-                  fontSize: 14, // Match your app's sizing
+                // FIXED: Use proper scaled subhead instead of raw TextStyle
+                style: AppTextStyles.scaledSubhead(context).copyWith(
                   color: AppColors.textSecondary,
-                  fontFamily: '.SF Pro Text',
                   height: 1.4,
                 ),
               ),
@@ -1975,13 +1884,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             width: screenWidth * 0.98,
             constraints: const BoxConstraints(maxWidth: 400),
             child: CupertinoAlertDialog(
-              title: const Text(
+              title: Text(
                 'About Alongside',
-                style: TextStyle(
+                // FIXED: Use proper scaled dialog title instead of raw TextStyle
+                style: AppTextStyles.scaledDialogTitle(context).copyWith(
                   color: AppColors.primary,
                   fontWeight: FontWeight.w700,
-                  fontSize: 18,
-                  fontFamily: '.SF Pro Text',
                 ),
               ),
               content: Padding(
@@ -2000,24 +1908,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: Illustrations.friendsIllustration(size: 80),
                       ),
                     ),
-                    const Text(
+                    Text(
                       'Alongside helps you walk with your friends through the highs and lows of life.',
-                      style: TextStyle(
-                        fontSize: 16,
+                      // FIXED: Use proper scaled callout instead of raw TextStyle
+                      style: AppTextStyles.scaledCallout(context).copyWith(
                         height: 1.4,
                         color: CupertinoColors.label,
-                        fontFamily: '.SF Pro Text',
                       ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
-                    const Text(
+                    Text(
                       'As Christians, we\'re called to carry one another\'s burdens—and this app helps you do that with just a few taps.',
-                      style: TextStyle(
-                        fontSize: 16,
+                      // FIXED: Use proper scaled callout instead of raw TextStyle
+                      style: AppTextStyles.scaledCallout(context).copyWith(
                         height: 1.4,
                         color: CupertinoColors.label,
-                        fontFamily: '.SF Pro Text',
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -2028,12 +1934,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               actions: [
                 CupertinoDialogAction(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text(
+                  child: Text(
                     'Close',
-                    style: TextStyle(
+                    // FIXED: Use proper scaled button instead of raw TextStyle
+                    style: AppTextStyles.scaledButton(context).copyWith(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w600,
-                      fontFamily: '.SF Pro Text',
                     ),
                   ),
                 ),
@@ -2055,24 +1961,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Container(
             width: screenWidth * 1.1,
             child: CupertinoAlertDialog(
-              title: const Text(
+              title: Text(
                 'Privacy & Security',
-                style: TextStyle(
+                // FIXED: Use proper scaled dialog title instead of raw TextStyle
+                style: AppTextStyles.scaledDialogTitle(context).copyWith(
                   color: AppColors.primary,
                   fontWeight: FontWeight.w700,
-                  fontSize: 18,
-                  fontFamily: '.SF Pro Text',
                 ),
               ),
-              content: const Padding(
-                padding: EdgeInsets.only(top: 16.0),
+              content: Padding(
+                padding: const EdgeInsets.only(top: 16.0),
                 child: Text(
                   'Alongside is designed with privacy in mind. All your data is stored locally on your device and never shared with third parties. Your conversations and friend information remain completely private.',
-                  style: TextStyle(
-                    fontSize: 16,
+                  // FIXED: Use proper scaled callout instead of raw TextStyle
+                  style: AppTextStyles.scaledCallout(context).copyWith(
                     height: 1.4,
                     color: CupertinoColors.label,
-                    fontFamily: '.SF Pro Text',
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -2080,12 +1984,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               actions: [
                 CupertinoDialogAction(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text(
+                  child: Text(
                     'Got it',
-                    style: TextStyle(
+                    // FIXED: Use proper scaled button instead of raw TextStyle
+                    style: AppTextStyles.scaledButton(context).copyWith(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w600,
-                      fontFamily: '.SF Pro Text',
                     ),
                   ),
                 ),

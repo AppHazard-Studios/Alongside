@@ -1,4 +1,4 @@
-// lib/widgets/friend_card.dart - REQUIRED REMINDERS + PERFECT ALIGNMENT
+// lib/widgets/friend_card.dart - FIXED CONSISTENT TEXT SCALING
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -12,6 +12,7 @@ import '../utils/colors.dart';
 import '../providers/friends_provider.dart';
 import '../utils/constants.dart';
 import '../utils/responsive_utils.dart';
+import '../utils/text_styles.dart'; // FIXED: Ensure text_styles import
 import '../services/notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -65,7 +66,6 @@ class _FriendCardNewState extends State<FriendCardNew>
   }
 
   Future<void> _loadNextReminderTime() async {
-    // Since reminders are now required, this should always have a value
     setState(() {
       _isLoadingReminderTime = true;
     });
@@ -102,24 +102,24 @@ class _FriendCardNewState extends State<FriendCardNew>
   }
 
   String _getFixedWidthReminderText(DateTime? nextReminder) {
-    if (nextReminder == null) return '---'; // Fallback if no reminder somehow
+    if (nextReminder == null) return '---';
 
     final now = DateTime.now();
     final difference = nextReminder.difference(now);
 
     if (difference.isNegative) {
-      return 'now'; // 3 characters
+      return 'now';
     } else if (difference.inDays >= 30) {
       final months = (difference.inDays / 30).round().clamp(1, 6);
-      return '${months}mo'; // 1mo, 2mo, 3mo, 4mo, 5mo, 6mo
+      return '${months}mo';
     } else if (difference.inDays >= 1) {
-      return '${difference.inDays}d'; // 1d, 2d, 3d, ... 29d
+      return '${difference.inDays}d';
     } else if (difference.inHours >= 1) {
-      return '${difference.inHours}h'; // 1h, 2h, ... 23h
+      return '${difference.inHours}h';
     } else if (difference.inMinutes >= 1) {
-      return '${difference.inMinutes}m'; // 1m, 2m, ... 59m
+      return '${difference.inMinutes}m';
     } else {
-      return 'now'; // 3 characters
+      return 'now';
     }
   }
 
@@ -130,7 +130,7 @@ class _FriendCardNewState extends State<FriendCardNew>
     final difference = nextReminder.difference(now);
 
     if (difference.inDays == 0 && difference.inHours <= 1) {
-      return AppColors.warning; // Urgent reminder
+      return AppColors.warning;
     } else {
       return AppColors.primary;
     }
@@ -169,11 +169,10 @@ class _FriendCardNewState extends State<FriendCardNew>
       builder: (context) => CupertinoActionSheet(
         title: Text(
           widget.friend.name,
-          style: const TextStyle(
-            fontSize: 16,
+          // FIXED: Use proper scaled text style instead of raw fontSize
+          style: AppTextStyles.scaledCallout(context).copyWith(
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
-            fontFamily: '.SF Pro Text',
           ),
         ),
         actions: [
@@ -184,7 +183,6 @@ class _FriendCardNewState extends State<FriendCardNew>
             },
             child: Row(
               children: [
-                // Fixed width for icon area to ensure alignment
                 const SizedBox(
                   width: 60,
                   child: Icon(
@@ -193,20 +191,17 @@ class _FriendCardNewState extends State<FriendCardNew>
                     size: 22,
                   ),
                 ),
-                // Expanded text area to center the text
-                const Expanded(
+                Expanded(
                   child: Text(
                     'Edit',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 20,
+                    // FIXED: Use proper scaled text style
+                    style: AppTextStyles.scaledHeadline(context).copyWith(
                       fontWeight: FontWeight.w400,
                       color: AppColors.primary,
-                      fontFamily: '.SF Pro Text',
                     ),
                   ),
                 ),
-                // Matching width spacer on the right for perfect centering
                 const SizedBox(width: 60),
               ],
             ),
@@ -219,7 +214,6 @@ class _FriendCardNewState extends State<FriendCardNew>
               },
               child: Row(
                 children: [
-                  // Fixed width for icon area to ensure alignment
                   const SizedBox(
                     width: 60,
                     child: Icon(
@@ -228,20 +222,17 @@ class _FriendCardNewState extends State<FriendCardNew>
                       size: 22,
                     ),
                   ),
-                  // Expanded text area to center the text
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Reorder',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 20,
+                      // FIXED: Use proper scaled text style
+                      style: AppTextStyles.scaledHeadline(context).copyWith(
                         fontWeight: FontWeight.w400,
                         color: AppColors.primary,
-                        fontFamily: '.SF Pro Text',
                       ),
                     ),
                   ),
-                  // Matching width spacer on the right for perfect centering
                   const SizedBox(width: 60),
                 ],
               ),
@@ -249,13 +240,12 @@ class _FriendCardNewState extends State<FriendCardNew>
         ],
         cancelButton: CupertinoActionSheetAction(
           onPressed: () => Navigator.pop(context),
-          child: const Text(
+          child: Text(
             'Cancel',
-            style: TextStyle(
-              fontSize: 20,
+            // FIXED: Use proper scaled text style
+            style: AppTextStyles.scaledHeadline(context).copyWith(
               fontWeight: FontWeight.w600,
               color: AppColors.primary,
-              fontFamily: '.SF Pro Text',
             ),
           ),
         ),
@@ -274,11 +264,10 @@ class _FriendCardNewState extends State<FriendCardNew>
       builder: (context) => CupertinoActionSheet(
         title: Text(
           'Reorder ${widget.friend.name}',
-          style: const TextStyle(
-            fontSize: 16,
+          // FIXED: Use proper scaled text style
+          style: AppTextStyles.scaledCallout(context).copyWith(
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
-            fontFamily: '.SF Pro Text',
           ),
         ),
         actions: [
@@ -288,22 +277,21 @@ class _FriendCardNewState extends State<FriendCardNew>
                 Navigator.pop(context);
                 _moveToTop();
               },
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  const Icon(
                     CupertinoIcons.arrow_up_to_line,
                     color: AppColors.primary,
                     size: 22,
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Text(
                     'Move to Top',
-                    style: TextStyle(
-                      fontSize: 20,
+                    // FIXED: Use proper scaled text style
+                    style: AppTextStyles.scaledHeadline(context).copyWith(
                       fontWeight: FontWeight.w400,
                       color: AppColors.primary,
-                      fontFamily: '.SF Pro Text',
                     ),
                   ),
                 ],
@@ -315,22 +303,21 @@ class _FriendCardNewState extends State<FriendCardNew>
                 Navigator.pop(context);
                 _moveUp();
               },
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  const Icon(
                     CupertinoIcons.arrow_up,
                     color: AppColors.primary,
                     size: 22,
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Text(
                     'Move Up',
-                    style: TextStyle(
-                      fontSize: 20,
+                    // FIXED: Use proper scaled text style
+                    style: AppTextStyles.scaledHeadline(context).copyWith(
                       fontWeight: FontWeight.w400,
                       color: AppColors.primary,
-                      fontFamily: '.SF Pro Text',
                     ),
                   ),
                 ],
@@ -342,22 +329,21 @@ class _FriendCardNewState extends State<FriendCardNew>
                 Navigator.pop(context);
                 _moveDown();
               },
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  const Icon(
                     CupertinoIcons.arrow_down,
                     color: AppColors.primary,
                     size: 22,
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Text(
                     'Move Down',
-                    style: TextStyle(
-                      fontSize: 20,
+                    // FIXED: Use proper scaled text style
+                    style: AppTextStyles.scaledHeadline(context).copyWith(
                       fontWeight: FontWeight.w400,
                       color: AppColors.primary,
-                      fontFamily: '.SF Pro Text',
                     ),
                   ),
                 ],
@@ -369,22 +355,21 @@ class _FriendCardNewState extends State<FriendCardNew>
                 Navigator.pop(context);
                 _moveToBottom();
               },
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  const Icon(
                     CupertinoIcons.arrow_down_to_line,
                     color: AppColors.primary,
                     size: 22,
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Text(
                     'Move to Bottom',
-                    style: TextStyle(
-                      fontSize: 20,
+                    // FIXED: Use proper scaled text style
+                    style: AppTextStyles.scaledHeadline(context).copyWith(
                       fontWeight: FontWeight.w400,
                       color: AppColors.primary,
-                      fontFamily: '.SF Pro Text',
                     ),
                   ),
                 ],
@@ -393,13 +378,12 @@ class _FriendCardNewState extends State<FriendCardNew>
         ],
         cancelButton: CupertinoActionSheetAction(
           onPressed: () => Navigator.pop(context),
-          child: const Text(
+          child: Text(
             'Cancel',
-            style: TextStyle(
-              fontSize: 20,
+            // FIXED: Use proper scaled text style
+            style: AppTextStyles.scaledHeadline(context).copyWith(
               fontWeight: FontWeight.w600,
               color: AppColors.primary,
-              fontFamily: '.SF Pro Text',
             ),
           ),
         ),
@@ -473,7 +457,6 @@ class _FriendCardNewState extends State<FriendCardNew>
             width: widget.isExpanded ? 1.5 : 1,
           ),
           boxShadow: widget.isExpanded ? [
-            // Subtle extra shadow for expanded cards
             BoxShadow(
               color: Colors.black.withOpacity(0.06),
               blurRadius: 12,
@@ -486,7 +469,6 @@ class _FriendCardNewState extends State<FriendCardNew>
               offset: const Offset(0, 2),
             ),
           ] : [
-            // Standard subtle shadow for collapsed cards
             BoxShadow(
               color: Colors.black.withOpacity(0.04),
               blurRadius: 8,
@@ -498,7 +480,6 @@ class _FriendCardNewState extends State<FriendCardNew>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Main card content with cohesive layout
             Container(
               padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 14)),
               child: Row(
@@ -512,11 +493,9 @@ class _FriendCardNewState extends State<FriendCardNew>
 
                   SizedBox(width: ResponsiveUtils.scaledSpacing(context, 12)),
 
-                  // Action buttons
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Message button
                       GestureDetector(
                         onTapDown: (_) => setState(() => _isMessagePressed = true),
                         onTapUp: (_) {
@@ -566,7 +545,6 @@ class _FriendCardNewState extends State<FriendCardNew>
                       ),
                       SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
 
-                      // Call button
                       GestureDetector(
                         onTapDown: (_) => setState(() => _isCallPressed = true),
                         onTapUp: (_) {
@@ -620,7 +598,6 @@ class _FriendCardNewState extends State<FriendCardNew>
               ),
             ),
 
-            // Expandable content - ONLY relationship context
             AnimatedBuilder(
               animation: _controller,
               builder: (context, child) {
@@ -700,11 +677,10 @@ class _FriendCardNewState extends State<FriendCardNew>
           Expanded(
             child: Text(
               widget.friend.name,
-              style: TextStyle(
-                fontSize: ResponsiveUtils.scaledFontSize(context, 20, maxScale: 1.3),
+              // FIXED: Use proper scaled headline instead of bypassing restrictions
+              style: AppTextStyles.scaledHeadline(context).copyWith(
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
-                fontFamily: '.SF Pro Text',
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -728,11 +704,10 @@ class _FriendCardNewState extends State<FriendCardNew>
         Expanded(
           child: Text(
             widget.friend.name,
-            style: TextStyle(
-              fontSize: ResponsiveUtils.scaledFontSize(context, 20, maxScale: 1.3),
+            // FIXED: Use proper scaled headline instead of bypassing restrictions
+            style: AppTextStyles.scaledHeadline(context).copyWith(
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
-              fontFamily: '.SF Pro Text',
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -740,7 +715,6 @@ class _FriendCardNewState extends State<FriendCardNew>
         ),
         SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
 
-        // Smaller, better positioned reminder indicator
         Row(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -756,11 +730,10 @@ class _FriendCardNewState extends State<FriendCardNew>
             SizedBox(width: ResponsiveUtils.scaledSpacing(context, 6)),
             Text(
               reminderText,
-              style: TextStyle(
-                fontSize: ResponsiveUtils.scaledFontSize(context, 13, maxScale: 1.1),
+              // FIXED: Use proper scaled footnote instead of bypassing restrictions
+              style: AppTextStyles.scaledFootnote(context).copyWith(
                 fontWeight: FontWeight.w600,
                 color: reminderColor,
-                fontFamily: '.SF Pro Text',
               ),
             ),
           ],
@@ -774,7 +747,7 @@ class _FriendCardNewState extends State<FriendCardNew>
     final hasAlongsideYou = widget.friend.theyHelpingWith != null && widget.friend.theyHelpingWith!.isNotEmpty;
 
     if (!hasAlongsideThem && !hasAlongsideYou) {
-      return const SizedBox.shrink(); // No expanded content if no relationship info
+      return const SizedBox.shrink();
     }
 
     return Container(
@@ -882,20 +855,18 @@ class _FriendCardNewState extends State<FriendCardNew>
               children: [
                 Text(
                   title,
-                  style: TextStyle(
-                    fontSize: ResponsiveUtils.scaledFontSize(context, 13, maxScale: 1.1),
+                  // FIXED: Use proper scaled footnote instead of bypassing restrictions
+                  style: AppTextStyles.scaledFootnote(context).copyWith(
                     fontWeight: FontWeight.w600,
                     color: color.withOpacity(0.9),
-                    fontFamily: '.SF Pro Text',
                   ),
                 ),
                 SizedBox(height: ResponsiveUtils.scaledSpacing(context, 2)),
                 Text(
                   content,
-                  style: TextStyle(
-                    fontSize: ResponsiveUtils.scaledFontSize(context, 14, maxScale: 1.2),
+                  // FIXED: Use proper scaled subhead instead of bypassing restrictions
+                  style: AppTextStyles.scaledSubhead(context).copyWith(
                     color: AppColors.textPrimary.withOpacity(0.8),
-                    fontFamily: '.SF Pro Text',
                     height: 1.2,
                   ),
                   maxLines: 2,

@@ -1,4 +1,4 @@
-// lib/screens/message_screen.dart - Updated with ToastService
+// lib/screens/message_screen.dart - FIXED CONSISTENT TEXT SCALING
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -11,8 +11,9 @@ import '../models/friend.dart';
 import '../providers/friends_provider.dart';
 import '../utils/colors.dart';
 import '../utils/responsive_utils.dart';
+import '../utils/text_styles.dart'; // FIXED: Ensure text_styles import
 import '../services/notification_service.dart';
-import '../services/toast_service.dart'; // ADD THIS IMPORT
+import '../services/toast_service.dart';
 
 class MessageScreenNew extends StatefulWidget {
   final Friend friend;
@@ -57,13 +58,10 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
   Future<void> _recordMessageAction() async {
     final prefs = await SharedPreferences.getInstance();
 
-    // Check if this was opened from a notification
     final pendingAction = prefs.getString('pending_notification_action');
     if (pendingAction == null || !pendingAction.contains(widget.friend.id)) {
-      // Manual action - record it
       await prefs.setInt('last_action_${widget.friend.id}', DateTime.now().millisecondsSinceEpoch);
 
-      // Reschedule reminder
       final notificationService = NotificationService();
       await notificationService.scheduleReminder(widget.friend);
 
@@ -75,7 +73,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
     final provider = Provider.of<FriendsProvider>(context, listen: false);
     final messages = await provider.storageService.getCustomMessages();
 
-    // Load favorites from SharedPreferences
     final prefs = await SharedPreferences.getInstance();
     final favorites = prefs.getStringList('favorite_messages') ?? [];
 
@@ -86,7 +83,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
     });
   }
 
-  // ADD this method to both MessageScreen and CallScreen classes
   Future<void> _recordFriendInteraction() async {
     try {
       final notificationService = NotificationService();
@@ -110,13 +106,12 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
     return CupertinoPageScaffold(
       backgroundColor: AppColors.background,
       navigationBar: CupertinoNavigationBar(
-        middle: const Text(
+        middle: Text(
           'Send Message',
-          style: TextStyle(
+          // FIXED: Use proper scaled nav title instead of raw TextStyle
+          style: AppTextStyles.scaledNavTitle(context).copyWith(
             fontWeight: FontWeight.w700,
             color: AppColors.primary,
-            fontSize: 18,
-            fontFamily: '.SF Pro Text',
           ),
         ),
         backgroundColor: AppColors.background,
@@ -150,7 +145,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
           : SafeArea(
         child: Column(
           children: [
-            // Friend info header with alongside details
             Container(
               margin: const EdgeInsets.all(16),
               padding: const EdgeInsets.all(16),
@@ -165,7 +159,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Friend basic info
                   Row(
                     children: [
                       _buildProfileImage(),
@@ -176,20 +169,18 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                           children: [
                             Text(
                               widget.friend.name,
-                              style: const TextStyle(
-                                fontSize: 18,
+                              // FIXED: Use proper scaled headline instead of raw TextStyle
+                              style: AppTextStyles.scaledHeadline(context).copyWith(
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.textPrimary,
-                                fontFamily: '.SF Pro Text',
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               widget.friend.phoneNumber,
-                              style: const TextStyle(
+                              // FIXED: Use proper scaled subhead instead of raw TextStyle
+                              style: AppTextStyles.scaledSubhead(context).copyWith(
                                 color: AppColors.textSecondary,
-                                fontSize: 14,
-                                fontFamily: '.SF Pro Text',
                               ),
                             ),
                           ],
@@ -198,7 +189,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                     ],
                   ),
 
-                  // Alongside information
                   if ((widget.friend.helpingWith != null &&
                       widget.friend.helpingWith!.isNotEmpty) ||
                       (widget.friend.theyHelpingWith != null &&
@@ -211,7 +201,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                     const SizedBox(height: 16),
                   ],
 
-                  // What you're alongside them in
                   if (widget.friend.helpingWith != null &&
                       widget.friend.helpingWith!.isNotEmpty) ...[
                     Row(
@@ -234,22 +223,20 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 'Alongside them in:',
-                                style: TextStyle(
-                                  fontSize: 12,
+                                // FIXED: Use proper scaled caption instead of raw TextStyle
+                                style: AppTextStyles.scaledCaption(context).copyWith(
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.primary,
-                                  fontFamily: '.SF Pro Text',
                                 ),
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 widget.friend.helpingWith!,
-                                style: const TextStyle(
-                                  fontSize: 14,
+                                // FIXED: Use proper scaled subhead instead of raw TextStyle
+                                style: AppTextStyles.scaledSubhead(context).copyWith(
                                   color: AppColors.textPrimary,
-                                  fontFamily: '.SF Pro Text',
                                 ),
                               ),
                             ],
@@ -262,7 +249,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                       const SizedBox(height: 12),
                   ],
 
-                  // What they're alongside you in
                   if (widget.friend.theyHelpingWith != null &&
                       widget.friend.theyHelpingWith!.isNotEmpty) ...[
                     Row(
@@ -285,22 +271,20 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 'Alongside you in:',
-                                style: TextStyle(
-                                  fontSize: 12,
+                                // FIXED: Use proper scaled caption instead of raw TextStyle
+                                style: AppTextStyles.scaledCaption(context).copyWith(
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.tertiary,
-                                  fontFamily: '.SF Pro Text',
                                 ),
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 widget.friend.theyHelpingWith!,
-                                style: const TextStyle(
-                                  fontSize: 14,
+                                // FIXED: Use proper scaled subhead instead of raw TextStyle
+                                style: AppTextStyles.scaledSubhead(context).copyWith(
                                   color: AppColors.textPrimary,
-                                  fontFamily: '.SF Pro Text',
                                 ),
                               ),
                             ],
@@ -313,7 +297,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               ),
             ),
 
-            // Help text for interactions
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
@@ -327,17 +310,15 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                   const SizedBox(width: 4),
                   Text(
                     'Tap to send • Hold for options',
-                    style: TextStyle(
-                      fontSize: 12,
+                    // FIXED: Use proper scaled caption instead of raw TextStyle
+                    style: AppTextStyles.scaledCaption(context).copyWith(
                       color: AppColors.textSecondary.withOpacity(0.6),
-                      fontFamily: '.SF Pro Text',
                     ),
                   ),
                 ],
               ),
             ),
 
-            // Category indicator dots
             Container(
               height: 40,
               padding: const EdgeInsets.symmetric(vertical: 12),
@@ -360,7 +341,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               ),
             ),
 
-            // Swipeable message pages
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
@@ -389,7 +369,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         children: [
-          // Category title
           Container(
             margin: const EdgeInsets.only(bottom: 16),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -399,16 +378,14 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
             ),
             child: Text(
               category,
-              style: const TextStyle(
-                fontSize: 16,
+              // FIXED: Use proper scaled callout instead of raw TextStyle
+              style: AppTextStyles.scaledCallout(context).copyWith(
                 fontWeight: FontWeight.w600,
                 color: AppColors.primary,
-                fontFamily: '.SF Pro Text',
               ),
             ),
           ),
 
-          // Messages content
           Expanded(
             child: _buildCategoryContent(categoryIndex),
           ),
@@ -423,20 +400,20 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
     provider.storageService.getCategorizedMessages();
 
     switch (categoryIndex) {
-      case 0: // Favorites
+      case 0:
         return _buildFavoritesList();
-      case 1: // Check-ins
+      case 1:
         return _buildMessagesList(categorizedMessages['Check-ins'] ?? []);
-      case 2: // Support & Struggle
+      case 2:
         return _buildMessagesList(
             categorizedMessages['Support & Struggle'] ?? []);
-      case 3: // Confession
+      case 3:
         return _buildMessagesList(categorizedMessages['Confession'] ?? []);
-      case 4: // Celebration
+      case 4:
         return _buildMessagesList(categorizedMessages['Celebration'] ?? []);
-      case 5: // Prayer Requests
+      case 5:
         return _buildMessagesList(categorizedMessages['Prayer Requests'] ?? []);
-      case 6: // Custom
+      case 6:
         return _buildCustomMessagesList();
       default:
         return const SizedBox.shrink();
@@ -455,12 +432,11 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               color: AppColors.textSecondary.withOpacity(0.3),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'No favorite messages yet',
-              style: TextStyle(
-                fontSize: 16,
+              // FIXED: Use proper scaled callout instead of raw TextStyle
+              style: AppTextStyles.scaledCallout(context).copyWith(
                 color: AppColors.textSecondary,
-                fontFamily: '.SF Pro Text',
               ),
             ),
             const SizedBox(height: 24),
@@ -468,21 +444,21 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               color: AppColors.primary,
               borderRadius: BorderRadius.circular(12),
               onPressed: () => _showFavoritePicker(),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
+                  const Icon(
                     CupertinoIcons.star_fill,
                     color: CupertinoColors.white,
                     size: 16,
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Text(
                     'Add Favorites',
-                    style: TextStyle(
+                    // FIXED: Use proper scaled button instead of raw TextStyle
+                    style: AppTextStyles.scaledButton(context).copyWith(
                       color: CupertinoColors.white,
                       fontWeight: FontWeight.w600,
-                      fontFamily: '.SF Pro Text',
                     ),
                   ),
                 ],
@@ -505,7 +481,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
             },
           ),
         ),
-        // Fixed bottom button
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -522,22 +497,21 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
             color: AppColors.primary,
             borderRadius: BorderRadius.circular(12),
             onPressed: () => _showFavoritePicker(),
-            child: const Row(
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
+                const Icon(
                   CupertinoIcons.star_fill,
                   color: CupertinoColors.white,
                   size: 18,
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Text(
                   'Edit Favorites',
-                  style: TextStyle(
+                  // FIXED: Use proper scaled button instead of raw TextStyle
+                  style: AppTextStyles.scaledButton(context).copyWith(
                     color: CupertinoColors.white,
                     fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                    fontFamily: '.SF Pro Text',
                   ),
                 ),
               ],
@@ -572,12 +546,11 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               color: AppColors.textSecondary.withOpacity(0.3),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'No custom messages yet',
-              style: TextStyle(
-                fontSize: 16,
+              // FIXED: Use proper scaled callout instead of raw TextStyle
+              style: AppTextStyles.scaledCallout(context).copyWith(
                 color: AppColors.textSecondary,
-                fontFamily: '.SF Pro Text',
               ),
             ),
             const SizedBox(height: 24),
@@ -585,12 +558,12 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               color: AppColors.primary,
               borderRadius: BorderRadius.circular(12),
               onPressed: () => _showCustomMessageDialog(context),
-              child: const Text(
+              child: Text(
                 'Add your first message',
-                style: TextStyle(
+                // FIXED: Use proper scaled button instead of raw TextStyle
+                style: AppTextStyles.scaledButton(context).copyWith(
                   color: CupertinoColors.white,
                   fontWeight: FontWeight.w600,
-                  fontFamily: '.SF Pro Text',
                 ),
               ),
             ),
@@ -617,8 +590,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
             },
           ),
         ),
-        // Fixed bottom button
-        // Fixed bottom button container
         Container(
           decoration: BoxDecoration(
             color: CupertinoColors.systemBackground,
@@ -638,22 +609,21 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                 color: AppColors.primary,
                 borderRadius: BorderRadius.circular(12),
                 onPressed: () => _showCustomMessageDialog(context),
-                child: const Row(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
+                    const Icon(
                       CupertinoIcons.add,
                       color: CupertinoColors.white,
                       size: 18,
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
                       'Add Custom Message',
-                      style: TextStyle(
+                      // FIXED: Use proper scaled button instead of raw TextStyle
+                      style: AppTextStyles.scaledButton(context).copyWith(
                         color: CupertinoColors.white,
                         fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                        fontFamily: '.SF Pro Text',
                       ),
                     ),
                   ],
@@ -700,10 +670,9 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
             Expanded(
               child: Text(
                 message,
-                style: const TextStyle(
+                // FIXED: Use proper scaled callout instead of raw TextStyle
+                style: AppTextStyles.scaledCallout(context).copyWith(
                   color: AppColors.textPrimary,
-                  fontSize: 16,
-                  fontFamily: '.SF Pro Text',
                   height: 1.4,
                 ),
               ),
@@ -744,10 +713,8 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
       builder: (context) => CupertinoActionSheet(
         title: Text(
           message.length > 50 ? '${message.substring(0, 50)}...' : message,
-          style: const TextStyle(
-            fontSize: 14,
-            fontFamily: '.SF Pro Text',
-          ),
+          // FIXED: Use proper scaled subhead instead of raw TextStyle
+          style: AppTextStyles.scaledSubhead(context),
         ),
         actions: [
           CupertinoActionSheetAction(
@@ -755,21 +722,19 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               Navigator.pop(context);
               _sendMessage(context, message);
             },
-            child: const Row(
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
+                const Icon(
                   CupertinoIcons.bubble_left_fill,
                   color: CupertinoColors.systemBlue,
                   size: 20,
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Text(
                   'Send via Messages',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontFamily: '.SF Pro Text',
-                  ),
+                  // FIXED: Use proper scaled callout instead of raw TextStyle
+                  style: AppTextStyles.scaledCallout(context),
                 ),
               ],
             ),
@@ -779,21 +744,19 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               Navigator.pop(context);
               _shareMessage(context, message);
             },
-            child: const Row(
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
+                const Icon(
                   CupertinoIcons.share,
                   color: CupertinoColors.systemBlue,
                   size: 20,
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Text(
                   'Share to Other Apps',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontFamily: '.SF Pro Text',
-                  ),
+                  // FIXED: Use proper scaled callout instead of raw TextStyle
+                  style: AppTextStyles.scaledCallout(context),
                 ),
               ],
             ),
@@ -806,15 +769,12 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                   _favoriteMessages.add(message);
                 });
                 _updateFavorites(_favoriteMessages);
-                // REPLACE: _showToast with ToastService.showSuccess
                 ToastService.showSuccess(context, 'Added to favorites');
               },
-              child: const Text(
+              child: Text(
                 'Add to Favorites',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontFamily: '.SF Pro Text',
-                ),
+                // FIXED: Use proper scaled callout instead of raw TextStyle
+                style: AppTextStyles.scaledCallout(context),
               ),
             ),
           if (isCustom && customIndex != null) ...[
@@ -823,23 +783,21 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                 Navigator.pop(context);
                 _editCustomMessage(context, message, customIndex);
               },
-              child: const Text(
+              child: Text(
                 'Edit Message',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontFamily: '.SF Pro Text',
-                ),
+                // FIXED: Use proper scaled callout instead of raw TextStyle
+                style: AppTextStyles.scaledCallout(context),
               ),
             ),
           ],
         ],
         cancelButton: CupertinoActionSheetAction(
           onPressed: () => Navigator.pop(context),
-          child: const Text(
+          child: Text(
             'Cancel',
-            style: TextStyle(
+            // FIXED: Use proper scaled button instead of raw TextStyle
+            style: AppTextStyles.scaledButton(context).copyWith(
               fontWeight: FontWeight.w600,
-              fontFamily: '.SF Pro Text',
             ),
           ),
         ),
@@ -861,15 +819,12 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                   _favoriteMessages.add(message);
                 });
                 _updateFavorites(_favoriteMessages);
-                // REPLACE: _showToast with ToastService.showSuccess
                 ToastService.showSuccess(context, 'Added to favorites');
               },
-              child: const Text(
+              child: Text(
                 'Add to Favorites',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontFamily: '.SF Pro Text',
-                ),
+                // FIXED: Use proper scaled callout instead of raw TextStyle
+                style: AppTextStyles.scaledCallout(context),
               ),
             ),
           CupertinoActionSheetAction(
@@ -877,12 +832,10 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               Navigator.pop(context);
               _editCustomMessage(context, message, index);
             },
-            child: const Text(
+            child: Text(
               'Edit Message',
-              style: TextStyle(
-                fontSize: 16,
-                fontFamily: '.SF Pro Text',
-              ),
+              // FIXED: Use proper scaled callout instead of raw TextStyle
+              style: AppTextStyles.scaledCallout(context),
             ),
           ),
           CupertinoActionSheetAction(
@@ -891,22 +844,20 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               _deleteCustomMessage(context, message, index);
             },
             isDestructiveAction: true,
-            child: const Text(
+            child: Text(
               'Delete Message',
-              style: TextStyle(
-                fontSize: 16,
-                fontFamily: '.SF Pro Text',
-              ),
+              // FIXED: Use proper scaled callout instead of raw TextStyle
+              style: AppTextStyles.scaledCallout(context),
             ),
           ),
         ],
         cancelButton: CupertinoActionSheetAction(
           onPressed: () => Navigator.pop(context),
-          child: const Text(
+          child: Text(
             'Cancel',
-            style: TextStyle(
+            // FIXED: Use proper scaled button instead of raw TextStyle
+            style: AppTextStyles.scaledButton(context).copyWith(
               fontWeight: FontWeight.w600,
-              fontFamily: '.SF Pro Text',
             ),
           ),
         ),
@@ -920,15 +871,12 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
     final categorizedMessages =
     provider.storageService.getCategorizedMessages();
 
-    // Add all categorized messages
     categorizedMessages.forEach((category, messages) {
       allMessages.addAll(messages);
     });
 
-    // Add custom messages
     allMessages.addAll(_customMessages);
 
-    // Create a copy of current favorites for editing
     final selectedMessages = List<String>.from(_favoriteMessages);
 
     showCupertinoModalPopup(
@@ -938,7 +886,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
         selectedMessages: selectedMessages,
         onSave: (newFavorites) {
           _updateFavorites(newFavorites);
-          // REPLACE: _showToast with ToastService.showSuccess
           ToastService.showSuccess(context, 'Favorites updated');
         },
       ),
@@ -955,7 +902,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
         box != null ? box.localToGlobal(Offset.zero) & box.size : null,
       );
     } catch (e) {
-      // REPLACE: _showToast with ToastService.showError
       ToastService.showError(context, 'Unable to share message');
     }
   }
@@ -966,13 +912,12 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text(
+        title: Text(
           'Create Message',
-          style: TextStyle(
+          // FIXED: Use proper scaled dialog title instead of raw TextStyle
+          style: AppTextStyles.scaledDialogTitle(context).copyWith(
             color: AppColors.primary,
             fontWeight: FontWeight.w700,
-            fontSize: 18,
-            fontFamily: '.SF Pro Text',
           ),
         ),
         content: Padding(
@@ -989,14 +934,13 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                 width: 1.5,
               ),
             ),
-            style: const TextStyle(
-              fontSize: 16,
-              fontFamily: '.SF Pro Text',
-            ),
-            placeholderStyle: TextStyle(
-              color: AppColors.textSecondary.withOpacity(0.7),
-              fontSize: 16,
-              fontFamily: '.SF Pro Text',
+            // FIXED: Use proper scaled callout instead of raw TextStyle
+            style: AppTextStyles.scaledCallout(context),
+            placeholderStyle: AppTextStyles.scaledTextStyle(
+              context,
+              AppTextStyles.placeholder.copyWith(
+                color: AppColors.textSecondary.withOpacity(0.7),
+              ),
             ),
             minLines: 1,
             maxLines: 5,
@@ -1007,12 +951,12 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(context),
             isDefaultAction: true,
-            child: const Text(
+            child: Text(
               'Cancel',
-              style: TextStyle(
+              // FIXED: Use proper scaled button instead of raw TextStyle
+              style: AppTextStyles.scaledButton(context).copyWith(
                 color: AppColors.secondary,
                 fontWeight: FontWeight.w600,
-                fontFamily: '.SF Pro Text',
               ),
             ),
           ),
@@ -1025,16 +969,15 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                         .storageService;
                 await storageService.addCustomMessage(textController.text);
                 _loadMessages();
-                // REPLACE: _showToast with ToastService.showSuccess
                 ToastService.showSuccess(context, 'Message saved! ✨');
               }
             },
-            child: const Text(
+            child: Text(
               'Save',
-              style: TextStyle(
+              // FIXED: Use proper scaled button instead of raw TextStyle
+              style: AppTextStyles.scaledButton(context).copyWith(
                 color: AppColors.primary,
                 fontWeight: FontWeight.w600,
-                fontFamily: '.SF Pro Text',
               ),
             ),
           ),
@@ -1049,13 +992,12 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text(
+        title: Text(
           'Edit Message',
-          style: TextStyle(
+          // FIXED: Use proper scaled dialog title instead of raw TextStyle
+          style: AppTextStyles.scaledDialogTitle(context).copyWith(
             color: AppColors.primary,
             fontWeight: FontWeight.w700,
-            fontSize: 18,
-            fontFamily: '.SF Pro Text',
           ),
         ),
         content: Padding(
@@ -1072,10 +1014,8 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                 width: 1.5,
               ),
             ),
-            style: const TextStyle(
-              fontSize: 16,
-              fontFamily: '.SF Pro Text',
-            ),
+            // FIXED: Use proper scaled callout instead of raw TextStyle
+            style: AppTextStyles.scaledCallout(context),
             minLines: 1,
             maxLines: 5,
             textCapitalization: TextCapitalization.sentences,
@@ -1085,12 +1025,12 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(context),
             isDefaultAction: true,
-            child: const Text(
+            child: Text(
               'Cancel',
-              style: TextStyle(
+              // FIXED: Use proper scaled button instead of raw TextStyle
+              style: AppTextStyles.scaledButton(context).copyWith(
                 color: AppColors.secondary,
                 fontWeight: FontWeight.w600,
-                fontFamily: '.SF Pro Text',
               ),
             ),
           ),
@@ -1109,16 +1049,15 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                         .storageService;
                 await storageService.saveCustomMessages(_customMessages);
 
-                // REPLACE: _showToast with ToastService.showSuccess
                 ToastService.showSuccess(context, 'Message updated! ✨');
               }
             },
-            child: const Text(
+            child: Text(
               'Save',
-              style: TextStyle(
+              // FIXED: Use proper scaled button instead of raw TextStyle
+              style: AppTextStyles.scaledButton(context).copyWith(
                 color: AppColors.primary,
                 fontWeight: FontWeight.w600,
-                fontFamily: '.SF Pro Text',
               ),
             ),
           ),
@@ -1132,47 +1071,45 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
     final shouldDelete = await showCupertinoDialog<bool>(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text(
+        title: Text(
           'Delete Message',
-          style: TextStyle(
+          // FIXED: Use proper scaled dialog title instead of raw TextStyle
+          style: AppTextStyles.scaledDialogTitle(context).copyWith(
             color: AppColors.error,
             fontWeight: FontWeight.w700,
-            fontSize: 18,
-            fontFamily: '.SF Pro Text',
           ),
         ),
-        content: const Padding(
-          padding: EdgeInsets.only(top: 8),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 8),
           child: Text(
             'Are you sure you want to delete this custom message?',
-            style: TextStyle(
-              fontSize: 16,
+            // FIXED: Use proper scaled callout instead of raw TextStyle
+            style: AppTextStyles.scaledCallout(context).copyWith(
               height: 1.3,
-              fontFamily: '.SF Pro Text',
             ),
           ),
         ),
         actions: [
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text(
+            child: Text(
               'Cancel',
-              style: TextStyle(
+              // FIXED: Use proper scaled button instead of raw TextStyle
+              style: AppTextStyles.scaledButton(context).copyWith(
                 color: AppColors.primary,
                 fontWeight: FontWeight.w600,
-                fontFamily: '.SF Pro Text',
               ),
             ),
           ),
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(context, true),
             isDestructiveAction: true,
-            child: const Text(
+            child: Text(
               'Delete',
-              style: TextStyle(
+              // FIXED: Use proper scaled button instead of raw TextStyle
+              style: AppTextStyles.scaledButton(context).copyWith(
                 color: AppColors.error,
                 fontWeight: FontWeight.w600,
-                fontFamily: '.SF Pro Text',
               ),
             ),
           ),
@@ -1183,7 +1120,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
     if (shouldDelete == true) {
       setState(() {
         _customMessages.removeAt(index);
-        // Also remove from favorites if it was favorited
         _favoriteMessages.remove(message);
       });
 
@@ -1192,7 +1128,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
       await storageService.saveCustomMessages(_customMessages);
       await _updateFavorites(_favoriteMessages);
 
-      // REPLACE: _showToast with ToastService.showSuccess
       ToastService.showSuccess(context, 'Message deleted');
     }
   }
@@ -1242,20 +1177,19 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               color: Colors.black.withOpacity(0.8),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Column(
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CupertinoActivityIndicator(
+                const CupertinoActivityIndicator(
                   color: Colors.white,
                   radius: 14,
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 Text(
                   'Sending...',
-                  style: TextStyle(
+                  // FIXED: Use proper scaled callout instead of raw TextStyle
+                  style: AppTextStyles.scaledCallout(context).copyWith(
                     color: Colors.white,
-                    fontSize: 16,
-                    fontFamily: '.SF Pro Text',
                   ),
                 ),
               ],
@@ -1273,7 +1207,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
         mode: LaunchMode.externalApplication,
       );
 
-      // Track the message sent
       final storageService =
           Provider.of<FriendsProvider>(context, listen: false).storageService;
       await storageService.incrementMessagesSent();
@@ -1294,33 +1227,32 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
         showCupertinoDialog(
           context: context,
           builder: (context) => CupertinoAlertDialog(
-            title: const Text(
+            title: Text(
               '❌ Error',
-              style: TextStyle(
+              // FIXED: Use proper scaled dialog title instead of raw TextStyle
+              style: AppTextStyles.scaledDialogTitle(context).copyWith(
                 color: AppColors.error,
                 fontWeight: FontWeight.w700,
-                fontFamily: '.SF Pro Text',
               ),
             ),
-            content: const Padding(
-              padding: EdgeInsets.only(top: 8),
+            content: Padding(
+              padding: const EdgeInsets.only(top: 8),
               child: Text(
                 'Unable to open messaging app. Please try again later.',
-                style: TextStyle(
-                  fontSize: 16,
+                // FIXED: Use proper scaled callout instead of raw TextStyle
+                style: AppTextStyles.scaledCallout(context).copyWith(
                   height: 1.3,
-                  fontFamily: '.SF Pro Text',
                 ),
               ),
             ),
             actions: [
               CupertinoDialogAction(
                 onPressed: () => Navigator.pop(context),
-                child: const Text(
+                child: Text(
                   'OK',
-                  style: TextStyle(
+                  // FIXED: Use proper scaled button instead of raw TextStyle
+                  style: AppTextStyles.scaledButton(context).copyWith(
                     color: AppColors.primary,
-                    fontFamily: '.SF Pro Text',
                   ),
                 ),
               ),
@@ -1332,7 +1264,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
   }
 }
 
-// Favorite picker modal widget
 class _FavoritePickerModal extends StatefulWidget {
   final List<String> allMessages;
   final List<String> selectedMessages;
@@ -1367,7 +1298,6 @@ class _FavoritePickerModalState extends State<_FavoritePickerModal> {
       ),
       child: Column(
         children: [
-          // Handle
           Container(
             margin: const EdgeInsets.only(top: 8),
             width: 40,
@@ -1378,7 +1308,6 @@ class _FavoritePickerModalState extends State<_FavoritePickerModal> {
             ),
           ),
 
-          // Header
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -1387,22 +1316,21 @@ class _FavoritePickerModalState extends State<_FavoritePickerModal> {
                 CupertinoButton(
                   padding: EdgeInsets.zero,
                   onPressed: () => Navigator.pop(context),
-                  child: const Text(
+                  child: Text(
                     'Cancel',
-                    style: TextStyle(
+                    // FIXED: Use proper scaled button instead of raw TextStyle
+                    style: AppTextStyles.scaledButton(context).copyWith(
                       color: AppColors.secondary,
                       fontWeight: FontWeight.w600,
-                      fontFamily: '.SF Pro Text',
                     ),
                   ),
                 ),
-                const Text(
+                Text(
                   'Select Favorites',
-                  style: TextStyle(
-                    fontSize: 18,
+                  // FIXED: Use proper scaled headline instead of raw TextStyle
+                  style: AppTextStyles.scaledHeadline(context).copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
-                    fontFamily: '.SF Pro Text',
                   ),
                 ),
                 CupertinoButton(
@@ -1411,12 +1339,12 @@ class _FavoritePickerModalState extends State<_FavoritePickerModal> {
                     widget.onSave(_selected);
                     Navigator.pop(context);
                   },
-                  child: const Text(
+                  child: Text(
                     'Save',
-                    style: TextStyle(
+                    // FIXED: Use proper scaled button instead of raw TextStyle
+                    style: AppTextStyles.scaledButton(context).copyWith(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w600,
-                      fontFamily: '.SF Pro Text',
                     ),
                   ),
                 ),
@@ -1424,7 +1352,6 @@ class _FavoritePickerModalState extends State<_FavoritePickerModal> {
             ),
           ),
 
-          // Messages list
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1486,15 +1413,14 @@ class _FavoritePickerModalState extends State<_FavoritePickerModal> {
                         Expanded(
                           child: Text(
                             message,
-                            style: TextStyle(
+                            // FIXED: Use proper scaled subhead instead of raw TextStyle
+                            style: AppTextStyles.scaledSubhead(context).copyWith(
                               color: isSelected
                                   ? AppColors.primary
                                   : AppColors.textPrimary,
-                              fontSize: 15,
                               fontWeight: isSelected
                                   ? FontWeight.w600
                                   : FontWeight.normal,
-                              fontFamily: '.SF Pro Text',
                             ),
                           ),
                         ),
