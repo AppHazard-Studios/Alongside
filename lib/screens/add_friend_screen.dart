@@ -106,7 +106,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
           child: Text(
             'Would you like to select a friend from your contacts?',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 17, // iOS body size
               height: 1.4,
               color: AppColors.textPrimary,
               fontFamily: '.SF Pro Text',
@@ -362,8 +362,11 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       builder: (context) => CupertinoActionSheet(
         title: Text(
           'Choose Profile Image',
-          style: AppTextStyles.headline.copyWith(
+          style: TextStyle(
             color: AppColors.primary,
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+            fontFamily: '.SF Pro Text',
           ),
         ),
         actions: [
@@ -372,11 +375,12 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               Navigator.pop(context);
               _showEmojiPicker();
             },
-            child: const Text(
+            child: Text(
               'Choose Emoji',
               style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
                 color: AppColors.primary,
-                fontSize: 16,
                 fontFamily: '.SF Pro Text',
               ),
             ),
@@ -758,8 +762,11 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       builder: (context) => CupertinoAlertDialog(
         title: Text(
           'Remove Friend',
-          style: AppTextStyles.scaledButton(context).copyWith(
+          style: TextStyle(
             color: AppColors.error,
+            fontWeight: FontWeight.w600,
+            fontSize: ResponsiveUtils.scaledFontSize(context, 17, maxScale: 1.1),
+            fontFamily: '.SF Pro Text',
           ),
         ),
         content: Padding(
@@ -866,10 +873,14 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                     // Title
                     Text(
                       widget.friend == null ? 'Add Friend' : 'Edit Friend',
-                      style: AppTextStyles.scaledHeadline(context).copyWith(
+                      style: TextStyle(
+                        fontSize: ResponsiveUtils.scaledFontSize(context, 17, maxScale: 1.15),
+                        fontWeight: FontWeight.w700,
                         color: AppColors.primary,
+                        fontFamily: '.SF Pro Text',
                       ),
                     ),
+
 
                     const Spacer(),
 
@@ -896,7 +907,12 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                         child: Center(
                           child: Text(
                             'Save',
-                            style: AppTextStyles.scaledButton(context),
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: ResponsiveUtils.scaledFontSize(context, 17, maxScale: 1.1),
+                              fontFamily: '.SF Pro Text',
+                            ),
                           ),
                         ),
                       ),
@@ -981,9 +997,11 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                                   SizedBox(width: ResponsiveUtils.scaledSpacing(context, 6)),
                                   Text(
                                     'Change Profile',
-                                    style: AppTextStyles.scaledBody(context).copyWith(
+                                    style: TextStyle(
                                       color: AppColors.primary,
                                       fontWeight: FontWeight.w500,
+                                      fontFamily: '.SF Pro Text',
+                                      fontSize: ResponsiveUtils.scaledFontSize(context, 15),
                                     ),
                                   ),
                                 ],
@@ -1183,7 +1201,13 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
         alignment: Alignment.centerLeft,
         child: Text(
           title,
-          style: AppTextStyles.sectionTitle,
+          style: TextStyle(
+            fontSize: ResponsiveUtils.scaledFontSize(context, 13, maxScale: 1.2),
+            fontWeight: FontWeight.w600,
+            color: AppColors.textSecondary,
+            letterSpacing: 0.5,
+            fontFamily: '.SF Pro Text',
+          ),
         ),
       ),
     );
@@ -1191,6 +1215,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
 
   // Helper method for form rows with rounded square icons
   // FIXED: Helper method for form rows with proper iOS text alignment
+  // FIXED: Proper iOS-style form row alignment
   Widget _buildFormRow({
     required IconData icon,
     required Color iconColor,
@@ -1202,28 +1227,36 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
         vertical: ResponsiveUtils.scaledSpacing(context, 12),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start, // Align to top of content
         children: [
-          Container(
-            width: ResponsiveUtils.scaledContainerSize(context, 38),
-            height: ResponsiveUtils.scaledContainerSize(context, 38),
-            decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10), // Rounded square like settings
-              border: Border.all(
-                color: iconColor.withOpacity(0.2),
-                width: 1,
-              ),
+          // Icon container positioned to align with label text
+          Padding(
+            padding: EdgeInsets.only(
+              top: ResponsiveUtils.scaledSpacing(context, 2), // Slight offset to align with label baseline
             ),
-            child: Icon(
-              icon,
-              color: iconColor,
-              size: ResponsiveUtils.scaledIconSize(context, 18),
+            child: Container(
+              width: ResponsiveUtils.scaledContainerSize(context, 38),
+              height: ResponsiveUtils.scaledContainerSize(context, 38),
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10), // Rounded square like settings
+                border: Border.all(
+                  color: iconColor.withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              child: Icon(
+                icon,
+                color: iconColor,
+                size: ResponsiveUtils.scaledIconSize(context, 18),
+              ),
             ),
           ),
           SizedBox(width: ResponsiveUtils.scaledSpacing(context, 12)),
-          // FIXED: Remove crossAxisAlignment.center and let the child handle its own alignment
-          // This allows the NoUnderlineField to center its content properly with the icon
-          Expanded(child: child),
+          // Field takes remaining space and handles its own internal layout
+          Expanded(
+            child: child,
+          ),
         ],
       ),
     );
@@ -1284,15 +1317,18 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                 children: [
                   Text(
                     title,
-                    style: AppTextStyles.scaledBody(context).copyWith(
+                    style: TextStyle(
                       color: AppColors.textPrimary,
+                      fontSize: ResponsiveUtils.scaledFontSize(context, 17, maxScale: 1.2),
+                      fontFamily: '.SF Pro Text',
                     ),
                   ),
                   Text(
                     subtitle,
-                    style: AppTextStyles.scaledBody(context).copyWith(
+                    style: const TextStyle(
+                      fontSize: 15, // iOS subhead size
                       color: AppColors.textSecondary,
-                      fontSize: ResponsiveUtils.scaledFontSize(context, 15), // iOS subhead size
+                      fontFamily: '.SF Pro Text',
                     ),
                   ),
                 ],
@@ -1423,7 +1459,6 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
                 const Expanded(
                   child: Text(
                     'Select Contact',
-                    textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
@@ -1491,7 +1526,7 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
                 padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
                 placeholderStyle: TextStyle(
                   color: AppColors.textSecondary,
-                  fontSize: 16,
+                  fontSize: 17, // iOS body size
                 ),
               ),
             ),
@@ -1542,7 +1577,7 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
                       title: Text(
                         contact.displayName,
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 17, // iOS body size
                           fontFamily: '.SF Pro Text',
                           color: AppColors.textPrimary,
                         ),

@@ -1,4 +1,4 @@
-// lib/widgets/no_underline_field.dart
+// lib/widgets/no_underline_field.dart - UPDATED FOR iOS STANDARD SIZING
 import 'package:flutter/cupertino.dart';
 import '../utils/colors.dart';
 import '../utils/text_styles.dart';
@@ -32,40 +32,54 @@ class NoUnderlineField extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        // Label
+        // Label - iOS Callout size (16pt)
         Text(
           label,
-          style: AppTextStyles.formLabel.copyWith(
-            fontSize: ResponsiveUtils.scaledFontSize(context, 14),
+          style: TextStyle(
+            fontSize: ResponsiveUtils.scaledFontSize(context, 16, maxScale: 1.2), // iOS callout size
             color: AppColors.textSecondary,
+            fontFamily: '.SF Pro Text',
+            fontWeight: FontWeight.w400,
           ),
         ),
-        SizedBox(height: ResponsiveUtils.scaledSpacing(context, 6)),
+        SizedBox(height: ResponsiveUtils.scaledSpacing(context, 4)),
 
-        // Using CupertinoTextField instead of Material TextField
-        CupertinoTextField(
-          controller: controller,
-          placeholder: placeholder,
-          keyboardType: keyboardType,
-          textCapitalization: textCapitalization,
-          obscureText: obscureText,
-          maxLines: maxLines,
-          minLines: minLines,
-          style: AppTextStyles.inputText.copyWith(
-            fontSize: ResponsiveUtils.scaledFontSize(context, 16),
+        // Input field container to ensure proper height
+        Container(
+          constraints: BoxConstraints(
+            minHeight: ResponsiveUtils.scaledFormHeight(context, baseHeight: 32),
           ),
-          padding: EdgeInsets.symmetric(
-            vertical: ResponsiveUtils.scaledSpacing(context, 10),
-            horizontal: 0,
+          child: CupertinoTextField(
+            controller: controller,
+            placeholder: placeholder,
+            keyboardType: keyboardType,
+            textCapitalization: textCapitalization,
+            obscureText: obscureText,
+            maxLines: maxLines,
+            minLines: minLines,
+            style: TextStyle(
+              fontSize: ResponsiveUtils.scaledFontSize(context, 17, maxScale: 1.2), // iOS body size
+              color: AppColors.textPrimary,
+              fontFamily: '.SF Pro Text',
+              fontWeight: FontWeight.w400,
+            ),
+            padding: EdgeInsets.symmetric(
+              vertical: ResponsiveUtils.scaledSpacing(context, 8),
+              horizontal: 0,
+            ),
+            decoration: null,
+            suffix: suffixIcon,
+            placeholderStyle: TextStyle(
+              fontSize: ResponsiveUtils.scaledFontSize(context, 17, maxScale: 1.2),
+              color: const Color(0xFFBEBEC0), // iOS placeholder color
+              fontFamily: '.SF Pro Text',
+              fontWeight: FontWeight.w400,
+            ),
+            autofocus: false,
+            cursorColor: AppColors.primary,
           ),
-          decoration: null,
-          suffix: suffixIcon,
-          placeholderStyle: AppTextStyles.placeholder.copyWith(
-            fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-          ),
-          autofocus: false,
-          cursorColor: AppColors.primary,
         ),
       ],
     );
