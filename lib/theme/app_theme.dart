@@ -1,4 +1,4 @@
-// lib/theme/app_theme.dart - Refined version
+// lib/theme/app_theme.dart - Fixed version with correct text style references
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import '../utils/colors.dart';
@@ -51,10 +51,10 @@ class AppTheme {
     fontFamily: '.SF Pro Text',
 
     // Text themes with our custom styles
-    textTheme: const TextTheme(
-      headlineMedium: AppTextStyles.title,
-      titleLarge: AppTextStyles.sectionTitle,
-      bodyLarge: AppTextStyles.bodyText,
+    textTheme: TextTheme(
+      headlineMedium: AppTextStyles.title2,
+      titleLarge: AppTextStyles.sectionHeader, // Fixed: Use sectionHeader instead of sectionTitle
+      bodyLarge: AppTextStyles.body,
       labelLarge: AppTextStyles.button,
     ),
 
@@ -209,7 +209,7 @@ class AppTheme {
       brightness: Brightness.light,
       textTheme: CupertinoTextThemeData(
         primaryColor: AppColors.primary,
-        textStyle: AppTextStyles.bodyText,
+        textStyle: AppTextStyles.body,
         navTitleTextStyle: AppTextStyles.navTitle.copyWith(
           fontSize: 17, // iOS standard
           fontWeight: FontWeight.w600,
@@ -218,7 +218,7 @@ class AppTheme {
           color: AppColors.primary,
           fontSize: 16,
         ),
-        navLargeTitleTextStyle: AppTextStyles.title.copyWith(
+        navLargeTitleTextStyle: AppTextStyles.title1.copyWith(
           fontSize: 28,
           fontWeight: FontWeight.w700,
         ),
@@ -226,11 +226,11 @@ class AppTheme {
           color: AppColors.primary,
           fontSize: 16,
         ),
-        tabLabelTextStyle: AppTextStyles.caption.copyWith(
+        tabLabelTextStyle: AppTextStyles.caption1.copyWith(
           fontSize: 10,
         ),
         // Adding more iOS-specific styles
-        pickerTextStyle: AppTextStyles.bodyText.copyWith(
+        pickerTextStyle: AppTextStyles.body.copyWith(
           fontSize: 16,
         ),
       ),

@@ -1,4 +1,4 @@
-// lib/widgets/no_underline_field.dart - UPDATED FOR iOS STANDARD SIZING
+// lib/widgets/no_underline_field.dart - FIXED FOR PROPER iOS TEXT STYLES
 import 'package:flutter/cupertino.dart';
 import '../utils/colors.dart';
 import '../utils/text_styles.dart';
@@ -34,15 +34,10 @@ class NoUnderlineField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Label - iOS Callout size (16pt)
+        // Label - Using proper iOS Callout style
         Text(
           label,
-          style: TextStyle(
-            fontSize: ResponsiveUtils.scaledFontSize(context, 16, maxScale: 1.2), // iOS callout size
-            color: AppColors.textSecondary,
-            fontFamily: '.SF Pro Text',
-            fontWeight: FontWeight.w400,
-          ),
+          style: AppTextStyles.scaledFormLabel(context),
         ),
         SizedBox(height: ResponsiveUtils.scaledSpacing(context, 4)),
 
@@ -59,23 +54,16 @@ class NoUnderlineField extends StatelessWidget {
             obscureText: obscureText,
             maxLines: maxLines,
             minLines: minLines,
-            style: TextStyle(
-              fontSize: ResponsiveUtils.scaledFontSize(context, 17, maxScale: 1.2), // iOS body size
-              color: AppColors.textPrimary,
-              fontFamily: '.SF Pro Text',
-              fontWeight: FontWeight.w400,
-            ),
+            style: AppTextStyles.scaledFormInput(context),
             padding: EdgeInsets.symmetric(
               vertical: ResponsiveUtils.scaledSpacing(context, 8),
               horizontal: 0,
             ),
             decoration: null,
             suffix: suffixIcon,
-            placeholderStyle: TextStyle(
-              fontSize: ResponsiveUtils.scaledFontSize(context, 17, maxScale: 1.2),
-              color: const Color(0xFFBEBEC0), // iOS placeholder color
-              fontFamily: '.SF Pro Text',
-              fontWeight: FontWeight.w400,
+            placeholderStyle: AppTextStyles.scaledTextStyle(
+              context,
+              AppTextStyles.placeholder,
             ),
             autofocus: false,
             cursorColor: AppColors.primary,

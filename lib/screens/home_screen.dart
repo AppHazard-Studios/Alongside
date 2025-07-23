@@ -1,4 +1,4 @@
-// lib/screens/home_screen.dart - INTEGRATED FLOWING DESIGN
+// lib/screens/home_screen.dart - FIXED IMPORTS AND TEXT STYLES
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +10,7 @@ import '../services/toast_service.dart';
 import '../utils/responsive_utils.dart';
 import '../widgets/friend_card.dart';
 import '../utils/colors.dart';
+import '../utils/text_styles.dart'; // ADDED: Missing import for AppTextStyles
 import '../widgets/illustrations.dart';
 import 'add_friend_screen.dart';
 import 'settings_screen.dart';
@@ -149,6 +150,9 @@ class _HomeScreenNewState extends State<HomeScreenNew>
 
     return CupertinoPageScaffold(
       backgroundColor: const Color(0xFFF8FAFC),
+      child: SafeArea(
+        // FIXED: Proper SafeArea for Android navigation bars
+        bottom: true,
         child: Consumer<FriendsProvider>(
           builder: (context, friendsProvider, child) {
             if (friendsProvider.isLoading) {
@@ -183,6 +187,7 @@ class _HomeScreenNewState extends State<HomeScreenNew>
             return _buildIntegratedLayout(context, friends, allFriends);
           },
         ),
+      ),
     );
   }
 
@@ -193,84 +198,82 @@ class _HomeScreenNewState extends State<HomeScreenNew>
     return Stack(
       children: [
         // Main content with integrated header
-        SafeArea(
-          child: CustomScrollView(
-            controller: _scrollController,
-            slivers: [
-              // Integrated header that flows with content
+        CustomScrollView(
+          controller: _scrollController,
+          slivers: [
+            // Integrated header that flows with content
+            SliverToBoxAdapter(
+              child: _buildIntegratedHeader(allFriends),
+            ),
+
+            // Subtle favorites if any exist
+            if (favoriteFriends.isNotEmpty && !_isSearching)
               SliverToBoxAdapter(
-                child: _buildIntegratedHeader(allFriends),
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    ResponsiveUtils.scaledSpacing(context, 16),
+                    ResponsiveUtils.scaledSpacing(context, 8),
+                    ResponsiveUtils.scaledSpacing(context, 16),
+                    ResponsiveUtils.scaledSpacing(context, 12),
+                  ),
+                  child: _buildSubtleFavorites(favoriteFriends),
+                ),
               ),
 
-              // Subtle favorites if any exist
-              if (favoriteFriends.isNotEmpty && !_isSearching)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      ResponsiveUtils.scaledSpacing(context, 16),
-                      ResponsiveUtils.scaledSpacing(context, 8),
-                      ResponsiveUtils.scaledSpacing(context, 16),
-                      ResponsiveUtils.scaledSpacing(context, 12),
-                    ),
-                    child: _buildSubtleFavorites(favoriteFriends),
-                  ),
-                ),
+            // Clean friends list
+            if (_searchQuery.isNotEmpty && filteredFriends.isEmpty)
+              SliverToBoxAdapter(
+                child: _buildSearchEmpty(),
+              )
+            else
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                    if (index >= filteredFriends.length) return null;
 
-              // Clean friends list
-              if (_searchQuery.isNotEmpty && filteredFriends.isEmpty)
-                SliverToBoxAdapter(
-                  child: _buildSearchEmpty(),
-                )
-              else
-                SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                      if (index >= filteredFriends.length) return null;
-
-                      final friend = filteredFriends[index];
-                      return TweenAnimationBuilder<double>(
-                        key: ValueKey(friend.id),
-                        tween: Tween<double>(begin: 0.0, end: 1.0),
-                        duration: Duration(milliseconds: 200 + (index * 50)),
-                        curve: Curves.easeOutQuart,
-                        builder: (context, value, child) {
-                          return Opacity(
-                            opacity: value,
-                            child: Transform.translate(
-                              offset: Offset(0, (1 - value) * 20),
-                              child: child,
-                            ),
-                          );
-                        },
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: ResponsiveUtils.scaledSpacing(context, 16),
-                            vertical: ResponsiveUtils.scaledSpacing(context, 4),
+                    final friend = filteredFriends[index];
+                    return TweenAnimationBuilder<double>(
+                      key: ValueKey(friend.id),
+                      tween: Tween<double>(begin: 0.0, end: 1.0),
+                      duration: Duration(milliseconds: 200 + (index * 50)),
+                      curve: Curves.easeOutQuart,
+                      builder: (context, value, child) {
+                        return Opacity(
+                          opacity: value,
+                          child: Transform.translate(
+                            offset: Offset(0, (1 - value) * 20),
+                            child: child,
                           ),
-                          child: GestureDetector(
-                            onLongPress: () {
-                              HapticFeedback.mediumImpact();
-                              _showFriendActions(context, friend, allFriends);
-                            },
-                            child: FriendCardNew(
-                              friend: friend,
-                              index: index,
-                              isExpanded: friend.id == _expandedFriendId,
-                              onExpand: _handleCardExpanded,
-                            ),
+                        );
+                      },
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: ResponsiveUtils.scaledSpacing(context, 16),
+                          vertical: ResponsiveUtils.scaledSpacing(context, 4),
+                        ),
+                        child: GestureDetector(
+                          onLongPress: () {
+                            HapticFeedback.mediumImpact();
+                            _showFriendActions(context, friend, allFriends);
+                          },
+                          child: FriendCardNew(
+                            friend: friend,
+                            index: index,
+                            isExpanded: friend.id == _expandedFriendId,
+                            onExpand: _handleCardExpanded,
                           ),
                         ),
-                      );
-                    },
-                    childCount: filteredFriends.length,
-                  ),
+                      ),
+                    );
+                  },
+                  childCount: filteredFriends.length,
                 ),
-
-              SliverToBoxAdapter(
-                child: SizedBox(height: ResponsiveUtils.scaledSpacing(context, 100)),
               ),
-            ],
-          ),
+
+            SliverToBoxAdapter(
+              child: SizedBox(height: ResponsiveUtils.scaledSpacing(context, 100)),
+            ),
+          ],
         ),
 
         // Floating action button
@@ -283,7 +286,7 @@ class _HomeScreenNewState extends State<HomeScreenNew>
     );
   }
 
-  // NEW: Much more subtle integrated header
+  // FIXED: Header with proper text styles and SafeArea handling
   Widget _buildIntegratedHeader(List<Friend> allFriends) {
     final hour = DateTime.now().hour;
     String greeting = hour < 12 ? "Good morning" : (hour < 17 ? "Good afternoon" : "Good evening");
@@ -303,17 +306,12 @@ class _HomeScreenNewState extends State<HomeScreenNew>
           // Top row with title and controls
           Row(
             children: [
-              // App title with heart
+              // App title with heart - Using proper iOS font sizing
               Row(
                 children: [
                   Text(
                     'Alongside',
-                    style: TextStyle(
-                      fontSize: ResponsiveUtils.scaledFontSize(context, 28, maxScale: 1.4),
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.primary,
-                      fontFamily: '.SF Pro Text',
-                    ),
+                    style: AppTextStyles.scaledAppTitle(context),
                   ),
                   SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
                   Container(
@@ -408,19 +406,15 @@ class _HomeScreenNewState extends State<HomeScreenNew>
                     _searchQuery = value.toLowerCase();
                   });
                 },
-                style: TextStyle(
-                  fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-                  fontFamily: '.SF Pro Text',
-                  color: AppColors.textPrimary,
-                ),
+                style: AppTextStyles.scaledCallout(context),
                 decoration: null,
                 padding: EdgeInsets.symmetric(
                   vertical: ResponsiveUtils.scaledSpacing(context, 12),
                   horizontal: ResponsiveUtils.scaledSpacing(context, 4),
                 ),
-                placeholderStyle: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: ResponsiveUtils.scaledFontSize(context, 16),
+                placeholderStyle: AppTextStyles.scaledTextStyle(
+                  context,
+                  AppTextStyles.placeholder,
                 ),
               ),
             ),
@@ -471,19 +465,14 @@ class _HomeScreenNewState extends State<HomeScreenNew>
                           children: [
                             Text(
                               greeting,
-                              style: TextStyle(
-                                fontSize: ResponsiveUtils.scaledFontSize(context, 20, maxScale: 1.3),
-                                fontWeight: FontWeight.w700,
+                              style: AppTextStyles.scaledTitle3(context).copyWith(
                                 color: AppColors.textPrimary,
-                                fontFamily: '.SF Pro Text',
                               ),
                             ),
                             Text(
                               "Ready to connect?",
-                              style: TextStyle(
-                                fontSize: ResponsiveUtils.scaledFontSize(context, 14, maxScale: 1.2),
+                              style: AppTextStyles.scaledCaption(context).copyWith(
                                 color: AppColors.textSecondary,
-                                fontFamily: '.SF Pro Text',
                               ),
                             ),
                           ],
@@ -571,7 +560,7 @@ class _HomeScreenNewState extends State<HomeScreenNew>
     );
   }
 
-  // NEW: Compact stat widget
+  // NEW: Compact stat widget with proper text styles
   Widget _buildCompactStat({
     required IconData icon,
     required String value,
@@ -605,19 +594,15 @@ class _HomeScreenNewState extends State<HomeScreenNew>
                 children: [
                   Text(
                     value,
-                    style: TextStyle(
-                      fontSize: ResponsiveUtils.scaledFontSize(context, 16, maxScale: 1.2),
+                    style: AppTextStyles.scaledCallout(context).copyWith(
                       fontWeight: FontWeight.w700,
                       color: AppColors.primary,
-                      fontFamily: '.SF Pro Text',
                     ),
                   ),
                   Text(
                     label,
-                    style: TextStyle(
-                      fontSize: ResponsiveUtils.scaledFontSize(context, 11, maxScale: 1.1),
+                    style: AppTextStyles.scaledCaption2(context).copyWith(
                       color: AppColors.textSecondary,
-                      fontFamily: '.SF Pro Text',
                     ),
                   ),
                 ],
@@ -654,11 +639,9 @@ class _HomeScreenNewState extends State<HomeScreenNew>
               SizedBox(width: ResponsiveUtils.scaledSpacing(context, 6)),
               Text(
                 'Favorites',
-                style: TextStyle(
-                  fontSize: ResponsiveUtils.scaledFontSize(context, 14, maxScale: 1.2),
+                style: AppTextStyles.scaledSubhead(context).copyWith(
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
-                  fontFamily: '.SF Pro Text',
                 ),
               ),
             ],
@@ -789,10 +772,8 @@ class _HomeScreenNewState extends State<HomeScreenNew>
           SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)),
           Text(
             'No friends found for "$_searchQuery"',
-            style: TextStyle(
-              fontSize: ResponsiveUtils.scaledFontSize(context, 16),
+            style: AppTextStyles.scaledCallout(context).copyWith(
               color: AppColors.textSecondary,
-              fontFamily: '.SF Pro Text',
             ),
             textAlign: TextAlign.center,
           ),
@@ -802,41 +783,37 @@ class _HomeScreenNewState extends State<HomeScreenNew>
   }
 
   Widget _buildLoadingState() {
-    return SafeArea(
-      child: Center(
-        child: Container(
-          padding: const EdgeInsets.all(32),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.9),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: AppColors.primary.withOpacity(0.2),
-              width: 1,
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: AppColors.primary.withOpacity(0.2),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 20,
-                offset: const Offset(0, 4),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CupertinoActivityIndicator(radius: 16),
+            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
+            Text(
+              'Loading your friends...',
+              style: AppTextStyles.scaledCallout(context).copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w500,
               ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CupertinoActivityIndicator(radius: 16),
-              SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
-              Text(
-                'Loading your friends...',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-                  fontFamily: '.SF Pro Text',
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -883,112 +860,102 @@ class _HomeScreenNewState extends State<HomeScreenNew>
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    return SafeArea(
-      child: Center(
-        child: SingleChildScrollView(
+    return Center(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 32)),
+        child: Container(
           padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 32)),
-          child: Container(
-            padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 32)),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.8),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: AppColors.primary.withOpacity(0.1), width: 1),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.8),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: AppColors.primary.withOpacity(0.1), width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Container(
+                width: ResponsiveUtils.scaledContainerSize(context, 120),
+                height: ResponsiveUtils.scaledContainerSize(context, 120),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primary.withOpacity(0.2),
+                      AppColors.primary.withOpacity(0.1),
+                    ],
+                  ),
+                  shape: BoxShape.circle,
                 ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Container(
-                  width: ResponsiveUtils.scaledContainerSize(context, 120),
-                  height: ResponsiveUtils.scaledContainerSize(context, 120),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppColors.primary.withOpacity(0.2),
-                        AppColors.primary.withOpacity(0.1),
-                      ],
+                child: Icon(
+                  CupertinoIcons.heart_fill,
+                  size: ResponsiveUtils.scaledIconSize(context, 60),
+                  color: AppColors.primary,
+                ),
+              ),
+              SizedBox(height: ResponsiveUtils.scaledSpacing(context, 24)),
+              Text(
+                'Walk alongside a friend',
+                style: AppTextStyles.scaledTitle1(context).copyWith(
+                  color: AppColors.textPrimary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)),
+              Text(
+                'Add someone to walk with—through setbacks, growth, and everything in between.',
+                style: AppTextStyles.scaledBody(context).copyWith(
+                  color: AppColors.textSecondary,
+                  height: 1.4,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: ResponsiveUtils.scaledSpacing(context, 32)),
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
                     ),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    CupertinoIcons.heart_fill,
-                    size: ResponsiveUtils.scaledIconSize(context, 60),
-                    color: AppColors.primary,
-                  ),
+                  ],
                 ),
-                SizedBox(height: ResponsiveUtils.scaledSpacing(context, 24)),
-                Text(
-                  'Walk alongside a friend',
-                  style: TextStyle(
-                    fontSize: ResponsiveUtils.scaledFontSize(context, 28, maxScale: 1.5),
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                    fontFamily: '.SF Pro Text',
+                child: CupertinoButton(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: ResponsiveUtils.scaledSpacing(context, 32),
+                    vertical: ResponsiveUtils.scaledSpacing(context, 16),
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)),
-                Text(
-                  'Add someone to walk with—through setbacks, growth, and everything in between.',
-                  style: TextStyle(
-                    fontSize: ResponsiveUtils.scaledFontSize(context, 17, maxScale: 1.4),
-                    color: AppColors.textSecondary,
-                    height: 1.4,
-                    fontFamily: '.SF Pro Text',
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: ResponsiveUtils.scaledSpacing(context, 32)),
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withOpacity(0.3),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
+                  borderRadius: BorderRadius.circular(16),
+                  onPressed: () => _navigateToAddFriend(context),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        CupertinoIcons.person_add_solid,
+                        color: Colors.white,
+                        size: ResponsiveUtils.scaledIconSize(context, 18),
+                      ),
+                      SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+                      Text(
+                        'Add Your First Friend',
+                        style: AppTextStyles.scaledButton(context).copyWith(
+                          color: Colors.white,
+                        ),
                       ),
                     ],
                   ),
-                  child: CupertinoButton(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: ResponsiveUtils.scaledSpacing(context, 32),
-                      vertical: ResponsiveUtils.scaledSpacing(context, 16),
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                    onPressed: () => _navigateToAddFriend(context),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          CupertinoIcons.person_add_solid,
-                          color: Colors.white,
-                          size: ResponsiveUtils.scaledIconSize(context, 18),
-                        ),
-                        SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
-                        Text(
-                          'Add Your First Friend',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: ResponsiveUtils.scaledFontSize(context, 16),
-                            fontFamily: '.SF Pro Text',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
