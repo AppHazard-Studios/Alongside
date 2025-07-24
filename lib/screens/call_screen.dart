@@ -1,4 +1,4 @@
-// lib/screens/call_screen.dart - Consistent styling
+// lib/screens/call_screen.dart - FIXED WITH SCALED TEXT STYLES
 
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -8,6 +8,7 @@ import '../models/friend.dart';
 import '../utils/constants.dart';
 import '../utils/text_styles.dart';
 import '../utils/ui_constants.dart';
+import '../utils/colors.dart';
 import '../providers/friends_provider.dart';
 import '../services/notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -119,7 +120,7 @@ class _CallScreenState extends State<CallScreen> {
       appBar: AppBar(
         title: Text(
           'Call ${widget.friend.name}',
-          style: AppTextStyles.navTitle,
+          style: AppTextStyles.scaledNavTitle(context),
           overflow: TextOverflow.ellipsis,
         ),
         backgroundColor: CupertinoColors.systemBackground,
@@ -143,7 +144,7 @@ class _CallScreenState extends State<CallScreen> {
                   Text(
                     'Initiating call to ${widget.friend.name}...',
                     textAlign: TextAlign.center,
-                    style: AppTextStyles.bodyText,
+                    style: AppTextStyles.scaledBody(context),
                     overflow: TextOverflow.ellipsis,
                     maxLines: 2,
                   ),
@@ -157,7 +158,7 @@ class _CallScreenState extends State<CallScreen> {
                   Text(
                     _errorMessage,
                     textAlign: TextAlign.center,
-                    style: AppTextStyles.bodyText,
+                    style: AppTextStyles.scaledBody(context),
                   ),
                   const SizedBox(height: 24),
                   CupertinoButton.filled(
@@ -182,7 +183,7 @@ class _CallScreenState extends State<CallScreen> {
                   Text(
                     'Ready to call ${widget.friend.name}',
                     textAlign: TextAlign.center,
-                    style: AppTextStyles.title,
+                    style: AppTextStyles.scaledTitle2(context),
                     overflow: TextOverflow.ellipsis,
                     maxLines: 2,
                   ),
@@ -190,19 +191,21 @@ class _CallScreenState extends State<CallScreen> {
                   Text(
                     widget.friend.phoneNumber,
                     textAlign: TextAlign.center,
-                    style: AppTextStyles.secondaryText,
+                    style: AppTextStyles.scaledBody(context).copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                   const SizedBox(height: 32),
                   CupertinoButton.filled(
                     onPressed: _initiateCall,
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(CupertinoIcons.phone_fill, size: 16),
-                        SizedBox(width: 8),
-                        const Text(
+                        const Icon(CupertinoIcons.phone_fill, size: 16),
+                        const SizedBox(width: 8),
+                        Text(
                           'Call Now',
-                          style: AppTextStyles.button,
+                          style: AppTextStyles.scaledButton(context),
                         ),
                       ],
                     ),

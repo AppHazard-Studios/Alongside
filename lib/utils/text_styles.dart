@@ -1,307 +1,292 @@
-// lib/utils/text_styles.dart - FIXED with CONSISTENT EXTREMELY RESTRICTIVE SCALING
+// lib/utils/text_styles.dart - FIXED SIZES WITH STYLE GUIDE
 import 'package:flutter/material.dart';
 import 'responsive_utils.dart';
 
+/// Complete Text Style Guide for Alongside App
+///
+/// USAGE GUIDE:
+/// - Navigation Bar Titles: scaledNavTitle
+/// - Screen Headers: scaledTitle1 or scaledTitle2
+/// - Section Headers: scaledSectionHeader
+/// - Card Titles: scaledHeadline
+/// - Body Text: scaledBody
+/// - Buttons: scaledButton
+/// - Form Labels: scaledFormLabel
+/// - Captions: scaledCaption
+/// - Dialog Titles: scaledDialogTitle
+///
+/// NEVER use raw TextStyle(fontSize: X) - always use these predefined styles!
+
 class AppTextStyles {
-  // Base font family
   static const String _fontFamily = '.SF Pro Text';
+  static const Color _primaryColor = Color(0xFF007AFF);
+  static const Color _textColor = Color(0xFF000000);
+  static const Color _secondaryColor = Color(0xFF8E8E93);
 
-  // Base colors
-  static const Color _primaryColor = Color(0xFF007AFF); // iOS blue
-  static const Color _textColor = Color(0xFF000000); // Black
-  static const Color _secondaryColor = Color(0xFF8E8E93); // iOS gray
+  // ============================================
+  // BASE STYLES - iOS Human Interface Guidelines
+  // ============================================
 
-  // iOS STANDARD FONT SIZES - These are the exact iOS system sizes
-
-  // Large Title - 34pt (used sparingly, like main app titles)
+  // Large Title - 34pt (Splash screens, onboarding)
   static const TextStyle largeTitle = TextStyle(
     fontSize: 34,
     fontWeight: FontWeight.w700,
     fontFamily: _fontFamily,
     color: _textColor,
+    height: 1.2,
   );
 
-  // Title 1 - 28pt (main screen titles)
+  // Title 1 - 28pt (Main screen titles like "Alongside")
   static const TextStyle title1 = TextStyle(
     fontSize: 28,
     fontWeight: FontWeight.w700,
     fontFamily: _fontFamily,
     color: _textColor,
+    height: 1.2,
   );
 
-  // Title 2 - 22pt (section titles)
+  // Title 2 - 22pt (Section titles in screens)
   static const TextStyle title2 = TextStyle(
     fontSize: 22,
     fontWeight: FontWeight.w700,
     fontFamily: _fontFamily,
     color: _textColor,
+    height: 1.3,
   );
 
-  // Title 3 - 20pt (subsection titles)
+  // Title 3 - 20pt (Subsection titles, card headers)
   static const TextStyle title3 = TextStyle(
     fontSize: 20,
     fontWeight: FontWeight.w600,
     fontFamily: _fontFamily,
     color: _textColor,
+    height: 1.3,
   );
 
-  // Headline - 17pt semibold (important labels, navigation titles)
+  // Headline - 17pt semibold (Navigation titles, important labels)
   static const TextStyle headline = TextStyle(
     fontSize: 17,
     fontWeight: FontWeight.w600,
     fontFamily: _fontFamily,
     color: _textColor,
+    height: 1.3,
   );
 
-  // Body - 17pt regular (MAIN CONTENT TEXT - iOS standard)
+  // Body - 17pt regular (Main content text)
   static const TextStyle body = TextStyle(
     fontSize: 17,
     fontWeight: FontWeight.w400,
     fontFamily: _fontFamily,
     color: _textColor,
+    height: 1.4,
   );
 
-  // Callout - 16pt (form labels, secondary content)
+  // Callout - 16pt (Secondary content, form fields)
   static const TextStyle callout = TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.w400,
     fontFamily: _fontFamily,
     color: _textColor,
+    height: 1.4,
   );
 
-  // Subhead - 15pt (smaller labels)
+  // Subhead - 15pt (Smaller labels, descriptions)
   static const TextStyle subhead = TextStyle(
     fontSize: 15,
     fontWeight: FontWeight.w400,
     fontFamily: _fontFamily,
     color: _textColor,
+    height: 1.4,
   );
 
-  // Footnote - 13pt (section headers, disclaimers)
+  // Footnote - 13pt (Timestamps, metadata)
   static const TextStyle footnote = TextStyle(
     fontSize: 13,
     fontWeight: FontWeight.w400,
     fontFamily: _fontFamily,
     color: _textColor,
+    height: 1.4,
   );
 
-  // Caption 1 - 12pt (small labels)
+  // Caption 1 - 12pt (Small labels)
   static const TextStyle caption1 = TextStyle(
     fontSize: 12,
     fontWeight: FontWeight.w400,
     fontFamily: _fontFamily,
     color: _secondaryColor,
+    height: 1.3,
   );
 
-  // Caption 2 - 11pt (very small labels)
+  // Caption 2 - 11pt (Very small labels)
   static const TextStyle caption2 = TextStyle(
     fontSize: 11,
     fontWeight: FontWeight.w400,
     fontFamily: _fontFamily,
     color: _secondaryColor,
+    height: 1.3,
   );
 
-  // SPECIFIC USE CASE STYLES WITH PROPER iOS SIZING
+  // ============================================
+  // SPECIFIC USE STYLES
+  // ============================================
 
-  // Navigation titles - Should be Title 3 for prominence
-  static const TextStyle navTitle = TextStyle(
-    fontSize: 20, // Title 3 size for nav titles
-    fontWeight: FontWeight.w700,
-    fontFamily: _fontFamily,
-    color: _textColor,
-  );
-
-  // Main app titles (like "Alongside") - Title 1
+  // App Title (e.g., "Alongside" in header)
   static const TextStyle appTitle = TextStyle(
-    fontSize: 28, // Title 1 size
+    fontSize: 28,
     fontWeight: FontWeight.w800,
     fontFamily: _fontFamily,
     color: _primaryColor,
+    height: 1.2,
   );
 
-  // Screen headers - Title 2
-  static const TextStyle screenHeader = TextStyle(
-    fontSize: 22, // Title 2 size
+  // Navigation Bar Title
+  static const TextStyle navTitle = TextStyle(
+    fontSize: 20,
     fontWeight: FontWeight.w700,
     fontFamily: _fontFamily,
     color: _textColor,
+    height: 1.2,
   );
 
-  // Card titles - Headline
-  static const TextStyle cardTitle = TextStyle(
-    fontSize: 17,
-    fontWeight: FontWeight.w600,
-    fontFamily: _fontFamily,
-    color: _textColor,
-  );
-
-  // Form labels - Callout
-  static const TextStyle formLabel = TextStyle(
-    fontSize: 16,
-    fontWeight: FontWeight.w400,
-    fontFamily: _fontFamily,
-    color: _secondaryColor,
-  );
-
-  // Form input text - Body
-  static const TextStyle formInput = TextStyle(
-    fontSize: 17,
-    fontWeight: FontWeight.w400,
-    fontFamily: _fontFamily,
-    color: _textColor,
-  );
-
-  // Button text - Headline
-  static const TextStyle button = TextStyle(
-    fontSize: 17,
-    fontWeight: FontWeight.w600,
-    fontFamily: _fontFamily,
-    color: Colors.white,
-  );
-
-  // Section headers (like "SECURITY") - Footnote with bold
+  // Section Headers (e.g., "SECURITY", "BACKUP")
   static const TextStyle sectionHeader = TextStyle(
     fontSize: 13,
     fontWeight: FontWeight.w600,
     fontFamily: _fontFamily,
     color: _secondaryColor,
     letterSpacing: 0.5,
+    height: 1.3,
   );
 
-  // Secondary text - Body with secondary color
-  static const TextStyle secondaryText = TextStyle(
+  // Button Text
+  static const TextStyle button = TextStyle(
     fontSize: 17,
-    fontWeight: FontWeight.w400,
+    fontWeight: FontWeight.w600,
     fontFamily: _fontFamily,
-    color: _secondaryColor,
+    color: Colors.white,
+    height: 1.2,
   );
 
-  // Placeholder text - Body with iOS placeholder color
-  static const TextStyle placeholder = TextStyle(
-    fontSize: 17,
-    fontWeight: FontWeight.w400,
-    fontFamily: _fontFamily,
-    color: Color(0xFFBEBEC0), // iOS placeholder color
-  );
-
-  // Caption text - Footnote with secondary color
-  static const TextStyle caption = TextStyle(
-    fontSize: 13,
-    fontWeight: FontWeight.w400,
-    fontFamily: _fontFamily,
-    color: _secondaryColor,
-  );
-
-  // Dialog titles - Headline
+  // Dialog Title
   static const TextStyle dialogTitle = TextStyle(
     fontSize: 17,
     fontWeight: FontWeight.w600,
     fontFamily: _fontFamily,
     color: _textColor,
+    height: 1.3,
   );
 
-  // RESPONSIVE SCALING WITH EXTREMELY RESTRICTIVE VALUES
+  // Form Label
+  static const TextStyle formLabel = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w400,
+    fontFamily: _fontFamily,
+    color: _secondaryColor,
+    height: 1.3,
+  );
 
-  // Scale text with EXTREMELY restricted scaling to prevent any noticeable changes
-  static TextStyle scaledTextStyle(
-      BuildContext context,
-      TextStyle baseStyle) {
-    // Use ResponsiveUtils directly - no more maxScale overrides!
-    return baseStyle.copyWith(
-      fontSize: ResponsiveUtils.scaledFontSize(
-        context,
-        baseStyle.fontSize ?? 17, // Default to iOS body size
-        // Using default values from ResponsiveUtils (maxScale: 1.02)
-      ),
-    );
+  // Form Input
+  static const TextStyle formInput = TextStyle(
+    fontSize: 17,
+    fontWeight: FontWeight.w400,
+    fontFamily: _fontFamily,
+    color: _textColor,
+    height: 1.4,
+  );
+
+  // Placeholder
+  static const TextStyle placeholder = TextStyle(
+    fontSize: 17,
+    fontWeight: FontWeight.w400,
+    fontFamily: _fontFamily,
+    color: Color(0xFFBEBEC0),
+    height: 1.4,
+  );
+
+  // ============================================
+  // SCALED METHODS (Now with FIXED sizes)
+  // ============================================
+
+  // Core scaling method - now returns FIXED sizes
+  static TextStyle scaledTextStyle(BuildContext context, TextStyle baseStyle) {
+    // Check for accessibility scaling in debug mode
+    if (ResponsiveUtils.hasAccessibilityScaling(context)) {
+      ResponsiveUtils.checkAccessibilityScaling(context);
+    }
+
+    // Return the base style unchanged - no scaling!
+    return baseStyle;
   }
 
-  // All scaled styles now use consistent extremely restrictive scaling
-  static TextStyle scaledBody(BuildContext context) {
-    return scaledTextStyle(context, body);
-  }
+  // ============================================
+  // QUICK REFERENCE - Use these in your widgets!
+  // ============================================
 
-  static TextStyle scaledHeadline(BuildContext context) {
-    return scaledTextStyle(context, headline);
-  }
+  // Titles & Headers
+  static TextStyle scaledLargeTitle(BuildContext context) => scaledTextStyle(context, largeTitle);
+  static TextStyle scaledTitle1(BuildContext context) => scaledTextStyle(context, title1);
+  static TextStyle scaledTitle2(BuildContext context) => scaledTextStyle(context, title2);
+  static TextStyle scaledTitle3(BuildContext context) => scaledTextStyle(context, title3);
+  static TextStyle scaledAppTitle(BuildContext context) => scaledTextStyle(context, appTitle);
+  static TextStyle scaledNavTitle(BuildContext context) => scaledTextStyle(context, navTitle);
 
-  static TextStyle scaledNavTitle(BuildContext context) {
-    return scaledTextStyle(context, navTitle);
-  }
+  // Content
+  static TextStyle scaledHeadline(BuildContext context) => scaledTextStyle(context, headline);
+  static TextStyle scaledBody(BuildContext context) => scaledTextStyle(context, body);
+  static TextStyle scaledCallout(BuildContext context) => scaledTextStyle(context, callout);
+  static TextStyle scaledSubhead(BuildContext context) => scaledTextStyle(context, subhead);
 
-  static TextStyle scaledAppTitle(BuildContext context) {
-    return scaledTextStyle(context, appTitle);
-  }
+  // Small Text
+  static TextStyle scaledFootnote(BuildContext context) => scaledTextStyle(context, footnote);
+  static TextStyle scaledCaption(BuildContext context) => scaledTextStyle(context, caption1);
+  static TextStyle scaledCaption2(BuildContext context) => scaledTextStyle(context, caption2);
 
-  static TextStyle scaledFormLabel(BuildContext context) {
-    return scaledTextStyle(context, formLabel);
-  }
+  // Functional
+  static TextStyle scaledButton(BuildContext context) => scaledTextStyle(context, button);
+  static TextStyle scaledSectionHeader(BuildContext context) => scaledTextStyle(context, sectionHeader);
+  static TextStyle scaledDialogTitle(BuildContext context) => scaledTextStyle(context, dialogTitle);
+  static TextStyle scaledFormLabel(BuildContext context) => scaledTextStyle(context, formLabel);
+  static TextStyle scaledFormInput(BuildContext context) => scaledTextStyle(context, formInput);
 
-  static TextStyle scaledFormInput(BuildContext context) {
-    return scaledTextStyle(context, formInput);
-  }
+  // Aliases for common use cases
+  static TextStyle scaledCardTitle(BuildContext context) => scaledHeadline(context);
+  static TextStyle scaledScreenHeader(BuildContext context) => scaledTitle2(context);
 
-  static TextStyle scaledButton(BuildContext context) {
-    return scaledTextStyle(context, button);
-  }
-
-  static TextStyle scaledCaption(BuildContext context) {
-    return scaledTextStyle(context, caption);
-  }
-
-  static TextStyle scaledSectionHeader(BuildContext context) {
-    return scaledTextStyle(context, sectionHeader);
-  }
-
-  static TextStyle scaledCardTitle(BuildContext context) {
-    return scaledTextStyle(context, cardTitle);
-  }
-
-  static TextStyle scaledDialogTitle(BuildContext context) {
-    return scaledTextStyle(context, dialogTitle);
-  }
-
-  static TextStyle scaledSubhead(BuildContext context) {
-    return scaledTextStyle(context, subhead);
-  }
-
-  static TextStyle scaledCallout(BuildContext context) {
-    return scaledTextStyle(context, callout);
-  }
-
-  static TextStyle scaledFootnote(BuildContext context) {
-    return scaledTextStyle(context, footnote);
-  }
-
-  static TextStyle scaledScreenHeader(BuildContext context) {
-    return scaledTextStyle(context, title3); // Use Title 3 for screen headers
-  }
-
-  static TextStyle scaledCaption2(BuildContext context) {
-    return scaledTextStyle(context, caption2);
-  }
-
-  static TextStyle scaledTitle1(BuildContext context) {
-    return scaledTextStyle(context, title1);
-  }
-
-  static TextStyle scaledTitle3(BuildContext context) {
-    return scaledTextStyle(context, title3);
-  }
-
+  // ============================================
   // BACKWARD COMPATIBILITY ALIASES
-  static const TextStyle title = title2; // For existing code
-  static const TextStyle bodyText = body; // For existing code
+  // ============================================
+
+  // These are deprecated but kept for compatibility
+  // TODO: Replace these throughout the app with proper scaled versions
+  static const TextStyle bodyText = body;
+  static const TextStyle title = title2;
+  static const TextStyle secondaryText = TextStyle(
+    fontSize: 17,
+    fontWeight: FontWeight.w400,
+    fontFamily: _fontFamily,
+    color: _secondaryColor,
+    height: 1.4,
+  );
   static const TextStyle accentText = TextStyle(
     fontSize: 17,
     fontWeight: FontWeight.w600,
     fontFamily: _fontFamily,
     color: _primaryColor,
+    height: 1.3,
   );
 
-  // NEW: Debug method to track text scaling
-  static void debugTextStyle(BuildContext context, String styleName, TextStyle style) {
-    ResponsiveUtils.debugTextScaling(context, styleName);
-    debugPrint('[$styleName] Base fontSize: ${style.fontSize}');
   }
-}
+
+// ============================================
+// USAGE EXAMPLES:
+// ============================================
+//
+// ✅ CORRECT:
+// Text('Hello', style: AppTextStyles.scaledBody(context))
+// Text('Title', style: AppTextStyles.scaledTitle1(context))
+// Text('Save', style: AppTextStyles.scaledButton(context))
+//
+// ❌ WRONG:
+// Text('Hello', style: TextStyle(fontSize: 17))
+// Text('Title', style: Theme.of(context).textTheme.headline)
+// Text('Save', style: AppTextStyles.body) // <- Missing context!

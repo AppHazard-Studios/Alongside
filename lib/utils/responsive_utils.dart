@@ -1,159 +1,105 @@
-// lib/utils/responsive_utils.dart - MUCH MORE RESTRICTIVE VERSION
+// lib/utils/responsive_utils.dart - ULTRA RESTRICTIVE VERSION
 import 'package:flutter/material.dart';
 import 'dart:math';
 
 class ResponsiveUtils {
-  // EXTREMELY restrictive text scaling - prevents any significant changes
+  // ULTRA restrictive text scaling - practically disables accessibility scaling
   static double scaledFontSize(
       BuildContext context,
       double baseSize, {
-        double minScale = 0.99,  // Barely scales down
-        double maxScale = 1.02,  // EXTREMELY restricted - was 1.03
-        double scaleFactor = 0.05, // MUCH less responsive - was 0.1
+        double minScale = 1.0,      // Never shrink
+        double maxScale = 1.0,      // NEVER GROW - completely fixed
+        double scaleFactor = 0.0,   // NO scaling at all
       }) {
-    final textScaleFactor = MediaQuery.of(context).textScaleFactor;
+    // For debugging - uncomment to see what's happening
+    // final rawTextScale = MediaQuery.of(context).textScaleFactor;
+    // debugPrint('Raw TextScaleFactor: $rawTextScale, BaseSize: $baseSize, Result: $baseSize');
 
-    // Debug print to see what's happening
-    debugPrint('TextScaleFactor: $textScaleFactor');
+    // OPTION 1: Completely ignore accessibility scaling
+    return baseSize;
 
-    // Cap the textScaleFactor itself to prevent extreme values
-    final cappedTextScaleFactor = textScaleFactor.clamp(0.85, 1.3);
-
-    // Only allow very minimal scaling beyond 1.0
-    final effectiveScale = 1.0 + ((cappedTextScaleFactor - 1.0) * scaleFactor);
-    final clampedScale = effectiveScale.clamp(minScale, maxScale);
-
-    debugPrint('BaseSize: $baseSize, EffectiveScale: $effectiveScale, ClampedScale: $clampedScale, FinalSize: ${baseSize * clampedScale}');
-
-    return baseSize * clampedScale;
+    // OPTION 2: Allow MINIMAL scaling (uncomment if you want some accessibility)
+    // final textScaleFactor = MediaQuery.of(context).textScaleFactor;
+    // final cappedScale = textScaleFactor.clamp(0.85, 1.15);
+    // final tinyScale = 1.0 + ((cappedScale - 1.0) * 0.1); // Only 10% of the scaling
+    // return baseSize * tinyScale.clamp(minScale, maxScale);
   }
 
-  // Even more conservative spacing scaling
+  // Fixed spacing - no scaling
   static double scaledSpacing(
       BuildContext context,
       double baseSpacing, {
-        double scaleFactor = 0.02, // MUCH reduced from 0.05
+        double scaleFactor = 0.0,
       }) {
-    final textScaleFactor = MediaQuery.of(context).textScaleFactor.clamp(0.85, 1.3);
-
-    // Calculate very minimal spacing increase
-    final spacingMultiplier = 1.0 + ((textScaleFactor - 1.0) * scaleFactor);
-
-    // Very tight clamps to prevent layout breaking
-    return baseSpacing * spacingMultiplier.clamp(0.98, 1.02);
+    return baseSpacing; // Completely fixed
   }
 
-  // Very conservative icon scaling
+  // Fixed icon sizes
   static double scaledIconSize(
       BuildContext context,
       double baseSize, {
-        double minScale = 0.99,
-        double maxScale = 1.01, // EXTREMELY restricted
-        double scaleFactor = 0.02, // Much less responsive
+        double minScale = 1.0,
+        double maxScale = 1.0,
+        double scaleFactor = 0.0,
       }) {
-    final textScaleFactor = MediaQuery.of(context).textScaleFactor.clamp(0.85, 1.3);
-
-    // Icons scale at much slower rate
-    final iconScale = 1.0 + ((textScaleFactor - 1.0) * scaleFactor);
-    final clampedScale = iconScale.clamp(minScale, maxScale);
-
-    return baseSize * clampedScale;
+    return baseSize; // Completely fixed
   }
 
-  // Very conservative container scaling
+  // Fixed container sizes
   static double scaledContainerSize(
       BuildContext context,
       double baseSize, {
-        double scaleFactor = 0.02, // MUCH more conservative
+        double scaleFactor = 0.0,
       }) {
-    final textScaleFactor = MediaQuery.of(context).textScaleFactor.clamp(0.85, 1.3);
-
-    final containerScale = 1.0 + ((textScaleFactor - 1.0) * scaleFactor);
-
-    // Very tight clamps - containers should barely grow
-    return baseSize * containerScale.clamp(0.99, 1.01);
+    return baseSize; // Completely fixed
   }
 
-  // More conservative compact layout threshold
+  // Check if we need compact layout (for extreme text scaling)
   static bool needsCompactLayout(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final textScaleFactor = MediaQuery.of(context).textScaleFactor;
 
-    // Trigger compact layout earlier to prevent breaking
-    return screenWidth < 350 || textScaleFactor > 1.2;
+    // Use compact layout for extreme scaling
+    return screenWidth < 350 || textScaleFactor > 1.5;
   }
 
-  // Conservative padding scaling
+  // Fixed padding
   static EdgeInsets scaledPadding(
       BuildContext context,
       EdgeInsets basePadding,
-      {double maxScale = 1.02} // Reduced max scale
+      {double maxScale = 1.0}
       ) {
-    final scale = scaledSpacing(context, 1.0).clamp(1.0, maxScale);
-
-    return EdgeInsets.only(
-      left: basePadding.left * scale,
-      right: basePadding.right * scale,
-      top: basePadding.top * scale,
-      bottom: basePadding.bottom * scale,
-    );
+    return basePadding; // Completely fixed
   }
 
-  // Conservative button height scaling
+  // Fixed button height
   static double scaledButtonHeight(BuildContext context,
       {double baseHeight = 44}) {
-    final textScaleFactor = MediaQuery.of(context).textScaleFactor.clamp(0.85, 1.3);
-
-    // Buttons need to grow for accessibility but very conservatively
-    final buttonScale = 1.0 + ((textScaleFactor - 1.0) * 0.1); // Reduced from 0.15
-
-    // Tighter clamps for buttons
-    return baseHeight * buttonScale.clamp(1.0, 1.1); // Reduced from 1.15
+    return baseHeight; // Completely fixed
   }
 
-  // For form fields - slightly more scaling for accessibility but still restricted
+  // Fixed form field height
   static double scaledFormHeight(BuildContext context, {double baseHeight = 44}) {
-    final textScaleFactor = MediaQuery.of(context).textScaleFactor.clamp(0.85, 1.3);
-    final scale = 1.0 + ((textScaleFactor - 1.0) * 0.15); // Reduced from 0.2
-    return baseHeight * scale.clamp(1.0, 1.1); // Reduced from 1.03
+    return baseHeight; // Completely fixed
   }
 
-  // For cards - minimal scaling to maintain layout
-  static double scaledCardPadding(BuildContext context, double basePadding) {
-    final textScaleFactor = MediaQuery.of(context).textScaleFactor.clamp(0.85, 1.3);
-    final scale = 1.0 + ((textScaleFactor - 1.0) * 0.02); // Reduced from 0.05
-    return basePadding * scale.clamp(1.0, 1.01); // Very minimal
+  // Get raw text scale factor for debugging
+  static double getRawTextScaleFactor(BuildContext context) {
+    return MediaQuery.of(context).textScaleFactor;
   }
 
-  // For profile images and similar elements
-  static double scaledProfileSize(BuildContext context, double baseSize) {
-    final textScaleFactor = MediaQuery.of(context).textScaleFactor.clamp(0.85, 1.3);
-    final scale = 1.0 + ((textScaleFactor - 1.0) * 0.05); // Reduced from 0.1
-    return baseSize * scale.clamp(1.0, 1.02); // Reduced from 1.03
+  // Check if user has accessibility scaling enabled
+  static bool hasAccessibilityScaling(BuildContext context) {
+    final scale = MediaQuery.of(context).textScaleFactor;
+    return scale < 0.95 || scale > 1.05;
   }
 
-  // Check if scaling is causing layout issues
-  static bool isHighAccessibilityScale(BuildContext context) {
-    return MediaQuery.of(context).textScaleFactor > 1.2; // Reduced threshold
-  }
-
-  // Get safe scaling factor that won't break layouts
-  static double getSafeScaleFactor(BuildContext context) {
-    final textScaleFactor = MediaQuery.of(context).textScaleFactor;
-    return textScaleFactor.clamp(0.95, 1.02); // Much more restrictive
-  }
-
-  // NEW: Get the effective text scale factor with our restrictions applied
-  static double getEffectiveTextScale(BuildContext context) {
-    final rawScale = MediaQuery.of(context).textScaleFactor;
-    // Apply our conservative scaling factor and cap it
-    return (1.0 + ((rawScale.clamp(0.85, 1.3) - 1.0) * 0.05)).clamp(0.99, 1.02);
-  }
-
-  // DEBUG: Method to see what's happening with text scaling
-  static void debugTextScaling(BuildContext context, String widgetName) {
-    final rawScale = MediaQuery.of(context).textScaleFactor;
-    final effectiveScale = getEffectiveTextScale(context);
-    debugPrint('[$widgetName] Raw TextScaleFactor: $rawScale, Effective: $effectiveScale');
+  // Show accessibility warning if needed
+  static void checkAccessibilityScaling(BuildContext context) {
+    if (hasAccessibilityScaling(context)) {
+      final scale = getRawTextScaleFactor(context);
+      debugPrint('⚠️ Accessibility scaling detected: ${(scale * 100).toStringAsFixed(0)}%');
+      debugPrint('⚠️ This app uses fixed text sizes for consistent layouts.');
+    }
   }
 }
