@@ -551,13 +551,10 @@ class _HomeScreenNewState extends State<HomeScreenNew>
   }) {
     return Expanded(
       child: Container(
-        // 🔧 FIX: Fixed minimum height to ensure consistency
-        constraints: BoxConstraints(
-          minHeight: ResponsiveUtils.scaledContainerSize(context, 65), // Fixed minimum height
-        ),
+        height: ResponsiveUtils.scaledContainerSize(context, 65) ?? 65.0,
         padding: EdgeInsets.symmetric(
-          vertical: ResponsiveUtils.scaledSpacing(context, 8),
-          horizontal: ResponsiveUtils.scaledSpacing(context, 8),
+          vertical: ResponsiveUtils.scaledSpacing(context, 8) ?? 8.0,
+          horizontal: ResponsiveUtils.scaledSpacing(context, 8) ?? 8.0,
         ),
         decoration: BoxDecoration(
           color: AppColors.primary.withOpacity(0.05),
@@ -569,85 +566,85 @@ class _HomeScreenNewState extends State<HomeScreenNew>
         ),
         child: LayoutBuilder(
           builder: (context, constraints) {
+            // Defensive check for constraints
+            if (!constraints.hasBoundedWidth) {
+              return const SizedBox.shrink();
+            }
+
             final isCompact = constraints.maxWidth < 85;
 
             if (isCompact) {
-              // 🔧 FIX: Vertical layout with consistent height
+              // Vertical layout for compact spaces
               return Column(
-                mainAxisAlignment: MainAxisAlignment.center, // Center content vertically
-                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.max, // Changed from min to max
                 children: [
                   Icon(
                     icon,
                     color: AppColors.primary,
-                    size: ResponsiveUtils.scaledIconSize(context, 14),
+                    size: ResponsiveUtils.scaledIconSize(context, 14) ?? 14.0,
                   ),
-                  SizedBox(height: ResponsiveUtils.scaledSpacing(context, 4)),
-
-                  // 🔧 FIX: Value with consistent styling
+                  const SizedBox(height: 4),
                   Text(
                     value,
-                    style: AppTextStyles.scaledCallout(context).copyWith(
+                    style: (AppTextStyles.scaledCallout(context) ?? const TextStyle()).copyWith(
                       fontWeight: FontWeight.w700,
                       color: AppColors.primary,
                     ),
                     textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-
-                  // 🔧 FIX: Label with smart text handling to prevent wrapping
-                  ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxWidth: constraints.maxWidth - 8, // Leave some margin
-                    ),
+                  Flexible( // Use Flexible instead of direct Text
                     child: Text(
                       label,
-                      style: AppTextStyles.scaledCaption2(context).copyWith( // 🔧 FIX: Use smaller caption2 to prevent wrapping
+                      style: (AppTextStyles.scaledCaption2(context) ?? const TextStyle()).copyWith(
                         color: AppColors.textSecondary,
-                        height: 1.1, // Tighter line height
+                        height: 1.1,
                       ),
                       textAlign: TextAlign.center,
-                      maxLines: 2, // Allow max 2 lines
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
               );
             } else {
-              // 🔧 FIX: Horizontal layout with consistent height
+              // Horizontal layout for wider spaces
               return Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
                     icon,
                     color: AppColors.primary,
-                    size: ResponsiveUtils.scaledIconSize(context, 14),
+                    size: ResponsiveUtils.scaledIconSize(context, 14) ?? 14.0,
                   ),
-                  SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
-
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center, // Center content vertically
-                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.max, // Changed from min to max
                       children: [
-                        // 🔧 FIX: Value with consistent styling
                         Text(
                           value,
-                          style: AppTextStyles.scaledCallout(context).copyWith(
+                          style: (AppTextStyles.scaledCallout(context) ?? const TextStyle()).copyWith(
                             fontWeight: FontWeight.w700,
                             color: AppColors.primary,
                           ),
-                        ),
-
-                        // 🔧 FIX: Label with smart text handling
-                        Text(
-                          label,
-                          style: AppTextStyles.scaledCaption2(context).copyWith( // 🔧 FIX: Use smaller caption2
-                            color: AppColors.textSecondary,
-                            height: 1.1, // Tighter line height
-                          ),
-                          maxLines: 2, // Allow max 2 lines if needed
+                          maxLines: 1,
                           overflow: TextOverflow.ellipsis,
+                        ),
+                        Flexible( // Use Flexible instead of direct Text
+                          child: Text(
+                            label,
+                            style: (AppTextStyles.scaledCaption2(context) ?? const TextStyle()).copyWith(
+                              color: AppColors.textSecondary,
+                              height: 1.1,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ],
                     ),
