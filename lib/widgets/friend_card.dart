@@ -616,9 +616,10 @@ class _FriendCardNewState extends State<FriendCardNew>
     );
   }
 
+  // FRIEND CARD FIXES - Replace these methods in friend_card.dart
+
   Widget _buildProfileImage() {
     final containerSize = ResponsiveUtils.scaledContainerSize(context, 44);
-    final emojiSize = ResponsiveUtils.scaledIconSize(context, 20, maxScale: 1.2);
 
     return Container(
       width: containerSize,
@@ -655,9 +656,14 @@ class _FriendCardNewState extends State<FriendCardNew>
         ),
         child: widget.friend.isEmoji
             ? Center(
-          child: Text(
-            widget.friend.profileImage,
-            style: TextStyle(fontSize: emojiSize),
+          child: FittedBox( // 🔧 FIX: Prevents emoji from growing outside circle
+            fit: BoxFit.scaleDown,
+            child: Text(
+              widget.friend.profileImage,
+              style: TextStyle(
+                fontSize: containerSize * 0.45, // 🔧 FIX: Size relative to container
+              ),
+            ),
           ),
         )
             : ClipOval(
@@ -670,14 +676,15 @@ class _FriendCardNewState extends State<FriendCardNew>
     );
   }
 
+// REMINDER INDICATOR FIX - Replace _buildNameWithReminder in friend_card.dart
+
   Widget _buildNameWithReminder() {
     if (_isLoadingReminderTime) {
       return Row(
         children: [
-          Expanded(
+          Expanded( // 🔧 FIX: Use Expanded instead of Flexible for proper spacing
             child: Text(
               widget.friend.name,
-              // FIXED: Use proper scaled headline instead of bypassing restrictions
               style: AppTextStyles.scaledHeadline(context).copyWith(
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
@@ -701,10 +708,10 @@ class _FriendCardNewState extends State<FriendCardNew>
 
     return Row(
       children: [
+        // 🔧 FIX: Give name most of the space but leave room for reminder
         Expanded(
           child: Text(
             widget.friend.name,
-            // FIXED: Use proper scaled headline instead of bypassing restrictions
             style: AppTextStyles.scaledHeadline(context).copyWith(
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
@@ -713,30 +720,44 @@ class _FriendCardNewState extends State<FriendCardNew>
             overflow: TextOverflow.ellipsis,
           ),
         ),
+
+        // 🔧 FIX: Fixed spacing
         SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
 
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: ResponsiveUtils.scaledContainerSize(context, 4),
-              height: ResponsiveUtils.scaledContainerSize(context, 4),
-              decoration: BoxDecoration(
-                color: reminderColor.withOpacity(0.6),
-                shape: BoxShape.circle,
+        // 🔧 FIX: Constrained reminder indicator to prevent overflow
+        ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 50, // Fixed max width to prevent overflow
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: ResponsiveUtils.scaledContainerSize(context, 4),
+                height: ResponsiveUtils.scaledContainerSize(context, 4),
+                decoration: BoxDecoration(
+                  color: reminderColor.withOpacity(0.6),
+                  shape: BoxShape.circle,
+                ),
               ),
-            ),
-            SizedBox(width: ResponsiveUtils.scaledSpacing(context, 6)),
-            Text(
-              reminderText,
-              // FIXED: Use proper scaled footnote instead of bypassing restrictions
-              style: AppTextStyles.scaledFootnote(context).copyWith(
-                fontWeight: FontWeight.w600,
-                color: reminderColor,
+              SizedBox(width: ResponsiveUtils.scaledSpacing(context, 4)), // 🔧 FIX: Reduced spacing
+
+              // 🔧 FIX: Flexible text that can scale down if needed
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    reminderText,
+                    style: AppTextStyles.scaledFootnote(context).copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: reminderColor,
+                    ),
+                  ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -779,7 +800,9 @@ class _FriendCardNewState extends State<FriendCardNew>
               ),
             ),
           ),
-          Container(
+
+          // 🔧 FIX: Remove fixed padding, let content determine height
+          Padding(
             padding: EdgeInsets.fromLTRB(
               ResponsiveUtils.scaledSpacing(context, 16),
               ResponsiveUtils.scaledSpacing(context, 14),
@@ -813,6 +836,8 @@ class _FriendCardNewState extends State<FriendCardNew>
     );
   }
 
+  // ALONGSIDE ICONS FIX - Replace _buildInfoRow in friend_card.dart
+
   Widget _buildInfoRow({
     required IconData icon,
     required String title,
@@ -822,11 +847,11 @@ class _FriendCardNewState extends State<FriendCardNew>
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: ResponsiveUtils.scaledSpacing(context, 12),
-        vertical: ResponsiveUtils.scaledSpacing(context, 10),
+        vertical: ResponsiveUtils.scaledSpacing(context, 12), // 🔧 FIX: Increased vertical padding
       ),
       decoration: BoxDecoration(
         color: color.withOpacity(0.02),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12), // 🔧 FIX: Slightly bigger radius
         border: Border.all(
           color: color.withOpacity(0.08),
           width: 0.5,
@@ -835,42 +860,46 @@ class _FriendCardNewState extends State<FriendCardNew>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 🔧 FIX: Bigger, properly scaling icon container
           Container(
-            width: ResponsiveUtils.scaledContainerSize(context, 24),
-            height: ResponsiveUtils.scaledContainerSize(context, 24),
+            width: ResponsiveUtils.scaledContainerSize(context, 32), // 🔧 FIX: Bigger container (was 24)
+            height: ResponsiveUtils.scaledContainerSize(context, 32),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(6),
+              color: color.withOpacity(0.12), // 🔧 FIX: Slightly more opaque background
+              borderRadius: BorderRadius.circular(8), // 🔧 FIX: Bigger border radius
+              border: Border.all(
+                color: color.withOpacity(0.15), // 🔧 FIX: Subtle border
+                width: 0.5,
+              ),
             ),
             child: Icon(
               icon,
-              color: color.withOpacity(0.8),
-              size: ResponsiveUtils.scaledIconSize(context, 12),
+              color: color.withOpacity(0.9), // 🔧 FIX: More opaque icon
+              size: ResponsiveUtils.scaledIconSize(context, 16), // 🔧 FIX: Bigger icon (was 12)
             ),
           ),
-          SizedBox(width: ResponsiveUtils.scaledSpacing(context, 10)),
+          SizedBox(width: ResponsiveUtils.scaledSpacing(context, 12)),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  // FIXED: Use proper scaled footnote instead of bypassing restrictions
                   style: AppTextStyles.scaledFootnote(context).copyWith(
                     fontWeight: FontWeight.w600,
                     color: color.withOpacity(0.9),
                   ),
                 ),
-                SizedBox(height: ResponsiveUtils.scaledSpacing(context, 2)),
+                SizedBox(height: ResponsiveUtils.scaledSpacing(context, 4)), // 🔧 FIX: Increased spacing
+
+                // 🔧 FIX: Better text handling
                 Text(
                   content,
-                  // FIXED: Use proper scaled subhead instead of bypassing restrictions
                   style: AppTextStyles.scaledSubhead(context).copyWith(
                     color: AppColors.textPrimary.withOpacity(0.8),
-                    height: 1.2,
+                    height: 1.3,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                  // No maxLines restriction - let it flow naturally
                 ),
               ],
             ),

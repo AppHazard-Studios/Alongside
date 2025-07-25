@@ -1,57 +1,66 @@
-// lib/utils/responsive_utils.dart - ULTRA RESTRICTIVE VERSION
+// lib/utils/responsive_utils.dart - SMART PROPORTIONAL SCALING
 import 'package:flutter/material.dart';
 import 'dart:math';
 
 class ResponsiveUtils {
-  // ULTRA restrictive text scaling - practically disables accessibility scaling
+  // Smart text scaling - allows limited scaling but keeps it reasonable
   static double scaledFontSize(
       BuildContext context,
       double baseSize, {
-        double minScale = 1.0,      // Never shrink
-        double maxScale = 1.0,      // NEVER GROW - completely fixed
-        double scaleFactor = 0.0,   // NO scaling at all
+        double minScale = 0.9,      // Minimal shrinking
+        double maxScale = 1.15,     // Conservative growth (15% max)
+        double scaleFactor = 0.5,   // Moderate scaling intensity
       }) {
-    // For debugging - uncomment to see what's happening
-    // final rawTextScale = MediaQuery.of(context).textScaleFactor;
-    // debugPrint('Raw TextScaleFactor: $rawTextScale, BaseSize: $baseSize, Result: $baseSize');
+    final textScaleFactor = MediaQuery.of(context).textScaleFactor;
 
-    // OPTION 1: Completely ignore accessibility scaling
-    return baseSize;
+    // Apply scaling factor to reduce the intensity
+    final adjustedScale = 1.0 + ((textScaleFactor - 1.0) * scaleFactor);
 
-    // OPTION 2: Allow MINIMAL scaling (uncomment if you want some accessibility)
-    // final textScaleFactor = MediaQuery.of(context).textScaleFactor;
-    // final cappedScale = textScaleFactor.clamp(0.85, 1.15);
-    // final tinyScale = 1.0 + ((cappedScale - 1.0) * 0.1); // Only 10% of the scaling
-    // return baseSize * tinyScale.clamp(minScale, maxScale);
+    // Clamp to reasonable bounds
+    final cappedScale = adjustedScale.clamp(minScale, maxScale);
+
+    return baseSize * cappedScale;
   }
 
-  // Fixed spacing - no scaling
+  // Smart spacing that scales with text but conservatively
   static double scaledSpacing(
       BuildContext context,
       double baseSpacing, {
-        double scaleFactor = 0.0,
+        double scaleFactor = 0.2, // Very conservative for spacing
       }) {
-    return baseSpacing; // Completely fixed
+    final textScaleFactor = MediaQuery.of(context).textScaleFactor;
+    final adjustedScale = 1.0 + ((textScaleFactor - 1.0) * scaleFactor);
+    final cappedScale = adjustedScale.clamp(0.95, 1.1);
+
+    return baseSpacing * cappedScale;
   }
 
-  // Fixed icon sizes
+  // Smart icon sizes that scale with text
   static double scaledIconSize(
       BuildContext context,
       double baseSize, {
-        double minScale = 1.0,
-        double maxScale = 1.0,
-        double scaleFactor = 0.0,
+        double minScale = 0.95,
+        double maxScale = 1.1,
+        double scaleFactor = 0.3,
       }) {
-    return baseSize; // Completely fixed
+    final textScaleFactor = MediaQuery.of(context).textScaleFactor;
+    final adjustedScale = 1.0 + ((textScaleFactor - 1.0) * scaleFactor);
+    final cappedScale = adjustedScale.clamp(minScale, maxScale);
+
+    return baseSize * cappedScale;
   }
 
-  // Fixed container sizes
+  // Smart container sizes that scale proportionally
   static double scaledContainerSize(
       BuildContext context,
       double baseSize, {
-        double scaleFactor = 0.0,
+        double scaleFactor = 0.4, // Conservative scaling for containers
       }) {
-    return baseSize; // Completely fixed
+    final textScaleFactor = MediaQuery.of(context).textScaleFactor;
+    final adjustedScale = 1.0 + ((textScaleFactor - 1.0) * scaleFactor);
+    final cappedScale = adjustedScale.clamp(0.95, 1.15);
+
+    return baseSize * cappedScale;
   }
 
   // Check if we need compact layout (for extreme text scaling)
@@ -59,28 +68,45 @@ class ResponsiveUtils {
     final screenWidth = MediaQuery.of(context).size.width;
     final textScaleFactor = MediaQuery.of(context).textScaleFactor;
 
-    // Use compact layout for extreme scaling
-    return screenWidth < 350 || textScaleFactor > 1.5;
+    // Use compact layout for extreme scaling or small screens
+    return screenWidth < 350 || textScaleFactor > 1.2; // More conservative threshold
   }
 
-  // Fixed padding
+  // Smart padding that scales reasonably
   static EdgeInsets scaledPadding(
       BuildContext context,
       EdgeInsets basePadding,
-      {double maxScale = 1.0}
+      {double maxScale = 1.2}
       ) {
-    return basePadding; // Completely fixed
+    final textScaleFactor = MediaQuery.of(context).textScaleFactor;
+    final adjustedScale = 1.0 + ((textScaleFactor - 1.0) * 0.3);
+    final scale = adjustedScale.clamp(0.9, maxScale);
+
+    return EdgeInsets.fromLTRB(
+      basePadding.left * scale,
+      basePadding.top * scale,
+      basePadding.right * scale,
+      basePadding.bottom * scale,
+    );
   }
 
-  // Fixed button height
+  // Smart button height
   static double scaledButtonHeight(BuildContext context,
       {double baseHeight = 44}) {
-    return baseHeight; // Completely fixed
+    final textScaleFactor = MediaQuery.of(context).textScaleFactor;
+    final adjustedScale = 1.0 + ((textScaleFactor - 1.0) * 0.3);
+    final scale = adjustedScale.clamp(0.98, 1.15);
+
+    return baseHeight * scale;
   }
 
-  // Fixed form field height
+  // Smart form field height
   static double scaledFormHeight(BuildContext context, {double baseHeight = 44}) {
-    return baseHeight; // Completely fixed
+    final textScaleFactor = MediaQuery.of(context).textScaleFactor;
+    final adjustedScale = 1.0 + ((textScaleFactor - 1.0) * 0.3);
+    final scale = adjustedScale.clamp(0.98, 1.15);
+
+    return baseHeight * scale;
   }
 
   // Get raw text scale factor for debugging
@@ -98,8 +124,42 @@ class ResponsiveUtils {
   static void checkAccessibilityScaling(BuildContext context) {
     if (hasAccessibilityScaling(context)) {
       final scale = getRawTextScaleFactor(context);
-      debugPrint('⚠️ Accessibility scaling detected: ${(scale * 100).toStringAsFixed(0)}%');
-      debugPrint('⚠️ This app uses fixed text sizes for consistent layouts.');
+      debugPrint('📱 Accessibility scaling detected: ${(scale * 100).toStringAsFixed(0)}%');
+      debugPrint('📱 Using smart responsive scaling (limited to 125%)');
     }
+  }
+
+  // Helper for overflow protection
+  static Widget protectFromOverflow({
+    required Widget child,
+    String? debugName,
+  }) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return OverflowBox(
+          maxWidth: constraints.maxWidth,
+          child: child,
+        );
+      },
+    );
+  }
+
+  // Helper for text that might overflow
+  static Widget safeText(
+      String text, {
+        required TextStyle style,
+        int? maxLines,
+        TextOverflow overflow = TextOverflow.ellipsis,
+        TextAlign? textAlign,
+      }) {
+    return Flexible(
+      child: Text(
+        text,
+        style: style,
+        maxLines: maxLines,
+        overflow: overflow,
+        textAlign: textAlign,
+      ),
+    );
   }
 }
