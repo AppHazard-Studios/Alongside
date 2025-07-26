@@ -1,4 +1,4 @@
-// lib/widgets/no_underline_field.dart - FIXED FOR PROPER iOS TEXT STYLES
+// lib/widgets/no_underline_field.dart - FIXED TEXT ALIGNMENT AND CENTERING
 import 'package:flutter/cupertino.dart';
 import '../utils/colors.dart';
 import '../utils/text_styles.dart';
@@ -41,11 +41,14 @@ class NoUnderlineField extends StatelessWidget {
         ),
         SizedBox(height: ResponsiveUtils.scaledSpacing(context, 4)),
 
-        // Input field container to ensure proper height
+        // 🔧 FIXED: Proper text field alignment and centering
         Container(
+          // Ensure minimum height for touch targets
           constraints: BoxConstraints(
-            minHeight: ResponsiveUtils.scaledFormHeight(context, baseHeight: 32),
+            minHeight: ResponsiveUtils.scaledFormHeight(context, baseHeight: 36),
           ),
+          // Center the text field content vertically
+          alignment: Alignment.centerLeft,
           child: CupertinoTextField(
             controller: controller,
             placeholder: placeholder,
@@ -55,8 +58,9 @@ class NoUnderlineField extends StatelessWidget {
             maxLines: maxLines,
             minLines: minLines,
             style: AppTextStyles.scaledFormInput(context),
+            // 🔧 FIXED: Proper vertical centering with responsive padding
             padding: EdgeInsets.symmetric(
-              vertical: ResponsiveUtils.scaledSpacing(context, 8),
+              vertical: ResponsiveUtils.scaledSpacing(context, 6), // Reduced for better centering
               horizontal: 0,
             ),
             decoration: null,
@@ -67,6 +71,9 @@ class NoUnderlineField extends StatelessWidget {
             ),
             autofocus: false,
             cursorColor: AppColors.primary,
+            // 🔧 FIXED: Ensure proper text alignment
+            textAlign: TextAlign.left,
+            textAlignVertical: TextAlignVertical.center,
           ),
         ),
       ],

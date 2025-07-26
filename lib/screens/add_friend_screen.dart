@@ -1,4 +1,4 @@
-// lib/screens/add_friend_screen.dart - FIXED NAVIGATION, FONTS, ICONS & SPACING
+// lib/screens/add_friend_screen.dart - FIXED SCALING, ALIGNMENT & OVERFLOW ISSUES
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -559,7 +559,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                       child: Center(
                         child: Text(
                           emoji,
-                          // 🔧 FIXED: Cap emoji size like home screen (max 32px)
+                          // 🔧 FIXED: Proper emoji scaling like home screen
                           style: TextStyle(
                             fontSize: ResponsiveUtils.scaledFontSize(
                               context,
@@ -750,7 +750,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
-            // 🔧 FIXED: Navigation layout like home screen - title left, buttons right
+            // 🔧 FIXED: Header like home screen with proper icon
             SliverToBoxAdapter(
               child: Container(
                 padding: EdgeInsets.fromLTRB(
@@ -761,16 +761,62 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                 ),
                 child: Row(
                   children: [
-                    // Title on left - like home screen
-                    Text(
-                      widget.friend == null ? 'Add Friend' : 'Edit Friend',
-                      style: AppTextStyles.scaledAppTitle(context),
+                    // Title with icon - like home screen
+                    Expanded(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Title with overflow protection
+                          Flexible(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                widget.friend == null ? 'Add Friend' : 'Edit Friend',
+                                style: AppTextStyles.scaledAppTitle(context),
+                                maxLines: 1,
+                              ),
+                            ),
+                          ),
+
+                          SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+
+                          // 🔧 FIXED: Added icon like home screen
+                          Container(
+                            width: ResponsiveUtils.scaledContainerSize(context, 28),
+                            height: ResponsiveUtils.scaledContainerSize(context, 28),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppColors.primary,
+                                  AppColors.primary.withOpacity(0.8),
+                                ],
+                              ),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primary.withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              widget.friend == null
+                                  ? CupertinoIcons.person_add_solid
+                                  : CupertinoIcons.person_crop_circle_badge_checkmark,
+                              size: ResponsiveUtils.scaledIconSize(context, 16),
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
 
-                    // Spacer
-                    const Spacer(),
+                    // Fixed spacing between title and buttons
+                    SizedBox(width: ResponsiveUtils.scaledSpacing(context, 16)),
 
-                    // X button and Save button on right
+                    // Button area - fixed size to prevent overflow
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -806,14 +852,19 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
 
                         SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
 
-                        // Save button
+                        // Save button - responsive width
                         CupertinoButton(
                           padding: EdgeInsets.zero,
                           onPressed: _saveFriend,
                           child: Container(
                             height: ResponsiveUtils.scaledContainerSize(context, 32),
+                            constraints: BoxConstraints(
+                              // 🔧 FIXED: Responsive width limits to prevent overflow
+                              minWidth: ResponsiveUtils.scaledContainerSize(context, 60),
+                              maxWidth: ResponsiveUtils.scaledContainerSize(context, 80),
+                            ),
                             padding: EdgeInsets.symmetric(
-                              horizontal: ResponsiveUtils.scaledSpacing(context, 16),
+                              horizontal: ResponsiveUtils.scaledSpacing(context, 12),
                             ),
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
@@ -829,10 +880,13 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                               ],
                             ),
                             child: Center(
-                              child: Text(
-                                'Save',
-                                style: AppTextStyles.scaledButton(context).copyWith(
-                                  color: Colors.white,
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  'Save',
+                                  style: AppTextStyles.scaledButton(context).copyWith(
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
                             ),
@@ -880,7 +934,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                                   ? Center(
                                 child: Text(
                                   _profileImage,
-                                  // 🔧 FIXED: Cap emoji size like home screen
+                                  // 🔧 FIXED: Proper emoji scaling like home screen
                                   style: TextStyle(
                                     fontSize: ResponsiveUtils.scaledFontSize(
                                       context,
@@ -921,7 +975,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                                   Icon(
                                     CupertinoIcons.camera,
                                     color: AppColors.primary,
-                                    // 🔧 FIXED: Make camera icon scale properly
+                                    // 🔧 FIXED: Proper icon scaling
                                     size: ResponsiveUtils.scaledIconSize(context, 14),
                                   ),
                                   SizedBox(width: ResponsiveUtils.scaledSpacing(context, 6)),
@@ -1082,7 +1136,8 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                         ),
                       ),
 
-                    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 24)),
+                    // 🔧 FIXED: Proper bottom spacing to prevent overflow
+                    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 32)),
                   ],
                 ),
               ),
@@ -1138,8 +1193,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: ResponsiveUtils.scaledSpacing(context, 16),
-        // 🔧 FIXED: Reduced vertical padding to match home screen density
-        vertical: ResponsiveUtils.scaledSpacing(context, 8), // Reduced from 10
+        vertical: ResponsiveUtils.scaledSpacing(context, 8),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1149,8 +1203,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               top: ResponsiveUtils.scaledSpacing(context, 2),
             ),
             child: Container(
-              // 🔧 FIXED: Match icon size from home screen
-              width: ResponsiveUtils.scaledContainerSize(context, 32), // Increased from 28
+              width: ResponsiveUtils.scaledContainerSize(context, 32),
               height: ResponsiveUtils.scaledContainerSize(context, 32),
               decoration: BoxDecoration(
                 color: iconColor.withOpacity(0.1),
@@ -1163,8 +1216,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               child: Icon(
                 icon,
                 color: iconColor,
-                // 🔧 FIXED: Match icon size from home screen
-                size: ResponsiveUtils.scaledIconSize(context, 16), // Increased from 14
+                size: ResponsiveUtils.scaledIconSize(context, 16),
               ),
             ),
           ),
@@ -1200,15 +1252,13 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       child: Padding(
         padding: EdgeInsets.symmetric(
           horizontal: ResponsiveUtils.scaledSpacing(context, 16),
-          // 🔧 FIXED: Reduced vertical padding
-          vertical: ResponsiveUtils.scaledSpacing(context, 8), // Reduced from 10
+          vertical: ResponsiveUtils.scaledSpacing(context, 8),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
-              // 🔧 FIXED: Match icon size from home screen
-              width: ResponsiveUtils.scaledContainerSize(context, 32), // Increased from 28
+              width: ResponsiveUtils.scaledContainerSize(context, 32),
               height: ResponsiveUtils.scaledContainerSize(context, 32),
               decoration: BoxDecoration(
                 color: iconColor.withOpacity(0.1),
@@ -1221,8 +1271,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               child: Icon(
                 icon,
                 color: iconColor,
-                // 🔧 FIXED: Match icon size from home screen
-                size: ResponsiveUtils.scaledIconSize(context, 16), // Increased from 14
+                size: ResponsiveUtils.scaledIconSize(context, 16),
               ),
             ),
             SizedBox(width: ResponsiveUtils.scaledSpacing(context, 12)),

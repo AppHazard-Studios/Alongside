@@ -1,4 +1,4 @@
-// lib/widgets/day_selector_widget.dart - FIXED FOR CONSISTENT SCALING WITH HOME SCREEN
+// lib/widgets/day_selector_widget.dart - FIXED TEXT CENTERING AND OVERFLOW ISSUES
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../models/day_selection_data.dart';
@@ -84,12 +84,12 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
     showCupertinoModalPopup(
       context: context,
       builder: (context) => Container(
-        height: ResponsiveUtils.scaledContainerSize(context, 250), // Reduced from 280
+        height: ResponsiveUtils.scaledContainerSize(context, 250),
         color: Colors.white,
         child: Column(
           children: [
             Container(
-              height: ResponsiveUtils.scaledContainerSize(context, 50), // Reduced from larger
+              height: ResponsiveUtils.scaledContainerSize(context, 50),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -137,7 +137,7 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 16)), // Reduced from 20
+      padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 16)),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.9),
         borderRadius: BorderRadius.circular(16),
@@ -159,11 +159,11 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
           Row(
             children: [
               Container(
-                width: ResponsiveUtils.scaledContainerSize(context, 32), // Reduced from 38
+                width: ResponsiveUtils.scaledContainerSize(context, 32),
                 height: ResponsiveUtils.scaledContainerSize(context, 32),
                 decoration: BoxDecoration(
                   color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8), // Reduced from larger
+                  borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: AppColors.primary.withOpacity(0.2),
                     width: 1,
@@ -172,7 +172,8 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
                 child: Icon(
                   CupertinoIcons.bell_fill,
                   color: AppColors.primary,
-                  size: ResponsiveUtils.scaledIconSize(context, 16), // Reduced from 18
+                  // 🔧 FIXED: Proper icon scaling
+                  size: ResponsiveUtils.scaledIconSize(context, 16),
                 ),
               ),
               SizedBox(width: ResponsiveUtils.scaledSpacing(context, 12)),
@@ -199,7 +200,7 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
             ],
           ),
 
-          SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)), // Reduced from 24
+          SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
 
           Text(
             'Select Days',
@@ -207,7 +208,9 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
               color: AppColors.textSecondary,
             ),
           ),
-          SizedBox(height: ResponsiveUtils.scaledSpacing(context, 10)), // Reduced from 12
+          SizedBox(height: ResponsiveUtils.scaledSpacing(context, 10)),
+
+          // 🔧 FIXED: Day selector with proper centering
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -222,7 +225,7 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
           ),
 
           if (_selectedDays.isNotEmpty) ...[
-            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)), // Reduced from 24
+            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
 
             Text(
               'Reminder Time',
@@ -230,13 +233,13 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
                 color: AppColors.textSecondary,
               ),
             ),
-            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 10)), // Reduced from 12
+            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 10)),
             GestureDetector(
               onTap: _showTimePicker,
               child: Container(
                 padding: EdgeInsets.symmetric(
-                  horizontal: ResponsiveUtils.scaledSpacing(context, 14), // Reduced from 16
-                  vertical: ResponsiveUtils.scaledSpacing(context, 10), // Reduced from 12
+                  horizontal: ResponsiveUtils.scaledSpacing(context, 14),
+                  vertical: ResponsiveUtils.scaledSpacing(context, 10),
                 ),
                 decoration: BoxDecoration(
                   color: AppColors.primary.withOpacity(0.05),
@@ -257,7 +260,7 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
                     ),
                     Icon(
                       CupertinoIcons.chevron_down,
-                      size: ResponsiveUtils.scaledIconSize(context, 12), // Reduced from 14
+                      size: ResponsiveUtils.scaledIconSize(context, 12),
                       color: AppColors.textSecondary,
                     ),
                   ],
@@ -265,7 +268,7 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
               ),
             ),
 
-            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)), // Reduced from 24
+            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
 
             Text(
               'Repeat',
@@ -273,13 +276,13 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
                 color: AppColors.textSecondary,
               ),
             ),
-            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 10)), // Reduced from 12
+            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 10)),
             _buildIntervalSelector(),
 
-            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)), // Reduced from 20
+            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
 
             Container(
-              padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 14)), // Reduced from 16
+              padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 14)),
               decoration: BoxDecoration(
                 color: AppColors.primary.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(12),
@@ -293,9 +296,9 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
                   Icon(
                     CupertinoIcons.bell_fill,
                     color: AppColors.primary,
-                    size: ResponsiveUtils.scaledIconSize(context, 14), // Reduced from 16
+                    size: ResponsiveUtils.scaledIconSize(context, 14),
                   ),
-                  SizedBox(width: ResponsiveUtils.scaledSpacing(context, 10)), // Reduced from 12
+                  SizedBox(width: ResponsiveUtils.scaledSpacing(context, 10)),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -320,9 +323,12 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
               ),
             ),
           ] else ...[
-            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)), // Reduced from 16
+            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)),
+
+            // 🔧 FIXED: No overflow and proper text wrapping
             Container(
-              padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 14)), // Reduced from 16
+              width: double.infinity, // Ensure full width
+              padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 14)),
               decoration: BoxDecoration(
                 color: AppColors.textSecondary.withOpacity(0.05),
                 borderRadius: BorderRadius.circular(12),
@@ -332,13 +338,17 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
                   Icon(
                     CupertinoIcons.bell_slash,
                     color: AppColors.textSecondary,
-                    size: ResponsiveUtils.scaledIconSize(context, 14), // Reduced from 16
+                    size: ResponsiveUtils.scaledIconSize(context, 14),
                   ),
-                  SizedBox(width: ResponsiveUtils.scaledSpacing(context, 10)), // Reduced from 12
-                  Text(
-                    'No reminders will be sent',
-                    style: AppTextStyles.scaledSubhead(context).copyWith(
-                      color: AppColors.textSecondary,
+                  SizedBox(width: ResponsiveUtils.scaledSpacing(context, 10)),
+                  Expanded( // 🔧 FIXED: Expanded to prevent overflow
+                    child: Text(
+                      'No reminders will be sent',
+                      style: AppTextStyles.scaledSubhead(context).copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                      maxLines: 2, // Allow wrapping if needed
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -350,9 +360,10 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
     );
   }
 
+  // 🔧 FIXED: Day circle with perfect text centering
   Widget _buildDayCircle(String letter, int dayNumber) {
     final isSelected = _selectedDays.contains(dayNumber);
-    final containerSize = ResponsiveUtils.scaledContainerSize(context, 36); // Reduced from 40
+    final containerSize = ResponsiveUtils.scaledContainerSize(context, 36);
 
     return GestureDetector(
       onTap: () {
@@ -377,13 +388,16 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
             width: isSelected ? 2 : 1,
           ),
         ),
+        // 🔧 FIXED: Perfect center alignment
         child: Center(
           child: Text(
             letter,
             style: AppTextStyles.scaledCallout(context).copyWith(
               fontWeight: FontWeight.w600,
               color: isSelected ? Colors.white : AppColors.textPrimary,
+              height: 1.0, // Ensure no extra line height
             ),
+            textAlign: TextAlign.center,
           ),
         ),
       ),
@@ -394,7 +408,7 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
     return Column(
       children: [
         _buildIntervalOption('Weekly', RepeatInterval.weekly),
-        SizedBox(height: ResponsiveUtils.scaledSpacing(context, 6)), // Reduced from 8
+        SizedBox(height: ResponsiveUtils.scaledSpacing(context, 6)),
         _buildIntervalOption('Every 2 weeks', RepeatInterval.biweekly),
         SizedBox(height: ResponsiveUtils.scaledSpacing(context, 6)),
         _buildIntervalOption('Monthly', RepeatInterval.monthly),
@@ -417,9 +431,10 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
         });
       },
       child: Container(
+        width: double.infinity, // 🔧 FIXED: Full width to prevent overflow
         padding: EdgeInsets.symmetric(
-          horizontal: ResponsiveUtils.scaledSpacing(context, 14), // Reduced from 16
-          vertical: ResponsiveUtils.scaledSpacing(context, 10), // Reduced from 12
+          horizontal: ResponsiveUtils.scaledSpacing(context, 14),
+          vertical: ResponsiveUtils.scaledSpacing(context, 10),
         ),
         decoration: BoxDecoration(
           color: isSelected
@@ -436,7 +451,7 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
         child: Row(
           children: [
             Container(
-              width: ResponsiveUtils.scaledContainerSize(context, 18), // Reduced from 20
+              width: ResponsiveUtils.scaledContainerSize(context, 18),
               height: ResponsiveUtils.scaledContainerSize(context, 18),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
@@ -451,17 +466,21 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
               child: isSelected
                   ? Icon(
                 CupertinoIcons.checkmark,
-                size: ResponsiveUtils.scaledIconSize(context, 10), // Reduced from 12
+                size: ResponsiveUtils.scaledIconSize(context, 10),
                 color: Colors.white,
               )
                   : null,
             ),
-            SizedBox(width: ResponsiveUtils.scaledSpacing(context, 10)), // Reduced from 12
-            Text(
-              title,
-              style: AppTextStyles.scaledCallout(context).copyWith(
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? AppColors.primary : AppColors.textPrimary,
+            SizedBox(width: ResponsiveUtils.scaledSpacing(context, 10)),
+            Expanded( // 🔧 FIXED: Expanded to prevent overflow
+              child: Text(
+                title,
+                style: AppTextStyles.scaledCallout(context).copyWith(
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
