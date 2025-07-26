@@ -1,10 +1,13 @@
-// lib/utils/text_styles.dart - SMART RESPONSIVE TEXT STYLES
+// lib/utils/text_styles.dart - CORRECTED TO EXACT iOS FONT SIZES
 import 'package:flutter/material.dart';
 import 'responsive_utils.dart';
 
-/// Complete Text Style Guide for Alongside App with Smart Responsive Scaling
+/// Complete Text Style Guide for Alongside App with iOS-Exact Font Sizes
 ///
-/// This version allows controlled font scaling that keeps layouts intact
+/// All base font sizes now match iOS specifications exactly:
+/// Large Title: 34pt, Title 1: 28pt, Title 2: 22pt, Title 3: 20pt
+/// Headline: 17pt (semibold), Body: 17pt, Callout: 16pt, Subhead: 15pt
+/// Footnote: 13pt, Caption 1: 12pt, Caption 2: 11pt
 
 class AppTextStyles {
   static const String _fontFamily = '.SF Pro Text';
@@ -13,74 +16,56 @@ class AppTextStyles {
   static const Color _secondaryColor = Color(0xFF8E8E93);
 
   // ============================================
-  // BASE STYLES - LARGER SIZES WITH SMART SCALING
+  // BASE STYLES - EXACT iOS FONT SIZES
   // ============================================
 
-  // Large Title - 36pt base
+  // Large Title - 34pt (iOS exact)
   static const TextStyle largeTitle = TextStyle(
-    fontSize: 36,
+    fontSize: 34,
     fontWeight: FontWeight.w700,
     fontFamily: _fontFamily,
     color: _textColor,
     height: 1.2,
   );
 
-  // Title 1 - 30pt base
+  // Title 1 - 28pt (iOS exact)
   static const TextStyle title1 = TextStyle(
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: FontWeight.w700,
     fontFamily: _fontFamily,
     color: _textColor,
     height: 1.2,
   );
 
-  // Title 2 - 24pt base
+  // Title 2 - 22pt (iOS exact)
   static const TextStyle title2 = TextStyle(
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: FontWeight.w700,
     fontFamily: _fontFamily,
     color: _textColor,
     height: 1.3,
   );
 
-  // Title 3 - 22pt base
+  // Title 3 - 20pt (iOS exact)
   static const TextStyle title3 = TextStyle(
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: FontWeight.w600,
     fontFamily: _fontFamily,
     color: _textColor,
     height: 1.3,
   );
 
-  // Headline - 19pt base
+  // Headline - 17pt semibold (iOS exact)
   static const TextStyle headline = TextStyle(
-    fontSize: 19,
+    fontSize: 17,
     fontWeight: FontWeight.w600,
     fontFamily: _fontFamily,
     color: _textColor,
     height: 1.3,
   );
 
-  // Body - 19pt base (MAIN CONTENT TEXT)
+  // Body - 17pt (iOS exact, MAIN CONTENT TEXT)
   static const TextStyle body = TextStyle(
-    fontSize: 19,
-    fontWeight: FontWeight.w400,
-    fontFamily: _fontFamily,
-    color: _textColor,
-    height: 1.4,
-  );
-
-  // Callout - 18pt base
-  static const TextStyle callout = TextStyle(
-    fontSize: 18,
-    fontWeight: FontWeight.w400,
-    fontFamily: _fontFamily,
-    color: _textColor,
-    height: 1.4,
-  );
-
-  // Subhead - 17pt base
-  static const TextStyle subhead = TextStyle(
     fontSize: 17,
     fontWeight: FontWeight.w400,
     fontFamily: _fontFamily,
@@ -88,8 +73,17 @@ class AppTextStyles {
     height: 1.4,
   );
 
-  // Footnote - 15pt base
-  static const TextStyle footnote = TextStyle(
+  // Callout - 16pt (iOS exact)
+  static const TextStyle callout = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w400,
+    fontFamily: _fontFamily,
+    color: _textColor,
+    height: 1.4,
+  );
+
+  // Subhead - 15pt (iOS exact)
+  static const TextStyle subhead = TextStyle(
     fontSize: 15,
     fontWeight: FontWeight.w400,
     fontFamily: _fontFamily,
@@ -97,18 +91,27 @@ class AppTextStyles {
     height: 1.4,
   );
 
-  // Caption 1 - 14pt base
+  // Footnote - 13pt (iOS exact)
+  static const TextStyle footnote = TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.w400,
+    fontFamily: _fontFamily,
+    color: _textColor,
+    height: 1.4,
+  );
+
+  // Caption 1 - 12pt (iOS exact)
   static const TextStyle caption1 = TextStyle(
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: FontWeight.w400,
     fontFamily: _fontFamily,
     color: _secondaryColor,
     height: 1.3,
   );
 
-  // Caption 2 - 13pt base
+  // Caption 2 - 11pt (iOS exact)
   static const TextStyle caption2 = TextStyle(
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: FontWeight.w400,
     fontFamily: _fontFamily,
     color: _secondaryColor,
@@ -119,27 +122,27 @@ class AppTextStyles {
   // SPECIFIC USE STYLES
   // ============================================
 
-  // App Title (e.g., "Alongside" in header) - 30pt base
+  // App Title (e.g., "Alongside" in header) - 28pt
   static const TextStyle appTitle = TextStyle(
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: FontWeight.w800,
     fontFamily: _fontFamily,
     color: _primaryColor,
     height: 1.2,
   );
 
-  // Navigation Bar Title - 22pt base
+  // Navigation Bar Title - 20pt
   static const TextStyle navTitle = TextStyle(
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: FontWeight.w700,
     fontFamily: _fontFamily,
     color: _textColor,
     height: 1.2,
   );
 
-  // Section Headers (e.g., "SECURITY", "BACKUP") - 15pt base
+  // Section Headers (e.g., "SECURITY", "BACKUP") - 13pt
   static const TextStyle sectionHeader = TextStyle(
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: FontWeight.w600,
     fontFamily: _fontFamily,
     color: _secondaryColor,
@@ -147,45 +150,45 @@ class AppTextStyles {
     height: 1.3,
   );
 
-  // Button Text - 19pt base
+  // Button Text - 17pt
   static const TextStyle button = TextStyle(
-    fontSize: 19,
+    fontSize: 17,
     fontWeight: FontWeight.w600,
     fontFamily: _fontFamily,
     color: Colors.white,
     height: 1.2,
   );
 
-  // Dialog Title - 19pt base
+  // Dialog Title - 17pt
   static const TextStyle dialogTitle = TextStyle(
-    fontSize: 19,
+    fontSize: 17,
     fontWeight: FontWeight.w600,
     fontFamily: _fontFamily,
     color: _textColor,
     height: 1.3,
   );
 
-  // Form Label - 18pt base
+  // Form Label - 16pt
   static const TextStyle formLabel = TextStyle(
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: FontWeight.w400,
     fontFamily: _fontFamily,
     color: _secondaryColor,
     height: 1.3,
   );
 
-  // Form Input - 19pt base
+  // Form Input - 17pt
   static const TextStyle formInput = TextStyle(
-    fontSize: 19,
+    fontSize: 17,
     fontWeight: FontWeight.w400,
     fontFamily: _fontFamily,
     color: _textColor,
     height: 1.4,
   );
 
-  // Placeholder - 19pt base
+  // Placeholder - 17pt
   static const TextStyle placeholder = TextStyle(
-    fontSize: 19,
+    fontSize: 17,
     fontWeight: FontWeight.w400,
     fontFamily: _fontFamily,
     color: Color(0xFFBEBEC0),
@@ -293,14 +296,14 @@ class AppTextStyles {
   static const TextStyle bodyText = body;
   static const TextStyle title = title2;
   static const TextStyle secondaryText = TextStyle(
-    fontSize: 19,
+    fontSize: 17,
     fontWeight: FontWeight.w400,
     fontFamily: _fontFamily,
     color: _secondaryColor,
     height: 1.4,
   );
   static const TextStyle accentText = TextStyle(
-    fontSize: 19,
+    fontSize: 17,
     fontWeight: FontWeight.w600,
     fontFamily: _fontFamily,
     color: _primaryColor,

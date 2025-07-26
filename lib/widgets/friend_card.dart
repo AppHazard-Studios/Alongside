@@ -1,4 +1,4 @@
-// lib/widgets/friend_card.dart - FIXED CONSISTENT TEXT SCALING
+// lib/widgets/friend_card.dart - FIXED WITH ORANGE REMINDER INDICATORS
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -12,7 +12,7 @@ import '../utils/colors.dart';
 import '../providers/friends_provider.dart';
 import '../utils/constants.dart';
 import '../utils/responsive_utils.dart';
-import '../utils/text_styles.dart'; // FIXED: Ensure text_styles import
+import '../utils/text_styles.dart';
 import '../services/notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -123,16 +123,17 @@ class _FriendCardNewState extends State<FriendCardNew>
     }
   }
 
+  // 🔧 FIXED: Use orange for reminder indicators everywhere
   Color _getReminderColor(DateTime? nextReminder) {
-    if (nextReminder == null) return AppColors.primary;
+    if (nextReminder == null) return AppColors.warning; // Orange
 
     final now = DateTime.now();
     final difference = nextReminder.difference(now);
 
     if (difference.inDays == 0 && difference.inHours <= 1) {
-      return AppColors.warning;
+      return AppColors.error; // Red for urgent
     } else {
-      return AppColors.primary;
+      return AppColors.warning; // Orange for normal reminders
     }
   }
 
@@ -169,7 +170,6 @@ class _FriendCardNewState extends State<FriendCardNew>
       builder: (context) => CupertinoActionSheet(
         title: Text(
           widget.friend.name,
-          // FIXED: Use proper scaled text style instead of raw fontSize
           style: AppTextStyles.scaledCallout(context).copyWith(
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
@@ -195,7 +195,6 @@ class _FriendCardNewState extends State<FriendCardNew>
                   child: Text(
                     'Edit',
                     textAlign: TextAlign.center,
-                    // FIXED: Use proper scaled text style
                     style: AppTextStyles.scaledHeadline(context).copyWith(
                       fontWeight: FontWeight.w400,
                       color: AppColors.primary,
@@ -226,7 +225,6 @@ class _FriendCardNewState extends State<FriendCardNew>
                     child: Text(
                       'Reorder',
                       textAlign: TextAlign.center,
-                      // FIXED: Use proper scaled text style
                       style: AppTextStyles.scaledHeadline(context).copyWith(
                         fontWeight: FontWeight.w400,
                         color: AppColors.primary,
@@ -242,7 +240,6 @@ class _FriendCardNewState extends State<FriendCardNew>
           onPressed: () => Navigator.pop(context),
           child: Text(
             'Cancel',
-            // FIXED: Use proper scaled text style
             style: AppTextStyles.scaledHeadline(context).copyWith(
               fontWeight: FontWeight.w600,
               color: AppColors.primary,
@@ -264,7 +261,6 @@ class _FriendCardNewState extends State<FriendCardNew>
       builder: (context) => CupertinoActionSheet(
         title: Text(
           'Reorder ${widget.friend.name}',
-          // FIXED: Use proper scaled text style
           style: AppTextStyles.scaledCallout(context).copyWith(
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
@@ -288,7 +284,6 @@ class _FriendCardNewState extends State<FriendCardNew>
                   const SizedBox(width: 12),
                   Text(
                     'Move to Top',
-                    // FIXED: Use proper scaled text style
                     style: AppTextStyles.scaledHeadline(context).copyWith(
                       fontWeight: FontWeight.w400,
                       color: AppColors.primary,
@@ -314,7 +309,6 @@ class _FriendCardNewState extends State<FriendCardNew>
                   const SizedBox(width: 12),
                   Text(
                     'Move Up',
-                    // FIXED: Use proper scaled text style
                     style: AppTextStyles.scaledHeadline(context).copyWith(
                       fontWeight: FontWeight.w400,
                       color: AppColors.primary,
@@ -340,7 +334,6 @@ class _FriendCardNewState extends State<FriendCardNew>
                   const SizedBox(width: 12),
                   Text(
                     'Move Down',
-                    // FIXED: Use proper scaled text style
                     style: AppTextStyles.scaledHeadline(context).copyWith(
                       fontWeight: FontWeight.w400,
                       color: AppColors.primary,
@@ -366,7 +359,6 @@ class _FriendCardNewState extends State<FriendCardNew>
                   const SizedBox(width: 12),
                   Text(
                     'Move to Bottom',
-                    // FIXED: Use proper scaled text style
                     style: AppTextStyles.scaledHeadline(context).copyWith(
                       fontWeight: FontWeight.w400,
                       color: AppColors.primary,
@@ -380,7 +372,6 @@ class _FriendCardNewState extends State<FriendCardNew>
           onPressed: () => Navigator.pop(context),
           child: Text(
             'Cancel',
-            // FIXED: Use proper scaled text style
             style: AppTextStyles.scaledHeadline(context).copyWith(
               fontWeight: FontWeight.w600,
               color: AppColors.primary,
@@ -616,8 +607,6 @@ class _FriendCardNewState extends State<FriendCardNew>
     );
   }
 
-  // FRIEND CARD FIXES - Replace these methods in friend_card.dart
-
   Widget _buildProfileImage() {
     final containerSize = ResponsiveUtils.scaledContainerSize(context, 44);
 
@@ -656,12 +645,12 @@ class _FriendCardNewState extends State<FriendCardNew>
         ),
         child: widget.friend.isEmoji
             ? Center(
-          child: FittedBox( // 🔧 FIX: Prevents emoji from growing outside circle
+          child: FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
               widget.friend.profileImage,
               style: TextStyle(
-                fontSize: containerSize * 0.45, // 🔧 FIX: Size relative to container
+                fontSize: containerSize * 0.45,
               ),
             ),
           ),
@@ -676,13 +665,11 @@ class _FriendCardNewState extends State<FriendCardNew>
     );
   }
 
-// REMINDER INDICATOR FIX - Replace _buildNameWithReminder in friend_card.dart
-
   Widget _buildNameWithReminder() {
     if (_isLoadingReminderTime) {
       return Row(
         children: [
-          Expanded( // 🔧 FIX: Use Expanded instead of Flexible for proper spacing
+          Expanded(
             child: Text(
               widget.friend.name,
               style: AppTextStyles.scaledHeadline(context).copyWith(
@@ -708,7 +695,6 @@ class _FriendCardNewState extends State<FriendCardNew>
 
     return Row(
       children: [
-        // 🔧 FIX: Give name most of the space but leave room for reminder
         Expanded(
           child: Text(
             widget.friend.name,
@@ -721,13 +707,11 @@ class _FriendCardNewState extends State<FriendCardNew>
           ),
         ),
 
-        // 🔧 FIX: Fixed spacing
         SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
 
-        // 🔧 FIX: Constrained reminder indicator to prevent overflow
         ConstrainedBox(
           constraints: BoxConstraints(
-            maxWidth: 50, // Fixed max width to prevent overflow
+            maxWidth: 50,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -741,9 +725,8 @@ class _FriendCardNewState extends State<FriendCardNew>
                   shape: BoxShape.circle,
                 ),
               ),
-              SizedBox(width: ResponsiveUtils.scaledSpacing(context, 4)), // 🔧 FIX: Reduced spacing
+              SizedBox(width: ResponsiveUtils.scaledSpacing(context, 4)),
 
-              // 🔧 FIX: Flexible text that can scale down if needed
               Flexible(
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
@@ -801,7 +784,6 @@ class _FriendCardNewState extends State<FriendCardNew>
             ),
           ),
 
-          // 🔧 FIX: Remove fixed padding, let content determine height
           Padding(
             padding: EdgeInsets.fromLTRB(
               ResponsiveUtils.scaledSpacing(context, 16),
@@ -836,8 +818,6 @@ class _FriendCardNewState extends State<FriendCardNew>
     );
   }
 
-  // ALONGSIDE ICONS FIX - Replace _buildInfoRow in friend_card.dart
-
   Widget _buildInfoRow({
     required IconData icon,
     required String title,
@@ -847,11 +827,11 @@ class _FriendCardNewState extends State<FriendCardNew>
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: ResponsiveUtils.scaledSpacing(context, 12),
-        vertical: ResponsiveUtils.scaledSpacing(context, 12), // 🔧 FIX: Increased vertical padding
+        vertical: ResponsiveUtils.scaledSpacing(context, 12),
       ),
       decoration: BoxDecoration(
         color: color.withOpacity(0.02),
-        borderRadius: BorderRadius.circular(12), // 🔧 FIX: Slightly bigger radius
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: color.withOpacity(0.08),
           width: 0.5,
@@ -860,22 +840,21 @@ class _FriendCardNewState extends State<FriendCardNew>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 🔧 FIX: Bigger, properly scaling icon container
           Container(
-            width: ResponsiveUtils.scaledContainerSize(context, 32), // 🔧 FIX: Bigger container (was 24)
+            width: ResponsiveUtils.scaledContainerSize(context, 32),
             height: ResponsiveUtils.scaledContainerSize(context, 32),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.12), // 🔧 FIX: Slightly more opaque background
-              borderRadius: BorderRadius.circular(8), // 🔧 FIX: Bigger border radius
+              color: color.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: color.withOpacity(0.15), // 🔧 FIX: Subtle border
+                color: color.withOpacity(0.15),
                 width: 0.5,
               ),
             ),
             child: Icon(
               icon,
-              color: color.withOpacity(0.9), // 🔧 FIX: More opaque icon
-              size: ResponsiveUtils.scaledIconSize(context, 16), // 🔧 FIX: Bigger icon (was 12)
+              color: color.withOpacity(0.9),
+              size: ResponsiveUtils.scaledIconSize(context, 16),
             ),
           ),
           SizedBox(width: ResponsiveUtils.scaledSpacing(context, 12)),
@@ -890,16 +869,14 @@ class _FriendCardNewState extends State<FriendCardNew>
                     color: color.withOpacity(0.9),
                   ),
                 ),
-                SizedBox(height: ResponsiveUtils.scaledSpacing(context, 4)), // 🔧 FIX: Increased spacing
+                SizedBox(height: ResponsiveUtils.scaledSpacing(context, 4)),
 
-                // 🔧 FIX: Better text handling
                 Text(
                   content,
                   style: AppTextStyles.scaledSubhead(context).copyWith(
                     color: AppColors.textPrimary.withOpacity(0.8),
                     height: 1.3,
                   ),
-                  // No maxLines restriction - let it flow naturally
                 ),
               ],
             ),

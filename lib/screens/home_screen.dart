@@ -1,4 +1,4 @@
-// lib/screens/home_screen.dart - FIXED CONSISTENT TEXT SCALING
+// lib/screens/home_screen.dart - FIXED FOR CORRECT iOS FONT SIZES AND LAYOUT
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -10,7 +10,7 @@ import '../services/toast_service.dart';
 import '../utils/responsive_utils.dart';
 import '../widgets/friend_card.dart';
 import '../utils/colors.dart';
-import '../utils/text_styles.dart'; // FIXED: Ensure text_styles import
+import '../utils/text_styles.dart';
 import '../widgets/illustrations.dart';
 import 'add_friend_screen.dart';
 import 'settings_screen.dart';
@@ -276,396 +276,347 @@ class _HomeScreenNewState extends State<HomeScreenNew>
     );
   }
 
-  // HOME SCREEN FIXES - Replace these methods in home_screen.dart
-
+  // 🔧 FIXED: Header with proper constraints to prevent overflow
   Widget _buildIntegratedHeader(List<Friend> allFriends) {
     final hour = DateTime.now().hour;
     String greeting = hour < 12 ? "Good morning" : (hour < 17 ? "Good afternoon" : "Good evening");
     IconData iconData = hour < 12 ? CupertinoIcons.sun_max_fill : (hour < 17 ? CupertinoIcons.sun_min_fill : CupertinoIcons.moon_stars_fill);
-
-        final friendsWithReminders = allFriends.where((f) => f.hasReminder).length;
+    final friendsWithReminders = allFriends.where((f) => f.hasReminder).length;
 
     return Container(
-    padding: EdgeInsets.fromLTRB(
-    ResponsiveUtils.scaledSpacing(context, 16),
-    ResponsiveUtils.scaledSpacing(context, 16),
-    ResponsiveUtils.scaledSpacing(context, 16),
-    ResponsiveUtils.scaledSpacing(context, 12),
-    ),
-    child: Column(
-    children: [
-    // 🔧 FIX: Better layout with proper constraints
-    LayoutBuilder(
-    builder: (context, constraints) {
-    final screenWidth = constraints.maxWidth;
-    final buttonAreaWidth = _isSearching ? 100.0 : 150.0; // 🔧 FIX: More conservative button area
-    final maxTitleWidth = screenWidth - buttonAreaWidth - 32; // 🔧 FIX: Leave more margin
-
-    return Row(
-    children: [
-    // 🔧 FIX: Constrained title area
-    ConstrainedBox(
-    constraints: BoxConstraints(
-    maxWidth: maxTitleWidth,
-    ),
-    child: Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-    // 🔧 FIX: Better title constraint
-    ConstrainedBox(
-    constraints: BoxConstraints(
-    maxWidth: maxTitleWidth - 40, // Leave room for heart
-    ),
-    child: FittedBox(
-    fit: BoxFit.scaleDown,
-    alignment: Alignment.centerLeft,
-    child: Text(
-    'Alongside',
-    style: AppTextStyles.scaledAppTitle(context),
-    maxLines: 1,
-    ),
-    ),
-    ),
-    SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
-    Container(
-    width: ResponsiveUtils.scaledContainerSize(context, 28),
-    height: ResponsiveUtils.scaledContainerSize(context, 28),
-    decoration: BoxDecoration(
-    gradient: LinearGradient(
-    colors: [
-    AppColors.primary,
-    AppColors.primary.withOpacity(0.8),
-    ],
-    ),
-    shape: BoxShape.circle,
-    boxShadow: [
-    BoxShadow(
-    color: AppColors.primary.withOpacity(0.3),
-    blurRadius: 8,
-    offset: const Offset(0, 2),
-    ),
-    ],
-    ),
-    child: Icon(
-    CupertinoIcons.heart_fill,
-    size: ResponsiveUtils.scaledIconSize(context, 16),
-    color: Colors.white,
-    ),
-    ),
-    ],
-    ),
-    ),
-
-    // 🔧 FIX: More spacing between title and buttons
-    SizedBox(width: ResponsiveUtils.scaledSpacing(context, 16)),
-
-    // 🔧 FIX: Flexible spacer
-    const Spacer(),
-
-    // 🔧 FIX: Constrained button area
-    ConstrainedBox(
-    constraints: BoxConstraints(
-    maxWidth: buttonAreaWidth,
-    ),
-    child: Row(
-    mainAxisAlignment: MainAxisAlignment.end,
-    children: [
-    if (!_isSearching) ...[
-    _buildHeaderButton(
-    icon: CupertinoIcons.sort_down,
-    onPressed: _isSorting ? null : _toggleSort,
-    isActive: _isSortedByReminders,
-    showSpinner: _isSorting,
-    ),
-    SizedBox(width: ResponsiveUtils.scaledSpacing(context, 6)), // 🔧 FIX: Reduced spacing between buttons
-    ],
-    _buildHeaderButton(
-    icon: _isSearching ? CupertinoIcons.xmark : CupertinoIcons.search,
-    onPressed: _toggleSearch,
-    ),
-    SizedBox(width: ResponsiveUtils.scaledSpacing(context, 6)),
-    _buildHeaderButton(
-    icon: CupertinoIcons.gear,
-    onPressed: () => _navigateToSettings(context),
-    ),
-    ],
-    ),
-    ),
-    ],
-    );
-    },
-    ),
-
-    if (_isSearching) ...[
-    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
-    Container(
-    decoration: BoxDecoration(
-    color: Colors.white.withOpacity(0.9),
-    borderRadius: BorderRadius.circular(12),
-    border: Border.all(
-    color: AppColors.primary.withOpacity(0.2),
-    width: 1,
-    ),
-    boxShadow: [
-    BoxShadow(
-    color: Colors.black.withOpacity(0.1),
-    blurRadius: 10,
-    offset: const Offset(0, 2),
-    ),
-    ],
-    ),
-    child: CupertinoTextField(
-    controller: _searchController,
-    placeholder: 'Search friends...',
-    autofocus: true,
-    prefix: Padding(
-    padding: EdgeInsets.only(left: ResponsiveUtils.scaledSpacing(context, 12)),
-    child: Icon(
-    CupertinoIcons.search,
-    color: AppColors.primary,
-    size: ResponsiveUtils.scaledIconSize(context, 18),
-    ),
-    ),
-    onChanged: (value) {
-    setState(() {
-    _searchQuery = value.toLowerCase();
-    });
-    },
-    style: AppTextStyles.scaledCallout(context),
-    decoration: null,
-    padding: EdgeInsets.symmetric(
-    vertical: ResponsiveUtils.scaledSpacing(context, 12),
-    horizontal: ResponsiveUtils.scaledSpacing(context, 4),
-    ),
-    placeholderStyle: AppTextStyles.scaledTextStyle(
-    context,
-    AppTextStyles.placeholder,
-    ),
-    ),
-    ),
-    ],
-
-    if (!_isSearching) ...[
-    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 20)),
-    Container(
-    padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 16)),
-    decoration: BoxDecoration(
-    color: Colors.white.withOpacity(0.7),
-    borderRadius: BorderRadius.circular(16),
-    border: Border.all(
-    color: AppColors.primary.withOpacity(0.1),
-    width: 1,
-    ),
-    boxShadow: [
-    BoxShadow(
-    color: Colors.black.withOpacity(0.04),
-    blurRadius: 12,
-    offset: const Offset(0, 4),
-    ),
-    ],
-    ),
-    child: Column(
-    children: [
-    Row(
-    children: [
-    Container(
-    width: ResponsiveUtils.scaledContainerSize(context, 36),
-    height: ResponsiveUtils.scaledContainerSize(context, 36),
-    decoration: BoxDecoration(
-    color: AppColors.primary.withOpacity(0.1),
-    borderRadius: BorderRadius.circular(10),
-    ),
-    child: Icon(
-    iconData,
-    color: AppColors.primary,
-    size: ResponsiveUtils.scaledIconSize(context, 18),
-    ),
-    ),
-    SizedBox(width: ResponsiveUtils.scaledSpacing(context, 12)),
-    Expanded(
-    child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-    Text(
-    greeting,
-    style: AppTextStyles.scaledTitle3(context).copyWith(
-    color: AppColors.textPrimary,
-    ),
-    ),
-    Text(
-    "Ready to connect?",
-    style: AppTextStyles.scaledCaption(context).copyWith(
-    color: AppColors.textSecondary,
-    ),
-    ),
-    ],
-    ),
-    ),
-    ],
-    ),
-
-    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)),
-
-    // 🔧 FIX: Use IntrinsicHeight to make all boxes same height
-    IntrinsicHeight(
-    child: Row(
-    children: [
-    _buildCompactStat(
-    icon: CupertinoIcons.bell_fill,
-    value: friendsWithReminders.toString(),
-    label: friendsWithReminders == 1 ? 'Reminder' : 'Reminders',
-    ),
-    SizedBox(width: ResponsiveUtils.scaledSpacing(context, 12)),
-    _buildCompactStat(
-    icon: CupertinoIcons.bubble_left_bubble_right_fill,
-    value: _messagesSent.toString(),
-    label: 'Messages',
-    ),
-    SizedBox(width: ResponsiveUtils.scaledSpacing(context, 12)),
-    _buildCompactStat(
-    icon: CupertinoIcons.phone_fill,
-    value: _callsMade.toString(),
-    label: 'Calls',
-    ),
-    ],
-    ),
-    ),
-    ],
-    ),
-    ),
-    ],
-    ],
-    ),
-    );
-  }
-  // STATS SCALING FIX - Replace _buildCompactStat in home_screen.dart
-
-  // STATS SCALING FIX - Replace _buildCompactStat in home_screen.dart
-
-  // STATS CONSISTENT SIZING FIX - Replace _buildCompactStat in home_screen.dart
-
-  Widget _buildCompactStat({
-    required IconData icon,
-    required String value,
-    required String label,
-  }) {
-    return Expanded(
-      child: Container(
-        height: ResponsiveUtils.scaledContainerSize(context, 65) ?? 65.0,
-        padding: EdgeInsets.symmetric(
-          vertical: ResponsiveUtils.scaledSpacing(context, 8) ?? 8.0,
-          horizontal: ResponsiveUtils.scaledSpacing(context, 8) ?? 8.0,
-        ),
-        decoration: BoxDecoration(
-          color: AppColors.primary.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: AppColors.primary.withOpacity(0.1),
-            width: 0.5,
-          ),
-        ),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            // Defensive check for constraints
-            if (!constraints.hasBoundedWidth) {
-              return const SizedBox.shrink();
-            }
-
-            final isCompact = constraints.maxWidth < 85;
-
-            if (isCompact) {
-              // Vertical layout for compact spaces
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.max, // Changed from min to max
-                children: [
-                  Icon(
-                    icon,
-                    color: AppColors.primary,
-                    size: ResponsiveUtils.scaledIconSize(context, 14) ?? 14.0,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    value,
-                    style: (AppTextStyles.scaledCallout(context) ?? const TextStyle()).copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
-                    ),
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Flexible( // Use Flexible instead of direct Text
-                    child: Text(
-                      label,
-                      style: (AppTextStyles.scaledCaption2(context) ?? const TextStyle()).copyWith(
-                        color: AppColors.textSecondary,
-                        height: 1.1,
-                      ),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              );
-            } else {
-              // Horizontal layout for wider spaces
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    icon,
-                    color: AppColors.primary,
-                    size: ResponsiveUtils.scaledIconSize(context, 14) ?? 14.0,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.max, // Changed from min to max
-                      children: [
-                        Text(
-                          value,
-                          style: (AppTextStyles.scaledCallout(context) ?? const TextStyle()).copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.primary,
-                          ),
+      padding: EdgeInsets.fromLTRB(
+        ResponsiveUtils.scaledSpacing(context, 16),
+        ResponsiveUtils.scaledSpacing(context, 16),
+        ResponsiveUtils.scaledSpacing(context, 16),
+        ResponsiveUtils.scaledSpacing(context, 12),
+      ),
+      child: Column(
+        children: [
+          // 🔧 FIXED: Simplified header with proper spacing
+          Row(
+            children: [
+              // Title area - takes available space
+              Expanded(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Title with overflow protection
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Alongside',
+                          style: AppTextStyles.scaledAppTitle(context),
                           maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
-                        Flexible( // Use Flexible instead of direct Text
-                          child: Text(
-                            label,
-                            style: (AppTextStyles.scaledCaption2(context) ?? const TextStyle()).copyWith(
-                              color: AppColors.textSecondary,
-                              height: 1.1,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
+
+                    SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+
+                    // Heart icon
+                    Container(
+                      width: ResponsiveUtils.scaledContainerSize(context, 28),
+                      height: ResponsiveUtils.scaledContainerSize(context, 28),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.primary,
+                            AppColors.primary.withOpacity(0.8),
+                          ],
+                        ),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        CupertinoIcons.heart_fill,
+                        size: ResponsiveUtils.scaledIconSize(context, 16),
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Fixed spacing between title and buttons
+              SizedBox(width: ResponsiveUtils.scaledSpacing(context, 16)),
+
+              // Button area - fixed size to prevent overflow
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (!_isSearching) ...[
+                    _buildHeaderButton(
+                      icon: CupertinoIcons.sort_down,
+                      onPressed: _isSorting ? null : _toggleSort,
+                      isActive: _isSortedByReminders,
+                      showSpinner: _isSorting,
+                    ),
+                    SizedBox(width: ResponsiveUtils.scaledSpacing(context, 4)),
+                  ],
+                  _buildHeaderButton(
+                    icon: _isSearching ? CupertinoIcons.xmark : CupertinoIcons.search,
+                    onPressed: _toggleSearch,
+                  ),
+                  SizedBox(width: ResponsiveUtils.scaledSpacing(context, 4)),
+                  _buildHeaderButton(
+                    icon: CupertinoIcons.gear,
+                    onPressed: () => _navigateToSettings(context),
                   ),
                 ],
-              );
-            }
-          },
-        ),
+              ),
+            ],
+          ),
+
+          if (_isSearching) ...[
+            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.primary.withOpacity(0.2),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: CupertinoTextField(
+                controller: _searchController,
+                placeholder: 'Search friends...',
+                autofocus: true,
+                prefix: Padding(
+                  padding: EdgeInsets.only(left: ResponsiveUtils.scaledSpacing(context, 12)),
+                  child: Icon(
+                    CupertinoIcons.search,
+                    color: AppColors.primary,
+                    size: ResponsiveUtils.scaledIconSize(context, 18),
+                  ),
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value.toLowerCase();
+                  });
+                },
+                style: AppTextStyles.scaledCallout(context),
+                decoration: null,
+                padding: EdgeInsets.symmetric(
+                  vertical: ResponsiveUtils.scaledSpacing(context, 12),
+                  horizontal: ResponsiveUtils.scaledSpacing(context, 4),
+                ),
+                placeholderStyle: AppTextStyles.scaledTextStyle(
+                  context,
+                  AppTextStyles.placeholder,
+                ),
+              ),
+            ),
+          ],
+
+          if (!_isSearching) ...[
+            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 20)),
+            Container(
+              padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 16)),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.7),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: AppColors.primary.withOpacity(0.1),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  // 🔧 FIXED: Dynamic responsive layout that adapts to text scaling
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      // Calculate if we have enough space for horizontal layout
+                      final textScale = MediaQuery.of(context).textScaleFactor;
+                      final needsVerticalLayout = textScale > 1.15 || constraints.maxWidth < 350;
+
+                      if (needsVerticalLayout) {
+                        // Vertical layout for larger text or narrow screens
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Greeting row with properly scaling icon
+                            Row(
+                              children: [
+                                Container(
+                                  width: ResponsiveUtils.scaledContainerSize(context, 42), // Bigger base size
+                                  height: ResponsiveUtils.scaledContainerSize(context, 42),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Icon(
+                                    iconData,
+                                    color: AppColors.primary,
+                                    size: ResponsiveUtils.scaledIconSize(context, 22), // Bigger base size
+                                  ),
+                                ),
+                                SizedBox(width: ResponsiveUtils.scaledSpacing(context, 12)),
+                                Expanded(
+                                  child: Text(
+                                    greeting,
+                                    style: AppTextStyles.scaledTitle3(context).copyWith(
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)),
+
+                            // Stats row below - centered when stacked
+                            Center(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _buildInlineStatChip(
+                                    icon: CupertinoIcons.bell_fill,
+                                    value: friendsWithReminders.toString(),
+                                    color: AppColors.warning, // 🔧 FIXED: Orange for reminders everywhere
+                                  ),
+                                  SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+                                  _buildInlineStatChip(
+                                    icon: CupertinoIcons.bubble_left_bubble_right_fill,
+                                    value: _messagesSent.toString(),
+                                    color: AppColors.primary, // Blue matches message buttons
+                                  ),
+                                  SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+                                  _buildInlineStatChip(
+                                    icon: CupertinoIcons.phone_fill,
+                                    value: _callsMade.toString(),
+                                    color: AppColors.tertiary, // Green matches call buttons
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      } else {
+                        // Horizontal layout for normal text sizes
+                        return Row(
+                          children: [
+                            Container(
+                              width: ResponsiveUtils.scaledContainerSize(context, 42), // Bigger base size
+                              height: ResponsiveUtils.scaledContainerSize(context, 42),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                iconData,
+                                color: AppColors.primary,
+                                size: ResponsiveUtils.scaledIconSize(context, 22), // Bigger base size
+                              ),
+                            ),
+                            SizedBox(width: ResponsiveUtils.scaledSpacing(context, 12)),
+                            Expanded(
+                              child: Text(
+                                greeting,
+                                style: AppTextStyles.scaledTitle3(context).copyWith(
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ),
+
+                            // Stats on the same row when there's space
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _buildInlineStatChip(
+                                  icon: CupertinoIcons.bell_fill,
+                                  value: friendsWithReminders.toString(),
+                                  color: AppColors.warning, // 🔧 FIXED: Orange for reminders everywhere
+                                ),
+                                SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+                                _buildInlineStatChip(
+                                  icon: CupertinoIcons.bubble_left_bubble_right_fill,
+                                  value: _messagesSent.toString(),
+                                  color: AppColors.primary, // Blue matches message buttons
+                                ),
+                                SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+                                _buildInlineStatChip(
+                                  icon: CupertinoIcons.phone_fill,
+                                  value: _callsMade.toString(),
+                                  color: AppColors.tertiary, // Green matches call buttons
+                                ),
+                              ],
+                            ),
+                          ],
+                        );
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
 
-// 🔧 ALSO UPDATE: The stats row to ensure consistent spacing
-// In _buildIntegratedHeader, replace the stats Row with this:
-
-
-// 🔧 ALSO FIX: The greeting icon scaling issue
-// In the greeting section of _buildIntegratedHeader, update this:
-
-
+  // 🔧 NEW: Compact inline stat chips - just icon and number
+  Widget _buildInlineStatChip({
+    required IconData icon,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: ResponsiveUtils.scaledSpacing(context, 8),
+        vertical: ResponsiveUtils.scaledSpacing(context, 6),
+      ),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: color.withOpacity(0.2),
+          width: 0.5,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            color: color,
+            size: ResponsiveUtils.scaledIconSize(context, 14),
+          ),
+          SizedBox(width: ResponsiveUtils.scaledSpacing(context, 4)),
+          Text(
+            value,
+            style: AppTextStyles.scaledFootnote(context).copyWith(
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildHeaderButton({
     required IconData icon,
@@ -677,13 +628,13 @@ class _HomeScreenNewState extends State<HomeScreenNew>
       padding: EdgeInsets.zero,
       onPressed: onPressed,
       child: Container(
-        width: ResponsiveUtils.scaledContainerSize(context, 36),
-        height: ResponsiveUtils.scaledContainerSize(context, 36),
+        width: ResponsiveUtils.scaledContainerSize(context, 32), // Reduced from 36
+        height: ResponsiveUtils.scaledContainerSize(context, 32), // Reduced from 36
         decoration: BoxDecoration(
           color: isActive
               ? AppColors.primary
               : Colors.white.withOpacity(0.8),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8), // Slightly smaller radius
           border: Border.all(
             color: AppColors.primary.withOpacity(isActive ? 0.8 : 0.2),
             width: 1,
@@ -700,12 +651,12 @@ class _HomeScreenNewState extends State<HomeScreenNew>
         ),
         child: showSpinner
             ? CupertinoActivityIndicator(
-          radius: 8,
+          radius: 6, // Smaller spinner
           color: isActive ? Colors.white : AppColors.primary,
         )
             : Icon(
           icon,
-          size: ResponsiveUtils.scaledIconSize(context, 18),
+          size: ResponsiveUtils.scaledIconSize(context, 16), // Reduced from 18
           color: isActive ? Colors.white : AppColors.primary,
         ),
       ),
@@ -736,7 +687,6 @@ class _HomeScreenNewState extends State<HomeScreenNew>
               SizedBox(width: ResponsiveUtils.scaledSpacing(context, 6)),
               Text(
                 'Favorites',
-                // FIXED: Use proper scaled subhead (already correct)
                 style: AppTextStyles.scaledSubhead(context).copyWith(
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
@@ -870,7 +820,6 @@ class _HomeScreenNewState extends State<HomeScreenNew>
           SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)),
           Text(
             'No friends found for "$_searchQuery"',
-            // FIXED: Use proper scaled callout (already correct)
             style: AppTextStyles.scaledCallout(context).copyWith(
               color: AppColors.textSecondary,
             ),
@@ -907,7 +856,6 @@ class _HomeScreenNewState extends State<HomeScreenNew>
             SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
             Text(
               'Loading your friends...',
-              // FIXED: Use proper scaled callout (already correct)
               style: AppTextStyles.scaledCallout(context).copyWith(
                 color: AppColors.textPrimary,
                 fontWeight: FontWeight.w500,
@@ -1000,7 +948,6 @@ class _HomeScreenNewState extends State<HomeScreenNew>
               SizedBox(height: ResponsiveUtils.scaledSpacing(context, 24)),
               Text(
                 'Walk alongside a friend',
-                // FIXED: Use proper scaled title1 (already correct)
                 style: AppTextStyles.scaledTitle1(context).copyWith(
                   color: AppColors.textPrimary,
                 ),
@@ -1009,7 +956,6 @@ class _HomeScreenNewState extends State<HomeScreenNew>
               SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)),
               Text(
                 'Add someone to walk with—through setbacks, growth, and everything in between.',
-                // FIXED: Use proper scaled body (already correct)
                 style: AppTextStyles.scaledBody(context).copyWith(
                   color: AppColors.textSecondary,
                   height: 1.4,
@@ -1049,7 +995,6 @@ class _HomeScreenNewState extends State<HomeScreenNew>
                       SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
                       Text(
                         'Add Your First Friend',
-                        // FIXED: Use proper scaled button (already correct)
                         style: AppTextStyles.scaledButton(context).copyWith(
                           color: Colors.white,
                         ),
