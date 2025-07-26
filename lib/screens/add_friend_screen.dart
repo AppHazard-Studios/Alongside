@@ -1,4 +1,4 @@
-// lib/screens/add_friend_screen.dart - FIXED CONSISTENT TEXT SCALING
+// lib/screens/add_friend_screen.dart - FIXED FOR iOS-CORRECT SIZING AND LAYOUT
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -12,7 +12,7 @@ import '../models/friend.dart';
 import '../utils/constants.dart';
 import '../utils/colors.dart';
 import '../utils/responsive_utils.dart';
-import '../utils/text_styles.dart'; // FIXED: Ensure text_styles import
+import '../utils/text_styles.dart';
 import '../widgets/no_underline_field.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../widgets/day_selector_widget.dart';
@@ -93,7 +93,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       builder: (context) => CupertinoAlertDialog(
         title: Text(
           'Add from Contacts?',
-          // FIXED: Use proper scaled dialog title instead of raw TextStyle
           style: AppTextStyles.scaledDialogTitle(context).copyWith(
             color: AppColors.primary,
           ),
@@ -102,7 +101,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
           padding: const EdgeInsets.only(top: 16),
           child: Text(
             'Would you like to select a friend from your contacts?',
-            // FIXED: Use proper scaled body instead of raw TextStyle
             style: AppTextStyles.scaledBody(context),
             textAlign: TextAlign.center,
           ),
@@ -112,7 +110,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             onPressed: () => Navigator.pop(context),
             child: Text(
               'No',
-              // FIXED: Use proper scaled button instead of raw TextStyle
               style: AppTextStyles.scaledButton(context).copyWith(
                 color: AppColors.secondary,
               ),
@@ -126,7 +123,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             isDefaultAction: true,
             child: Text(
               'Yes',
-              // FIXED: Use proper scaled button instead of raw TextStyle
               style: AppTextStyles.scaledButton(context).copyWith(
                 color: AppColors.primary,
               ),
@@ -210,7 +206,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       builder: (context) => CupertinoActionSheet(
         title: Text(
           'Choose Phone Number for ${contact.displayName}',
-          // FIXED: Use proper scaled callout instead of raw TextStyle
           style: AppTextStyles.scaledCallout(context).copyWith(
             color: AppColors.primary,
             fontWeight: FontWeight.w600,
@@ -218,7 +213,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
         ),
         message: Text(
           'This contact has multiple phone numbers. Which one would you like to use?',
-          // FIXED: Use proper scaled caption instead of raw TextStyle
           style: AppTextStyles.scaledCaption(context).copyWith(
             color: AppColors.textSecondary,
           ),
@@ -270,7 +264,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               children: [
                 Text(
                   phone.number,
-                  // FIXED: Use proper scaled callout instead of raw TextStyle
                   style: AppTextStyles.scaledCallout(context).copyWith(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w500,
@@ -279,7 +272,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                 if (labelText.isNotEmpty)
                   Text(
                     labelText,
-                    // FIXED: Use proper scaled footnote instead of raw TextStyle
                     style: AppTextStyles.scaledFootnote(context).copyWith(
                       color: AppColors.textSecondary,
                     ),
@@ -293,7 +285,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
           isDestructiveAction: true,
           child: Text(
             'Cancel',
-            // FIXED: Use proper scaled button instead of raw TextStyle
             style: AppTextStyles.scaledButton(context).copyWith(
               color: AppColors.error,
             ),
@@ -309,14 +300,12 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       builder: (context) => CupertinoAlertDialog(
         title: Text(
           'Error',
-          // FIXED: Use proper scaled dialog title instead of raw TextStyle
           style: AppTextStyles.scaledDialogTitle(context).copyWith(
             color: AppColors.error,
           ),
         ),
         content: Text(
           message,
-          // FIXED: Use proper scaled body instead of raw TextStyle
           style: AppTextStyles.scaledBody(context),
         ),
         actions: [
@@ -324,7 +313,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             onPressed: () => Navigator.pop(context),
             child: Text(
               'OK',
-              // FIXED: Use proper scaled button instead of raw TextStyle
               style: AppTextStyles.scaledButton(context).copyWith(
                 color: AppColors.primary,
               ),
@@ -341,7 +329,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       builder: (context) => CupertinoActionSheet(
         title: Text(
           'Choose Profile Image',
-          // FIXED: Use proper scaled headline instead of raw TextStyle
           style: AppTextStyles.scaledHeadline(context).copyWith(
             color: AppColors.primary,
           ),
@@ -354,7 +341,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             },
             child: Text(
               'Choose Emoji',
-              // FIXED: Use proper scaled headline instead of raw TextStyle
               style: AppTextStyles.scaledHeadline(context).copyWith(
                 color: AppColors.primary,
               ),
@@ -367,7 +353,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             },
             child: Text(
               'Take Photo',
-              // FIXED: Use proper scaled callout instead of raw TextStyle
               style: AppTextStyles.scaledCallout(context).copyWith(
                 color: AppColors.primary,
               ),
@@ -380,7 +365,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             },
             child: Text(
               'Choose from Library',
-              // FIXED: Use proper scaled callout instead of raw TextStyle
               style: AppTextStyles.scaledCallout(context).copyWith(
                 color: AppColors.primary,
               ),
@@ -392,7 +376,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
           isDestructiveAction: true,
           child: Text(
             'Cancel',
-            // FIXED: Use proper scaled button instead of raw TextStyle
             style: AppTextStyles.scaledButton(context).copyWith(
               color: AppColors.error,
             ),
@@ -421,7 +404,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             builder: (context) => CupertinoAlertDialog(
               title: Text(
                 'Camera Permission Required',
-                // FIXED: Use proper scaled dialog title instead of raw TextStyle
                 style: AppTextStyles.scaledDialogTitle(context).copyWith(
                   color: AppColors.primary,
                 ),
@@ -430,7 +412,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
                   'Camera access is permanently denied. Please enable it in Settings to take photos.',
-                  // FIXED: Use proper scaled body instead of raw TextStyle
                   style: AppTextStyles.scaledBody(context),
                 ),
               ),
@@ -439,7 +420,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                   onPressed: () => Navigator.pop(context),
                   child: Text(
                     'Cancel',
-                    // FIXED: Use proper scaled button instead of raw TextStyle
                     style: AppTextStyles.scaledButton(context).copyWith(
                       color: AppColors.secondary,
                     ),
@@ -452,7 +432,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                   },
                   child: Text(
                     'Open Settings',
-                    // FIXED: Use proper scaled button instead of raw TextStyle
                     style: AppTextStyles.scaledButton(context).copyWith(
                       color: AppColors.primary,
                     ),
@@ -518,7 +497,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                   padding: EdgeInsets.zero,
                   child: Text(
                     'Cancel',
-                    // FIXED: Use proper scaled button instead of raw TextStyle
                     style: AppTextStyles.scaledButton(context).copyWith(
                       color: AppColors.secondary,
                     ),
@@ -527,7 +505,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                 ),
                 Text(
                   'Choose Emoji',
-                  // FIXED: Use proper scaled headline instead of raw TextStyle
                   style: AppTextStyles.scaledHeadline(context).copyWith(
                     color: AppColors.primary,
                   ),
@@ -536,7 +513,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                   padding: EdgeInsets.zero,
                   child: Text(
                     'Done',
-                    // FIXED: Use proper scaled button instead of raw TextStyle
                     style: AppTextStyles.scaledButton(context).copyWith(
                       color: AppColors.primary,
                     ),
@@ -583,7 +559,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                       child: Center(
                         child: Text(
                           emoji,
-                          style: const TextStyle(fontSize: 28),
+                          style: TextStyle(fontSize: ResponsiveUtils.scaledFontSize(context, 28)),
                         ),
                       ),
                     ),
@@ -655,7 +631,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       builder: (context) => CupertinoAlertDialog(
         title: Text(
           'Invite Friend',
-          // FIXED: Use proper scaled dialog title instead of raw TextStyle
           style: AppTextStyles.scaledDialogTitle(context).copyWith(
             color: AppColors.primary,
           ),
@@ -664,7 +639,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
           padding: const EdgeInsets.only(top: 16),
           child: Text(
             'Would you like to invite ${friend.name} to use Alongside with you?',
-            // FIXED: Use proper scaled body instead of raw TextStyle
             style: AppTextStyles.scaledBody(context),
             textAlign: TextAlign.center,
           ),
@@ -674,7 +648,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Not Now',
-              // FIXED: Use proper scaled button instead of raw TextStyle
               style: AppTextStyles.scaledButton(context).copyWith(
                 color: AppColors.secondary,
               ),
@@ -699,7 +672,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             },
             child: Text(
               'Send Invite',
-              // FIXED: Use proper scaled button instead of raw TextStyle
               style: AppTextStyles.scaledButton(context).copyWith(
                 color: AppColors.primary,
               ),
@@ -716,7 +688,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       builder: (context) => CupertinoAlertDialog(
         title: Text(
           'Remove Friend',
-          // FIXED: Use proper scaled dialog title instead of raw TextStyle
           style: AppTextStyles.scaledDialogTitle(context).copyWith(
             color: AppColors.error,
           ),
@@ -725,7 +696,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
           padding: const EdgeInsets.only(top: 8),
           child: Text(
             'Are you sure you want to remove ${widget.friend!.name}? This action cannot be undone.',
-            // FIXED: Use proper scaled body instead of raw TextStyle
             style: AppTextStyles.scaledBody(context),
           ),
         ),
@@ -735,7 +705,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             isDefaultAction: true,
             child: Text(
               'Cancel',
-              // FIXED: Use proper scaled button instead of raw TextStyle
               style: AppTextStyles.scaledButton(context).copyWith(
                 color: AppColors.secondary,
               ),
@@ -755,7 +724,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             isDestructiveAction: true,
             child: Text(
               'Remove',
-              // FIXED: Use proper scaled button instead of raw TextStyle
               style: AppTextStyles.scaledButton(context).copyWith(
                 color: AppColors.error,
               ),
@@ -788,11 +756,11 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                     CupertinoButton(
                       padding: EdgeInsets.zero,
                       child: Container(
-                        width: ResponsiveUtils.scaledContainerSize(context, 36),
-                        height: ResponsiveUtils.scaledContainerSize(context, 36),
+                        width: ResponsiveUtils.scaledContainerSize(context, 32), // Reduced from 36
+                        height: ResponsiveUtils.scaledContainerSize(context, 32),
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.8),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(8), // Slightly smaller
                           border: Border.all(
                             color: AppColors.primary.withOpacity(0.2),
                             width: 1,
@@ -807,7 +775,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                         ),
                         child: Icon(
                           CupertinoIcons.chevron_left,
-                          size: ResponsiveUtils.scaledIconSize(context, 18),
+                          size: ResponsiveUtils.scaledIconSize(context, 16), // Reduced from 18
                           color: AppColors.primary,
                         ),
                       ),
@@ -818,7 +786,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                       child: Center(
                         child: Text(
                           widget.friend == null ? 'Add Friend' : 'Edit Friend',
-                          // FIXED: Use proper scaled nav title instead of raw TextStyle
                           style: AppTextStyles.scaledNavTitle(context).copyWith(
                             color: AppColors.primary,
                           ),
@@ -830,13 +797,13 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                       padding: EdgeInsets.zero,
                       onPressed: _saveFriend,
                       child: Container(
-                        width: ResponsiveUtils.scaledContainerSize(context, 60),
-                        height: ResponsiveUtils.scaledContainerSize(context, 36),
+                        width: ResponsiveUtils.scaledContainerSize(context, 56), // Slightly smaller
+                        height: ResponsiveUtils.scaledContainerSize(context, 32),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
                           ),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(8), // Consistent with back button
                           boxShadow: [
                             BoxShadow(
                               color: AppColors.primary.withOpacity(0.3),
@@ -848,7 +815,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                         child: Center(
                           child: Text(
                             'Save',
-                            // FIXED: Use proper scaled button instead of raw TextStyle
                             style: AppTextStyles.scaledButton(context).copyWith(
                               color: Colors.white,
                             ),
@@ -934,7 +900,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                                   SizedBox(width: ResponsiveUtils.scaledSpacing(context, 6)),
                                   Text(
                                     'Change Profile',
-                                    // FIXED: Use proper scaled subhead instead of raw TextStyle
                                     style: AppTextStyles.scaledSubhead(context).copyWith(
                                       color: AppColors.primary,
                                       fontWeight: FontWeight.w500,
@@ -1075,7 +1040,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                               SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
                               Text(
                                 'Remove Friend',
-                                // FIXED: Use proper scaled callout instead of raw TextStyle
                                 style: AppTextStyles.scaledCallout(context).copyWith(
                                   color: AppColors.error,
                                   fontWeight: FontWeight.w600,
@@ -1128,7 +1092,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
         alignment: Alignment.centerLeft,
         child: Text(
           title,
-          // FIXED: Use proper scaled section header instead of raw TextStyle
           style: AppTextStyles.scaledSectionHeader(context),
         ),
       ),
@@ -1153,11 +1116,11 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               top: ResponsiveUtils.scaledSpacing(context, 2),
             ),
             child: Container(
-              width: ResponsiveUtils.scaledContainerSize(context, 38),
-              height: ResponsiveUtils.scaledContainerSize(context, 38),
+              width: ResponsiveUtils.scaledContainerSize(context, 32), // Reduced from 38
+              height: ResponsiveUtils.scaledContainerSize(context, 32),
               decoration: BoxDecoration(
                 color: iconColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(8), // Slightly smaller radius
                 border: Border.all(
                   color: iconColor.withOpacity(0.2),
                   width: 1,
@@ -1166,7 +1129,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               child: Icon(
                 icon,
                 color: iconColor,
-                size: ResponsiveUtils.scaledIconSize(context, 18),
+                size: ResponsiveUtils.scaledIconSize(context, 16), // Reduced from 18
               ),
             ),
           ),
@@ -1208,11 +1171,11 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
-              width: ResponsiveUtils.scaledContainerSize(context, 38),
-              height: ResponsiveUtils.scaledContainerSize(context, 38),
+              width: ResponsiveUtils.scaledContainerSize(context, 32), // Reduced from 38
+              height: ResponsiveUtils.scaledContainerSize(context, 32),
               decoration: BoxDecoration(
                 color: iconColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(8), // Slightly smaller radius
                 border: Border.all(
                   color: iconColor.withOpacity(0.2),
                   width: 1,
@@ -1221,7 +1184,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               child: Icon(
                 icon,
                 color: iconColor,
-                size: ResponsiveUtils.scaledIconSize(context, 18),
+                size: ResponsiveUtils.scaledIconSize(context, 16), // Reduced from 18
               ),
             ),
             SizedBox(width: ResponsiveUtils.scaledSpacing(context, 12)),
@@ -1231,14 +1194,12 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                 children: [
                   Text(
                     title,
-                    // FIXED: Use proper scaled body instead of raw TextStyle
                     style: AppTextStyles.scaledBody(context).copyWith(
                       color: AppColors.textPrimary,
                     ),
                   ),
                   Text(
                     subtitle,
-                    // FIXED: Use proper scaled subhead instead of raw TextStyle
                     style: AppTextStyles.scaledSubhead(context).copyWith(
                       color: AppColors.textSecondary,
                     ),
@@ -1355,7 +1316,6 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
                   onPressed: () => Navigator.pop(context),
                   child: Text(
                     'Cancel',
-                    // FIXED: Use proper scaled button instead of raw TextStyle
                     style: AppTextStyles.scaledButton(context).copyWith(
                       color: AppColors.secondary,
                     ),
@@ -1365,7 +1325,6 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
                   child: Center(
                     child: Text(
                       'Select Contact',
-                      // FIXED: Use proper scaled headline instead of raw TextStyle
                       style: AppTextStyles.scaledHeadline(context).copyWith(
                         color: AppColors.primary,
                       ),
@@ -1403,7 +1362,7 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
                   child: Icon(
                     CupertinoIcons.search,
                     color: AppColors.primary,
-                    size: 18,
+                    size: ResponsiveUtils.scaledIconSize(context, 18),
                   ),
                 ),
                 suffix: _searchController.text.isNotEmpty
@@ -1416,18 +1375,16 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
                     child: Icon(
                       CupertinoIcons.clear_circled,
                       color: AppColors.textSecondary,
-                      size: 18,
+                      size: ResponsiveUtils.scaledIconSize(context, 18),
                     ),
                   ),
                 )
                     : null,
-                // FIXED: Use proper scaled callout instead of raw TextStyle
                 style: AppTextStyles.scaledCallout(context).copyWith(
                   color: AppColors.textPrimary,
                 ),
                 decoration: null,
                 padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-                // FIXED: Use proper scaled body instead of raw TextStyle
                 placeholderStyle: AppTextStyles.scaledBody(context).copyWith(
                   color: AppColors.textSecondary,
                 ),
@@ -1445,13 +1402,12 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
                 children: [
                   Icon(
                     CupertinoIcons.person_3,
-                    size: 48,
+                    size: ResponsiveUtils.scaledIconSize(context, 48),
                     color: AppColors.textSecondary,
                   ),
                   const SizedBox(height: 16),
                   Text(
                     'No contacts found',
-                    // FIXED: Use proper scaled callout instead of raw TextStyle
                     style: AppTextStyles.scaledCallout(context).copyWith(
                       color: AppColors.textSecondary,
                     ),
@@ -1477,7 +1433,6 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
                     child: CupertinoListTile(
                       title: Text(
                         contact.displayName,
-                        // FIXED: Use proper scaled body instead of raw TextStyle
                         style: AppTextStyles.scaledBody(context).copyWith(
                           color: AppColors.textPrimary,
                         ),
@@ -1487,14 +1442,12 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
                         contact.phones.length == 1
                             ? '${contact.phones.first.number}${_getPhoneLabel(contact.phones.first).isNotEmpty ? ' (${_getPhoneLabel(contact.phones.first)})' : ''}'
                             : '${contact.phones.length} phone numbers',
-                        // FIXED: Use proper scaled caption instead of raw TextStyle
                         style: AppTextStyles.scaledCaption(context).copyWith(
                           color: AppColors.textSecondary,
                         ),
                       )
                           : Text(
                         'No phone number',
-                        // FIXED: Use proper scaled caption instead of raw TextStyle
                         style: AppTextStyles.scaledCaption(context).copyWith(
                           color: AppColors.textSecondary,
                         ),

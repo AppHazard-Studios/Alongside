@@ -1,4 +1,4 @@
-// lib/screens/message_screen.dart - FIXED CONSISTENT TEXT SCALING
+// lib/screens/message_screen.dart - FIXED FOR iOS-CORRECT SIZING AND LAYOUT
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -11,7 +11,7 @@ import '../models/friend.dart';
 import '../providers/friends_provider.dart';
 import '../utils/colors.dart';
 import '../utils/responsive_utils.dart';
-import '../utils/text_styles.dart'; // FIXED: Ensure text_styles import
+import '../utils/text_styles.dart';
 import '../services/notification_service.dart';
 import '../services/toast_service.dart';
 
@@ -108,7 +108,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
       navigationBar: CupertinoNavigationBar(
         middle: Text(
           'Send Message',
-          // FIXED: Use proper scaled nav title instead of raw TextStyle
           style: AppTextStyles.scaledNavTitle(context).copyWith(
             fontWeight: FontWeight.w700,
             color: AppColors.primary,
@@ -119,8 +118,8 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
         leading: CupertinoButton(
           padding: EdgeInsets.zero,
           child: Container(
-            width: 32,
-            height: 32,
+            width: ResponsiveUtils.scaledContainerSize(context, 32),
+            height: ResponsiveUtils.scaledContainerSize(context, 32),
             decoration: BoxDecoration(
               color: AppColors.background,
               shape: BoxShape.circle,
@@ -129,10 +128,10 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                 width: 1,
               ),
             ),
-            child: const Icon(
+            child: Icon(
               CupertinoIcons.back,
               color: AppColors.primary,
-              size: 16,
+              size: ResponsiveUtils.scaledIconSize(context, 16),
             ),
           ),
           onPressed: () => Navigator.of(context).pop(),
@@ -169,7 +168,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                           children: [
                             Text(
                               widget.friend.name,
-                              // FIXED: Use proper scaled headline instead of raw TextStyle
                               style: AppTextStyles.scaledHeadline(context).copyWith(
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.textPrimary,
@@ -178,7 +176,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                             const SizedBox(height: 4),
                             Text(
                               widget.friend.phoneNumber,
-                              // FIXED: Use proper scaled subhead instead of raw TextStyle
                               style: AppTextStyles.scaledSubhead(context).copyWith(
                                 color: AppColors.textSecondary,
                               ),
@@ -212,10 +209,10 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                             color: AppColors.primaryLight,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
+                          child: Icon(
                             CupertinoIcons.heart_fill,
                             color: AppColors.primary,
-                            size: 12,
+                            size: ResponsiveUtils.scaledIconSize(context, 12),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -225,7 +222,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                             children: [
                               Text(
                                 'Alongside them in:',
-                                // FIXED: Use proper scaled caption instead of raw TextStyle
                                 style: AppTextStyles.scaledCaption(context).copyWith(
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.primary,
@@ -234,7 +230,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                               const SizedBox(height: 2),
                               Text(
                                 widget.friend.helpingWith!,
-                                // FIXED: Use proper scaled subhead instead of raw TextStyle
                                 style: AppTextStyles.scaledSubhead(context).copyWith(
                                   color: AppColors.textPrimary,
                                 ),
@@ -260,10 +255,10 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                             color: AppColors.tertiaryLight,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
+                          child: Icon(
                             CupertinoIcons.person_2_fill,
                             color: AppColors.tertiary,
-                            size: 12,
+                            size: ResponsiveUtils.scaledIconSize(context, 12),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -273,7 +268,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                             children: [
                               Text(
                                 'Alongside you in:',
-                                // FIXED: Use proper scaled caption instead of raw TextStyle
                                 style: AppTextStyles.scaledCaption(context).copyWith(
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.tertiary,
@@ -282,7 +276,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                               const SizedBox(height: 2),
                               Text(
                                 widget.friend.theyHelpingWith!,
-                                // FIXED: Use proper scaled subhead instead of raw TextStyle
                                 style: AppTextStyles.scaledSubhead(context).copyWith(
                                   color: AppColors.textPrimary,
                                 ),
@@ -304,13 +297,12 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                 children: [
                   Icon(
                     Icons.touch_app,
-                    size: 14,
+                    size: ResponsiveUtils.scaledIconSize(context, 14),
                     color: AppColors.textSecondary.withOpacity(0.6),
                   ),
                   const SizedBox(width: 4),
                   Text(
                     'Tap to send • Hold for options',
-                    // FIXED: Use proper scaled caption instead of raw TextStyle
                     style: AppTextStyles.scaledCaption(context).copyWith(
                       color: AppColors.textSecondary.withOpacity(0.6),
                     ),
@@ -320,7 +312,7 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
             ),
 
             Container(
-              height: 40,
+              height: ResponsiveUtils.scaledContainerSize(context, 40),
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -328,8 +320,10 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
                     margin: const EdgeInsets.symmetric(horizontal: 4),
-                    height: 8,
-                    width: _currentPage == index ? 24 : 8,
+                    height: ResponsiveUtils.scaledContainerSize(context, 8),
+                    width: _currentPage == index
+                        ? ResponsiveUtils.scaledContainerSize(context, 24)
+                        : ResponsiveUtils.scaledContainerSize(context, 8),
                     decoration: BoxDecoration(
                       color: _currentPage == index
                           ? AppColors.primary
@@ -371,14 +365,16 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
         children: [
           Container(
             margin: const EdgeInsets.only(bottom: 16),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: EdgeInsets.symmetric(
+                horizontal: ResponsiveUtils.scaledSpacing(context, 16),
+                vertical: ResponsiveUtils.scaledSpacing(context, 8)
+            ),
             decoration: BoxDecoration(
               color: AppColors.primary.withOpacity(0.1),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
               category,
-              // FIXED: Use proper scaled callout instead of raw TextStyle
               style: AppTextStyles.scaledCallout(context).copyWith(
                 fontWeight: FontWeight.w600,
                 color: AppColors.primary,
@@ -428,13 +424,12 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
           children: [
             Icon(
               CupertinoIcons.star,
-              size: 48,
+              size: ResponsiveUtils.scaledIconSize(context, 48),
               color: AppColors.textSecondary.withOpacity(0.3),
             ),
             const SizedBox(height: 16),
             Text(
               'No favorite messages yet',
-              // FIXED: Use proper scaled callout instead of raw TextStyle
               style: AppTextStyles.scaledCallout(context).copyWith(
                 color: AppColors.textSecondary,
               ),
@@ -447,15 +442,14 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
+                  Icon(
                     CupertinoIcons.star_fill,
                     color: CupertinoColors.white,
-                    size: 16,
+                    size: ResponsiveUtils.scaledIconSize(context, 16),
                   ),
                   const SizedBox(width: 8),
                   Text(
                     'Add Favorites',
-                    // FIXED: Use proper scaled button instead of raw TextStyle
                     style: AppTextStyles.scaledButton(context).copyWith(
                       color: CupertinoColors.white,
                       fontWeight: FontWeight.w600,
@@ -493,22 +487,23 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
             ),
           ),
           child: CupertinoButton(
-            padding: const EdgeInsets.symmetric(vertical: 14),
+            padding: EdgeInsets.symmetric(
+                vertical: ResponsiveUtils.scaledSpacing(context, 14)
+            ),
             color: AppColors.primary,
             borderRadius: BorderRadius.circular(12),
             onPressed: () => _showFavoritePicker(),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
+                Icon(
                   CupertinoIcons.star_fill,
                   color: CupertinoColors.white,
-                  size: 18,
+                  size: ResponsiveUtils.scaledIconSize(context, 18),
                 ),
                 const SizedBox(width: 8),
                 Text(
                   'Edit Favorites',
-                  // FIXED: Use proper scaled button instead of raw TextStyle
                   style: AppTextStyles.scaledButton(context).copyWith(
                     color: CupertinoColors.white,
                     fontWeight: FontWeight.w600,
@@ -542,13 +537,12 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
           children: [
             Icon(
               CupertinoIcons.bubble_left,
-              size: 48,
+              size: ResponsiveUtils.scaledIconSize(context, 48),
               color: AppColors.textSecondary.withOpacity(0.3),
             ),
             const SizedBox(height: 16),
             Text(
               'No custom messages yet',
-              // FIXED: Use proper scaled callout instead of raw TextStyle
               style: AppTextStyles.scaledCallout(context).copyWith(
                 color: AppColors.textSecondary,
               ),
@@ -560,7 +554,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               onPressed: () => _showCustomMessageDialog(context),
               child: Text(
                 'Add your first message',
-                // FIXED: Use proper scaled button instead of raw TextStyle
                 style: AppTextStyles.scaledButton(context).copyWith(
                   color: CupertinoColors.white,
                   fontWeight: FontWeight.w600,
@@ -605,22 +598,23 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: CupertinoButton(
-                padding: const EdgeInsets.symmetric(vertical: 14),
+                padding: EdgeInsets.symmetric(
+                    vertical: ResponsiveUtils.scaledSpacing(context, 14)
+                ),
                 color: AppColors.primary,
                 borderRadius: BorderRadius.circular(12),
                 onPressed: () => _showCustomMessageDialog(context),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
+                    Icon(
                       CupertinoIcons.add,
                       color: CupertinoColors.white,
-                      size: 18,
+                      size: ResponsiveUtils.scaledIconSize(context, 18),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       'Add Custom Message',
-                      // FIXED: Use proper scaled button instead of raw TextStyle
                       style: AppTextStyles.scaledButton(context).copyWith(
                         color: CupertinoColors.white,
                         fontWeight: FontWeight.w600,
@@ -663,14 +657,13 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               Icon(
                 CupertinoIcons.star_fill,
                 color: AppColors.warning,
-                size: 18,
+                size: ResponsiveUtils.scaledIconSize(context, 18),
               ),
               const SizedBox(width: 12),
             ],
             Expanded(
               child: Text(
                 message,
-                // FIXED: Use proper scaled callout instead of raw TextStyle
                 style: AppTextStyles.scaledCallout(context).copyWith(
                   color: AppColors.textPrimary,
                   height: 1.4,
@@ -687,7 +680,7 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                   child: Icon(
                     CupertinoIcons.ellipsis_vertical,
                     color: AppColors.textSecondary.withOpacity(0.6),
-                    size: 18,
+                    size: ResponsiveUtils.scaledIconSize(context, 18),
                   ),
                 ),
               ),
@@ -695,7 +688,7 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               Icon(
                 CupertinoIcons.arrow_right_circle_fill,
                 color: AppColors.primary,
-                size: 22,
+                size: ResponsiveUtils.scaledIconSize(context, 22),
               ),
             ],
           ],
@@ -713,7 +706,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
       builder: (context) => CupertinoActionSheet(
         title: Text(
           message.length > 50 ? '${message.substring(0, 50)}...' : message,
-          // FIXED: Use proper scaled subhead instead of raw TextStyle
           style: AppTextStyles.scaledSubhead(context),
         ),
         actions: [
@@ -725,15 +717,14 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
+                Icon(
                   CupertinoIcons.bubble_left_fill,
                   color: CupertinoColors.systemBlue,
-                  size: 20,
+                  size: ResponsiveUtils.scaledIconSize(context, 20),
                 ),
                 const SizedBox(width: 8),
                 Text(
                   'Send via Messages',
-                  // FIXED: Use proper scaled callout instead of raw TextStyle
                   style: AppTextStyles.scaledCallout(context),
                 ),
               ],
@@ -747,15 +738,14 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
+                Icon(
                   CupertinoIcons.share,
                   color: CupertinoColors.systemBlue,
-                  size: 20,
+                  size: ResponsiveUtils.scaledIconSize(context, 20),
                 ),
                 const SizedBox(width: 8),
                 Text(
                   'Share to Other Apps',
-                  // FIXED: Use proper scaled callout instead of raw TextStyle
                   style: AppTextStyles.scaledCallout(context),
                 ),
               ],
@@ -773,7 +763,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               },
               child: Text(
                 'Add to Favorites',
-                // FIXED: Use proper scaled callout instead of raw TextStyle
                 style: AppTextStyles.scaledCallout(context),
               ),
             ),
@@ -785,7 +774,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               },
               child: Text(
                 'Edit Message',
-                // FIXED: Use proper scaled callout instead of raw TextStyle
                 style: AppTextStyles.scaledCallout(context),
               ),
             ),
@@ -795,7 +783,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
           onPressed: () => Navigator.pop(context),
           child: Text(
             'Cancel',
-            // FIXED: Use proper scaled button instead of raw TextStyle
             style: AppTextStyles.scaledButton(context).copyWith(
               fontWeight: FontWeight.w600,
             ),
@@ -823,7 +810,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               },
               child: Text(
                 'Add to Favorites',
-                // FIXED: Use proper scaled callout instead of raw TextStyle
                 style: AppTextStyles.scaledCallout(context),
               ),
             ),
@@ -834,7 +820,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
             },
             child: Text(
               'Edit Message',
-              // FIXED: Use proper scaled callout instead of raw TextStyle
               style: AppTextStyles.scaledCallout(context),
             ),
           ),
@@ -846,7 +831,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
             isDestructiveAction: true,
             child: Text(
               'Delete Message',
-              // FIXED: Use proper scaled callout instead of raw TextStyle
               style: AppTextStyles.scaledCallout(context),
             ),
           ),
@@ -855,7 +839,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
           onPressed: () => Navigator.pop(context),
           child: Text(
             'Cancel',
-            // FIXED: Use proper scaled button instead of raw TextStyle
             style: AppTextStyles.scaledButton(context).copyWith(
               fontWeight: FontWeight.w600,
             ),
@@ -914,7 +897,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
       builder: (context) => CupertinoAlertDialog(
         title: Text(
           'Create Message',
-          // FIXED: Use proper scaled dialog title instead of raw TextStyle
           style: AppTextStyles.scaledDialogTitle(context).copyWith(
             color: AppColors.primary,
             fontWeight: FontWeight.w700,
@@ -934,7 +916,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                 width: 1.5,
               ),
             ),
-            // FIXED: Use proper scaled callout instead of raw TextStyle
             style: AppTextStyles.scaledCallout(context),
             placeholderStyle: AppTextStyles.scaledTextStyle(
               context,
@@ -953,7 +934,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
             isDefaultAction: true,
             child: Text(
               'Cancel',
-              // FIXED: Use proper scaled button instead of raw TextStyle
               style: AppTextStyles.scaledButton(context).copyWith(
                 color: AppColors.secondary,
                 fontWeight: FontWeight.w600,
@@ -974,7 +954,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
             },
             child: Text(
               'Save',
-              // FIXED: Use proper scaled button instead of raw TextStyle
               style: AppTextStyles.scaledButton(context).copyWith(
                 color: AppColors.primary,
                 fontWeight: FontWeight.w600,
@@ -994,7 +973,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
       builder: (context) => CupertinoAlertDialog(
         title: Text(
           'Edit Message',
-          // FIXED: Use proper scaled dialog title instead of raw TextStyle
           style: AppTextStyles.scaledDialogTitle(context).copyWith(
             color: AppColors.primary,
             fontWeight: FontWeight.w700,
@@ -1014,7 +992,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                 width: 1.5,
               ),
             ),
-            // FIXED: Use proper scaled callout instead of raw TextStyle
             style: AppTextStyles.scaledCallout(context),
             minLines: 1,
             maxLines: 5,
@@ -1027,7 +1004,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
             isDefaultAction: true,
             child: Text(
               'Cancel',
-              // FIXED: Use proper scaled button instead of raw TextStyle
               style: AppTextStyles.scaledButton(context).copyWith(
                 color: AppColors.secondary,
                 fontWeight: FontWeight.w600,
@@ -1054,7 +1030,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
             },
             child: Text(
               'Save',
-              // FIXED: Use proper scaled button instead of raw TextStyle
               style: AppTextStyles.scaledButton(context).copyWith(
                 color: AppColors.primary,
                 fontWeight: FontWeight.w600,
@@ -1073,7 +1048,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
       builder: (context) => CupertinoAlertDialog(
         title: Text(
           'Delete Message',
-          // FIXED: Use proper scaled dialog title instead of raw TextStyle
           style: AppTextStyles.scaledDialogTitle(context).copyWith(
             color: AppColors.error,
             fontWeight: FontWeight.w700,
@@ -1083,7 +1057,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
           padding: const EdgeInsets.only(top: 8),
           child: Text(
             'Are you sure you want to delete this custom message?',
-            // FIXED: Use proper scaled callout instead of raw TextStyle
             style: AppTextStyles.scaledCallout(context).copyWith(
               height: 1.3,
             ),
@@ -1094,7 +1067,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
             onPressed: () => Navigator.pop(context, false),
             child: Text(
               'Cancel',
-              // FIXED: Use proper scaled button instead of raw TextStyle
               style: AppTextStyles.scaledButton(context).copyWith(
                 color: AppColors.primary,
                 fontWeight: FontWeight.w600,
@@ -1106,7 +1078,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
             isDestructiveAction: true,
             child: Text(
               'Delete',
-              // FIXED: Use proper scaled button instead of raw TextStyle
               style: AppTextStyles.scaledButton(context).copyWith(
                 color: AppColors.error,
                 fontWeight: FontWeight.w600,
@@ -1134,8 +1105,8 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
 
   Widget _buildProfileImage() {
     return Container(
-      width: 48,
-      height: 48,
+      width: ResponsiveUtils.scaledContainerSize(context, 48),
+      height: ResponsiveUtils.scaledContainerSize(context, 48),
       decoration: BoxDecoration(
         color: widget.friend.isEmoji
             ? CupertinoColors.systemGrey6
@@ -1150,7 +1121,7 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
           ? Center(
         child: Text(
           widget.friend.profileImage,
-          style: const TextStyle(fontSize: 24),
+          style: TextStyle(fontSize: ResponsiveUtils.scaledFontSize(context, 24)),
         ),
       )
           : ClipOval(
@@ -1171,8 +1142,8 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
         barrierDismissible: false,
         builder: (context) => Center(
           child: Container(
-            width: 120,
-            height: 120,
+            width: ResponsiveUtils.scaledContainerSize(context, 120),
+            height: ResponsiveUtils.scaledContainerSize(context, 120),
             decoration: BoxDecoration(
               color: Colors.black.withOpacity(0.8),
               borderRadius: BorderRadius.circular(16),
@@ -1187,7 +1158,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                 const SizedBox(height: 16),
                 Text(
                   'Sending...',
-                  // FIXED: Use proper scaled callout instead of raw TextStyle
                   style: AppTextStyles.scaledCallout(context).copyWith(
                     color: Colors.white,
                   ),
@@ -1229,7 +1199,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
           builder: (context) => CupertinoAlertDialog(
             title: Text(
               '❌ Error',
-              // FIXED: Use proper scaled dialog title instead of raw TextStyle
               style: AppTextStyles.scaledDialogTitle(context).copyWith(
                 color: AppColors.error,
                 fontWeight: FontWeight.w700,
@@ -1239,7 +1208,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               padding: const EdgeInsets.only(top: 8),
               child: Text(
                 'Unable to open messaging app. Please try again later.',
-                // FIXED: Use proper scaled callout instead of raw TextStyle
                 style: AppTextStyles.scaledCallout(context).copyWith(
                   height: 1.3,
                 ),
@@ -1250,7 +1218,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                 onPressed: () => Navigator.pop(context),
                 child: Text(
                   'OK',
-                  // FIXED: Use proper scaled button instead of raw TextStyle
                   style: AppTextStyles.scaledButton(context).copyWith(
                     color: AppColors.primary,
                   ),
@@ -1318,7 +1285,6 @@ class _FavoritePickerModalState extends State<_FavoritePickerModal> {
                   onPressed: () => Navigator.pop(context),
                   child: Text(
                     'Cancel',
-                    // FIXED: Use proper scaled button instead of raw TextStyle
                     style: AppTextStyles.scaledButton(context).copyWith(
                       color: AppColors.secondary,
                       fontWeight: FontWeight.w600,
@@ -1327,7 +1293,6 @@ class _FavoritePickerModalState extends State<_FavoritePickerModal> {
                 ),
                 Text(
                   'Select Favorites',
-                  // FIXED: Use proper scaled headline instead of raw TextStyle
                   style: AppTextStyles.scaledHeadline(context).copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
@@ -1341,7 +1306,6 @@ class _FavoritePickerModalState extends State<_FavoritePickerModal> {
                   },
                   child: Text(
                     'Save',
-                    // FIXED: Use proper scaled button instead of raw TextStyle
                     style: AppTextStyles.scaledButton(context).copyWith(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w600,
@@ -1387,8 +1351,8 @@ class _FavoritePickerModalState extends State<_FavoritePickerModal> {
                     child: Row(
                       children: [
                         Container(
-                          width: 24,
-                          height: 24,
+                          width: ResponsiveUtils.scaledContainerSize(context, 24),
+                          height: ResponsiveUtils.scaledContainerSize(context, 24),
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? AppColors.primary
@@ -1402,10 +1366,10 @@ class _FavoritePickerModalState extends State<_FavoritePickerModal> {
                             ),
                           ),
                           child: isSelected
-                              ? const Icon(
+                              ? Icon(
                             CupertinoIcons.checkmark,
                             color: CupertinoColors.white,
-                            size: 14,
+                            size: ResponsiveUtils.scaledIconSize(context, 14),
                           )
                               : null,
                         ),
@@ -1413,7 +1377,6 @@ class _FavoritePickerModalState extends State<_FavoritePickerModal> {
                         Expanded(
                           child: Text(
                             message,
-                            // FIXED: Use proper scaled subhead instead of raw TextStyle
                             style: AppTextStyles.scaledSubhead(context).copyWith(
                               color: isSelected
                                   ? AppColors.primary
