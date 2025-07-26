@@ -1,4 +1,4 @@
-// lib/screens/add_friend_screen.dart - FIXED FOR iOS-CORRECT SIZING AND LAYOUT
+// lib/screens/add_friend_screen.dart - FIXED NAVIGATION, FONTS, ICONS & SPACING
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -98,7 +98,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
           ),
         ),
         content: Padding(
-          padding: const EdgeInsets.only(top: 16),
+          padding: EdgeInsets.only(top: ResponsiveUtils.scaledSpacing(context, 16)),
           child: Text(
             'Would you like to select a friend from your contacts?',
             style: AppTextStyles.scaledBody(context),
@@ -409,7 +409,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                 ),
               ),
               content: Padding(
-                padding: const EdgeInsets.only(top: 8),
+                padding: EdgeInsets.only(top: ResponsiveUtils.scaledSpacing(context, 8)),
                 child: Text(
                   'Camera access is permanently denied. Please enable it in Settings to take photos.',
                   style: AppTextStyles.scaledBody(context),
@@ -473,7 +473,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       context: context,
       builder: (context) => Container(
         height: MediaQuery.of(context).size.height * 0.4,
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 16)),
         decoration: const BoxDecoration(
           color: Color(0xFFF8FAFC),
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -481,7 +481,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
         child: Column(
           children: [
             Container(
-              margin: const EdgeInsets.only(bottom: 16),
+              margin: EdgeInsets.only(bottom: ResponsiveUtils.scaledSpacing(context, 16)),
               width: 40,
               height: 4,
               decoration: BoxDecoration(
@@ -523,7 +523,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             ),
             Expanded(
               child: GridView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: EdgeInsets.symmetric(vertical: ResponsiveUtils.scaledSpacing(context, 16)),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 6,
                   mainAxisSpacing: 16,
@@ -559,7 +559,14 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                       child: Center(
                         child: Text(
                           emoji,
-                          style: TextStyle(fontSize: ResponsiveUtils.scaledFontSize(context, 28)),
+                          // 🔧 FIXED: Cap emoji size like home screen (max 32px)
+                          style: TextStyle(
+                            fontSize: ResponsiveUtils.scaledFontSize(
+                              context,
+                              28,
+                              maxScale: 1.15, // Cap at 32px (28 * 1.15)
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -636,7 +643,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
           ),
         ),
         content: Padding(
-          padding: const EdgeInsets.only(top: 16),
+          padding: EdgeInsets.only(top: ResponsiveUtils.scaledSpacing(context, 16)),
           child: Text(
             'Would you like to invite ${friend.name} to use Alongside with you?',
             style: AppTextStyles.scaledBody(context),
@@ -693,7 +700,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
           ),
         ),
         content: Padding(
-          padding: const EdgeInsets.only(top: 8),
+          padding: EdgeInsets.only(top: ResponsiveUtils.scaledSpacing(context, 8)),
           child: Text(
             'Are you sure you want to remove ${widget.friend!.name}? This action cannot be undone.',
             style: AppTextStyles.scaledBody(context),
@@ -743,6 +750,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
+            // 🔧 FIXED: Navigation layout like home screen - title left, buttons right
             SliverToBoxAdapter(
               child: Container(
                 padding: EdgeInsets.fromLTRB(
@@ -753,74 +761,84 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                 ),
                 child: Row(
                   children: [
-                    CupertinoButton(
-                      padding: EdgeInsets.zero,
-                      child: Container(
-                        width: ResponsiveUtils.scaledContainerSize(context, 32), // Reduced from 36
-                        height: ResponsiveUtils.scaledContainerSize(context, 32),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.8),
-                          borderRadius: BorderRadius.circular(8), // Slightly smaller
-                          border: Border.all(
-                            color: AppColors.primary.withOpacity(0.2),
-                            width: 1,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          CupertinoIcons.chevron_left,
-                          size: ResponsiveUtils.scaledIconSize(context, 16), // Reduced from 18
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      onPressed: () => Navigator.pop(context),
+                    // Title on left - like home screen
+                    Text(
+                      widget.friend == null ? 'Add Friend' : 'Edit Friend',
+                      style: AppTextStyles.scaledAppTitle(context),
                     ),
 
-                    Expanded(
-                      child: Center(
-                        child: Text(
-                          widget.friend == null ? 'Add Friend' : 'Edit Friend',
-                          style: AppTextStyles.scaledNavTitle(context).copyWith(
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ),
-                    ),
+                    // Spacer
+                    const Spacer(),
 
-                    CupertinoButton(
-                      padding: EdgeInsets.zero,
-                      onPressed: _saveFriend,
-                      child: Container(
-                        width: ResponsiveUtils.scaledContainerSize(context, 56), // Slightly smaller
-                        height: ResponsiveUtils.scaledContainerSize(context, 32),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
-                          ),
-                          borderRadius: BorderRadius.circular(8), // Consistent with back button
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.primary.withOpacity(0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
+                    // X button and Save button on right
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // X button
+                        CupertinoButton(
+                          padding: EdgeInsets.zero,
+                          child: Container(
+                            width: ResponsiveUtils.scaledContainerSize(context, 32),
+                            height: ResponsiveUtils.scaledContainerSize(context, 32),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.8),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: AppColors.primary.withOpacity(0.2),
+                                width: 1,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                             ),
-                          ],
+                            child: Icon(
+                              CupertinoIcons.xmark,
+                              size: ResponsiveUtils.scaledIconSize(context, 16),
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          onPressed: () => Navigator.pop(context),
                         ),
-                        child: Center(
-                          child: Text(
-                            'Save',
-                            style: AppTextStyles.scaledButton(context).copyWith(
-                              color: Colors.white,
+
+                        SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+
+                        // Save button
+                        CupertinoButton(
+                          padding: EdgeInsets.zero,
+                          onPressed: _saveFriend,
+                          child: Container(
+                            height: ResponsiveUtils.scaledContainerSize(context, 32),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: ResponsiveUtils.scaledSpacing(context, 16),
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primary.withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: Text(
+                                'Save',
+                                style: AppTextStyles.scaledButton(context).copyWith(
+                                  color: Colors.white,
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
@@ -834,14 +852,15 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                 ),
                 child: Column(
                   children: [
+                    // Profile image section
                     Center(
                       child: Column(
                         children: [
                           GestureDetector(
                             onTap: _showProfileOptions,
                             child: Container(
-                              width: ResponsiveUtils.scaledContainerSize(context, 100),
-                              height: ResponsiveUtils.scaledContainerSize(context, 100),
+                              width: ResponsiveUtils.scaledContainerSize(context, 80),
+                              height: ResponsiveUtils.scaledContainerSize(context, 80),
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.9),
                                 shape: BoxShape.circle,
@@ -861,7 +880,14 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                                   ? Center(
                                 child: Text(
                                   _profileImage,
-                                  style: TextStyle(fontSize: ResponsiveUtils.scaledFontSize(context, 50)),
+                                  // 🔧 FIXED: Cap emoji size like home screen
+                                  style: TextStyle(
+                                    fontSize: ResponsiveUtils.scaledFontSize(
+                                      context,
+                                      40,
+                                      maxScale: 1.15, // Cap at 46px (40 * 1.15)
+                                    ),
+                                  ),
                                 ),
                               )
                                   : ClipOval(
@@ -872,14 +898,14 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                               ),
                             ),
                           ),
-                          SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)),
+                          SizedBox(height: ResponsiveUtils.scaledSpacing(context, 8)),
                           CupertinoButton(
                             padding: EdgeInsets.zero,
                             onPressed: _showProfileOptions,
                             child: Container(
                               padding: EdgeInsets.symmetric(
                                 horizontal: ResponsiveUtils.scaledSpacing(context, 12),
-                                vertical: ResponsiveUtils.scaledSpacing(context, 8),
+                                vertical: ResponsiveUtils.scaledSpacing(context, 6),
                               ),
                               decoration: BoxDecoration(
                                 color: AppColors.primary.withOpacity(0.1),
@@ -895,7 +921,8 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                                   Icon(
                                     CupertinoIcons.camera,
                                     color: AppColors.primary,
-                                    size: ResponsiveUtils.scaledIconSize(context, 16),
+                                    // 🔧 FIXED: Make camera icon scale properly
+                                    size: ResponsiveUtils.scaledIconSize(context, 14),
                                   ),
                                   SizedBox(width: ResponsiveUtils.scaledSpacing(context, 6)),
                                   Text(
@@ -913,8 +940,9 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                       ),
                     ),
 
-                    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 24)),
+                    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
 
+                    // Basic info section
                     _buildSection(
                       children: [
                         _buildFormRow(
@@ -941,8 +969,9 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                       ],
                     ),
 
-                    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
+                    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)),
 
+                    // Alongside info section
                     _buildSection(
                       children: [
                         _buildFormRow(
@@ -969,8 +998,9 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                       ],
                     ),
 
-                    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 24)),
+                    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
 
+                    // Day selector
                     DaySelectorWidget(
                       initialData: _daySelectionData,
                       reminderTime: _reminderTimeStr,
@@ -989,8 +1019,9 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                       },
                     ),
 
-                    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 24)),
+                    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
 
+                    // Notification settings section
                     _buildSectionHeader('NOTIFICATION SETTINGS'),
 
                     _buildSection(
@@ -1010,8 +1041,9 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                       ],
                     ),
 
-                    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
+                    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)),
 
+                    // Delete button for existing friends
                     if (widget.friend != null)
                       Container(
                         width: double.infinity,
@@ -1025,7 +1057,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                         ),
                         child: CupertinoButton(
                           padding: EdgeInsets.symmetric(
-                            vertical: ResponsiveUtils.scaledSpacing(context, 16),
+                            vertical: ResponsiveUtils.scaledSpacing(context, 12),
                           ),
                           borderRadius: BorderRadius.circular(12),
                           onPressed: () => _showDeleteConfirmation(context),
@@ -1035,7 +1067,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                               Icon(
                                 CupertinoIcons.delete,
                                 color: AppColors.error,
-                                size: ResponsiveUtils.scaledIconSize(context, 18),
+                                size: ResponsiveUtils.scaledIconSize(context, 16),
                               ),
                               SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
                               Text(
@@ -1050,7 +1082,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                         ),
                       ),
 
-                    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 32)),
+                    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 24)),
                   ],
                 ),
               ),
@@ -1106,7 +1138,8 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: ResponsiveUtils.scaledSpacing(context, 16),
-        vertical: ResponsiveUtils.scaledSpacing(context, 12),
+        // 🔧 FIXED: Reduced vertical padding to match home screen density
+        vertical: ResponsiveUtils.scaledSpacing(context, 8), // Reduced from 10
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1116,11 +1149,12 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               top: ResponsiveUtils.scaledSpacing(context, 2),
             ),
             child: Container(
-              width: ResponsiveUtils.scaledContainerSize(context, 32), // Reduced from 38
+              // 🔧 FIXED: Match icon size from home screen
+              width: ResponsiveUtils.scaledContainerSize(context, 32), // Increased from 28
               height: ResponsiveUtils.scaledContainerSize(context, 32),
               decoration: BoxDecoration(
                 color: iconColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8), // Slightly smaller radius
+                borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: iconColor.withOpacity(0.2),
                   width: 1,
@@ -1129,7 +1163,8 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               child: Icon(
                 icon,
                 color: iconColor,
-                size: ResponsiveUtils.scaledIconSize(context, 16), // Reduced from 18
+                // 🔧 FIXED: Match icon size from home screen
+                size: ResponsiveUtils.scaledIconSize(context, 16), // Increased from 14
               ),
             ),
           ),
@@ -1165,17 +1200,19 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       child: Padding(
         padding: EdgeInsets.symmetric(
           horizontal: ResponsiveUtils.scaledSpacing(context, 16),
-          vertical: ResponsiveUtils.scaledSpacing(context, 12),
+          // 🔧 FIXED: Reduced vertical padding
+          vertical: ResponsiveUtils.scaledSpacing(context, 8), // Reduced from 10
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
-              width: ResponsiveUtils.scaledContainerSize(context, 32), // Reduced from 38
+              // 🔧 FIXED: Match icon size from home screen
+              width: ResponsiveUtils.scaledContainerSize(context, 32), // Increased from 28
               height: ResponsiveUtils.scaledContainerSize(context, 32),
               decoration: BoxDecoration(
                 color: iconColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8), // Slightly smaller radius
+                borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: iconColor.withOpacity(0.2),
                   width: 1,
@@ -1184,7 +1221,8 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               child: Icon(
                 icon,
                 color: iconColor,
-                size: ResponsiveUtils.scaledIconSize(context, 16), // Reduced from 18
+                // 🔧 FIXED: Match icon size from home screen
+                size: ResponsiveUtils.scaledIconSize(context, 16), // Increased from 14
               ),
             ),
             SizedBox(width: ResponsiveUtils.scaledSpacing(context, 12)),
@@ -1219,6 +1257,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   }
 }
 
+// Contact picker component with consistent scaling
 class _ContactPickerWithSearch extends StatefulWidget {
   final List<Contact> contacts;
   final Function(Contact) onContactSelected;
@@ -1298,7 +1337,7 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
       child: Column(
         children: [
           Container(
-            margin: const EdgeInsets.only(top: 8),
+            margin: EdgeInsets.only(top: ResponsiveUtils.scaledSpacing(context, 8)),
             width: 40,
             height: 4,
             decoration: BoxDecoration(
@@ -1308,7 +1347,7 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
           ),
 
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 16)),
             child: Row(
               children: [
                 CupertinoButton(
@@ -1331,13 +1370,13 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 60),
+                SizedBox(width: ResponsiveUtils.scaledContainerSize(context, 60)),
               ],
             ),
           ),
 
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.symmetric(horizontal: ResponsiveUtils.scaledSpacing(context, 16)),
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.9),
@@ -1358,11 +1397,11 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
                 controller: _searchController,
                 placeholder: 'Search contacts...',
                 prefix: Padding(
-                  padding: const EdgeInsets.only(left: 12),
+                  padding: EdgeInsets.only(left: ResponsiveUtils.scaledSpacing(context, 12)),
                   child: Icon(
                     CupertinoIcons.search,
                     color: AppColors.primary,
-                    size: ResponsiveUtils.scaledIconSize(context, 18),
+                    size: ResponsiveUtils.scaledIconSize(context, 16),
                   ),
                 ),
                 suffix: _searchController.text.isNotEmpty
@@ -1371,11 +1410,11 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
                   minSize: 0,
                   onPressed: () => _searchController.clear(),
                   child: Padding(
-                    padding: const EdgeInsets.only(right: 12),
+                    padding: EdgeInsets.only(right: ResponsiveUtils.scaledSpacing(context, 12)),
                     child: Icon(
                       CupertinoIcons.clear_circled,
                       color: AppColors.textSecondary,
-                      size: ResponsiveUtils.scaledIconSize(context, 18),
+                      size: ResponsiveUtils.scaledIconSize(context, 16),
                     ),
                   ),
                 )
@@ -1384,7 +1423,10 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
                   color: AppColors.textPrimary,
                 ),
                 decoration: null,
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                padding: EdgeInsets.symmetric(
+                    vertical: ResponsiveUtils.scaledSpacing(context, 12),
+                    horizontal: ResponsiveUtils.scaledSpacing(context, 4)
+                ),
                 placeholderStyle: AppTextStyles.scaledBody(context).copyWith(
                   color: AppColors.textSecondary,
                 ),
@@ -1392,7 +1434,7 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
             ),
           ),
 
-          const SizedBox(height: 16),
+          SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
 
           Expanded(
             child: _filteredContacts.isEmpty
@@ -1402,10 +1444,10 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
                 children: [
                   Icon(
                     CupertinoIcons.person_3,
-                    size: ResponsiveUtils.scaledIconSize(context, 48),
+                    size: ResponsiveUtils.scaledIconSize(context, 40),
                     color: AppColors.textSecondary,
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
                   Text(
                     'No contacts found',
                     style: AppTextStyles.scaledCallout(context).copyWith(
@@ -1421,7 +1463,10 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
                 itemBuilder: (context, index) {
                   final contact = _filteredContacts[index];
                   return Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                    margin: EdgeInsets.symmetric(
+                        horizontal: ResponsiveUtils.scaledSpacing(context, 16),
+                        vertical: ResponsiveUtils.scaledSpacing(context, 2)
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.8),
                       borderRadius: BorderRadius.circular(12),
@@ -1453,8 +1498,8 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
                         ),
                       ),
                       leading: Container(
-                        width: 40,
-                        height: 40,
+                        width: ResponsiveUtils.scaledContainerSize(context, 36),
+                        height: ResponsiveUtils.scaledContainerSize(context, 36),
                         decoration: BoxDecoration(
                           color: contact.photo != null && contact.photo!.isNotEmpty
                               ? null
@@ -1474,7 +1519,7 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
                               return Icon(
                                 CupertinoIcons.person,
                                 color: AppColors.primary,
-                                size: 20,
+                                size: ResponsiveUtils.scaledIconSize(context, 18),
                               );
                             },
                           ),
@@ -1482,14 +1527,14 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
                             : Icon(
                           CupertinoIcons.person,
                           color: AppColors.primary,
-                          size: 20,
+                          size: ResponsiveUtils.scaledIconSize(context, 18),
                         ),
                       ),
                       trailing: contact.phones.isNotEmpty
                           ? Icon(
                         CupertinoIcons.chevron_right,
                         color: AppColors.textSecondary,
-                        size: 16,
+                        size: ResponsiveUtils.scaledIconSize(context, 14),
                       )
                           : null,
                       onTap: contact.phones.isNotEmpty
