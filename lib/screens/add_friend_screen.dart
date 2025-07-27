@@ -341,7 +341,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             },
             child: Text(
               'Choose Emoji',
-              style: AppTextStyles.scaledHeadline(context).copyWith(
+              style: AppTextStyles.scaledCallout(context).copyWith( // 🔧 FIXED: Consistent with other options
                 color: AppColors.primary,
               ),
             ),
@@ -490,6 +490,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               ),
             ),
 
+            // 🔧 FIXED: Simplified header - remove "Choose Emoji" text to prevent overflow
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -502,12 +503,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                     ),
                   ),
                   onPressed: () => Navigator.pop(context),
-                ),
-                Text(
-                  'Choose Emoji',
-                  style: AppTextStyles.scaledHeadline(context).copyWith(
-                    color: AppColors.primary,
-                  ),
                 ),
                 CupertinoButton(
                   padding: EdgeInsets.zero,
@@ -557,14 +552,13 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                         ],
                       ),
                       child: Center(
-                        child: Text(
-                          emoji,
-                          // 🔧 FIXED: Proper emoji scaling like home screen
-                          style: TextStyle(
-                            fontSize: ResponsiveUtils.scaledFontSize(
-                              context,
-                              28,
-                              maxScale: 1.15, // Cap at 32px (28 * 1.15)
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            emoji,
+                            // 🔧 FIXED: Proper emoji sizing that stays within container bounds
+                            style: TextStyle(
+                              fontSize: ResponsiveUtils.scaledContainerSize(context, 40) * 0.6,
                             ),
                           ),
                         ),
@@ -932,15 +926,16 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                               ),
                               child: _isEmoji
                                   ? Center(
-                                child: Text(
-                                  _profileImage,
-                                  // 🔧 FIXED: Proper emoji scaling like home screen
-                                  style: TextStyle(
-                                    fontSize: ResponsiveUtils.scaledFontSize(
-                                      context,
-                                      40,
-                                      maxScale: 1.15, // Cap at 46px (40 * 1.15)
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    _profileImage,
+                                    // 🔧 FIXED: Larger minimum size while keeping FittedBox protection
+                                    style: TextStyle(
+                                      fontSize: ResponsiveUtils.scaledContainerSize(context, 100) * 0.55,
+                                      height: 1.2, // 🔧 FIXED: Slight line height for better centering
                                     ),
+                                    textAlign: TextAlign.center,
                                   ),
                                 ),
                               )
@@ -957,13 +952,14 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                             padding: EdgeInsets.zero,
                             onPressed: _showProfileOptions,
                             child: Container(
+                              // 🔧 FIXED: Smaller, more compact button
                               padding: EdgeInsets.symmetric(
-                                horizontal: ResponsiveUtils.scaledSpacing(context, 12),
-                                vertical: ResponsiveUtils.scaledSpacing(context, 6),
+                                horizontal: ResponsiveUtils.scaledSpacing(context, 10), // Reduced from 12
+                                vertical: ResponsiveUtils.scaledSpacing(context, 6), // Reduced from 8
                               ),
                               decoration: BoxDecoration(
                                 color: AppColors.primary.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(8), // Smaller radius
                                 border: Border.all(
                                   color: AppColors.primary.withOpacity(0.2),
                                   width: 1,
@@ -975,13 +971,13 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                                   Icon(
                                     CupertinoIcons.camera,
                                     color: AppColors.primary,
-                                    // 🔧 FIXED: Proper icon scaling
-                                    size: ResponsiveUtils.scaledIconSize(context, 14),
+                                    // 🔧 FIXED: Smaller icon size
+                                    size: ResponsiveUtils.scaledIconSize(context, 14), // Reduced from 16
                                   ),
-                                  SizedBox(width: ResponsiveUtils.scaledSpacing(context, 6)),
+                                  SizedBox(width: ResponsiveUtils.scaledSpacing(context, 5)), // Reduced from 6
                                   Text(
                                     'Change Profile',
-                                    style: AppTextStyles.scaledSubhead(context).copyWith(
+                                    style: AppTextStyles.scaledCaption(context).copyWith( // Smaller text style
                                       color: AppColors.primary,
                                       fontWeight: FontWeight.w500,
                                     ),
@@ -995,6 +991,9 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                     ),
 
                     SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
+
+                    // 🔧 ADDED: Friend Details section header
+                    _buildSectionHeader('FRIEND DETAILS'),
 
                     // Basic info section
                     _buildSection(
@@ -1025,6 +1024,9 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
 
                     SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)),
 
+                    // 🔧 ADDED: Support Areas section header
+                    _buildSectionHeader('SUPPORT AREAS'),
+
                     // Alongside info section
                     _buildSection(
                       children: [
@@ -1054,6 +1056,9 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
 
                     SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
 
+                    // 🔧 ADDED: Reminder Settings section header
+                    _buildSectionHeader('REMINDER SETTINGS'),
+
                     // Day selector
                     DaySelectorWidget(
                       initialData: _daySelectionData,
@@ -1075,16 +1080,14 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
 
                     SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
 
-                    // Notification settings section
-                    _buildSectionHeader('NOTIFICATION SETTINGS'),
-
+                    // 🔧 REMOVED: Redundant "NOTIFICATION SETTINGS" header - now part of Reminder Settings
                     _buildSection(
                       children: [
                         _buildSwitchRow(
                           icon: CupertinoIcons.rectangle_stack_badge_person_crop,
                           iconColor: AppColors.primary,
-                          title: 'Show in notification area',
-                          subtitle: 'Keep a quick access notification for this friend',
+                          title: 'Quick Access Notification', // 🔧 IMPROVED: Clearer title
+                          subtitle: 'Always-visible notification with call & message buttons', // 🔧 IMPROVED: Clearer description
                           value: _hasPersistentNotification,
                           onChanged: (value) {
                             setState(() {
@@ -1193,7 +1196,8 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: ResponsiveUtils.scaledSpacing(context, 16),
-        vertical: ResponsiveUtils.scaledSpacing(context, 8),
+        // 🔧 FIXED: Reduced vertical padding for tighter spacing
+        vertical: ResponsiveUtils.scaledSpacing(context, 6), // Reduced from 8
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1252,26 +1256,32 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       child: Padding(
         padding: EdgeInsets.symmetric(
           horizontal: ResponsiveUtils.scaledSpacing(context, 16),
-          vertical: ResponsiveUtils.scaledSpacing(context, 8),
+          // 🔧 FIXED: Reduced vertical padding for consistency
+          vertical: ResponsiveUtils.scaledSpacing(context, 6), // Reduced from 8
         ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start, // 🔧 FIXED: Align to top like form fields
           children: [
-            Container(
-              width: ResponsiveUtils.scaledContainerSize(context, 32),
-              height: ResponsiveUtils.scaledContainerSize(context, 32),
-              decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: iconColor.withOpacity(0.2),
-                  width: 1,
-                ),
+            Padding(
+              padding: EdgeInsets.only(
+                top: ResponsiveUtils.scaledSpacing(context, 2), // Align with text baseline
               ),
-              child: Icon(
-                icon,
-                color: iconColor,
-                size: ResponsiveUtils.scaledIconSize(context, 16),
+              child: Container(
+                width: ResponsiveUtils.scaledContainerSize(context, 32),
+                height: ResponsiveUtils.scaledContainerSize(context, 32),
+                decoration: BoxDecoration(
+                  color: iconColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: iconColor.withOpacity(0.2),
+                    width: 1,
+                  ),
+                ),
+                child: Icon(
+                  icon,
+                  color: iconColor,
+                  size: ResponsiveUtils.scaledIconSize(context, 16),
+                ),
               ),
             ),
             SizedBox(width: ResponsiveUtils.scaledSpacing(context, 12)),
@@ -1281,8 +1291,9 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                 children: [
                   Text(
                     title,
-                    style: AppTextStyles.scaledBody(context).copyWith(
+                    style: AppTextStyles.scaledCallout(context).copyWith(
                       color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w500, // 🔧 FIXED: Consistent with other section titles
                     ),
                   ),
                   Text(
@@ -1294,10 +1305,15 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                 ],
               ),
             ),
-            CupertinoSwitch(
-              value: value,
-              onChanged: onChanged,
-              activeColor: AppColors.primary,
+            Padding(
+              padding: EdgeInsets.only(
+                top: ResponsiveUtils.scaledSpacing(context, 8), // Center switch with text content
+              ),
+              child: CupertinoSwitch(
+                value: value,
+                onChanged: onChanged,
+                activeColor: AppColors.primary,
+              ),
             ),
           ],
         ),

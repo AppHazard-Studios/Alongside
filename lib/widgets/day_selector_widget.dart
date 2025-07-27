@@ -84,35 +84,43 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
     showCupertinoModalPopup(
       context: context,
       builder: (context) => Container(
-        height: ResponsiveUtils.scaledContainerSize(context, 250),
+        height: ResponsiveUtils.scaledContainerSize(context, 280), // Increased height
         color: Colors.white,
         child: Column(
           children: [
             Container(
-              height: ResponsiveUtils.scaledContainerSize(context, 50),
+              height: ResponsiveUtils.scaledContainerSize(context, 60), // Increased height
+              padding: EdgeInsets.symmetric(
+                horizontal: ResponsiveUtils.scaledSpacing(context, 16),
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  CupertinoButton(
-                    child: Text(
-                      'Cancel',
-                      style: AppTextStyles.scaledButton(context).copyWith(
-                        color: AppColors.primary,
+                  // 🔧 FIXED: Flexible buttons to prevent cutoff
+                  Flexible(
+                    child: CupertinoButton(
+                      child: Text(
+                        'Cancel',
+                        style: AppTextStyles.scaledButton(context).copyWith(
+                          color: AppColors.primary,
+                        ),
                       ),
+                      onPressed: () => Navigator.pop(context),
                     ),
-                    onPressed: () => Navigator.pop(context),
                   ),
-                  CupertinoButton(
-                    child: Text(
-                      'Done',
-                      style: AppTextStyles.scaledButton(context).copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w600,
+                  Flexible(
+                    child: CupertinoButton(
+                      child: Text(
+                        'Done',
+                        style: AppTextStyles.scaledButton(context).copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
                     ),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
                   ),
                 ],
               ),
@@ -126,6 +134,8 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
                   widget.onTimeChanged(newTimeStr);
                 },
                 use24hFormat: false,
+                // 🔧 FIXED: Use textScaleFactor to make picker scale with accessibility settings
+                itemExtent: ResponsiveUtils.scaledContainerSize(context, 40), // Increased base size
               ),
             ),
           ],
@@ -157,23 +167,29 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start, // 🔧 FIXED: Align to top like form fields
             children: [
-              Container(
-                width: ResponsiveUtils.scaledContainerSize(context, 32),
-                height: ResponsiveUtils.scaledContainerSize(context, 32),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: AppColors.primary.withOpacity(0.2),
-                    width: 1,
-                  ),
+              Padding(
+                padding: EdgeInsets.only(
+                  top: ResponsiveUtils.scaledSpacing(context, 2), // Align with text baseline
                 ),
-                child: Icon(
-                  CupertinoIcons.bell_fill,
-                  color: AppColors.primary,
-                  // 🔧 FIXED: Proper icon scaling
-                  size: ResponsiveUtils.scaledIconSize(context, 16),
+                child: Container(
+                  width: ResponsiveUtils.scaledContainerSize(context, 32),
+                  height: ResponsiveUtils.scaledContainerSize(context, 32),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: AppColors.primary.withOpacity(0.2),
+                      width: 1,
+                    ),
+                  ),
+                  child: Icon(
+                    CupertinoIcons.bell_fill,
+                    color: AppColors.primary,
+                    // 🔧 FIXED: Proper icon scaling
+                    size: ResponsiveUtils.scaledIconSize(context, 16),
+                  ),
                 ),
               ),
               SizedBox(width: ResponsiveUtils.scaledSpacing(context, 12)),
@@ -182,7 +198,7 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Reminder Schedule',
+                      'Schedule', // 🔧 UPDATED: Simplified since we're under "REMINDER SETTINGS" header
                       style: AppTextStyles.scaledCallout(context).copyWith(
                         color: AppColors.textPrimary,
                         fontWeight: FontWeight.w500,
@@ -292,11 +308,19 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
                 ),
               ),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start, // 🔧 FIXED: Align to top
                 children: [
-                  Icon(
-                    CupertinoIcons.bell_fill,
-                    color: AppColors.primary,
-                    size: ResponsiveUtils.scaledIconSize(context, 14),
+                  // 🔧 FIXED: Icon positioned to align with first line of text only
+                  Container(
+                    margin: EdgeInsets.only(
+                      top: ResponsiveUtils.scaledSpacing(context, 1), // Fine-tune alignment with first line
+                    ),
+                    child: Icon(
+                      CupertinoIcons.bell_fill,
+                      color: AppColors.primary,
+                      // 🔧 FIXED: Proper icon scaling
+                      size: ResponsiveUtils.scaledIconSize(context, 16),
+                    ),
                   ),
                   SizedBox(width: ResponsiveUtils.scaledSpacing(context, 10)),
                   Expanded(
@@ -334,11 +358,19 @@ class _DaySelectorWidgetState extends State<DaySelectorWidget> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start, // 🔧 FIXED: Align to top
                 children: [
-                  Icon(
-                    CupertinoIcons.bell_slash,
-                    color: AppColors.textSecondary,
-                    size: ResponsiveUtils.scaledIconSize(context, 14),
+                  // 🔧 FIXED: Icon positioned to align with first line of text only
+                  Container(
+                    margin: EdgeInsets.only(
+                      top: ResponsiveUtils.scaledSpacing(context, 1), // Fine-tune alignment with first line
+                    ),
+                    child: Icon(
+                      CupertinoIcons.bell_slash,
+                      color: AppColors.textSecondary,
+                      // 🔧 FIXED: Proper icon scaling
+                      size: ResponsiveUtils.scaledIconSize(context, 16),
+                    ),
                   ),
                   SizedBox(width: ResponsiveUtils.scaledSpacing(context, 10)),
                   Expanded( // 🔧 FIXED: Expanded to prevent overflow

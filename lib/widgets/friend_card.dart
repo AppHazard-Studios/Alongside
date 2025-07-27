@@ -650,7 +650,7 @@ class _FriendCardNewState extends State<FriendCardNew>
             child: Text(
               widget.friend.profileImage,
               style: TextStyle(
-                fontSize: containerSize * 0.45,
+                fontSize: containerSize * 0.55,
               ),
             ),
           ),

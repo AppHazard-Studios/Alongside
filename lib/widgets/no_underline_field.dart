@@ -34,18 +34,22 @@ class NoUnderlineField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Label - Using proper iOS Callout style
+        // Label - Bold black for main form labels (iOS standard)
         Text(
           label,
-          style: AppTextStyles.scaledFormLabel(context),
+          style: AppTextStyles.scaledSubhead(context).copyWith(
+            // 🔧 FIXED: Bold black for form field labels
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w600,
+          ),
         ),
-        SizedBox(height: ResponsiveUtils.scaledSpacing(context, 4)),
+        SizedBox(height: ResponsiveUtils.scaledSpacing(context, 2)), // Reduced from 4
 
-        // 🔧 FIXED: Proper text field alignment and centering
+        // 🔧 FIXED: Reduced container height for tighter spacing
         Container(
-          // Ensure minimum height for touch targets
+          // Smaller minimum height for tighter layout
           constraints: BoxConstraints(
-            minHeight: ResponsiveUtils.scaledFormHeight(context, baseHeight: 36),
+            minHeight: ResponsiveUtils.scaledFormHeight(context, baseHeight: 32), // Reduced from 36
           ),
           // Center the text field content vertically
           alignment: Alignment.centerLeft,
@@ -58,9 +62,9 @@ class NoUnderlineField extends StatelessWidget {
             maxLines: maxLines,
             minLines: minLines,
             style: AppTextStyles.scaledFormInput(context),
-            // 🔧 FIXED: Proper vertical centering with responsive padding
+            // 🔧 FIXED: Reduced padding for tighter, more iOS-like spacing
             padding: EdgeInsets.symmetric(
-              vertical: ResponsiveUtils.scaledSpacing(context, 6), // Reduced for better centering
+              vertical: ResponsiveUtils.scaledSpacing(context, 4), // Reduced from 6
               horizontal: 0,
             ),
             decoration: null,
