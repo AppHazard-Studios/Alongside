@@ -276,7 +276,7 @@ class _HomeScreenNewState extends State<HomeScreenNew>
     );
   }
 
-  // 🔧 FIXED: Header with proper constraints to prevent overflow
+  // 🔧 FIXED: Header with greeting text that wraps properly
   Widget _buildIntegratedHeader(List<Friend> allFriends) {
     final hour = DateTime.now().hour;
     String greeting = hour < 12 ? "Good morning" : (hour < 17 ? "Good afternoon" : "Good evening");
@@ -292,7 +292,7 @@ class _HomeScreenNewState extends State<HomeScreenNew>
       ),
       child: Column(
         children: [
-          // 🔧 FIXED: Simplified header with proper spacing
+          // Header with consistent title sizing
           Row(
             children: [
               // Title area - takes available space
@@ -300,7 +300,7 @@ class _HomeScreenNewState extends State<HomeScreenNew>
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Title with overflow protection
+                    // Title with overflow protection - RESTORED
                     Flexible(
                       child: FittedBox(
                         fit: BoxFit.scaleDown,
@@ -445,129 +445,63 @@ class _HomeScreenNewState extends State<HomeScreenNew>
               ),
               child: Column(
                 children: [
-                  // 🔧 FIXED: Dynamic responsive layout that adapts to text scaling
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      // Calculate if we have enough space for horizontal layout
-                      final textScale = MediaQuery.of(context).textScaleFactor;
-                      final needsVerticalLayout = textScale > 1.15 || constraints.maxWidth < 350;
+                  // 🔧 FIXED: Natural greeting layout - let it flow properly
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: ResponsiveUtils.scaledContainerSize(context, 42),
+                        height: ResponsiveUtils.scaledContainerSize(context, 42),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          iconData,
+                          color: AppColors.primary,
+                          size: ResponsiveUtils.scaledIconSize(context, 22),
+                        ),
+                      ),
+                      SizedBox(width: ResponsiveUtils.scaledSpacing(context, 12)),
 
-                      if (needsVerticalLayout) {
-                        // Vertical layout for larger text or narrow screens
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Greeting row with properly scaling icon
-                            Row(
-                              children: [
-                                Container(
-                                  width: ResponsiveUtils.scaledContainerSize(context, 42), // Bigger base size
-                                  height: ResponsiveUtils.scaledContainerSize(context, 42),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Icon(
-                                    iconData,
-                                    color: AppColors.primary,
-                                    size: ResponsiveUtils.scaledIconSize(context, 22), // Bigger base size
-                                  ),
-                                ),
-                                SizedBox(width: ResponsiveUtils.scaledSpacing(context, 12)),
-                                Expanded(
-                                  child: Text(
-                                    greeting,
-                                    style: AppTextStyles.scaledTitle3(context).copyWith(
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                      // 🔧 FIXED: Let greeting take available space, naturally wrap when it hits stats
+                      Expanded(
+                        child: Text(
+                          greeting,
+                          style: AppTextStyles.scaledTitle3(context).copyWith(
+                            color: AppColors.textPrimary,
+                          ),
+                          maxLines: 2, // Allow wrapping when needed
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
 
-                            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)),
+                      SizedBox(width: ResponsiveUtils.scaledSpacing(context, 12)),
 
-                            // Stats row below - centered when stacked
-                            Center(
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  _buildInlineStatChip(
-                                    icon: CupertinoIcons.bell_fill,
-                                    value: friendsWithReminders.toString(),
-                                    color: AppColors.warning, // 🔧 FIXED: Orange for reminders everywhere
-                                  ),
-                                  SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
-                                  _buildInlineStatChip(
-                                    icon: CupertinoIcons.bubble_left_bubble_right_fill,
-                                    value: _messagesSent.toString(),
-                                    color: AppColors.primary, // Blue matches message buttons
-                                  ),
-                                  SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
-                                  _buildInlineStatChip(
-                                    icon: CupertinoIcons.phone_fill,
-                                    value: _callsMade.toString(),
-                                    color: AppColors.tertiary, // Green matches call buttons
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        );
-                      } else {
-                        // Horizontal layout for normal text sizes
-                        return Row(
-                          children: [
-                            Container(
-                              width: ResponsiveUtils.scaledContainerSize(context, 42), // Bigger base size
-                              height: ResponsiveUtils.scaledContainerSize(context, 42),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Icon(
-                                iconData,
-                                color: AppColors.primary,
-                                size: ResponsiveUtils.scaledIconSize(context, 22), // Bigger base size
-                              ),
-                            ),
-                            SizedBox(width: ResponsiveUtils.scaledSpacing(context, 12)),
-                            Expanded(
-                              child: Text(
-                                greeting,
-                                style: AppTextStyles.scaledTitle3(context).copyWith(
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                            ),
-
-                            // Stats on the same row when there's space
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                _buildInlineStatChip(
-                                  icon: CupertinoIcons.bell_fill,
-                                  value: friendsWithReminders.toString(),
-                                  color: AppColors.warning, // 🔧 FIXED: Orange for reminders everywhere
-                                ),
-                                SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
-                                _buildInlineStatChip(
-                                  icon: CupertinoIcons.bubble_left_bubble_right_fill,
-                                  value: _messagesSent.toString(),
-                                  color: AppColors.primary, // Blue matches message buttons
-                                ),
-                                SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
-                                _buildInlineStatChip(
-                                  icon: CupertinoIcons.phone_fill,
-                                  value: _callsMade.toString(),
-                                  color: AppColors.tertiary, // Green matches call buttons
-                                ),
-                              ],
-                            ),
-                          ],
-                        );
-                      }
-                    },
+                      // Stats stay on the same row - they'll naturally push text to wrap
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildInlineStatChip(
+                            icon: CupertinoIcons.bell_fill,
+                            value: friendsWithReminders.toString(),
+                            color: AppColors.warning,
+                          ),
+                          SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+                          _buildInlineStatChip(
+                            icon: CupertinoIcons.bubble_left_bubble_right_fill,
+                            value: _messagesSent.toString(),
+                            color: AppColors.primary,
+                          ),
+                          SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+                          _buildInlineStatChip(
+                            icon: CupertinoIcons.phone_fill,
+                            value: _callsMade.toString(),
+                            color: AppColors.tertiary,
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -578,7 +512,7 @@ class _HomeScreenNewState extends State<HomeScreenNew>
     );
   }
 
-  // 🔧 NEW: Compact inline stat chips - just icon and number
+  // Vertical stat chips to prevent wrapping on smaller screens
   Widget _buildInlineStatChip({
     required IconData icon,
     required String value,
@@ -586,8 +520,8 @@ class _HomeScreenNewState extends State<HomeScreenNew>
   }) {
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: ResponsiveUtils.scaledSpacing(context, 8),
-        vertical: ResponsiveUtils.scaledSpacing(context, 6),
+        horizontal: ResponsiveUtils.scaledSpacing(context, 10), // Slightly more horizontal padding
+        vertical: ResponsiveUtils.scaledSpacing(context, 8), // More vertical padding for balance
       ),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
@@ -597,15 +531,15 @@ class _HomeScreenNewState extends State<HomeScreenNew>
           width: 0.5,
         ),
       ),
-      child: Row(
+      child: Column( // Vertical layout for compact horizontal space
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             icon,
             color: color,
-            size: ResponsiveUtils.scaledIconSize(context, 14),
+            size: ResponsiveUtils.scaledIconSize(context, 16), // Slightly bigger icon for vertical layout
           ),
-          SizedBox(width: ResponsiveUtils.scaledSpacing(context, 4)),
+          SizedBox(height: ResponsiveUtils.scaledSpacing(context, 4)), // Vertical spacing instead of horizontal
           Text(
             value,
             style: AppTextStyles.scaledFootnote(context).copyWith(
@@ -628,13 +562,13 @@ class _HomeScreenNewState extends State<HomeScreenNew>
       padding: EdgeInsets.zero,
       onPressed: onPressed,
       child: Container(
-        width: ResponsiveUtils.scaledContainerSize(context, 32), // Reduced from 36
-        height: ResponsiveUtils.scaledContainerSize(context, 32), // Reduced from 36
+        width: ResponsiveUtils.scaledContainerSize(context, 32),
+        height: ResponsiveUtils.scaledContainerSize(context, 32),
         decoration: BoxDecoration(
           color: isActive
               ? AppColors.primary
               : Colors.white.withOpacity(0.8),
-          borderRadius: BorderRadius.circular(8), // Slightly smaller radius
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: AppColors.primary.withOpacity(isActive ? 0.8 : 0.2),
             width: 1,
@@ -651,12 +585,12 @@ class _HomeScreenNewState extends State<HomeScreenNew>
         ),
         child: showSpinner
             ? CupertinoActivityIndicator(
-          radius: 6, // Smaller spinner
+          radius: 6,
           color: isActive ? Colors.white : AppColors.primary,
         )
             : Icon(
           icon,
-          size: ResponsiveUtils.scaledIconSize(context, 16), // Reduced from 18
+          size: ResponsiveUtils.scaledIconSize(context, 16),
           color: isActive ? Colors.white : AppColors.primary,
         ),
       ),
