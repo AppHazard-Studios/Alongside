@@ -722,7 +722,7 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
   }
 
   Widget _buildProfileImage() {
-    final containerSize = ResponsiveUtils.scaledContainerSize(context, 40); // Reduced from 48
+    final containerSize = ResponsiveUtils.scaledContainerSize(context, 40);
 
     return Container(
       width: containerSize,
@@ -739,9 +739,16 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
       ),
       child: widget.friend.isEmoji
           ? Center(
-        child: Text(
-          widget.friend.profileImage,
-          style: TextStyle(fontSize: ResponsiveUtils.scaledFontSize(context, 20)), // Reduced from 24
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            widget.friend.profileImage,
+            style: TextStyle(
+              fontSize: containerSize * 0.55,
+              height: 1.2,
+            ),
+            textAlign: TextAlign.center,
+          ),
         ),
       )
           : ClipOval(

@@ -221,8 +221,15 @@ class AppTextStyles {
   static TextStyle scaledTitle1(BuildContext context) => scaledTextStyle(context, title1);
   static TextStyle scaledTitle2(BuildContext context) => scaledTextStyle(context, title2);
   static TextStyle scaledTitle3(BuildContext context) => scaledTextStyle(context, title3);
-  static TextStyle scaledAppTitle(BuildContext context) => scaledTextStyle(context, appTitle);
-  static TextStyle scaledNavTitle(BuildContext context) => scaledTextStyle(context, navTitle);
+  static TextStyle scaledAppTitle(BuildContext context) {
+    final baseStyle = appTitle;
+    final scaledSize = ResponsiveUtils.scaledFontSize(context, baseStyle.fontSize ?? 28);
+
+    // Hard cap at 32pt to keep headers consistent across all screens
+    final cappedSize = scaledSize.clamp(28.0, 28.0);
+
+    return baseStyle.copyWith(fontSize: cappedSize);
+  }  static TextStyle scaledNavTitle(BuildContext context) => scaledTextStyle(context, navTitle);
 
   // Content
   static TextStyle scaledHeadline(BuildContext context) => scaledTextStyle(context, headline);

@@ -40,8 +40,8 @@ class ResponsiveUtils {
       BuildContext context,
       double baseSize, {
         double minScale = 0.95,
-        double maxScale = 1.1,
-        double scaleFactor = 0.3,
+        double maxScale = 1.3,
+        double scaleFactor = 0.5,
       }) {
     final textScaleFactor = MediaQuery.of(context).textScaleFactor;
     final adjustedScale = 1.0 + ((textScaleFactor - 1.0) * scaleFactor);

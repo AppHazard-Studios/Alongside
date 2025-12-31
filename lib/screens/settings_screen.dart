@@ -64,102 +64,103 @@ class _SettingsScreenState extends State<SettingsScreen> {
           physics: const BouncingScrollPhysics(),
           slivers: [
             // Header matching add_friend_screen pattern exactly
-        SliverToBoxAdapter(
-        child: Container(
-        padding: EdgeInsets.fromLTRB(
-            ResponsiveUtils.scaledSpacing(context, 16),
-        ResponsiveUtils.scaledSpacing(context, 16),
-        ResponsiveUtils.scaledSpacing(context, 16),
-        ResponsiveUtils.scaledSpacing(context, 12),
-      ),
-      child: Row(
-        children: [
-          // Title area with icon on left - takes available space
-          Expanded(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Icon first
-                Container(
-                  width: ResponsiveUtils.scaledContainerSize(context, 28),
-                  height: ResponsiveUtils.scaledContainerSize(context, 28),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppColors.primary,
-                        AppColors.primary.withOpacity(0.8),
-                      ],
-                    ),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
+            SliverToBoxAdapter(
+              child: Container(
+                padding: EdgeInsets.fromLTRB(
+                  ResponsiveUtils.scaledSpacing(context, 16),
+                  ResponsiveUtils.scaledSpacing(context, 16),
+                  ResponsiveUtils.scaledSpacing(context, 16),
+                  ResponsiveUtils.scaledSpacing(context, 12),
+                ),
+                child: Row(
+                  children: [
+                    // Title area with icon on left - takes available space
+                    Expanded(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Icon first
+                          Container(
+                            width: ResponsiveUtils.scaledContainerSize(context, 28),
+                            height: ResponsiveUtils.scaledContainerSize(context, 28),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppColors.primary,
+                                  AppColors.primary.withOpacity(0.8),
+                                ],
+                              ),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primary.withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              CupertinoIcons.gear_solid,
+                              size: ResponsiveUtils.scaledIconSize(context, 16),
+                              color: Colors.white,
+                            ),
+                          ),
+
+                          SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+
+                          // Title with overflow protection
+                          // Title with size cap AND overflow protection
+                          Flexible(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                'Settings', // or 'Alongside', or 'Send Message', etc.
+                                style: AppTextStyles.scaledAppTitle(context),
+                                maxLines: 1,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: Icon(
-                    CupertinoIcons.gear_solid,
-                    size: ResponsiveUtils.scaledIconSize(context, 16),
-                    color: Colors.white,
-                  ),
-                ),
-
-                SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
-
-                // Title with overflow protection
-                Flexible(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Settings',
-                      style: AppTextStyles.scaledAppTitle(context),
-                      maxLines: 1,
                     ),
-                  ),
-                ),
-              ],
-            ),
-          ),
 
-          // Fixed spacing between title and X button
-          SizedBox(width: ResponsiveUtils.scaledSpacing(context, 16)),
+                    // Fixed spacing between title and X button
+                    SizedBox(width: ResponsiveUtils.scaledSpacing(context, 16)),
 
-          // X button
-          CupertinoButton(
-            padding: EdgeInsets.zero,
-            child: Container(
-              width: ResponsiveUtils.scaledContainerSize(context, 32),
-              height: ResponsiveUtils.scaledContainerSize(context, 32),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.8),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: AppColors.primary.withOpacity(0.2),
-                  width: 1,
+                    // X button
+                    CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      child: Container(
+                        width: ResponsiveUtils.scaledContainerSize(context, 32),
+                        height: ResponsiveUtils.scaledContainerSize(context, 32),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.8),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: AppColors.primary.withOpacity(0.2),
+                            width: 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          CupertinoIcons.xmark,
+                          size: ResponsiveUtils.scaledIconSize(context, 16),
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Icon(
-                CupertinoIcons.xmark,
-                size: ResponsiveUtils.scaledIconSize(context, 16),
-                color: AppColors.primary,
               ),
             ),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ],
-      ),
-    ),
-    ),
 
             SliverToBoxAdapter(
               child: Padding(
@@ -243,10 +244,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   color: AppColors.textSecondary,
                                 ),
                                 SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
-                                Text(
-                                  'Last backup: $_lastBackupDate',
-                                  style: AppTextStyles.scaledSubhead(context).copyWith(
-                                    color: AppColors.textSecondary,
+                                Expanded(
+                                  child: Text(
+                                    'Last backup: $_lastBackupDate',
+                                    style: AppTextStyles.scaledSubhead(context).copyWith(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ],
