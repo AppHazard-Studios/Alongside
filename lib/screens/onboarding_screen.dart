@@ -96,25 +96,26 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       child: SafeArea(
         child: Column(
           children: [
-            // Skip button
+            // Skip button - only show on pages 1 and 2
             Padding(
               padding: const EdgeInsets.all(20),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  CupertinoButton(
-                    padding: EdgeInsets.zero,
-                    onPressed: _skipOnboarding,
-                    child: Text(
-                      _currentPage == 2 ? 'Done' : 'Skip',
-                      style: const TextStyle(
-                        color: AppColors.primary,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: '.SF Pro Text',
+                  if (_currentPage < 2)
+                    CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: _skipOnboarding,
+                      child: Text(
+                        'Skip',
+                        style: const TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: '.SF Pro Text',
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -133,22 +134,22 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                     illustration: Illustrations.friendsIllustration(size: 200),
                     title: 'Welcome to Alongside',
                     description:
-                        'A simple way to walk alongside your friends through life\'s ups and downs.',
+                    'A simple way to walk alongside your friends through life\'s ups and downs.',
                     color: AppColors.primary,
                   ),
                   _buildPage(
                     illustration:
-                        Illustrations.messagingIllustration(size: 200),
+                    Illustrations.messagingIllustration(size: 200),
                     title: 'Stay Connected',
                     description:
-                        'Send thoughtful messages and check in with reminders that help you be present when it matters most.',
+                    'Send thoughtful messages and check in with reminders that help you be present when it matters most.',
                     color: AppColors.secondary,
                   ),
                   _buildPage(
                     illustration: Illustrations.reminderIllustration(size: 200),
                     title: 'Never Forget',
                     description:
-                        'Set gentle reminders to reach out, because the best friendships are built one conversation at a time.',
+                    'Set gentle reminders to reach out, because the best friendships are built one conversation at a time.',
                     color: AppColors.accent,
                     showAddFriendButton: true,
                   ),
@@ -156,71 +157,74 @@ class _OnboardingScreenState extends State<OnboardingScreen>
               ),
             ),
 
-            // Page indicators and next button
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  // Page indicators
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(3, (index) {
-                      return AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        height: 8,
-                        width: _currentPage == index ? 24 : 8,
-                        decoration: BoxDecoration(
-                          color: _currentPage == index
-                              ? AppColors.primary
-                              : AppColors.primary.withOpacity(0.3),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      );
-                    }),
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // Next/Get Started button
-                  AnimatedBuilder(
-                    animation: _scaleAnimation,
-                    builder: (context, child) {
-                      return Transform.scale(
-                        scale: _scaleAnimation.value,
-                        child: CupertinoButton(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 32, vertical: 16),
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(16),
-                          onPressed: _nextPage,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                _currentPage == 2 ? 'Get Started' : 'Next',
-                                style: const TextStyle(
-                                  color: CupertinoColors.white,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 16,
-                                  fontFamily: '.SF Pro Text',
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              const Icon(
-                                CupertinoIcons.arrow_right,
-                                color: CupertinoColors.white,
-                                size: 18,
-                              ),
-                            ],
+            // Page indicators and next button - only show on pages 1 and 2
+            if (_currentPage < 2)
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    // Page indicators
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(3, (index) {
+                        return AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          height: 8,
+                          width: _currentPage == index ? 24 : 8,
+                          decoration: BoxDecoration(
+                            color: _currentPage == index
+                                ? AppColors.primary
+                                : AppColors.primary.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(4),
                           ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
+                        );
+                      }),
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    // Next button
+                    AnimatedBuilder(
+                      animation: _scaleAnimation,
+                      builder: (context, child) {
+                        return Transform.scale(
+                          scale: _scaleAnimation.value,
+                          child: CupertinoButton(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 32, vertical: 16),
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(16),
+                            onPressed: _nextPage,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Next',
+                                  style: const TextStyle(
+                                    color: CupertinoColors.white,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 16,
+                                    fontFamily: '.SF Pro Text',
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                const Icon(
+                                  CupertinoIcons.arrow_right,
+                                  color: CupertinoColors.white,
+                                  size: 18,
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              )
+            else
+              const SizedBox(height: 20),
           ],
         ),
       ),

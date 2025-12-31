@@ -34,12 +34,12 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
 
   final List<String> _categories = [
     'Favorites',
+    'Custom',
     'Check-ins',
     'Support & Struggle',
     'Confession',
     'Celebration',
     'Prayer Requests',
-    'Custom',
   ];
 
   @override
@@ -112,7 +112,7 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
           : SafeArea(
         child: Column(
           children: [
-            // 🔧 FIXED: Header matching home screen and add friend patterns
+            // Header matching home screen pattern
             Container(
               padding: EdgeInsets.fromLTRB(
                 ResponsiveUtils.scaledSpacing(context, 16),
@@ -122,7 +122,60 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               ),
               child: Row(
                 children: [
-                  // Back button - consistent with home screen sizing
+                  // Title area with icon on left - takes available space
+                  Expanded(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Icon first
+                        Container(
+                          width: ResponsiveUtils.scaledContainerSize(context, 28),
+                          height: ResponsiveUtils.scaledContainerSize(context, 28),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                AppColors.primary,
+                                AppColors.primary.withOpacity(0.8),
+                              ],
+                            ),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primary.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            CupertinoIcons.chat_bubble_fill,
+                            size: ResponsiveUtils.scaledIconSize(context, 16),
+                            color: Colors.white,
+                          ),
+                        ),
+
+                        SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+
+                        // Title with overflow protection
+                        Flexible(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Send Message',
+                              style: AppTextStyles.scaledAppTitle(context),
+                              maxLines: 1,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Fixed spacing between title and close button
+                  SizedBox(width: ResponsiveUtils.scaledSpacing(context, 16)),
+
+                  // Close button on right
                   CupertinoButton(
                     padding: EdgeInsets.zero,
                     child: Container(
@@ -144,44 +197,23 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                         ],
                       ),
                       child: Icon(
-                        CupertinoIcons.chevron_left,
+                        CupertinoIcons.xmark,
                         color: AppColors.primary,
                         size: ResponsiveUtils.scaledIconSize(context, 16),
                       ),
                     ),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
-
-                  SizedBox(width: ResponsiveUtils.scaledSpacing(context, 16)),
-
-                  // Title - expandable with proper overflow handling
-                  Expanded(
-                    child: Center(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          'Send Message',
-                          style: AppTextStyles.scaledNavTitle(context).copyWith(
-                            color: AppColors.primary,
-                          ),
-                          maxLines: 1,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // Right side spacer for balance
-                  SizedBox(width: ResponsiveUtils.scaledContainerSize(context, 48)),
                 ],
               ),
             ),
 
-            // Friend info card - consistent styling
+            // Friend info card
             Container(
               margin: EdgeInsets.symmetric(
                 horizontal: ResponsiveUtils.scaledSpacing(context, 16),
               ),
-              padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 14)), // Reduced from 16
+              padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 14)),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.9),
                 borderRadius: BorderRadius.circular(16),
@@ -234,12 +266,12 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                       widget.friend.helpingWith!.isNotEmpty) ||
                       (widget.friend.theyHelpingWith != null &&
                           widget.friend.theyHelpingWith!.isNotEmpty)) ...[
-                    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)), // Reduced from 16
+                    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)),
                     Container(
                       height: 0.5,
                       color: AppColors.primary.withOpacity(0.1),
                     ),
-                    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)), // Reduced from 16
+                    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)),
                   ],
 
                   if (widget.friend.helpingWith != null &&
@@ -248,7 +280,7 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Container(
-                          width: ResponsiveUtils.scaledContainerSize(context, 24), // Reduced from larger size
+                          width: ResponsiveUtils.scaledContainerSize(context, 24),
                           height: ResponsiveUtils.scaledContainerSize(context, 24),
                           decoration: BoxDecoration(
                             color: AppColors.primary.withOpacity(0.1),
@@ -286,7 +318,7 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                     ),
                     if (widget.friend.theyHelpingWith != null &&
                         widget.friend.theyHelpingWith!.isNotEmpty)
-                      SizedBox(height: ResponsiveUtils.scaledSpacing(context, 10)), // Reduced from 12
+                      SizedBox(height: ResponsiveUtils.scaledSpacing(context, 10)),
                   ],
 
                   if (widget.friend.theyHelpingWith != null &&
@@ -295,7 +327,7 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Container(
-                          width: ResponsiveUtils.scaledContainerSize(context, 24), // Reduced
+                          width: ResponsiveUtils.scaledContainerSize(context, 24),
                           height: ResponsiveUtils.scaledContainerSize(context, 24),
                           decoration: BoxDecoration(
                             color: AppColors.tertiary.withOpacity(0.1),
@@ -336,18 +368,18 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               ),
             ),
 
-            // Instructions - reduced spacing
+            // Instructions
             Padding(
               padding: EdgeInsets.symmetric(
                 horizontal: ResponsiveUtils.scaledSpacing(context, 16),
-                vertical: ResponsiveUtils.scaledSpacing(context, 12), // Reduced
+                vertical: ResponsiveUtils.scaledSpacing(context, 12),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
                     Icons.touch_app,
-                    size: ResponsiveUtils.scaledIconSize(context, 12), // Reduced from 14
+                    size: ResponsiveUtils.scaledIconSize(context, 12),
                     color: AppColors.textSecondary.withOpacity(0.6),
                   ),
                   SizedBox(width: ResponsiveUtils.scaledSpacing(context, 4)),
@@ -361,25 +393,27 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               ),
             ),
 
-            // Page indicators - consistent sizing
+            // Page indicators
             Container(
-              height: ResponsiveUtils.scaledContainerSize(context, 32), // Reduced from 40
-              padding: EdgeInsets.symmetric(vertical: ResponsiveUtils.scaledSpacing(context, 10)), // Reduced from 12
+              height: ResponsiveUtils.scaledContainerSize(context, 32),
+              padding: EdgeInsets.symmetric(
+                  vertical: ResponsiveUtils.scaledSpacing(context, 10)),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(_categories.length, (index) {
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
-                    margin: EdgeInsets.symmetric(horizontal: ResponsiveUtils.scaledSpacing(context, 3)), // Reduced from 4
-                    height: ResponsiveUtils.scaledContainerSize(context, 6), // Reduced from 8
+                    margin: EdgeInsets.symmetric(
+                        horizontal: ResponsiveUtils.scaledSpacing(context, 3)),
+                    height: ResponsiveUtils.scaledContainerSize(context, 6),
                     width: _currentPage == index
-                        ? ResponsiveUtils.scaledContainerSize(context, 20) // Reduced from 24
-                        : ResponsiveUtils.scaledContainerSize(context, 6), // Reduced from 8
+                        ? ResponsiveUtils.scaledContainerSize(context, 20)
+                        : ResponsiveUtils.scaledContainerSize(context, 6),
                     decoration: BoxDecoration(
                       color: _currentPage == index
                           ? AppColors.primary
                           : AppColors.primary.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(3), // Reduced from 4
+                      borderRadius: BorderRadius.circular(3),
                     ),
                   );
                 }),
@@ -410,34 +444,82 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
   Widget _buildCategoryPage(int categoryIndex) {
     final category = _categories[categoryIndex];
 
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: ResponsiveUtils.scaledSpacing(context, 16)),
-      child: Column(
-        children: [
-          Container(
-            margin: EdgeInsets.only(bottom: ResponsiveUtils.scaledSpacing(context, 12)), // Reduced from 16
-            padding: EdgeInsets.symmetric(
-                horizontal: ResponsiveUtils.scaledSpacing(context, 12), // Reduced from 16
-                vertical: ResponsiveUtils.scaledSpacing(context, 6) // Reduced from 8
-            ),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(16), // Reduced from 20
-            ),
-            child: Text(
-              category,
-              style: AppTextStyles.scaledCallout(context).copyWith(
-                fontWeight: FontWeight.w600,
-                color: AppColors.primary,
+    return Stack(
+      children: [
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: ResponsiveUtils.scaledSpacing(context, 16)),
+          child: Column(
+            children: [
+              // Compact header - box only around text
+              Center(
+                child: Container(
+                  margin: EdgeInsets.only(bottom: ResponsiveUtils.scaledSpacing(context, 12)),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: ResponsiveUtils.scaledSpacing(context, 12),
+                      vertical: ResponsiveUtils.scaledSpacing(context, 6)
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    category,
+                    style: AppTextStyles.scaledCallout(context).copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ),
+
+              Expanded(
+                child: _buildCategoryContent(categoryIndex),
+              ),
+            ],
+          ),
+        ),
+
+        // FLOATING BUTTON for Favorites and Custom only
+        if (category == 'Favorites' || category == 'Custom')
+          Positioned(
+            right: ResponsiveUtils.scaledSpacing(context, 20),
+            bottom: ResponsiveUtils.scaledSpacing(context, 20),
+            child: GestureDetector(
+              onTap: () {
+                if (category == 'Favorites') {
+                  _showFavoritePicker();
+                } else if (category == 'Custom') {
+                  _showCustomMessageDialog(context);
+                }
+              },
+              child: Container(
+                width: ResponsiveUtils.scaledContainerSize(context, 56),
+                height: ResponsiveUtils.scaledContainerSize(context, 56),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
+                  ),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withOpacity(0.4),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  category == 'Favorites' ? CupertinoIcons.pencil : CupertinoIcons.add,
+                  size: ResponsiveUtils.scaledIconSize(context, 24),
+                  color: Colors.white,
+                ),
               ),
             ),
           ),
-
-          Expanded(
-            child: _buildCategoryContent(categoryIndex),
-          ),
-        ],
-      ),
+      ],
     );
   }
 
@@ -450,18 +532,18 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
       case 0:
         return _buildFavoritesList();
       case 1:
-        return _buildMessagesList(categorizedMessages['Check-ins'] ?? []);
+        return _buildCustomMessagesList();
       case 2:
+        return _buildMessagesList(categorizedMessages['Check-ins'] ?? []);
+      case 3:
         return _buildMessagesList(
             categorizedMessages['Support & Struggle'] ?? []);
-      case 3:
-        return _buildMessagesList(categorizedMessages['Confession'] ?? []);
       case 4:
-        return _buildMessagesList(categorizedMessages['Celebration'] ?? []);
+        return _buildMessagesList(categorizedMessages['Confession'] ?? []);
       case 5:
-        return _buildMessagesList(categorizedMessages['Prayer Requests'] ?? []);
+        return _buildMessagesList(categorizedMessages['Celebration'] ?? []);
       case 6:
-        return _buildCustomMessagesList();
+        return _buildMessagesList(categorizedMessages['Prayer Requests'] ?? []);
       default:
         return const SizedBox.shrink();
     }
@@ -475,56 +557,21 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
           children: [
             Icon(
               CupertinoIcons.star,
-              size: ResponsiveUtils.scaledIconSize(context, 40), // Reduced from 48
+              size: ResponsiveUtils.scaledIconSize(context, 40),
               color: AppColors.textSecondary.withOpacity(0.3),
             ),
-            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)), // Reduced from 16
+            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)),
             Text(
               'No favorite messages yet',
               style: AppTextStyles.scaledCallout(context).copyWith(
                 color: AppColors.textSecondary,
               ),
             ),
-            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 20)), // Reduced from 24
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
-                ),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: CupertinoButton(
-                padding: EdgeInsets.symmetric(
-                  horizontal: ResponsiveUtils.scaledSpacing(context, 16),
-                  vertical: ResponsiveUtils.scaledSpacing(context, 10), // Reduced from 12
-                ),
-                borderRadius: BorderRadius.circular(12),
-                onPressed: () => _showFavoritePicker(),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      CupertinoIcons.star_fill,
-                      color: Colors.white,
-                      size: ResponsiveUtils.scaledIconSize(context, 14), // Reduced from 16
-                    ),
-                    SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
-                    Text(
-                      'Add Favorites',
-                      style: AppTextStyles.scaledButton(context).copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
+            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 8)),
+            Text(
+              'Tap the + button above to add favorites',
+              style: AppTextStyles.scaledCaption(context).copyWith(
+                color: AppColors.textSecondary,
               ),
             ),
           ],
@@ -532,71 +579,13 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
       );
     }
 
-    return Column(
-      children: [
-        Expanded(
-          child: ListView.builder(
-            padding: EdgeInsets.only(bottom: ResponsiveUtils.scaledSpacing(context, 12)), // Reduced from 16
-            itemCount: _favoriteMessages.length,
-            itemBuilder: (context, index) {
-              final message = _favoriteMessages[index];
-              return _buildMessageCard(message, isFavorite: true);
-            },
-          ),
-        ),
-        Container(
-          padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 12)), // Reduced from 16
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.9),
-            border: Border(
-              top: BorderSide(
-                color: AppColors.primary.withOpacity(0.1),
-                width: 0.5,
-              ),
-            ),
-          ),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
-              ),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: CupertinoButton(
-              padding: EdgeInsets.symmetric(
-                  vertical: ResponsiveUtils.scaledSpacing(context, 10) // Reduced from 14
-              ),
-              borderRadius: BorderRadius.circular(12),
-              onPressed: () => _showFavoritePicker(),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    CupertinoIcons.star_fill,
-                    color: Colors.white,
-                    size: ResponsiveUtils.scaledIconSize(context, 16), // Reduced from 18
-                  ),
-                  SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
-                  Text(
-                    'Edit Favorites',
-                    style: AppTextStyles.scaledButton(context).copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
+    return ListView.builder(
+      padding: EdgeInsets.only(bottom: ResponsiveUtils.scaledSpacing(context, 12)),
+      itemCount: _favoriteMessages.length,
+      itemBuilder: (context, index) {
+        final message = _favoriteMessages[index];
+        return _buildMessageCard(message, isFavorite: true);
+      },
     );
   }
 
@@ -620,45 +609,21 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
           children: [
             Icon(
               CupertinoIcons.bubble_left,
-              size: ResponsiveUtils.scaledIconSize(context, 40), // Reduced from 48
+              size: ResponsiveUtils.scaledIconSize(context, 40),
               color: AppColors.textSecondary.withOpacity(0.3),
             ),
-            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)), // Reduced from 16
+            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)),
             Text(
               'No custom messages yet',
               style: AppTextStyles.scaledCallout(context).copyWith(
                 color: AppColors.textSecondary,
               ),
             ),
-            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 20)), // Reduced from 24
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
-                ),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: CupertinoButton(
-                padding: EdgeInsets.symmetric(
-                  horizontal: ResponsiveUtils.scaledSpacing(context, 16),
-                  vertical: ResponsiveUtils.scaledSpacing(context, 10), // Reduced
-                ),
-                borderRadius: BorderRadius.circular(12),
-                onPressed: () => _showCustomMessageDialog(context),
-                child: Text(
-                  'Add your first message',
-                  style: AppTextStyles.scaledButton(context).copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 8)),
+            Text(
+              'Tap the + button above to create one',
+              style: AppTextStyles.scaledCaption(context).copyWith(
+                color: AppColors.textSecondary,
               ),
             ),
           ],
@@ -666,82 +631,19 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
       );
     }
 
-    return Column(
-      children: [
-        Expanded(
-          child: ListView.builder(
-            padding: EdgeInsets.only(bottom: ResponsiveUtils.scaledSpacing(context, 12)), // Reduced from 16
-            itemCount: _customMessages.length,
-            itemBuilder: (context, index) {
-              final message = _customMessages[index];
-              final isFavorite = _favoriteMessages.contains(message);
-              return _buildMessageCard(
-                message,
-                isFavorite: isFavorite,
-                isCustom: true,
-                customIndex: index,
-              );
-            },
-          ),
-        ),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.9),
-            border: Border(
-              top: BorderSide(
-                color: AppColors.primary.withOpacity(0.1),
-                width: 0.5,
-              ),
-            ),
-          ),
-          child: SafeArea(
-            top: false,
-            child: Padding(
-              padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 12)), // Reduced from 16
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: CupertinoButton(
-                  padding: EdgeInsets.symmetric(
-                      vertical: ResponsiveUtils.scaledSpacing(context, 10) // Reduced from 14
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  onPressed: () => _showCustomMessageDialog(context),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        CupertinoIcons.add,
-                        color: Colors.white,
-                        size: ResponsiveUtils.scaledIconSize(context, 16), // Reduced from 18
-                      ),
-                      SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
-                      Text(
-                        'Add Custom Message',
-                        style: AppTextStyles.scaledButton(context).copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
+    return ListView.builder(
+      padding: EdgeInsets.only(bottom: ResponsiveUtils.scaledSpacing(context, 12)),
+      itemCount: _customMessages.length,
+      itemBuilder: (context, index) {
+        final message = _customMessages[index];
+        final isFavorite = _favoriteMessages.contains(message);
+        return _buildMessageCard(
+          message,
+          isFavorite: isFavorite,
+          isCustom: true,
+          customIndex: index,
+        );
+      },
     );
   }
 
@@ -859,9 +761,19 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
     showCupertinoModalPopup(
       context: context,
       builder: (context) => CupertinoActionSheet(
-        title: Text(
-          message.length > 50 ? '${message.substring(0, 50)}...' : message,
-          style: AppTextStyles.scaledSubhead(context),
+        title: Container(
+          padding: EdgeInsets.symmetric(
+            vertical: ResponsiveUtils.scaledSpacing(context, 8),
+          ),
+          child: Text(
+            message,
+            style: AppTextStyles.scaledCallout(context).copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w600,
+              fontSize: ResponsiveUtils.scaledFontSize(context, 16),
+            ),
+            textAlign: TextAlign.center,
+          ),
         ),
         actions: [
           CupertinoActionSheetAction(
@@ -875,7 +787,7 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                 Icon(
                   CupertinoIcons.bubble_left_fill,
                   color: AppColors.primary,
-                  size: ResponsiveUtils.scaledIconSize(context, 18), // Reduced from 20
+                  size: ResponsiveUtils.scaledIconSize(context, 18),
                 ),
                 SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
                 Text(
@@ -896,7 +808,7 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                 Icon(
                   CupertinoIcons.share,
                   color: AppColors.primary,
-                  size: ResponsiveUtils.scaledIconSize(context, 18), // Reduced from 20
+                  size: ResponsiveUtils.scaledIconSize(context, 18),
                 ),
                 SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
                 Text(
@@ -916,9 +828,46 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                 _updateFavorites(_favoriteMessages);
                 ToastService.showSuccess(context, 'Added to favorites');
               },
-              child: Text(
-                'Add to Favorites',
-                style: AppTextStyles.scaledCallout(context),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    CupertinoIcons.star,
+                    color: AppColors.tertiary,
+                    size: ResponsiveUtils.scaledIconSize(context, 18),
+                  ),
+                  SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+                  Text(
+                    'Add to Favorites',
+                    style: AppTextStyles.scaledCallout(context),
+                  ),
+                ],
+              ),
+            ),
+          if (isFavorite)
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(context);
+                setState(() {
+                  _favoriteMessages.remove(message);
+                });
+                _updateFavorites(_favoriteMessages);
+                ToastService.showSuccess(context, 'Removed from favorites');
+              },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    CupertinoIcons.star_slash,
+                    color: AppColors.secondary,
+                    size: ResponsiveUtils.scaledIconSize(context, 18),
+                  ),
+                  SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+                  Text(
+                    'Remove from Favorites',
+                    style: AppTextStyles.scaledCallout(context),
+                  ),
+                ],
               ),
             ),
           if (isCustom && customIndex != null) ...[
@@ -927,9 +876,41 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                 Navigator.pop(context);
                 _editCustomMessage(context, message, customIndex);
               },
-              child: Text(
-                'Edit Message',
-                style: AppTextStyles.scaledCallout(context),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    CupertinoIcons.pencil,
+                    color: AppColors.primary,
+                    size: ResponsiveUtils.scaledIconSize(context, 18),
+                  ),
+                  SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+                  Text(
+                    'Edit Message',
+                    style: AppTextStyles.scaledCallout(context),
+                  ),
+                ],
+              ),
+            ),
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(context);
+                _deleteCustomMessage(context, message, customIndex);
+              },
+              isDestructiveAction: true,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    CupertinoIcons.trash,
+                    size: ResponsiveUtils.scaledIconSize(context, 18),
+                  ),
+                  SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+                  Text(
+                    'Delete Message',
+                    style: AppTextStyles.scaledCallout(context),
+                  ),
+                ],
               ),
             ),
           ],
@@ -963,9 +944,20 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                 _updateFavorites(_favoriteMessages);
                 ToastService.showSuccess(context, 'Added to favorites');
               },
-              child: Text(
-                'Add to Favorites',
-                style: AppTextStyles.scaledCallout(context),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    CupertinoIcons.star,
+                    color: AppColors.tertiary,
+                    size: ResponsiveUtils.scaledIconSize(context, 18),
+                  ),
+                  SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+                  Text(
+                    'Add to Favorites',
+                    style: AppTextStyles.scaledCallout(context),
+                  ),
+                ],
               ),
             ),
           CupertinoActionSheetAction(
@@ -973,9 +965,20 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               Navigator.pop(context);
               _editCustomMessage(context, message, index);
             },
-            child: Text(
-              'Edit Message',
-              style: AppTextStyles.scaledCallout(context),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  CupertinoIcons.pencil,
+                  color: AppColors.primary,
+                  size: ResponsiveUtils.scaledIconSize(context, 18),
+                ),
+                SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+                Text(
+                  'Edit Message',
+                  style: AppTextStyles.scaledCallout(context),
+                ),
+              ],
             ),
           ),
           CupertinoActionSheetAction(
@@ -984,9 +987,19 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               _deleteCustomMessage(context, message, index);
             },
             isDestructiveAction: true,
-            child: Text(
-              'Delete Message',
-              style: AppTextStyles.scaledCallout(context),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  CupertinoIcons.trash,
+                  size: ResponsiveUtils.scaledIconSize(context, 18),
+                ),
+                SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+                Text(
+                  'Delete Message',
+                  style: AppTextStyles.scaledCallout(context),
+                ),
+              ],
             ),
           ),
         ],
@@ -1051,7 +1064,7 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
       context: context,
       builder: (context) => CupertinoAlertDialog(
         title: Text(
-          'Create Message',
+          'New Message',
           style: AppTextStyles.scaledDialogTitle(context).copyWith(
             color: AppColors.primary,
             fontWeight: FontWeight.w700,
@@ -1059,31 +1072,43 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
         ),
         content: Padding(
           padding: EdgeInsets.only(top: ResponsiveUtils.scaledSpacing(context, 16)),
-          child: CupertinoTextField(
-            controller: textController,
-            placeholder: 'Type your message...',
-            padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 12)),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppColors.primary.withOpacity(0.3),
-                width: 1.5,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CupertinoTextField(
+                controller: textController,
+                placeholder: 'Type your message...',
+                padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 12)),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.primary.withOpacity(0.3),
+                    width: 1.5,
+                  ),
+                ),
+                style: AppTextStyles.scaledCallout(context),
+                placeholderStyle: AppTextStyles.scaledCallout(context).copyWith(
+                  color: AppColors.textSecondary.withOpacity(0.7),
+                ),
+                minLines: 1,
+                maxLines: 5,
+                textCapitalization: TextCapitalization.sentences,
+                autofocus: true,
               ),
-            ),
-            style: AppTextStyles.scaledCallout(context),
-            placeholderStyle: AppTextStyles.scaledCallout(context).copyWith(
-              color: AppColors.textSecondary.withOpacity(0.7),
-            ),
-            minLines: 1,
-            maxLines: 5,
-            textCapitalization: TextCapitalization.sentences,
+              SizedBox(height: ResponsiveUtils.scaledSpacing(context, 8)),
+              Text(
+                'This will be saved to your custom messages',
+                style: AppTextStyles.scaledCaption(context).copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
           ),
         ),
         actions: [
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(context),
-            isDefaultAction: true,
             child: Text(
               'Cancel',
               style: AppTextStyles.scaledButton(context).copyWith(
@@ -1096,16 +1121,21 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
             onPressed: () async {
               if (textController.text.isNotEmpty) {
                 Navigator.pop(context);
+
+                // Save to custom messages
                 final storageService =
                     Provider.of<FriendsProvider>(context, listen: false)
                         .storageService;
                 await storageService.addCustomMessage(textController.text);
                 _loadMessages();
-                ToastService.showSuccess(context, 'Message saved! ✨');
+
+                // Send the message
+                _sendMessage(context, textController.text);
               }
             },
+            isDefaultAction: true,
             child: Text(
-              'Save',
+              'Send',
               style: AppTextStyles.scaledButton(context).copyWith(
                 color: AppColors.primary,
                 fontWeight: FontWeight.w600,
@@ -1116,7 +1146,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
       ),
     );
   }
-
   void _editCustomMessage(BuildContext context, String message, int index) {
     final textController = TextEditingController(text: message);
 

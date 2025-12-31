@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:workmanager/workmanager.dart';
 import '../models/friend.dart';
 import 'storage_service.dart';
 import 'notification_service.dart';
@@ -288,6 +289,30 @@ class BackupService {
     }
   }
 
+  // Clean up all reminder-related data before import
+  static Future<void> _cleanupReminderData() async {
+    try {
+      // Cancel ALL WorkManager tasks
+      await Workmanager().cancelAll();
+      print("🗑️ Cancelled all WorkManager tasks");
+
+      // Clear all reminder-related SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final keysToRemove = prefs.getKeys()
+          .where((key) =>
+      key.startsWith('next_reminder_') ||
+          key.startsWith('last_action_'))
+          .toList();
+
+      for (final key in keysToRemove) {
+        await prefs.remove(key);
+      }
+      print("🗑️ Cleared ${keysToRemove.length} reminder keys");
+    } catch (e) {
+      print("⚠️ Error cleaning up reminder data: $e");
+    }
+  }
+
   // Show export success dialog
   static void _showExportSuccessDialog(BuildContext context,
       {bool savedToDevice = false, String? path}) {
@@ -514,15 +539,18 @@ class BackupService {
               ),
             );
 
+            // CLEANUP OLD DATA FIRST
+            await _cleanupReminderData();
+
             // Import the data
             final provider =
-                Provider.of<FriendsProvider>(context, listen: false);
+            Provider.of<FriendsProvider>(context, listen: false);
             final storageService = provider.storageService;
 
             // Import friends
             final friendsList = (backupData['friends'] as List?)
-                    ?.map((f) => Friend.fromJson(f))
-                    .toList() ??
+                ?.map((f) => Friend.fromJson(f))
+                .toList() ??
                 [];
             await storageService.saveFriends(friendsList);
 
@@ -540,8 +568,17 @@ class BackupService {
                   'calls_made_count', backupData['stats']['callsMade'] ?? 0);
             }
 
-            // Force reload the provider - THIS IS THE KEY CHANGE
+            // Force reload and reschedule all reminders
             await provider.reloadFriends();
+
+            // Reschedule reminders for all friends
+            final notificationService = NotificationService();
+            for (final friend in friendsList) {
+              if (friend.hasReminder) {
+                await notificationService.scheduleReminder(friend);
+              }
+            }
+            print("✅ Rescheduled ${friendsList.where((f) => f.hasReminder).length} reminders");
 
             // Close importing dialog
             if (context.mounted) {
@@ -579,7 +616,6 @@ class BackupService {
                     CupertinoDialogAction(
                       onPressed: () {
                         Navigator.pop(context);
-                        // Just pop to go back, no need to reload entire app
                         Navigator.pop(context);
                       },
                       child: const Text(

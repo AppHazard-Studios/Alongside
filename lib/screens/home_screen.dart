@@ -300,22 +300,7 @@ class _HomeScreenNewState extends State<HomeScreenNew>
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Title with overflow protection - RESTORED
-                    Flexible(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'Alongside',
-                          style: AppTextStyles.scaledAppTitle(context),
-                          maxLines: 1,
-                        ),
-                      ),
-                    ),
-
-                    SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
-
-                    // Heart icon
+                    // Heart icon FIRST
                     Container(
                       width: ResponsiveUtils.scaledContainerSize(context, 28),
                       height: ResponsiveUtils.scaledContainerSize(context, 28),
@@ -339,6 +324,21 @@ class _HomeScreenNewState extends State<HomeScreenNew>
                         CupertinoIcons.heart_fill,
                         size: ResponsiveUtils.scaledIconSize(context, 16),
                         color: Colors.white,
+                      ),
+                    ),
+
+                    SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+
+                    // Title with overflow protection
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Alongside',
+                          style: AppTextStyles.scaledAppTitle(context),
+                          maxLines: 1,
+                        ),
                       ),
                     ),
                   ],
@@ -968,6 +968,7 @@ class _HomeScreenNewState extends State<HomeScreenNew>
     final currentFriends = provider.friends;
 
     if (_isSortedByReminders) {
+      // Restore original order
       if (_originalFriendsOrder != null) {
         provider.reorderFriends(_originalFriendsOrder!);
         ToastService.showSuccess(context, 'Sorted by custom order');
@@ -977,14 +978,12 @@ class _HomeScreenNewState extends State<HomeScreenNew>
         _originalFriendsOrder = null;
       });
     } else {
+      // Save current order
       _originalFriendsOrder = List<Friend>.from(currentFriends);
 
-      final sortedFriends = List<Friend>.from(currentFriends);
-      sortedFriends.sort((a, b) {
-        if (a.hasReminder && !b.hasReminder) return -1;
-        if (!a.hasReminder && b.hasReminder) return 1;
-        return a.name.compareTo(b.name);
-      });
+      // Sort by next reminder proximity
+      final notificationService = NotificationService();
+      final sortedFriends = await notificationService.sortFriendsByReminderProximityOptimized(currentFriends);
 
       provider.reorderFriends(sortedFriends);
       ToastService.showSuccess(context, 'Sorted by reminders');

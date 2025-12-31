@@ -755,27 +755,12 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                 ),
                 child: Row(
                   children: [
-                    // Title with icon - like home screen
+                    // Title area with icon on left - takes available space
                     Expanded(
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // Title with overflow protection
-                          Flexible(
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                widget.friend == null ? 'Add Friend' : 'Edit Friend',
-                                style: AppTextStyles.scaledAppTitle(context),
-                                maxLines: 1,
-                              ),
-                            ),
-                          ),
-
-                          SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
-
-                          // 🔧 FIXED: Added icon like home screen
+                          // Icon first
                           Container(
                             width: ResponsiveUtils.scaledContainerSize(context, 28),
                             height: ResponsiveUtils.scaledContainerSize(context, 28),
@@ -801,6 +786,21 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                                   : CupertinoIcons.person_crop_circle_badge_checkmark,
                               size: ResponsiveUtils.scaledIconSize(context, 16),
                               color: Colors.white,
+                            ),
+                          ),
+
+                          SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+
+                          // Title with overflow protection
+                          Flexible(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                widget.friend == null ? 'Add Friend' : 'Edit Friend',
+                                style: AppTextStyles.scaledAppTitle(context),
+                                maxLines: 1,
+                              ),
                             ),
                           ),
                         ],
@@ -853,7 +853,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                           child: Container(
                             height: ResponsiveUtils.scaledContainerSize(context, 32),
                             constraints: BoxConstraints(
-                              // 🔧 FIXED: Responsive width limits to prevent overflow
                               minWidth: ResponsiveUtils.scaledContainerSize(context, 60),
                               maxWidth: ResponsiveUtils.scaledContainerSize(context, 80),
                             ),
