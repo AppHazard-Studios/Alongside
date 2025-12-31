@@ -1077,7 +1077,7 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
             children: [
               CupertinoTextField(
                 controller: textController,
-                placeholder: 'Type your message...',
+                placeholder: 'Message...',
                 padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 12)),
                 decoration: BoxDecoration(
                   color: Colors.white,
