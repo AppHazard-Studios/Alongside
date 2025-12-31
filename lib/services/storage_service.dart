@@ -14,7 +14,7 @@ class StorageService {
   Future<void> saveFriends(List<Friend> friends) async {
     final prefs = await SharedPreferences.getInstance();
     final friendsJson =
-        friends.map((friend) => jsonEncode(friend.toJson())).toList();
+    friends.map((friend) => jsonEncode(friend.toJson())).toList();
     await prefs.setStringList(_friendsKey, friendsJson);
   }
 

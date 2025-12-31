@@ -698,7 +698,8 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
             if (isCustom) ...[
               GestureDetector(
                 onTap: () =>
-                    _showCustomMessageOptions(context, message, customIndex!),
+                    _showMessageOptions(context, message,
+                        isCustom: isCustom, customIndex: customIndex),
                 child: Container(
                   padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 6)), // Reduced from 8
                   child: Icon(
@@ -935,93 +936,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
     );
   }
 
-  void _showCustomMessageOptions(
-      BuildContext context, String message, int index) {
-    showCupertinoModalPopup(
-      context: context,
-      builder: (context) => CupertinoActionSheet(
-        actions: [
-          if (!_favoriteMessages.contains(message))
-            CupertinoActionSheetAction(
-              onPressed: () {
-                Navigator.pop(context);
-                setState(() {
-                  _favoriteMessages.add(message);
-                });
-                _updateFavorites(_favoriteMessages);
-                ToastService.showSuccess(context, 'Added to favorites');
-              },
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    CupertinoIcons.star,
-                    color: AppColors.tertiary,
-                    size: ResponsiveUtils.scaledIconSize(context, 18),
-                  ),
-                  SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
-                  Text(
-                    'Add to Favorites',
-                    style: AppTextStyles.scaledCallout(context),
-                  ),
-                ],
-              ),
-            ),
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(context);
-              _editCustomMessage(context, message, index);
-            },
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  CupertinoIcons.pencil,
-                  color: AppColors.primary,
-                  size: ResponsiveUtils.scaledIconSize(context, 18),
-                ),
-                SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
-                Text(
-                  'Edit Message',
-                  style: AppTextStyles.scaledCallout(context),
-                ),
-              ],
-            ),
-          ),
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(context);
-              _deleteCustomMessage(context, message, index);
-            },
-            isDestructiveAction: true,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  CupertinoIcons.trash,
-                  size: ResponsiveUtils.scaledIconSize(context, 18),
-                ),
-                SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
-                Text(
-                  'Delete Message',
-                  style: AppTextStyles.scaledCallout(context),
-                ),
-              ],
-            ),
-          ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          onPressed: () => Navigator.pop(context),
-          child: Text(
-            'Cancel',
-            style: AppTextStyles.scaledButton(context).copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 
   void _showFavoritePicker() {
     final provider = Provider.of<FriendsProvider>(context, listen: false);
