@@ -232,32 +232,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           subtitle: 'Restore from backup file',
                           onTap: () => _importData(context),
                         ),
-                        if (_lastBackupDate != null) ...[
-                          _buildDivider(),
-                          Padding(
-                            padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 12)),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  CupertinoIcons.clock,
-                                  size: ResponsiveUtils.scaledIconSize(context, 14),
-                                  color: AppColors.textSecondary,
-                                ),
-                                SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
-                                Expanded(
-                                  child: Text(
-                                    'Last backup: $_lastBackupDate',
-                                    style: AppTextStyles.scaledSubhead(context).copyWith(
-                                      color: AppColors.textSecondary,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
                       ],
                     ),
 
