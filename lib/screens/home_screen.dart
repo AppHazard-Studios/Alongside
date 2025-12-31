@@ -78,6 +78,14 @@ class _HomeScreenNewState extends State<HomeScreenNew>
 
     if (state == AppLifecycleState.resumed) {
       _loadStats();
+
+      // NEW: Force rebuild to refresh all countdown timers
+      if (mounted) {
+        setState(() {
+          // This triggers a rebuild, which will cause all FriendCards
+          // to refresh their countdown displays
+        });
+      }
     }
   }
 

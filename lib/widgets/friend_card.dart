@@ -1,4 +1,5 @@
-// lib/widgets/friend_card.dart - FIXED WITH ORANGE REMINDER INDICATORS
+// lib/widgets/friend_card.dart - FIXED WITH AUTO-REFRESHING COUNTDOWN
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -45,6 +46,9 @@ class _FriendCardNewState extends State<FriendCardNew>
   DateTime? _nextReminderTime;
   bool _isLoadingReminderTime = false;
 
+  // Timer for periodic countdown refresh
+  Timer? _countdownTimer;
+
   @override
   void initState() {
     super.initState();
@@ -62,9 +66,37 @@ class _FriendCardNewState extends State<FriendCardNew>
     }
 
     _loadNextReminderTime();
+
+    // Start periodic refresh every 30 seconds
+    _startCountdownTimer();
   }
 
+  // Start the countdown refresh timer
+  void _startCountdownTimer() {
+    _countdownTimer?.cancel();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) {
+        _refreshCountdownDisplay();
+      }
+    });
+  }
+
+  // Refresh just the display (no rescheduling)
+  void _refreshCountdownDisplay() {
+    final notificationService = NotificationService();
+    notificationService.getNextReminderTime(widget.friend.id).then((nextTime) {
+      if (mounted && nextTime != _nextReminderTime) {
+        setState(() {
+          _nextReminderTime = nextTime;
+        });
+      }
+    });
+  }
+
+  // Load reminder time WITHOUT triggering reschedule
   Future<void> _loadNextReminderTime() async {
+    if (!mounted) return;
+
     setState(() {
       _isLoadingReminderTime = true;
     });
@@ -73,22 +105,11 @@ class _FriendCardNewState extends State<FriendCardNew>
       final notificationService = NotificationService();
       final nextTime = await notificationService.getNextReminderTime(widget.friend.id);
 
-      if (nextTime == null) {
-        await notificationService.scheduleReminder(widget.friend);
-        final newNextTime = await notificationService.getNextReminderTime(widget.friend.id);
-        if (mounted) {
-          setState(() {
-            _nextReminderTime = newNextTime;
-            _isLoadingReminderTime = false;
-          });
-        }
-      } else {
-        if (mounted) {
-          setState(() {
-            _nextReminderTime = nextTime;
-            _isLoadingReminderTime = false;
-          });
-        }
+      if (mounted) {
+        setState(() {
+          _nextReminderTime = nextTime;
+          _isLoadingReminderTime = false;
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -122,17 +143,16 @@ class _FriendCardNewState extends State<FriendCardNew>
     }
   }
 
-  // 🔧 FIXED: Use orange for reminder indicators everywhere
   Color _getReminderColor(DateTime? nextReminder) {
-    if (nextReminder == null) return AppColors.warning; // Orange
+    if (nextReminder == null) return AppColors.warning;
 
     final now = DateTime.now();
     final difference = nextReminder.difference(now);
 
     if (difference.inDays == 0 && difference.inHours <= 1) {
-      return AppColors.error; // Red for urgent
+      return AppColors.error;
     } else {
-      return AppColors.warning; // Orange for normal reminders
+      return AppColors.warning;
     }
   }
 
@@ -151,6 +171,7 @@ class _FriendCardNewState extends State<FriendCardNew>
   @override
   void dispose() {
     _controller.dispose();
+    _countdownTimer?.cancel();
     super.dispose();
   }
 
@@ -446,7 +467,8 @@ class _FriendCardNewState extends State<FriendCardNew>
             color: AppColors.primary.withOpacity(widget.isExpanded ? 0.15 : 0.1),
             width: widget.isExpanded ? 1.5 : 1,
           ),
-          boxShadow: widget.isExpanded ? [
+          boxShadow: widget.isExpanded
+              ? [
             BoxShadow(
               color: Colors.black.withOpacity(0.06),
               blurRadius: 12,
@@ -458,7 +480,8 @@ class _FriendCardNewState extends State<FriendCardNew>
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
-          ] : [
+          ]
+              : [
             BoxShadow(
               color: Colors.black.withOpacity(0.04),
               blurRadius: 8,
@@ -476,13 +499,10 @@ class _FriendCardNewState extends State<FriendCardNew>
                 children: [
                   _buildProfileImage(),
                   SizedBox(width: ResponsiveUtils.scaledSpacing(context, 12)),
-
                   Expanded(
                     child: _buildNameWithReminder(),
                   ),
-
                   SizedBox(width: ResponsiveUtils.scaledSpacing(context, 12)),
-
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -505,20 +525,25 @@ class _FriendCardNewState extends State<FriendCardNew>
                             gradient: LinearGradient(
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
-                              colors: _isMessagePressed ? [
+                              colors: _isMessagePressed
+                                  ? [
                                 AppColors.primary.withOpacity(0.3),
                                 AppColors.primary.withOpacity(0.2),
-                              ] : [
+                              ]
+                                  : [
                                 AppColors.primary.withOpacity(0.15),
                                 AppColors.primary.withOpacity(0.1),
                               ],
                             ),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: AppColors.primary.withOpacity(_isMessagePressed ? 0.4 : 0.2),
+                              color: AppColors.primary
+                                  .withOpacity(_isMessagePressed ? 0.4 : 0.2),
                               width: 1,
                             ),
-                            boxShadow: _isMessagePressed ? [] : [
+                            boxShadow: _isMessagePressed
+                                ? []
+                                : [
                               BoxShadow(
                                 color: AppColors.primary.withOpacity(0.1),
                                 blurRadius: 4,
@@ -534,7 +559,6 @@ class _FriendCardNewState extends State<FriendCardNew>
                         ),
                       ),
                       SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
-
                       GestureDetector(
                         onTapDown: (_) => setState(() => _isCallPressed = true),
                         onTapUp: (_) {
@@ -554,20 +578,25 @@ class _FriendCardNewState extends State<FriendCardNew>
                             gradient: LinearGradient(
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
-                              colors: _isCallPressed ? [
+                              colors: _isCallPressed
+                                  ? [
                                 AppColors.tertiary.withOpacity(0.3),
                                 AppColors.tertiary.withOpacity(0.2),
-                              ] : [
+                              ]
+                                  : [
                                 AppColors.tertiary.withOpacity(0.15),
                                 AppColors.tertiary.withOpacity(0.1),
                               ],
                             ),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: AppColors.tertiary.withOpacity(_isCallPressed ? 0.4 : 0.2),
+                              color: AppColors.tertiary
+                                  .withOpacity(_isCallPressed ? 0.4 : 0.2),
                               width: 1,
                             ),
-                            boxShadow: _isCallPressed ? [] : [
+                            boxShadow: _isCallPressed
+                                ? []
+                                : [
                               BoxShadow(
                                 color: AppColors.tertiary.withOpacity(0.1),
                                 blurRadius: 4,
@@ -587,7 +616,6 @@ class _FriendCardNewState extends State<FriendCardNew>
                 ],
               ),
             ),
-
             AnimatedBuilder(
               animation: _controller,
               builder: (context, child) {
@@ -650,7 +678,7 @@ class _FriendCardNewState extends State<FriendCardNew>
               widget.friend.profileImage,
               style: TextStyle(
                 fontSize: containerSize * 0.55,
-                height: 1.2, // ← ADD THIS
+                height: 1.2,
               ),
               textAlign: TextAlign.center,
             ),
@@ -707,11 +735,9 @@ class _FriendCardNewState extends State<FriendCardNew>
             overflow: TextOverflow.ellipsis,
           ),
         ),
-
         SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
-
         ConstrainedBox(
-          constraints: BoxConstraints(
+          constraints: const BoxConstraints(
             maxWidth: 50,
           ),
           child: Row(
@@ -727,7 +753,6 @@ class _FriendCardNewState extends State<FriendCardNew>
                 ),
               ),
               SizedBox(width: ResponsiveUtils.scaledSpacing(context, 4)),
-
               Flexible(
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
@@ -748,8 +773,10 @@ class _FriendCardNewState extends State<FriendCardNew>
   }
 
   Widget _buildExpandedContent() {
-    final hasAlongsideThem = widget.friend.helpingWith != null && widget.friend.helpingWith!.isNotEmpty;
-    final hasAlongsideYou = widget.friend.theyHelpingWith != null && widget.friend.theyHelpingWith!.isNotEmpty;
+    final hasAlongsideThem =
+        widget.friend.helpingWith != null && widget.friend.helpingWith!.isNotEmpty;
+    final hasAlongsideYou = widget.friend.theyHelpingWith != null &&
+        widget.friend.theyHelpingWith!.isNotEmpty;
 
     if (!hasAlongsideThem && !hasAlongsideYou) {
       return const SizedBox.shrink();
@@ -784,7 +811,6 @@ class _FriendCardNewState extends State<FriendCardNew>
               ),
             ),
           ),
-
           Padding(
             padding: EdgeInsets.fromLTRB(
               ResponsiveUtils.scaledSpacing(context, 16),
@@ -801,7 +827,8 @@ class _FriendCardNewState extends State<FriendCardNew>
                     content: widget.friend.helpingWith!,
                     color: AppColors.primary,
                   ),
-                  if (hasAlongsideYou) SizedBox(height: ResponsiveUtils.scaledSpacing(context, 10)),
+                  if (hasAlongsideYou)
+                    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 10)),
                 ],
                 if (hasAlongsideYou) ...[
                   _buildInfoRow(
@@ -871,7 +898,6 @@ class _FriendCardNewState extends State<FriendCardNew>
                   ),
                 ),
                 SizedBox(height: ResponsiveUtils.scaledSpacing(context, 4)),
-
                 Text(
                   content,
                   style: AppTextStyles.scaledSubhead(context).copyWith(
@@ -906,7 +932,8 @@ class _FriendCardNewState extends State<FriendCardNew>
   }
 
   void _callFriend(BuildContext context) async {
-    final phoneNumber = widget.friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+    final phoneNumber =
+    widget.friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
     try {
       final telUri = Uri.parse('tel:$phoneNumber');
       await launchUrl(
@@ -914,24 +941,26 @@ class _FriendCardNewState extends State<FriendCardNew>
         mode: LaunchMode.externalApplication,
       );
 
-      final storageService = Provider.of<FriendsProvider>(context, listen: false).storageService;
+      final storageService =
+          Provider.of<FriendsProvider>(context, listen: false).storageService;
       await storageService.incrementCallsMade();
 
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt('last_action_${widget.friend.id}', DateTime.now().millisecondsSinceEpoch);
+      await prefs.setInt(
+          'last_action_${widget.friend.id}', DateTime.now().millisecondsSinceEpoch);
 
       final notificationService = NotificationService();
       await notificationService.scheduleReminder(widget.friend);
 
       _loadNextReminderTime();
-
     } catch (e) {
       if (context.mounted) {
         showCupertinoDialog(
           context: context,
           builder: (context) => CupertinoAlertDialog(
             title: const Text('Error'),
-            content: const Text('Unable to open phone app. Please try again later.'),
+            content:
+            const Text('Unable to open phone app. Please try again later.'),
             actions: [
               CupertinoDialogAction(
                 onPressed: () => Navigator.pop(context),
