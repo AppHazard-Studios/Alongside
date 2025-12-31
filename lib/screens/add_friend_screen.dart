@@ -28,7 +28,6 @@ class AddFriendScreen extends StatefulWidget {
 }
 
 class _AddFriendScreenState extends State<AddFriendScreen> {
-  final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _helpingThemWithController = TextEditingController();
@@ -42,20 +41,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
 
   String _reminderTimeStr = "09:00";
 
-  String get _formattedReminderTime {
-    final parts = _reminderTimeStr.split(':');
-    if (parts.length == 2) {
-      int hour = int.tryParse(parts[0]) ?? 9;
-      int minute = int.tryParse(parts[1]) ?? 0;
-
-      final period = hour < 12 ? 'AM' : 'PM';
-      if (hour > 12) hour -= 12;
-      if (hour == 0) hour = 12;
-
-      return '$hour:${minute.toString().padLeft(2, '0')} $period';
-    }
-    return "9:00 AM";
-  }
 
   @override
   void initState() {

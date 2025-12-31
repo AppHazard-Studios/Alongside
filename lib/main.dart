@@ -13,7 +13,6 @@ import 'models/friend.dart';
 import 'services/storage_service.dart';
 import 'providers/friends_provider.dart';
 import 'theme/app_theme.dart';
-import 'screens/call_screen.dart';
 import 'screens/message_screen.dart';
 import 'services/battery_optimization_service.dart';
 
@@ -139,7 +138,6 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
   bool _isLocked = false;
   bool _lockChecked = false;
   final LockService _lockService = LockService();
-  DateTime? _pausedTime;
   Timer? _scheduleCheckTimer;
 
   @override
@@ -170,7 +168,6 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
       case AppLifecycleState.paused:
         print("📱 App paused");
         _lockService.recordBackgroundTime();
-        _pausedTime = DateTime.now();
         break;
 
       case AppLifecycleState.resumed:
@@ -336,7 +333,7 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
             await _lockService.clearBackgroundTime();
 
             // FIXED: Initialize app features only after unlock
-            if (!_scheduleCheckTimer!.isActive ?? true) {
+            if (!_scheduleCheckTimer!.isActive) {
               _initializeAppFeatures();
             }
           },

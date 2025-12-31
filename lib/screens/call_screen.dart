@@ -102,15 +102,6 @@ class _CallScreenState extends State<CallScreen> {
   }
 
   // ADD this method to both MessageScreen and CallScreen classes
-  Future<void> _recordFriendInteraction() async {
-    try {
-      final notificationService = NotificationService();
-      await notificationService.recordFriendInteraction(widget.friend.id);
-      print("📝 Recorded manual interaction with ${widget.friend.name}");
-    } catch (e) {
-      print("❌ Error recording interaction: $e");
-    }
-  }
 
   @override
   Widget build(BuildContext context) {

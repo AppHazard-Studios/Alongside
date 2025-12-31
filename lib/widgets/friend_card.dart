@@ -10,7 +10,6 @@ import '../screens/add_friend_screen.dart';
 import '../screens/message_screen.dart';
 import '../utils/colors.dart';
 import '../providers/friends_provider.dart';
-import '../utils/constants.dart';
 import '../utils/responsive_utils.dart';
 import '../utils/text_styles.dart';
 import '../services/notification_service.dart';

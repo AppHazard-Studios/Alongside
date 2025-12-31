@@ -12,10 +12,6 @@ import '../services/battery_optimization_service.dart';
 import '../services/backup_service.dart';
 import '../services/notification_service.dart';
 import '../providers/friends_provider.dart';
-import '../models/friend.dart';
-import 'package:file_picker/file_picker.dart';
-import 'dart:convert';
-import 'dart:io';
 import '../services/lock_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -27,8 +23,6 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  String? _lastBackupDate;
-  bool _notificationSounds = true;
   bool _lockEnabled = false;
   String? _lockType;
   int _lockCooldownMinutes = 5;
@@ -41,14 +35,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _loadSettings() async {
-    final prefs = await SharedPreferences.getInstance();
     final lockEnabled = await _lockService.isLockEnabled();
     final lockType = await _lockService.getLockType();
     final cooldownMinutes = await _lockService.getCooldownMinutes();
 
     setState(() {
-      _lastBackupDate = prefs.getString('last_backup_date');
-      _notificationSounds = prefs.getBool('notification_sounds') ?? true;
       _lockEnabled = lockEnabled;
       _lockType = lockType;
       _lockCooldownMinutes = cooldownMinutes;
@@ -1343,7 +1334,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final dateStr = '${now.month}/${now.day}/${now.year}';
       await prefs.setString('last_backup_date', dateStr);
       setState(() {
-        _lastBackupDate = dateStr;
       });
     }
   }

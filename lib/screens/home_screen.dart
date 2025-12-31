@@ -11,14 +11,12 @@ import '../utils/responsive_utils.dart';
 import '../widgets/friend_card.dart';
 import '../utils/colors.dart';
 import '../utils/text_styles.dart';
-import '../widgets/illustrations.dart';
 import 'add_friend_screen.dart';
 import 'settings_screen.dart';
 import 'message_screen.dart';
 import '../models/friend.dart';
 import 'onboarding_screen.dart';
 import '../services/storage_service.dart';
-import '../services/battery_optimization_service.dart';
 
 class HomeScreenNew extends StatefulWidget {
   const HomeScreenNew({Key? key}) : super(key: key);
@@ -32,8 +30,6 @@ class _HomeScreenNewState extends State<HomeScreenNew>
   String? _expandedFriendId;
   late AnimationController _animationController;
   late AnimationController _searchAnimationController;
-  late Animation<double> _animation;
-  late Animation<double> _searchAnimation;
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
 
@@ -60,14 +56,6 @@ class _HomeScreenNewState extends State<HomeScreenNew>
       vsync: this,
     );
 
-    _animation = CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.elasticOut,
-    );
-    _searchAnimation = CurvedAnimation(
-      parent: _searchAnimationController,
-      curve: Curves.easeOutCubic,
-    );
 
     _animationController.forward();
     _checkFirstLaunch();

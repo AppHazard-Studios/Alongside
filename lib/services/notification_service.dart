@@ -1,7 +1,5 @@
 // lib/services/notification_service.dart - FIXED WITH PROPER ACTION ROUTING
 import 'dart:io';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' hide RepeatInterval;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
@@ -121,7 +119,6 @@ Future<void> _sendCleanBackgroundNotification(String friendId, String friendName
 
         if (friend.hasReminder) {
           final notificationService = NotificationService();
-          final prefs = await SharedPreferences.getInstance();
 
           // Don't update last_action - this is a reminder, not user interaction
           // Just reschedule for next occurrence

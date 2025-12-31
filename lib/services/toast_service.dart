@@ -68,7 +68,6 @@ class ToastService {
     }
 
     final overlay = Overlay.of(context);
-    if (overlay == null) return;
 
     _isShowing = true;
 

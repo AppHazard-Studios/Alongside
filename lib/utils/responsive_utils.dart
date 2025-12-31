@@ -1,6 +1,5 @@
 // lib/utils/responsive_utils.dart - SMART PROPORTIONAL SCALING
 import 'package:flutter/material.dart';
-import 'dart:math';
 
 class ResponsiveUtils {
   // Smart text scaling - allows limited scaling but keeps it reasonable
