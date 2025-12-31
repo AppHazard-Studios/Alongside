@@ -1,4 +1,4 @@
-// lib/widgets/friend_card.dart - FIXED WITH AUTO-REFRESHING COUNTDOWN
+// lib/widgets/friend_card.dart - FIXED: Timer auto-refresh + checkmark feature
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -14,6 +14,7 @@ import '../providers/friends_provider.dart';
 import '../utils/responsive_utils.dart';
 import '../utils/text_styles.dart';
 import '../services/notification_service.dart';
+import '../services/toast_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class FriendCardNew extends StatefulWidget {
@@ -46,7 +47,7 @@ class _FriendCardNewState extends State<FriendCardNew>
   DateTime? _nextReminderTime;
   bool _isLoadingReminderTime = false;
 
-  // Timer for periodic countdown refresh
+  // FIX: Timer for auto-refresh every 30 seconds
   Timer? _countdownTimer;
 
   @override
@@ -67,22 +68,22 @@ class _FriendCardNewState extends State<FriendCardNew>
 
     _loadNextReminderTime();
 
-    // Start periodic refresh every 30 seconds
+    // FIX: Start auto-refresh timer
     _startCountdownTimer();
   }
 
-  // Start the countdown refresh timer
+  // FIX: Periodic refresh timer
   void _startCountdownTimer() {
     _countdownTimer?.cancel();
     _countdownTimer = Timer.periodic(const Duration(seconds: 30), (_) {
       if (mounted) {
-        _refreshCountdownDisplay();
+        _refreshCountdownOnly();
       }
     });
   }
 
-  // Refresh just the display (no rescheduling)
-  void _refreshCountdownDisplay() {
+  // FIX: Refresh display only - NO rescheduling
+  void _refreshCountdownOnly() {
     final notificationService = NotificationService();
     notificationService.getNextReminderTime(widget.friend.id).then((nextTime) {
       if (mounted && nextTime != _nextReminderTime) {
@@ -93,7 +94,7 @@ class _FriendCardNewState extends State<FriendCardNew>
     });
   }
 
-  // Load reminder time WITHOUT triggering reschedule
+  // FIX: Load time WITHOUT triggering reschedule
   Future<void> _loadNextReminderTime() async {
     if (!mounted) return;
 
@@ -104,6 +105,8 @@ class _FriendCardNewState extends State<FriendCardNew>
     try {
       final notificationService = NotificationService();
       final nextTime = await notificationService.getNextReminderTime(widget.friend.id);
+
+      // FIX: REMOVED the "if null, schedule" logic - that was the bug!
 
       if (mounted) {
         setState(() {
@@ -128,7 +131,7 @@ class _FriendCardNewState extends State<FriendCardNew>
     final difference = nextReminder.difference(now);
 
     if (difference.isNegative) {
-      return 'now';
+      return ''; // Empty when overdue (checkmark shows instead)
     } else if (difference.inDays >= 30) {
       final months = (difference.inDays / 30).round().clamp(1, 6);
       return '${months}mo';
@@ -139,8 +142,14 @@ class _FriendCardNewState extends State<FriendCardNew>
     } else if (difference.inMinutes >= 1) {
       return '${difference.inMinutes}m';
     } else {
-      return 'now';
+      return ''; // Empty when very close (checkmark shows instead)
     }
+  }
+
+  bool _isReminderOverdue(DateTime? nextReminder) {
+    if (nextReminder == null) return false;
+    final now = DateTime.now();
+    return nextReminder.isBefore(now);
   }
 
   Color _getReminderColor(DateTime? nextReminder) {
@@ -171,13 +180,83 @@ class _FriendCardNewState extends State<FriendCardNew>
   @override
   void dispose() {
     _controller.dispose();
-    _countdownTimer?.cancel();
+    _countdownTimer?.cancel(); // FIX: Cancel timer
     super.dispose();
   }
 
   void _toggleExpand() {
     widget.onExpand(widget.friend.id);
     HapticFeedback.lightImpact();
+  }
+
+  // Show confirmation dialog when tapping checkmark
+  void _showMarkAsContactedDialog() {
+    HapticFeedback.lightImpact();
+
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text(
+          'Time to check in with ${widget.friend.name}?',
+          style: AppTextStyles.scaledDialogTitle(context).copyWith(
+            color: AppColors.primary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Not Yet',
+              style: AppTextStyles.scaledButton(context).copyWith(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          CupertinoDialogAction(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _markAsContacted();
+            },
+            child: Text(
+              'Yes',
+              style: AppTextStyles.scaledButton(context).copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Mark as contacted
+  Future<void> _markAsContacted() async {
+    try {
+      final notificationService = NotificationService();
+
+      await notificationService.cancelReminder(widget.friend.id);
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('last_action_${widget.friend.id}', DateTime.now().millisecondsSinceEpoch);
+
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      await notificationService.scheduleReminder(widget.friend);
+
+      await _loadNextReminderTime();
+
+      if (mounted) {
+        ToastService.showSuccess(context, 'Great work! 🙌');
+      }
+    } catch (e) {
+      print("❌ Error marking as contacted: $e");
+      if (mounted) {
+        ToastService.showError(context, 'Failed to update reminder');
+      }
+    }
   }
 
   void _showActionMenu() {
@@ -202,26 +281,21 @@ class _FriendCardNewState extends State<FriendCardNew>
               _navigateToEditScreen(context);
             },
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const SizedBox(
-                  width: 60,
-                  child: Icon(
-                    CupertinoIcons.pencil,
+                Icon(
+                  CupertinoIcons.pencil,
+                  color: AppColors.primary,
+                  size: ResponsiveUtils.scaledIconSize(context, 20),
+                ),
+                SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+                Text(
+                  'Edit',
+                  style: AppTextStyles.scaledHeadline(context).copyWith(
+                    fontWeight: FontWeight.w400,
                     color: AppColors.primary,
-                    size: 22,
                   ),
                 ),
-                Expanded(
-                  child: Text(
-                    'Edit',
-                    textAlign: TextAlign.center,
-                    style: AppTextStyles.scaledHeadline(context).copyWith(
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 60),
               ],
             ),
           ),
@@ -232,26 +306,21 @@ class _FriendCardNewState extends State<FriendCardNew>
                 _showReorderMenu();
               },
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SizedBox(
-                    width: 60,
-                    child: Icon(
-                      CupertinoIcons.arrow_up_arrow_down,
+                  Icon(
+                    CupertinoIcons.arrow_up_arrow_down,
+                    color: AppColors.primary,
+                    size: ResponsiveUtils.scaledIconSize(context, 20),
+                  ),
+                  SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+                  Text(
+                    'Reorder',
+                    style: AppTextStyles.scaledHeadline(context).copyWith(
+                      fontWeight: FontWeight.w400,
                       color: AppColors.primary,
-                      size: 22,
                     ),
                   ),
-                  Expanded(
-                    child: Text(
-                      'Reorder',
-                      textAlign: TextAlign.center,
-                      style: AppTextStyles.scaledHeadline(context).copyWith(
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 60),
                 ],
               ),
             ),
@@ -296,19 +365,9 @@ class _FriendCardNewState extends State<FriendCardNew>
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
-                    CupertinoIcons.arrow_up_to_line,
-                    color: AppColors.primary,
-                    size: 22,
-                  ),
+                  const Icon(CupertinoIcons.arrow_up_to_line, color: AppColors.primary, size: 22),
                   const SizedBox(width: 12),
-                  Text(
-                    'Move to Top',
-                    style: AppTextStyles.scaledHeadline(context).copyWith(
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.primary,
-                    ),
-                  ),
+                  Text('Move to Top', style: AppTextStyles.scaledHeadline(context).copyWith(fontWeight: FontWeight.w400, color: AppColors.primary)),
                 ],
               ),
             ),
@@ -321,19 +380,9 @@ class _FriendCardNewState extends State<FriendCardNew>
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
-                    CupertinoIcons.arrow_up,
-                    color: AppColors.primary,
-                    size: 22,
-                  ),
+                  const Icon(CupertinoIcons.arrow_up, color: AppColors.primary, size: 22),
                   const SizedBox(width: 12),
-                  Text(
-                    'Move Up',
-                    style: AppTextStyles.scaledHeadline(context).copyWith(
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.primary,
-                    ),
-                  ),
+                  Text('Move Up', style: AppTextStyles.scaledHeadline(context).copyWith(fontWeight: FontWeight.w400, color: AppColors.primary)),
                 ],
               ),
             ),
@@ -346,19 +395,9 @@ class _FriendCardNewState extends State<FriendCardNew>
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
-                    CupertinoIcons.arrow_down,
-                    color: AppColors.primary,
-                    size: 22,
-                  ),
+                  const Icon(CupertinoIcons.arrow_down, color: AppColors.primary, size: 22),
                   const SizedBox(width: 12),
-                  Text(
-                    'Move Down',
-                    style: AppTextStyles.scaledHeadline(context).copyWith(
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.primary,
-                    ),
-                  ),
+                  Text('Move Down', style: AppTextStyles.scaledHeadline(context).copyWith(fontWeight: FontWeight.w400, color: AppColors.primary)),
                 ],
               ),
             ),
@@ -371,32 +410,16 @@ class _FriendCardNewState extends State<FriendCardNew>
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
-                    CupertinoIcons.arrow_down_to_line,
-                    color: AppColors.primary,
-                    size: 22,
-                  ),
+                  const Icon(CupertinoIcons.arrow_down_to_line, color: AppColors.primary, size: 22),
                   const SizedBox(width: 12),
-                  Text(
-                    'Move to Bottom',
-                    style: AppTextStyles.scaledHeadline(context).copyWith(
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.primary,
-                    ),
-                  ),
+                  Text('Move to Bottom', style: AppTextStyles.scaledHeadline(context).copyWith(fontWeight: FontWeight.w400, color: AppColors.primary)),
                 ],
               ),
             ),
         ],
         cancelButton: CupertinoActionSheetAction(
           onPressed: () => Navigator.pop(context),
-          child: Text(
-            'Cancel',
-            style: AppTextStyles.scaledHeadline(context).copyWith(
-              fontWeight: FontWeight.w600,
-              color: AppColors.primary,
-            ),
-          ),
+          child: Text('Cancel', style: AppTextStyles.scaledHeadline(context).copyWith(fontWeight: FontWeight.w600, color: AppColors.primary)),
         ),
       ),
     );
@@ -454,12 +477,8 @@ class _FriendCardNewState extends State<FriendCardNew>
       onLongPress: _showActionMenu,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        transform: _isPressed
-            ? Matrix4.translationValues(0, 2, 0)
-            : Matrix4.identity(),
-        margin: EdgeInsets.symmetric(
-          vertical: ResponsiveUtils.scaledSpacing(context, 4),
-        ),
+        transform: _isPressed ? Matrix4.translationValues(0, 2, 0) : Matrix4.identity(),
+        margin: EdgeInsets.symmetric(vertical: ResponsiveUtils.scaledSpacing(context, 4)),
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(widget.isExpanded ? 0.95 : 0.85),
           borderRadius: BorderRadius.circular(16),
@@ -469,26 +488,10 @@ class _FriendCardNewState extends State<FriendCardNew>
           ),
           boxShadow: widget.isExpanded
               ? [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-              spreadRadius: 0,
-            ),
-            BoxShadow(
-              color: AppColors.primary.withOpacity(0.08),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
+            BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 12, offset: const Offset(0, 4)),
+            BoxShadow(color: AppColors.primary.withOpacity(0.08), blurRadius: 6, offset: const Offset(0, 2)),
           ]
-              : [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-              spreadRadius: 0,
-            ),
-          ],
+              : [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2))],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -499,118 +502,14 @@ class _FriendCardNewState extends State<FriendCardNew>
                 children: [
                   _buildProfileImage(),
                   SizedBox(width: ResponsiveUtils.scaledSpacing(context, 12)),
-                  Expanded(
-                    child: _buildNameWithReminder(),
-                  ),
+                  Expanded(child: _buildNameWithReminder()),
                   SizedBox(width: ResponsiveUtils.scaledSpacing(context, 12)),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      GestureDetector(
-                        onTapDown: (_) => setState(() => _isMessagePressed = true),
-                        onTapUp: (_) {
-                          setState(() => _isMessagePressed = false);
-                          HapticFeedback.lightImpact();
-                          _navigateToMessageScreen(context);
-                        },
-                        onTapCancel: () => setState(() => _isMessagePressed = false),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          transform: _isMessagePressed
-                              ? Matrix4.translationValues(0, 1, 0)
-                              : Matrix4.identity(),
-                          width: ResponsiveUtils.scaledContainerSize(context, 32),
-                          height: ResponsiveUtils.scaledContainerSize(context, 32),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: _isMessagePressed
-                                  ? [
-                                AppColors.primary.withOpacity(0.3),
-                                AppColors.primary.withOpacity(0.2),
-                              ]
-                                  : [
-                                AppColors.primary.withOpacity(0.15),
-                                AppColors.primary.withOpacity(0.1),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: AppColors.primary
-                                  .withOpacity(_isMessagePressed ? 0.4 : 0.2),
-                              width: 1,
-                            ),
-                            boxShadow: _isMessagePressed
-                                ? []
-                                : [
-                              BoxShadow(
-                                color: AppColors.primary.withOpacity(0.1),
-                                blurRadius: 4,
-                                offset: const Offset(0, 1),
-                              ),
-                            ],
-                          ),
-                          child: Icon(
-                            CupertinoIcons.bubble_left_fill,
-                            color: AppColors.primary,
-                            size: ResponsiveUtils.scaledIconSize(context, 16),
-                          ),
-                        ),
-                      ),
+                      _buildMessageButton(),
                       SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
-                      GestureDetector(
-                        onTapDown: (_) => setState(() => _isCallPressed = true),
-                        onTapUp: (_) {
-                          setState(() => _isCallPressed = false);
-                          HapticFeedback.lightImpact();
-                          _callFriend(context);
-                        },
-                        onTapCancel: () => setState(() => _isCallPressed = false),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          transform: _isCallPressed
-                              ? Matrix4.translationValues(0, 1, 0)
-                              : Matrix4.identity(),
-                          width: ResponsiveUtils.scaledContainerSize(context, 32),
-                          height: ResponsiveUtils.scaledContainerSize(context, 32),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: _isCallPressed
-                                  ? [
-                                AppColors.tertiary.withOpacity(0.3),
-                                AppColors.tertiary.withOpacity(0.2),
-                              ]
-                                  : [
-                                AppColors.tertiary.withOpacity(0.15),
-                                AppColors.tertiary.withOpacity(0.1),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: AppColors.tertiary
-                                  .withOpacity(_isCallPressed ? 0.4 : 0.2),
-                              width: 1,
-                            ),
-                            boxShadow: _isCallPressed
-                                ? []
-                                : [
-                              BoxShadow(
-                                color: AppColors.tertiary.withOpacity(0.1),
-                                blurRadius: 4,
-                                offset: const Offset(0, 1),
-                              ),
-                            ],
-                          ),
-                          child: Icon(
-                            CupertinoIcons.phone_fill,
-                            color: AppColors.tertiary,
-                            size: ResponsiveUtils.scaledIconSize(context, 16),
-                          ),
-                        ),
-                      ),
+                      _buildCallButton(),
                     ],
                   ),
                 ],
@@ -618,18 +517,75 @@ class _FriendCardNewState extends State<FriendCardNew>
             ),
             AnimatedBuilder(
               animation: _controller,
-              builder: (context, child) {
-                return ClipRect(
-                  child: Align(
-                    heightFactor: _expandAnimation.value,
-                    child: child,
-                  ),
-                );
-              },
+              builder: (context, child) => ClipRect(
+                child: Align(heightFactor: _expandAnimation.value, child: child),
+              ),
               child: _buildExpandedContent(),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildMessageButton() {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isMessagePressed = true),
+      onTapUp: (_) async {
+        setState(() => _isMessagePressed = false);
+        HapticFeedback.lightImpact();
+        await _navigateToMessageScreen(context);
+      },
+      onTapCancel: () => setState(() => _isMessagePressed = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        transform: _isMessagePressed ? Matrix4.translationValues(0, 1, 0) : Matrix4.identity(),
+        width: ResponsiveUtils.scaledContainerSize(context, 32),
+        height: ResponsiveUtils.scaledContainerSize(context, 32),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: _isMessagePressed
+                ? [AppColors.primary.withOpacity(0.3), AppColors.primary.withOpacity(0.2)]
+                : [AppColors.primary.withOpacity(0.15), AppColors.primary.withOpacity(0.1)],
+          ),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.primary.withOpacity(_isMessagePressed ? 0.4 : 0.2), width: 1),
+          boxShadow: _isMessagePressed ? [] : [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 1))],
+        ),
+        child: Icon(CupertinoIcons.bubble_left_fill, color: AppColors.primary, size: ResponsiveUtils.scaledIconSize(context, 16)),
+      ),
+    );
+  }
+
+  Widget _buildCallButton() {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isCallPressed = true),
+      onTapUp: (_) async {
+        setState(() => _isCallPressed = false);
+        HapticFeedback.lightImpact();
+        await _callFriend(context);
+      },
+      onTapCancel: () => setState(() => _isCallPressed = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        transform: _isCallPressed ? Matrix4.translationValues(0, 1, 0) : Matrix4.identity(),
+        width: ResponsiveUtils.scaledContainerSize(context, 32),
+        height: ResponsiveUtils.scaledContainerSize(context, 32),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: _isCallPressed
+                ? [AppColors.tertiary.withOpacity(0.3), AppColors.tertiary.withOpacity(0.2)]
+                : [AppColors.tertiary.withOpacity(0.15), AppColors.tertiary.withOpacity(0.1)],
+          ),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.tertiary.withOpacity(_isCallPressed ? 0.4 : 0.2), width: 1),
+          boxShadow: _isCallPressed ? [] : [BoxShadow(color: AppColors.tertiary.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 1))],
+        ),
+        child: Icon(CupertinoIcons.phone_fill, color: AppColors.tertiary, size: ResponsiveUtils.scaledIconSize(context, 16)),
       ),
     );
   }
@@ -644,52 +600,26 @@ class _FriendCardNewState extends State<FriendCardNew>
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            AppColors.primary.withOpacity(0.1),
-            AppColors.primary.withOpacity(0.05),
-          ],
+          colors: [AppColors.primary.withOpacity(0.1), AppColors.primary.withOpacity(0.05)],
         ),
         shape: BoxShape.circle,
-        border: Border.all(
-          color: AppColors.primary.withOpacity(0.2),
-          width: 2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withOpacity(0.08),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 2),
+        boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.08), blurRadius: 6, offset: const Offset(0, 2))],
       ),
       child: Container(
         margin: const EdgeInsets.all(2),
         decoration: BoxDecoration(
-          color: widget.friend.isEmoji
-              ? Colors.white.withOpacity(0.9)
-              : Colors.white,
+          color: widget.friend.isEmoji ? Colors.white.withOpacity(0.9) : Colors.white,
           shape: BoxShape.circle,
         ),
         child: widget.friend.isEmoji
             ? Center(
           child: FittedBox(
             fit: BoxFit.scaleDown,
-            child: Text(
-              widget.friend.profileImage,
-              style: TextStyle(
-                fontSize: containerSize * 0.55,
-                height: 1.2,
-              ),
-              textAlign: TextAlign.center,
-            ),
+            child: Text(widget.friend.profileImage, style: TextStyle(fontSize: containerSize * 0.55, height: 1.2), textAlign: TextAlign.center),
           ),
         )
-            : ClipOval(
-          child: Image.file(
-            File(widget.friend.profileImage),
-            fit: BoxFit.cover,
-          ),
-        ),
+            : ClipOval(child: Image.file(File(widget.friend.profileImage), fit: BoxFit.cover)),
       ),
     );
   }
@@ -701,10 +631,7 @@ class _FriendCardNewState extends State<FriendCardNew>
           Expanded(
             child: Text(
               widget.friend.name,
-              style: AppTextStyles.scaledHeadline(context).copyWith(
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
+              style: AppTextStyles.scaledHeadline(context).copyWith(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -721,66 +648,48 @@ class _FriendCardNewState extends State<FriendCardNew>
 
     final reminderText = _getFixedWidthReminderText(_nextReminderTime);
     final reminderColor = _getReminderColor(_nextReminderTime);
+    final isOverdue = _isReminderOverdue(_nextReminderTime);
 
     return Row(
       children: [
         Expanded(
           child: Text(
             widget.friend.name,
-            style: AppTextStyles.scaledHeadline(context).copyWith(
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
+            style: AppTextStyles.scaledHeadline(context).copyWith(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
         ),
         SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
-        ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxWidth: 50,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                width: ResponsiveUtils.scaledContainerSize(context, 4),
-                height: ResponsiveUtils.scaledContainerSize(context, 4),
-                decoration: BoxDecoration(
-                  color: reminderColor.withOpacity(0.6),
-                  shape: BoxShape.circle,
-                ),
+        // Show checkmark when overdue, otherwise show time
+        if (isOverdue)
+          GestureDetector(
+            onTap: _showMarkAsContactedDialog,
+            child: Container(
+              width: ResponsiveUtils.scaledContainerSize(context, 24),
+              height: ResponsiveUtils.scaledContainerSize(context, 24),
+              decoration: BoxDecoration(
+                color: AppColors.warning.withOpacity(0.15),
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.warning.withOpacity(0.4), width: 1.5),
               ),
-              SizedBox(width: ResponsiveUtils.scaledSpacing(context, 4)),
-              Flexible(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    reminderText,
-                    style: AppTextStyles.scaledFootnote(context).copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: reminderColor,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+              child: Icon(CupertinoIcons.checkmark, color: AppColors.warning, size: ResponsiveUtils.scaledIconSize(context, 14)),
+            ),
+          )
+        else if (reminderText.isNotEmpty)
+          Text(
+            reminderText,
+            style: AppTextStyles.scaledFootnote(context).copyWith(fontWeight: FontWeight.w600, color: reminderColor),
           ),
-        ),
       ],
     );
   }
 
   Widget _buildExpandedContent() {
-    final hasAlongsideThem =
-        widget.friend.helpingWith != null && widget.friend.helpingWith!.isNotEmpty;
-    final hasAlongsideYou = widget.friend.theyHelpingWith != null &&
-        widget.friend.theyHelpingWith!.isNotEmpty;
+    final hasAlongsideThem = widget.friend.helpingWith != null && widget.friend.helpingWith!.isNotEmpty;
+    final hasAlongsideYou = widget.friend.theyHelpingWith != null && widget.friend.theyHelpingWith!.isNotEmpty;
 
-    if (!hasAlongsideThem && !hasAlongsideYou) {
-      return const SizedBox.shrink();
-    }
+    if (!hasAlongsideThem && !hasAlongsideYou) return const SizedBox.shrink();
 
     return Container(
       decoration: BoxDecoration(
@@ -788,27 +697,16 @@ class _FriendCardNewState extends State<FriendCardNew>
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            Colors.transparent,
-            AppColors.primary.withOpacity(0.01),
-          ],
+          colors: [Colors.transparent, AppColors.primary.withOpacity(0.01)],
         ),
       ),
       child: Column(
         children: [
           Container(
             height: 0.5,
-            margin: EdgeInsets.symmetric(
-              horizontal: ResponsiveUtils.scaledSpacing(context, 20),
-            ),
+            margin: EdgeInsets.symmetric(horizontal: ResponsiveUtils.scaledSpacing(context, 20)),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.transparent,
-                  AppColors.primary.withOpacity(0.15),
-                  Colors.transparent,
-                ],
-              ),
+              gradient: LinearGradient(colors: [Colors.transparent, AppColors.primary.withOpacity(0.15), Colors.transparent]),
             ),
           ),
           Padding(
@@ -821,23 +719,11 @@ class _FriendCardNewState extends State<FriendCardNew>
             child: Column(
               children: [
                 if (hasAlongsideThem) ...[
-                  _buildInfoRow(
-                    icon: CupertinoIcons.person_fill,
-                    title: "Alongside them",
-                    content: widget.friend.helpingWith!,
-                    color: AppColors.primary,
-                  ),
-                  if (hasAlongsideYou)
-                    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 10)),
+                  _buildInfoRow(icon: CupertinoIcons.person_fill, title: "Alongside them", content: widget.friend.helpingWith!, color: AppColors.primary),
+                  if (hasAlongsideYou) SizedBox(height: ResponsiveUtils.scaledSpacing(context, 10)),
                 ],
-                if (hasAlongsideYou) ...[
-                  _buildInfoRow(
-                    icon: CupertinoIcons.person_2_fill,
-                    title: "Alongside you",
-                    content: widget.friend.theyHelpingWith!,
-                    color: AppColors.tertiary,
-                  ),
-                ],
+                if (hasAlongsideYou)
+                  _buildInfoRow(icon: CupertinoIcons.person_2_fill, title: "Alongside you", content: widget.friend.theyHelpingWith!, color: AppColors.tertiary),
               ],
             ),
           ),
@@ -846,12 +732,7 @@ class _FriendCardNewState extends State<FriendCardNew>
     );
   }
 
-  Widget _buildInfoRow({
-    required IconData icon,
-    required String title,
-    required String content,
-    required Color color,
-  }) {
+  Widget _buildInfoRow({required IconData icon, required String title, required String content, required Color color}) {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: ResponsiveUtils.scaledSpacing(context, 12),
@@ -860,10 +741,7 @@ class _FriendCardNewState extends State<FriendCardNew>
       decoration: BoxDecoration(
         color: color.withOpacity(0.02),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: color.withOpacity(0.08),
-          width: 0.5,
-        ),
+        border: Border.all(color: color.withOpacity(0.08), width: 0.5),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -874,37 +752,18 @@ class _FriendCardNewState extends State<FriendCardNew>
             decoration: BoxDecoration(
               color: color.withOpacity(0.12),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: color.withOpacity(0.15),
-                width: 0.5,
-              ),
+              border: Border.all(color: color.withOpacity(0.15), width: 0.5),
             ),
-            child: Icon(
-              icon,
-              color: color.withOpacity(0.9),
-              size: ResponsiveUtils.scaledIconSize(context, 16),
-            ),
+            child: Icon(icon, color: color.withOpacity(0.9), size: ResponsiveUtils.scaledIconSize(context, 16)),
           ),
           SizedBox(width: ResponsiveUtils.scaledSpacing(context, 12)),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: AppTextStyles.scaledFootnote(context).copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: color.withOpacity(0.9),
-                  ),
-                ),
+                Text(title, style: AppTextStyles.scaledFootnote(context).copyWith(fontWeight: FontWeight.w600, color: color.withOpacity(0.9))),
                 SizedBox(height: ResponsiveUtils.scaledSpacing(context, 4)),
-                Text(
-                  content,
-                  style: AppTextStyles.scaledSubhead(context).copyWith(
-                    color: AppColors.textPrimary.withOpacity(0.8),
-                    height: 1.3,
-                  ),
-                ),
+                Text(content, style: AppTextStyles.scaledSubhead(context).copyWith(color: AppColors.textPrimary.withOpacity(0.8), height: 1.3)),
               ],
             ),
           ),
@@ -913,60 +772,43 @@ class _FriendCardNewState extends State<FriendCardNew>
     );
   }
 
-  void _navigateToMessageScreen(BuildContext context) {
-    Navigator.push(
-      context,
-      CupertinoPageRoute(
-        builder: (context) => MessageScreenNew(friend: widget.friend),
-      ),
-    );
+  Future<void> _navigateToMessageScreen(BuildContext context) async {
+    await Navigator.push(context, CupertinoPageRoute(builder: (context) => MessageScreenNew(friend: widget.friend)));
+    await _loadNextReminderTime();
   }
 
   void _navigateToEditScreen(BuildContext context) {
-    Navigator.push(
-      context,
-      CupertinoPageRoute(
-        builder: (context) => AddFriendScreen(friend: widget.friend),
-      ),
-    );
+    Navigator.push(context, CupertinoPageRoute(builder: (context) => AddFriendScreen(friend: widget.friend)));
   }
 
-  void _callFriend(BuildContext context) async {
-    final phoneNumber =
-    widget.friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+  Future<void> _callFriend(BuildContext context) async {
+    final phoneNumber = widget.friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
     try {
       final telUri = Uri.parse('tel:$phoneNumber');
-      await launchUrl(
-        telUri,
-        mode: LaunchMode.externalApplication,
-      );
+      await launchUrl(telUri, mode: LaunchMode.externalApplication);
 
-      final storageService =
-          Provider.of<FriendsProvider>(context, listen: false).storageService;
+      final storageService = Provider.of<FriendsProvider>(context, listen: false).storageService;
       await storageService.incrementCallsMade();
 
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt(
-          'last_action_${widget.friend.id}', DateTime.now().millisecondsSinceEpoch);
+      await prefs.setInt('last_action_${widget.friend.id}', DateTime.now().millisecondsSinceEpoch);
 
       final notificationService = NotificationService();
       await notificationService.scheduleReminder(widget.friend);
 
-      _loadNextReminderTime();
+      await _loadNextReminderTime();
+
+      if (mounted) {
+        ToastService.showSuccess(context, 'Reminder updated ✓');
+      }
     } catch (e) {
       if (context.mounted) {
         showCupertinoDialog(
           context: context,
           builder: (context) => CupertinoAlertDialog(
             title: const Text('Error'),
-            content:
-            const Text('Unable to open phone app. Please try again later.'),
-            actions: [
-              CupertinoDialogAction(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('OK'),
-              ),
-            ],
+            content: const Text('Unable to open phone app. Please try again later.'),
+            actions: [CupertinoDialogAction(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
           ),
         );
       }
