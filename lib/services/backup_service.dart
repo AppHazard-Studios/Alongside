@@ -5,7 +5,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:workmanager/workmanager.dart';
 import '../models/friend.dart';
 import 'storage_service.dart';
 import 'notification_service.dart';
@@ -65,7 +64,7 @@ class BackupService {
       for (final friend in friends) {
         if (friend.reminderDays > 0) {
           final nextReminderTime =
-              await notificationService.getNextReminderTime(friend.id);
+          await notificationService.getNextReminderTime(friend.id);
           final lastActionTime = prefs.getInt('last_action_${friend.id}');
 
           reminderData[friend.id] = {
@@ -118,10 +117,10 @@ class BackupService {
 
   // Android-specific export options
   static Future<String?> _showAndroidExportOptions(
-    BuildContext context,
-    String jsonString,
-    Map<String, dynamic> backupData,
-  ) async {
+      BuildContext context,
+      String jsonString,
+      Map<String, dynamic> backupData,
+      ) async {
     return showCupertinoModalPopup<String?>(
       context: context,
       builder: (context) => CupertinoActionSheet(
@@ -218,7 +217,7 @@ class BackupService {
       String? outputFile = await FilePicker.platform.saveFile(
         dialogTitle: 'Save Alongside Backup',
         fileName:
-            'alongside_backup_${DateTime.now().millisecondsSinceEpoch}.json',
+        'alongside_backup_${DateTime.now().millisecondsSinceEpoch}.json',
         type: FileType.custom,
         allowedExtensions: ['json'],
         bytes: await tempFile.readAsBytes(), // Pass bytes directly
@@ -262,7 +261,7 @@ class BackupService {
           text: 'Alongside Backup - ${DateTime.now().toString().split(' ')[0]}',
           subject: 'Alongside App Backup',
           sharePositionOrigin:
-              box != null ? box.localToGlobal(Offset.zero) & box.size : null,
+          box != null ? box.localToGlobal(Offset.zero) & box.size : null,
         );
 
         // Update last backup date
@@ -285,30 +284,6 @@ class BackupService {
         _showErrorDialog(context, 'Share failed: $e');
       }
       return null;
-    }
-  }
-
-  // Clean up all reminder-related data before import
-  static Future<void> _cleanupReminderData() async {
-    try {
-      // Cancel ALL WorkManager tasks
-      await Workmanager().cancelAll();
-      print("🗑️ Cancelled all WorkManager tasks");
-
-      // Clear all reminder-related SharedPreferences
-      final prefs = await SharedPreferences.getInstance();
-      final keysToRemove = prefs.getKeys()
-          .where((key) =>
-      key.startsWith('next_reminder_') ||
-          key.startsWith('last_action_'))
-          .toList();
-
-      for (final key in keysToRemove) {
-        await prefs.remove(key);
-      }
-      print("🗑️ Cleared ${keysToRemove.length} reminder keys");
-    } catch (e) {
-      print("⚠️ Error cleaning up reminder data: $e");
     }
   }
 
@@ -538,9 +513,6 @@ class BackupService {
               ),
             );
 
-            // CLEANUP OLD DATA FIRST
-            await _cleanupReminderData();
-
             // Import the data
             final provider =
             Provider.of<FriendsProvider>(context, listen: false);
@@ -567,17 +539,8 @@ class BackupService {
                   'calls_made_count', backupData['stats']['callsMade'] ?? 0);
             }
 
-            // Force reload and reschedule all reminders
+            // Force reload the provider - THIS IS THE KEY CHANGE
             await provider.reloadFriends();
-
-            // Reschedule reminders for all friends
-            final notificationService = NotificationService();
-            for (final friend in friendsList) {
-              if (friend.hasReminder) {
-                await notificationService.scheduleReminder(friend);
-              }
-            }
-            print("✅ Rescheduled ${friendsList.where((f) => f.hasReminder).length} reminders");
 
             // Close importing dialog
             if (context.mounted) {
@@ -615,6 +578,7 @@ class BackupService {
                     CupertinoDialogAction(
                       onPressed: () {
                         Navigator.pop(context);
+                        // Just pop to go back, no need to reload entire app
                         Navigator.pop(context);
                       },
                       child: const Text(

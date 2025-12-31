@@ -9,7 +9,6 @@ import '../models/day_selection_data.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:workmanager/workmanager.dart';
-import 'storage_service.dart';
 
 typedef NotificationActionCallback = void Function(String friendId, String action);
 
@@ -110,31 +109,6 @@ Future<void> _sendCleanBackgroundNotification(String friendId, String friendName
       );
 
       print("✅ Background notification sent for $safeFriendName");
-
-      // AUTO-RESCHEDULE NEXT REMINDER
-      try {
-        final storageService = StorageService();
-        final friends = await storageService.getFriends();
-        final friend = friends.firstWhere((f) => f.id == friendId);
-
-        if (friend.hasReminder) {
-          final notificationService = NotificationService();
-
-          // Don't update last_action - this is a reminder, not user interaction
-          // Just reschedule for next occurrence
-
-          final success = await notificationService.scheduleReminder(friend);
-          if (success) {
-            print("✅ Auto-rescheduled next reminder for $safeFriendName");
-          } else {
-            print("⚠️ Failed to auto-reschedule for $safeFriendName");
-          }
-        }
-      } catch (e) {
-        print("⚠️ Couldn't auto-reschedule: $e");
-        // Don't fail the whole notification just because rescheduling failed
-      }
-
     } catch (e) {
       print("❌ Failed to show notification for $friendId: $e");
     }
