@@ -1,5 +1,6 @@
 // lib/screens/home_screen.dart - FIXED FOR CORRECT iOS FONT SIZES AND LAYOUT
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -43,6 +44,12 @@ class _HomeScreenNewState extends State<HomeScreenNew>
   int _messagesSent = 0;
   int _callsMade = 0;
 
+  // Foreground timers
+  // Precise notification timer
+  Timer? _nextNotificationTimer;
+  bool _isAppInForeground = true;
+  String? _pendingNotificationFriendId; // Track which friend's notification is showing
+
   @override
   void initState() {
     super.initState();
@@ -56,10 +63,16 @@ class _HomeScreenNewState extends State<HomeScreenNew>
       vsync: this,
     );
 
-
     _animationController.forward();
     _checkFirstLaunch();
     _loadStats();
+
+    // Schedule the first precise notification timer
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        _scheduleNextNotificationTimer();
+      }
+    });
   }
 
   @override
@@ -69,6 +82,10 @@ class _HomeScreenNewState extends State<HomeScreenNew>
     _searchAnimationController.dispose();
     _scrollController.dispose();
     _searchController.dispose();
+
+    // Clean up precise timer
+    _nextNotificationTimer?.cancel();
+
     super.dispose();
   }
 
@@ -77,15 +94,20 @@ class _HomeScreenNewState extends State<HomeScreenNew>
     super.didChangeAppLifecycleState(state);
 
     if (state == AppLifecycleState.resumed) {
+      print("📱 App resumed - checking overdue and scheduling");
+      _isAppInForeground = true;
+
       _loadStats();
 
-      // NEW: Force rebuild to refresh all countdown timers
-      if (mounted) {
-        setState(() {
-          // This triggers a rebuild, which will cause all FriendCards
-          // to refresh their countdown displays
-        });
-      }
+      // Check for overdue notifications and schedule next timer
+      _checkOverdueAndSchedule();
+
+    } else if (state == AppLifecycleState.paused) {
+      print("📱 App paused - stopping timers");
+      _isAppInForeground = false;
+
+      // Cancel timer when going to background
+      _nextNotificationTimer?.cancel();
     }
   }
 
@@ -123,6 +145,384 @@ class _HomeScreenNewState extends State<HomeScreenNew>
       }
     });
     HapticFeedback.lightImpact();
+  }
+
+  // ============================================================================
+  // FOREGROUND TIMER MANAGEMENT
+  // ============================================================================
+
+// ============================================================================
+  // PRECISE NOTIFICATION TIMER SYSTEM
+  // ============================================================================
+
+  /// Calculate and schedule timer for the next upcoming notification
+  Future<void> _scheduleNextNotificationTimer() async {
+    // Cancel existing timer
+    _nextNotificationTimer?.cancel();
+    _nextNotificationTimer = null;
+
+    try {
+      final provider = Provider.of<FriendsProvider>(context, listen: false);
+      final notificationService = NotificationService();
+
+      DateTime? earliestTime;
+      String? earliestFriendId;
+
+      // Find the earliest upcoming notification across all friends
+      for (final friend in provider.friends) {
+        if (!friend.hasReminder) continue;
+
+        final nextTime = await notificationService.getNextReminderTime(friend.id);
+        if (nextTime == null) continue;
+
+        if (earliestTime == null || nextTime.isBefore(earliestTime)) {
+          earliestTime = nextTime;
+          earliestFriendId = friend.id;
+        }
+      }
+
+      if (earliestTime == null || earliestFriendId == null) {
+        print("⏰ No upcoming notifications to schedule");
+        return;
+      }
+
+      final now = DateTime.now();
+      final delay = earliestTime.difference(now);
+
+      if (delay.isNegative) {
+        // Notification is overdue - show immediately
+        print("⏰ Notification overdue - showing immediately for $earliestFriendId");
+        _handleNotificationDue(earliestFriendId);
+      } else {
+        // Schedule precise timer
+        print("⏰ Scheduling notification for $earliestFriendId at $earliestTime (in ${delay.inMinutes}m ${delay.inSeconds % 60}s)");
+
+        final friendId = earliestFriendId; // Capture value for closure
+        _nextNotificationTimer = Timer(delay, () {
+          if (mounted && _isAppInForeground) {
+            _handleNotificationDue(friendId);
+          }
+        });
+      }
+    } catch (e) {
+      print("❌ Error scheduling notification timer: $e");
+    }
+  }
+
+  /// Handle when a notification becomes due
+  void _handleNotificationDue(String friendId) {
+    final provider = Provider.of<FriendsProvider>(context, listen: false);
+    final friend = provider.getFriendById(friendId);
+
+    if (friend == null) {
+      print("❌ Friend not found: $friendId");
+      _scheduleNextNotificationTimer(); // Try next one
+      return;
+    }
+
+    print("🔔 Notification due for ${friend.name}");
+
+    // Trigger UI rebuild (shows tick in FriendCard)
+    setState(() {});
+
+    // Show popup if not already showing one
+    if (_pendingNotificationFriendId == null) {
+      _showNotificationPopup(friend);
+    }
+
+    // Schedule next notification timer
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        _scheduleNextNotificationTimer();
+      }
+    });
+  }
+
+  /// Check for any overdue notifications (called on app resume)
+  Future<void> _checkOverdueAndSchedule() async {
+    try {
+      final provider = Provider.of<FriendsProvider>(context, listen: false);
+      final notificationService = NotificationService();
+
+      final overdueFriends = await notificationService.checkOverdueNotifications(
+        provider.friends,
+      );
+
+      if (overdueFriends.isNotEmpty && mounted) {
+        // Trigger rebuild to show all ticks
+        setState(() {});
+
+        // Show popups for overdue friends (one at a time)
+        for (final friend in overdueFriends) {
+          await _showNotificationPopupQueued(friend);
+        }
+      }
+
+      // Always schedule the next timer
+      await _scheduleNextNotificationTimer();
+    } catch (e) {
+      print("❌ Error checking overdue notifications: $e");
+    }
+  }
+
+  /// Show notification popup with proper cleanup
+  void _showNotificationPopup(Friend friend) {
+    if (_pendingNotificationFriendId != null) return; // Already showing one
+
+    _pendingNotificationFriendId = friend.id;
+
+    HapticFeedback.mediumImpact();
+
+    showCupertinoDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => CupertinoAlertDialog(
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              CupertinoIcons.bell_fill,
+              color: AppColors.primary,
+              size: ResponsiveUtils.scaledIconSize(context, 20),
+            ),
+            SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+            Text(
+              'Check-in Time',
+              style: AppTextStyles.scaledHeadline(context).copyWith(
+                color: AppColors.primary,
+              ),
+            ),
+          ],
+        ),
+        content: Padding(
+          padding: EdgeInsets.only(top: ResponsiveUtils.scaledSpacing(context, 12)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: ResponsiveUtils.scaledContainerSize(context, 50),
+                height: ResponsiveUtils.scaledContainerSize(context, 50),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.primary.withOpacity(0.3),
+                    width: 2,
+                  ),
+                ),
+                child: friend.isEmoji
+                    ? Center(
+                  child: Text(
+                    friend.profileImage,
+                    style: TextStyle(
+                      fontSize: ResponsiveUtils.scaledContainerSize(context, 26),
+                    ),
+                  ),
+                )
+                    : ClipOval(
+                  child: Image.file(
+                    File(friend.profileImage),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              SizedBox(height: ResponsiveUtils.scaledSpacing(context, 10)),
+              Text(
+                friend.name,
+                style: AppTextStyles.scaledCallout(context).copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () async {
+              Navigator.pop(context);
+              _pendingNotificationFriendId = null;
+
+              final notificationService = NotificationService();
+              await notificationService.triggerOverdueNotification(friend);
+
+              // Force UI refresh (removes tick)
+              if (mounted) {
+                setState(() {});
+              }
+            },
+            child: Text(
+              'Already Done',
+              style: AppTextStyles.scaledButton(context).copyWith(
+                color: AppColors.secondary,
+              ),
+            ),
+          ),
+          CupertinoDialogAction(
+            onPressed: () async {
+              Navigator.pop(context);
+              _pendingNotificationFriendId = null;
+
+              final notificationService = NotificationService();
+              await notificationService.triggerOverdueNotification(friend);
+
+              // Navigate to message screen
+              await Navigator.push(
+                context,
+                CupertinoPageRoute(
+                  builder: (context) => MessageScreenNew(friend: friend),
+                ),
+              );
+
+              // Force UI refresh when returning (removes tick)
+              if (mounted) {
+                setState(() {});
+              }
+            },
+            isDefaultAction: true,
+            child: Text(
+              'Message',
+              style: AppTextStyles.scaledButton(context).copyWith(
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ).then((_) {
+      _pendingNotificationFriendId = null;
+    });
+  }
+
+  /// Show notification popup with queueing (for multiple overdue)
+  Future<void> _showNotificationPopupQueued(Friend friend) async {
+    if (ModalRoute.of(context)?.isCurrent != true) return;
+
+    final completer = Completer<void>();
+    _pendingNotificationFriendId = friend.id;
+
+    HapticFeedback.mediumImpact();
+
+    showCupertinoDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => CupertinoAlertDialog(
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              CupertinoIcons.bell_fill,
+              color: AppColors.primary,
+              size: ResponsiveUtils.scaledIconSize(context, 20),
+            ),
+            SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+            Text(
+              'Check-in Time',
+              style: AppTextStyles.scaledHeadline(context).copyWith(
+                color: AppColors.primary,
+              ),
+            ),
+          ],
+        ),
+        content: Padding(
+          padding: EdgeInsets.only(top: ResponsiveUtils.scaledSpacing(context, 12)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: ResponsiveUtils.scaledContainerSize(context, 50),
+                height: ResponsiveUtils.scaledContainerSize(context, 50),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.primary.withOpacity(0.3),
+                    width: 2,
+                  ),
+                ),
+                child: friend.isEmoji
+                    ? Center(
+                  child: Text(
+                    friend.profileImage,
+                    style: TextStyle(
+                      fontSize: ResponsiveUtils.scaledContainerSize(context, 26),
+                    ),
+                  ),
+                )
+                    : ClipOval(
+                  child: Image.file(
+                    File(friend.profileImage),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              SizedBox(height: ResponsiveUtils.scaledSpacing(context, 10)),
+              Text(
+                friend.name,
+                style: AppTextStyles.scaledCallout(context).copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () async {
+              Navigator.pop(context);
+
+              final notificationService = NotificationService();
+              await notificationService.triggerOverdueNotification(friend);
+
+              if (mounted) {
+                setState(() {});
+              }
+
+              completer.complete();
+            },
+            child: Text(
+              'Already Done',
+              style: AppTextStyles.scaledButton(context).copyWith(
+                color: AppColors.secondary,
+              ),
+            ),
+          ),
+          CupertinoDialogAction(
+            onPressed: () async {
+              Navigator.pop(context);
+
+              final notificationService = NotificationService();
+              await notificationService.triggerOverdueNotification(friend);
+
+              await Navigator.push(
+                context,
+                CupertinoPageRoute(
+                  builder: (context) => MessageScreenNew(friend: friend),
+                ),
+              );
+
+              if (mounted) {
+                setState(() {});
+              }
+
+              completer.complete();
+            },
+            isDefaultAction: true,
+            child: Text(
+              'Message',
+              style: AppTextStyles.scaledButton(context).copyWith(
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ).then((_) {
+      _pendingNotificationFriendId = null;
+    });
+
+    return completer.future;
   }
 
   @override

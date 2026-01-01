@@ -574,6 +574,53 @@ class NotificationService {
     }
   }
 
+  /// Check for any overdue notifications while app is in foreground
+  Future<List<Friend>> checkOverdueNotifications(List<Friend> allFriends) async {
+    final List<Friend> overdueFriends = [];
+    final now = DateTime.now();
+
+    for (final friend in allFriends) {
+      if (!friend.hasReminder) continue;
+
+      final nextTime = await getNextReminderTime(friend.id);
+      if (nextTime != null && nextTime.isBefore(now)) {
+        overdueFriends.add(friend);
+        print("⏰ OVERDUE: ${friend.name} - was due at $nextTime");
+      }
+    }
+
+    return overdueFriends;
+  }
+
+  /// Get countdown until next notification for a friend
+  Future<Duration?> getTimeUntilReminder(String friendId) async {
+    try {
+      final nextTime = await getNextReminderTime(friendId);
+      if (nextTime == null) return null;
+
+      final now = DateTime.now();
+      final duration = nextTime.difference(now);
+
+      return duration.isNegative ? Duration.zero : duration;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Trigger an overdue notification immediately (for in-app display)
+  Future<void> triggerOverdueNotification(Friend friend) async {
+    try {
+      print("🔔 Triggering overdue notification for ${friend.name}");
+
+      await recordFriendInteraction(friend.id);
+      await scheduleReminder(friend);
+
+      print("✅ Overdue notification processed and rescheduled");
+    } catch (e) {
+      print("❌ Error triggering overdue notification: $e");
+    }
+  }
+
   Future<DateTime?> getNextReminderTime(String friendId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
