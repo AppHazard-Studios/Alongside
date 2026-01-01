@@ -16,6 +16,8 @@ import '../widgets/no_underline_field.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../widgets/day_selector_widget.dart';
 import '../models/day_selection_data.dart';
+import 'package:flutter/services.dart';
+import '../services/toast_service.dart';
 
 class AddFriendScreen extends StatefulWidget {
   final Friend? friend;
@@ -31,6 +33,50 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   final _phoneController = TextEditingController();
   final _helpingThemWithController = TextEditingController();
   final _helpingYouWithController = TextEditingController();
+  final _phoneFocusNode = FocusNode();
+  // Comprehensive country codes list - Top 40 countries
+  final List<Map<String, String>> _countryCodes = [
+    {'name': 'Australia', 'code': '+61'},
+    {'name': 'United States', 'code': '+1'},
+    {'name': 'United Kingdom', 'code': '+44'},
+    {'name': 'Canada', 'code': '+1'},
+    {'name': 'New Zealand', 'code': '+64'},
+    {'name': 'India', 'code': '+91'},
+    {'name': 'Philippines', 'code': '+63'},
+    {'name': 'Singapore', 'code': '+65'},
+    {'name': 'Malaysia', 'code': '+60'},
+    {'name': 'Indonesia', 'code': '+62'},
+    {'name': 'Hong Kong', 'code': '+852'},
+    {'name': 'China', 'code': '+86'},
+    {'name': 'Japan', 'code': '+81'},
+    {'name': 'South Korea', 'code': '+82'},
+    {'name': 'Vietnam', 'code': '+84'},
+    {'name': 'Thailand', 'code': '+66'},
+    {'name': 'Germany', 'code': '+49'},
+    {'name': 'France', 'code': '+33'},
+    {'name': 'Italy', 'code': '+39'},
+    {'name': 'Spain', 'code': '+34'},
+    {'name': 'Netherlands', 'code': '+31'},
+    {'name': 'Belgium', 'code': '+32'},
+    {'name': 'Switzerland', 'code': '+41'},
+    {'name': 'Sweden', 'code': '+46'},
+    {'name': 'Ireland', 'code': '+353'},
+    {'name': 'Poland', 'code': '+48'},
+    {'name': 'Greece', 'code': '+30'},
+    {'name': 'Portugal', 'code': '+351'},
+    {'name': 'Brazil', 'code': '+55'},
+    {'name': 'Mexico', 'code': '+52'},
+    {'name': 'South Africa', 'code': '+27'},
+    {'name': 'Kenya', 'code': '+254'},
+    {'name': 'Nigeria', 'code': '+234'},
+    {'name': 'Egypt', 'code': '+20'},
+    {'name': 'UAE', 'code': '+971'},
+    {'name': 'Saudi Arabia', 'code': '+966'},
+    {'name': 'Israel', 'code': '+972'},
+    {'name': 'Turkey', 'code': '+90'},
+    {'name': 'Pakistan', 'code': '+92'},
+    {'name': 'Bangladesh', 'code': '+880'},
+  ];
 
   String _profileImage = '😊';
   bool _isEmoji = true;
@@ -123,6 +169,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     _phoneController.dispose();
     _helpingThemWithController.dispose();
     _helpingYouWithController.dispose();
+    _phoneFocusNode.dispose(); // ADD THIS LINE
     super.dispose();
   }
 
@@ -569,6 +616,227 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     );
   }
 
+  Future<String?> _showCountryCodePicker(String currentNumber) async {
+    int selectedIndex = 0; // Default to "No Country Code"
+
+    return await showCupertinoModalPopup<String>(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => GestureDetector(
+        onVerticalDragEnd: (details) {
+          if (details.primaryVelocity != null && details.primaryVelocity! > 300) {
+            Navigator.pop(context);
+          }
+        },
+        child: Container(
+          height: MediaQuery.of(context).size.height * 0.5,
+          decoration: const BoxDecoration(
+            color: Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              Container(
+                margin: EdgeInsets.only(top: ResponsiveUtils.scaledSpacing(context, 8)),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.textSecondary.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+
+              Container(
+                padding: EdgeInsets.fromLTRB(
+                  ResponsiveUtils.scaledSpacing(context, 16),
+                  ResponsiveUtils.scaledSpacing(context, 12),
+                  ResponsiveUtils.scaledSpacing(context, 16),
+                  ResponsiveUtils.scaledSpacing(context, 8),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      'Add Country Code',
+                      style: AppTextStyles.scaledHeadline(context).copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 4)),
+                    Text(
+                      currentNumber,
+                      style: AppTextStyles.scaledCallout(context).copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 2)),
+                    Text(
+                      'Select your country to add the correct code',
+                      style: AppTextStyles.scaledCaption(context).copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+
+              Expanded(
+                child: CupertinoPicker(
+                  itemExtent: ResponsiveUtils.scaledContainerSize(context, 44),
+                  scrollController: FixedExtentScrollController(initialItem: selectedIndex),
+                  onSelectedItemChanged: (index) {
+                    selectedIndex = index;
+                    HapticFeedback.selectionClick();
+                  },
+                  children: [
+                    // First option: No Country Code
+                    Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: ResponsiveUtils.scaledSpacing(context, 16),
+                        ),
+                        child: Text(
+                          'No Country Code',
+                          style: AppTextStyles.scaledCallout(context).copyWith(
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Then all the countries
+                    ..._countryCodes.map((country) {
+                      return Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: ResponsiveUtils.scaledSpacing(context, 16),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  country['name']!,
+                                  style: AppTextStyles.scaledCallout(context).copyWith(
+                                    color: AppColors.textPrimary,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+                              Text(
+                                country['code']!,
+                                style: AppTextStyles.scaledCallout(context).copyWith(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ],
+                ),
+              ),
+
+              Container(
+                padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 16)),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.9),
+                  border: Border(
+                    top: BorderSide(
+                      color: AppColors.primary.withOpacity(0.1),
+                      width: 0.5,
+                    ),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: CupertinoButton(
+                        padding: EdgeInsets.zero,
+                        onPressed: () => Navigator.pop(context, 'manual'),
+                        child: Container(
+                          height: ResponsiveUtils.scaledButtonHeight(context),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppColors.primary.withOpacity(0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Enter Manually',
+                              style: AppTextStyles.scaledButton(context).copyWith(
+                                color: AppColors.secondary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(width: ResponsiveUtils.scaledSpacing(context, 12)),
+
+                    Expanded(
+                      child: CupertinoButton(
+                        padding: EdgeInsets.zero,
+                        onPressed: () {
+                          if (selectedIndex == 0) {
+                            // "No Country Code" selected - return 'none'
+                            Navigator.pop(context, 'none');
+                          } else {
+                            // Country selected - return code
+                            final selectedCode = _countryCodes[selectedIndex - 1]['code']!;
+                            Navigator.pop(context, selectedCode);
+                          }
+                        },
+                        child: Container(
+                          height: ResponsiveUtils.scaledButtonHeight(context),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                AppColors.primary,
+                                AppColors.primary.withOpacity(0.8),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primary.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Save',
+                              style: AppTextStyles.scaledButton(context).copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _saveFriend() async {
     if (_nameController.text.trim().isEmpty) {
       _showErrorSnackBar('Please enter a name');
@@ -579,56 +847,57 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       return;
     }
 
-    // Validate phone number format
-    final phoneNumber = _phoneController.text.trim();
-    if (!phoneNumber.startsWith('+')) {
-      // Show warning about missing country code
-      final shouldContinue = await showCupertinoDialog<bool>(
-        context: context,
-        builder: (context) => CupertinoAlertDialog(
-          title: Text(
-            'Phone Number Format',
-            style: AppTextStyles.scaledDialogTitle(context).copyWith(
-              color: AppColors.warning,
-            ),
-          ),
-          content: Padding(
-            padding: EdgeInsets.only(top: ResponsiveUtils.scaledSpacing(context, 8)),
-            child: Text(
-              'The phone number should include a country code (e.g., +61 for Australia, +1 for USA).\n\nWithout it, messages may create duplicate chat threads.\n\nContinue anyway?',
-              style: AppTextStyles.scaledBody(context),
-            ),
-          ),
-          actions: [
-            CupertinoDialogAction(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(
-                'Fix Number',
-                style: AppTextStyles.scaledButton(context).copyWith(
-                  color: AppColors.secondary,
-                ),
-              ),
-            ),
-            CupertinoDialogAction(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(
-                'Continue',
-                style: AppTextStyles.scaledButton(context).copyWith(
-                  color: AppColors.primary,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
+    String phoneNumber = _phoneController.text.trim();
 
-      if (shouldContinue != true) {
-        return;
+    // Only show picker for NEW friends without country code
+    final isNewFriend = widget.friend == null;
+
+    if (isNewFriend && !phoneNumber.startsWith('+')) {
+      final result = await _showCountryCodePicker(phoneNumber);
+
+      if (result == 'manual') {
+        // Focus phone field for manual entry
+        _phoneFocusNode.requestFocus();
+        _phoneController.selection = TextSelection.fromPosition(
+          const TextPosition(offset: 0),
+        );
+        ToastService.showSuccess(context, 'Add country code (e.g., +61)');
+        return; // DON'T SAVE
+
+      } else if (result == 'none') {
+        // User selected "No Country Code" - continue to save as-is
+        // phoneNumber stays unchanged
+
+      } else if (result != null) {
+        // User selected a country code
+        String numberWithoutLeadingZero = phoneNumber;
+
+        final countriesWithLeadingZero = [
+          '+61', '+44', '+64', '+27', '+91', '+92', '+234', '+254', '+63',
+          '+60', '+62', '+66', '+84', '+20', '+972', '+90', '+880'
+        ];
+
+        if (countriesWithLeadingZero.contains(result) && phoneNumber.startsWith('0')) {
+          numberWithoutLeadingZero = phoneNumber.substring(1);
+        }
+
+        phoneNumber = result + numberWithoutLeadingZero;
+
+        setState(() {
+          _phoneController.text = phoneNumber;
+        });
+
+        ToastService.showSuccess(context, 'Country code added! 📞');
+        await Future.delayed(const Duration(milliseconds: 500));
+
+      } else {
+        // result is null (dismissed/swiped) - DON'T SAVE, stay on page
+        return; // THIS WAS MISSING!
       }
     }
 
+    // Proceed with save
     final provider = Provider.of<FriendsProvider>(context, listen: false);
-    final isNewFriend = widget.friend == null;
 
     if (isNewFriend) {
       final newFriend = Friend(
@@ -1073,11 +1342,14 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                         _buildFormRow(
                           icon: CupertinoIcons.phone_fill,
                           iconColor: AppColors.primary,
-                          child: NoUnderlineField(
-                            controller: _phoneController,
-                            label: 'Phone Number',
-                            placeholder: 'Enter phone number',
-                            keyboardType: TextInputType.phone,
+                          child: Focus(
+                            focusNode: _phoneFocusNode,
+                            child: NoUnderlineField(
+                              controller: _phoneController,
+                              label: 'Phone Number',
+                              placeholder: 'Enter number (or random if none)',
+                              keyboardType: TextInputType.phone,
+                            ),
                           ),
                         ),
                       ],
