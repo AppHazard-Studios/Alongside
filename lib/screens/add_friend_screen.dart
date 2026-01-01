@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../providers/friends_provider.dart';
 import '../models/friend.dart';
 import '../utils/constants.dart';
@@ -640,21 +639,40 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             ),
           ),
           CupertinoDialogAction(
-            onPressed: () async {
+            onPressed: () {
               Navigator.pop(context);
 
-              final message = 'Hey ${friend.name.split(' ')[0]}! I just added you to Alongside - '
-                  'an app that helps us stay connected. '
-                  'It reminds me to check in with you and makes it easy to send quick messages. '
-                  'Would love if you joined too! Download at: alongside.app';
-
-              final smsUri = Uri.parse('sms:${friend.phoneNumber}?body=${Uri.encodeComponent(message)}');
-
-              try {
-                await launchUrl(smsUri, mode: LaunchMode.externalApplication);
-              } catch (e) {
-                // Handle error silently
-              }
+              // Show coming soon message
+              showCupertinoDialog(
+                context: context,
+                builder: (context) => CupertinoAlertDialog(
+                  title: Text(
+                    'Coming Soon!',
+                    style: AppTextStyles.scaledDialogTitle(context).copyWith(
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  content: Padding(
+                    padding: EdgeInsets.only(top: ResponsiveUtils.scaledSpacing(context, 8)),
+                    child: Text(
+                      'The invite feature is currently in development. Stay tuned!',
+                      style: AppTextStyles.scaledBody(context),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  actions: [
+                    CupertinoDialogAction(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        'Got it',
+                        style: AppTextStyles.scaledButton(context).copyWith(
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
             },
             child: Text(
               'Send Invite',

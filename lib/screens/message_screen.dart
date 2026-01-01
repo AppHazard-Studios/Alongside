@@ -654,15 +654,19 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
         int? customIndex,
       }) {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: () => _sendMessage(context, message),
-      onLongPress: () => _showMessageOptions(context, message,
-          isCustom: isCustom, customIndex: customIndex),
+      onLongPress: () {
+        HapticFeedback.mediumImpact();
+        _showMessageOptions(context, message,
+            isCustom: isCustom, customIndex: customIndex);
+      },
       child: Container(
-        margin: EdgeInsets.only(bottom: ResponsiveUtils.scaledSpacing(context, 6)), // Reduced from 8
-        padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 12)), // Reduced from 16
+        margin: EdgeInsets.only(bottom: ResponsiveUtils.scaledSpacing(context, 6)),
+        padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 12)),
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.9),
-          borderRadius: BorderRadius.circular(14), // Reduced from 16
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: AppColors.primary.withOpacity(0.1),
             width: 0.5,
@@ -681,9 +685,9 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               Icon(
                 CupertinoIcons.star_fill,
                 color: AppColors.warning,
-                size: ResponsiveUtils.scaledIconSize(context, 16), // Reduced from 18
+                size: ResponsiveUtils.scaledIconSize(context, 16),
               ),
-              SizedBox(width: ResponsiveUtils.scaledSpacing(context, 10)), // Reduced from 12
+              SizedBox(width: ResponsiveUtils.scaledSpacing(context, 10)),
             ],
             Expanded(
               child: Text(
@@ -694,18 +698,21 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
                 ),
               ),
             ),
-            SizedBox(width: ResponsiveUtils.scaledSpacing(context, 10)), // Reduced from 12
+            SizedBox(width: ResponsiveUtils.scaledSpacing(context, 10)),
             if (isCustom) ...[
               GestureDetector(
-                onTap: () =>
-                    _showMessageOptions(context, message,
-                        isCustom: isCustom, customIndex: customIndex),
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  _showMessageOptions(context, message,
+                      isCustom: isCustom, customIndex: customIndex!);
+                },
                 child: Container(
-                  padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 6)), // Reduced from 8
+                  padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 12)),
                   child: Icon(
                     CupertinoIcons.ellipsis_vertical,
                     color: AppColors.textSecondary.withOpacity(0.6),
-                    size: ResponsiveUtils.scaledIconSize(context, 16), // Reduced from 18
+                    size: ResponsiveUtils.scaledIconSize(context, 18),
                   ),
                 ),
               ),
@@ -713,7 +720,7 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               Icon(
                 CupertinoIcons.arrow_right_circle_fill,
                 color: AppColors.primary,
-                size: ResponsiveUtils.scaledIconSize(context, 20), // Reduced from 22
+                size: ResponsiveUtils.scaledIconSize(context, 20),
               ),
             ],
           ],
@@ -928,6 +935,7 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
           child: Text(
             'Cancel',
             style: AppTextStyles.scaledButton(context).copyWith(
+              color: AppColors.primary,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -935,7 +943,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
       ),
     );
   }
-
 
   void _showFavoritePicker() {
     final provider = Provider.of<FriendsProvider>(context, listen: false);
@@ -1206,6 +1213,12 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
   }
 
   void _sendMessage(BuildContext context, String message) async {
+    // Copy to clipboard first
+    await Clipboard.setData(ClipboardData(text: message));
+
+    // Show toast that message was copied
+    ToastService.showSuccess(context, 'Message copied to clipboard! 📋');
+
     final phoneNumber =
     widget.friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
     try {
@@ -1214,7 +1227,7 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
         barrierDismissible: false,
         builder: (context) => Center(
           child: Container(
-            width: ResponsiveUtils.scaledContainerSize(context, 100), // Reduced from 120
+            width: ResponsiveUtils.scaledContainerSize(context, 100),
             height: ResponsiveUtils.scaledContainerSize(context, 100),
             decoration: BoxDecoration(
               color: Colors.black.withOpacity(0.8),
@@ -1225,9 +1238,9 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               children: [
                 const CupertinoActivityIndicator(
                   color: Colors.white,
-                  radius: 12, // Reduced from 14
+                  radius: 12,
                 ),
-                SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)), // Reduced from 16
+                SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)),
                 Text(
                   'Sending...',
                   style: AppTextStyles.scaledCallout(context).copyWith(
@@ -1408,8 +1421,8 @@ class _FavoritePickerModalState extends State<_FavoritePickerModal> {
                     HapticFeedback.lightImpact();
                   },
                   child: Container(
-                    margin: EdgeInsets.only(bottom: ResponsiveUtils.scaledSpacing(context, 6)), // Reduced from 8
-                    padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 12)), // Reduced from 16
+                    margin: EdgeInsets.only(bottom: ResponsiveUtils.scaledSpacing(context, 6)),
+                    padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 12)),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.9),
                       borderRadius: BorderRadius.circular(12),
@@ -1423,7 +1436,7 @@ class _FavoritePickerModalState extends State<_FavoritePickerModal> {
                     child: Row(
                       children: [
                         Container(
-                          width: ResponsiveUtils.scaledContainerSize(context, 20), // Reduced from 24
+                          width: ResponsiveUtils.scaledContainerSize(context, 20),
                           height: ResponsiveUtils.scaledContainerSize(context, 20),
                           decoration: BoxDecoration(
                             color: isSelected
@@ -1441,11 +1454,11 @@ class _FavoritePickerModalState extends State<_FavoritePickerModal> {
                               ? Icon(
                             CupertinoIcons.checkmark,
                             color: Colors.white,
-                            size: ResponsiveUtils.scaledIconSize(context, 12), // Reduced from 14
+                            size: ResponsiveUtils.scaledIconSize(context, 12),
                           )
                               : null,
                         ),
-                        SizedBox(width: ResponsiveUtils.scaledSpacing(context, 10)), // Reduced from 12
+                        SizedBox(width: ResponsiveUtils.scaledSpacing(context, 10)),
                         Expanded(
                           child: Text(
                             message,
