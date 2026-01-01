@@ -1619,87 +1619,96 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _showTroubleshooting(BuildContext context) {
     showCupertinoModalPopup(
       context: context,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.45, // 🔧 FIXED: Reduced size since we removed a section
-        minChildSize: 0.3,
-        maxChildSize: 0.85,
-        expand: false,
-        builder: (context, scrollController) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.only(bottom: ResponsiveUtils.scaledSpacing(context, 8)),
-                child: Column(
-                  children: [
-                    Container(
-                      margin: EdgeInsets.only(
-                          top: ResponsiveUtils.scaledSpacing(context, 8),
-                          bottom: ResponsiveUtils.scaledSpacing(context, 16)
-                      ),
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: AppColors.textSecondary.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: ResponsiveUtils.scaledSpacing(context, 20)),
-                      child: Text(
-                        'Troubleshooting Guide',
-                        style: AppTextStyles.scaledHeadline(context).copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
+      barrierDismissible: true, // ✅ NOW YOU CAN TAP OUTSIDE OR SWIPE DOWN TO DISMISS
+      builder: (context) => GestureDetector(
+        onVerticalDragEnd: (details) {
+          // ✅ SWIPE DOWN GESTURE - just like country code picker
+          if (details.primaryVelocity != null && details.primaryVelocity! > 300) {
+            Navigator.pop(context);
+          }
+        },
+        child: DraggableScrollableSheet(
+          initialChildSize: 0.45,
+          minChildSize: 0.3,
+          maxChildSize: 0.85,
+          expand: false,
+          builder: (context, scrollController) => Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.only(bottom: ResponsiveUtils.scaledSpacing(context, 8)),
+                  child: Column(
+                    children: [
+                      Container(
+                        margin: EdgeInsets.only(
+                            top: ResponsiveUtils.scaledSpacing(context, 8),
+                            bottom: ResponsiveUtils.scaledSpacing(context, 16)
+                        ),
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: AppColors.textSecondary.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
 
-              Flexible(
-                child: SingleChildScrollView(
-                  controller: scrollController,
-                  padding: EdgeInsets.fromLTRB(
-                      ResponsiveUtils.scaledSpacing(context, 20),
-                      ResponsiveUtils.scaledSpacing(context, 10),
-                      ResponsiveUtils.scaledSpacing(context, 20),
-                      ResponsiveUtils.scaledSpacing(context, 20)
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildTroubleshootingSection(
-                        'Not receiving notifications?',
-                        [
-                          '1. Check that notifications are enabled in your device settings',
-                          '2. Disable battery optimisation for Alongside',
-                          '3. Make sure Do Not Disturb is off',
-                          '4. Restart your device and try again',
-                        ],
-                      ),
-                      _buildTroubleshootingSection(
-                        'Can\'t send messages or make calls?',
-                        [
-                          '1. Check that phone numbers are entered correctly',
-                          '2. Ensure you have a default messaging/phone app set',
-                          '3. Check app permissions for phone and SMS',
-                          '4. Try restarting the messaging app',
-                        ],
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: ResponsiveUtils.scaledSpacing(context, 20)),
+                        child: Text(
+                          'Troubleshooting Guide',
+                          style: AppTextStyles.scaledHeadline(context).copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ),
-              ),
-            ],
+
+                Flexible(
+                  child: SingleChildScrollView(
+                    controller: scrollController,
+                    padding: EdgeInsets.fromLTRB(
+                        ResponsiveUtils.scaledSpacing(context, 20),
+                        ResponsiveUtils.scaledSpacing(context, 10),
+                        ResponsiveUtils.scaledSpacing(context, 20),
+                        ResponsiveUtils.scaledSpacing(context, 20)
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildTroubleshootingSection(
+                          'Not receiving notifications?',
+                          [
+                            '1. Check that notifications are enabled in your device settings',
+                            '2. Disable battery optimisation for Alongside',
+                            '3. Make sure Do Not Disturb is off',
+                            '4. Restart your device and try again',
+                          ],
+                        ),
+                        _buildTroubleshootingSection(
+                          'Can\'t send messages or make calls?',
+                          [
+                            '1. Check that phone numbers are entered correctly',
+                            '2. Ensure you have a default messaging/phone app set',
+                            '3. Check app permissions for phone and SMS',
+                            '4. Try restarting the messaging app',
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
