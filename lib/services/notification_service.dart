@@ -631,6 +631,10 @@ class NotificationService {
     }
   }
 
+  // NEW: Check for overdue notifications across all friends
+
+  // NEW: Handle overdue notification - reschedule without showing system notification
+
   // Test methods
   Future<void> scheduleTestIn30Seconds() async {
     try {

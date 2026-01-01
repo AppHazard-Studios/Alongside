@@ -86,7 +86,7 @@ class _FriendCardNewState extends State<FriendCardNew>
   void _refreshCountdownOnly() {
     final notificationService = NotificationService();
     notificationService.getNextReminderTime(widget.friend.id).then((nextTime) {
-      if (mounted && nextTime != _nextReminderTime) {
+      if (mounted) {
         setState(() {
           _nextReminderTime = nextTime;
         });
@@ -168,9 +168,15 @@ class _FriendCardNewState extends State<FriendCardNew>
   @override
   void didUpdateWidget(FriendCardNew oldWidget) {
     super.didUpdateWidget(oldWidget);
+
+    // CRITICAL: Refresh reminder time whenever parent rebuilds
+    // This ensures tick disappears after popup reschedules
+    _refreshCountdownOnly();
+
     if (widget.isExpanded != oldWidget.isExpanded) {
       widget.isExpanded ? _controller.forward() : _controller.reverse();
     }
+
     if (widget.friend.reminderTime != oldWidget.friend.reminderTime ||
         widget.friend.reminderData != oldWidget.friend.reminderData) {
       _loadNextReminderTime();

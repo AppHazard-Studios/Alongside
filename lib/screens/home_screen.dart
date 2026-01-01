@@ -147,17 +147,11 @@ class _HomeScreenNewState extends State<HomeScreenNew>
     HapticFeedback.lightImpact();
   }
 
-  // ============================================================================
-  // FOREGROUND TIMER MANAGEMENT
-  // ============================================================================
-
 // ============================================================================
   // PRECISE NOTIFICATION TIMER SYSTEM
   // ============================================================================
 
-  /// Calculate and schedule timer for the next upcoming notification
   Future<void> _scheduleNextNotificationTimer() async {
-    // Cancel existing timer
     _nextNotificationTimer?.cancel();
     _nextNotificationTimer = null;
 
@@ -168,7 +162,6 @@ class _HomeScreenNewState extends State<HomeScreenNew>
       DateTime? earliestTime;
       String? earliestFriendId;
 
-      // Find the earliest upcoming notification across all friends
       for (final friend in provider.friends) {
         if (!friend.hasReminder) continue;
 
@@ -190,14 +183,12 @@ class _HomeScreenNewState extends State<HomeScreenNew>
       final delay = earliestTime.difference(now);
 
       if (delay.isNegative) {
-        // Notification is overdue - show immediately
         print("⏰ Notification overdue - showing immediately for $earliestFriendId");
         _handleNotificationDue(earliestFriendId);
       } else {
-        // Schedule precise timer
         print("⏰ Scheduling notification for $earliestFriendId at $earliestTime (in ${delay.inMinutes}m ${delay.inSeconds % 60}s)");
 
-        final friendId = earliestFriendId; // Capture value for closure
+        final friendId = earliestFriendId;
         _nextNotificationTimer = Timer(delay, () {
           if (mounted && _isAppInForeground) {
             _handleNotificationDue(friendId);
@@ -209,28 +200,25 @@ class _HomeScreenNewState extends State<HomeScreenNew>
     }
   }
 
-  /// Handle when a notification becomes due
   void _handleNotificationDue(String friendId) {
     final provider = Provider.of<FriendsProvider>(context, listen: false);
     final friend = provider.getFriendById(friendId);
 
     if (friend == null) {
       print("❌ Friend not found: $friendId");
-      _scheduleNextNotificationTimer(); // Try next one
+      _scheduleNextNotificationTimer();
       return;
     }
 
     print("🔔 Notification due for ${friend.name}");
 
-    // Trigger UI rebuild (shows tick in FriendCard)
+    // Trigger rebuild to show tick
     setState(() {});
 
-    // Show popup if not already showing one
     if (_pendingNotificationFriendId == null) {
       _showNotificationPopup(friend);
     }
 
-    // Schedule next notification timer
     Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
         _scheduleNextNotificationTimer();
@@ -238,7 +226,6 @@ class _HomeScreenNewState extends State<HomeScreenNew>
     });
   }
 
-  /// Check for any overdue notifications (called on app resume)
   Future<void> _checkOverdueAndSchedule() async {
     try {
       final provider = Provider.of<FriendsProvider>(context, listen: false);
@@ -249,25 +236,21 @@ class _HomeScreenNewState extends State<HomeScreenNew>
       );
 
       if (overdueFriends.isNotEmpty && mounted) {
-        // Trigger rebuild to show all ticks
         setState(() {});
 
-        // Show popups for overdue friends (one at a time)
         for (final friend in overdueFriends) {
           await _showNotificationPopupQueued(friend);
         }
       }
 
-      // Always schedule the next timer
       await _scheduleNextNotificationTimer();
     } catch (e) {
       print("❌ Error checking overdue notifications: $e");
     }
   }
 
-  /// Show notification popup with proper cleanup
   void _showNotificationPopup(Friend friend) {
-    if (_pendingNotificationFriendId != null) return; // Already showing one
+    if (_pendingNotificationFriendId != null) return;
 
     _pendingNotificationFriendId = friend.id;
 
@@ -346,9 +329,13 @@ class _HomeScreenNewState extends State<HomeScreenNew>
               final notificationService = NotificationService();
               await notificationService.triggerOverdueNotification(friend);
 
-              // Force UI refresh (removes tick)
+              // Force multiple rebuilds to ensure FriendCard updates
+              await Future.delayed(const Duration(milliseconds: 200));
               if (mounted) {
                 setState(() {});
+                Future.delayed(const Duration(milliseconds: 100), () {
+                  if (mounted) setState(() {});
+                });
               }
             },
             child: Text(
@@ -366,7 +353,6 @@ class _HomeScreenNewState extends State<HomeScreenNew>
               final notificationService = NotificationService();
               await notificationService.triggerOverdueNotification(friend);
 
-              // Navigate to message screen
               await Navigator.push(
                 context,
                 CupertinoPageRoute(
@@ -374,9 +360,13 @@ class _HomeScreenNewState extends State<HomeScreenNew>
                 ),
               );
 
-              // Force UI refresh when returning (removes tick)
+              // Force multiple rebuilds when returning
+              await Future.delayed(const Duration(milliseconds: 200));
               if (mounted) {
                 setState(() {});
+                Future.delayed(const Duration(milliseconds: 100), () {
+                  if (mounted) setState(() {});
+                });
               }
             },
             isDefaultAction: true,
@@ -394,7 +384,6 @@ class _HomeScreenNewState extends State<HomeScreenNew>
     });
   }
 
-  /// Show notification popup with queueing (for multiple overdue)
   Future<void> _showNotificationPopupQueued(Friend friend) async {
     if (ModalRoute.of(context)?.isCurrent != true) return;
 
@@ -475,8 +464,12 @@ class _HomeScreenNewState extends State<HomeScreenNew>
               final notificationService = NotificationService();
               await notificationService.triggerOverdueNotification(friend);
 
+              await Future.delayed(const Duration(milliseconds: 200));
               if (mounted) {
                 setState(() {});
+                Future.delayed(const Duration(milliseconds: 100), () {
+                  if (mounted) setState(() {});
+                });
               }
 
               completer.complete();
@@ -502,8 +495,12 @@ class _HomeScreenNewState extends State<HomeScreenNew>
                 ),
               );
 
+              await Future.delayed(const Duration(milliseconds: 200));
               if (mounted) {
                 setState(() {});
+                Future.delayed(const Duration(milliseconds: 100), () {
+                  if (mounted) setState(() {});
+                });
               }
 
               completer.complete();
@@ -524,6 +521,8 @@ class _HomeScreenNewState extends State<HomeScreenNew>
 
     return completer.future;
   }
+
+
 
   @override
   void didChangeDependencies() {
