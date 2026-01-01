@@ -647,6 +647,21 @@ class _HomeScreenNewState extends State<HomeScreenNew>
                             index: index,
                             isExpanded: friend.id == _expandedFriendId,
                             onExpand: _handleCardExpanded,
+                            isSortedByReminders: _isSortedByReminders,
+                            onExitSortMode: () {
+                              // Restore original custom order before allowing reorder
+                              if (_originalFriendsOrder != null) {
+                                final provider = Provider.of<FriendsProvider>(context, listen: false);
+                                provider.reorderFriends(_originalFriendsOrder!);
+                              }
+
+                              setState(() {
+                                _isSortedByReminders = false;
+                                _originalFriendsOrder = null;
+                              });
+
+                              ToastService.showSuccess(context, 'Switched to custom order');
+                            },
                           ),
                         ),
                       ),

@@ -23,6 +23,8 @@ class FriendCardNew extends StatefulWidget {
   final Function(String) onExpand;
   final int index;
   final Function(int, int)? onReorder;
+  final bool isSortedByReminders;
+  final VoidCallback onExitSortMode;
 
   const FriendCardNew({
     Key? key,
@@ -31,6 +33,8 @@ class FriendCardNew extends StatefulWidget {
     required this.onExpand,
     required this.index,
     this.onReorder,
+    this.isSortedByReminders = false,
+    required this.onExitSortMode,
   }) : super(key: key);
 
   @override
@@ -309,7 +313,18 @@ class _FriendCardNewState extends State<FriendCardNew>
             CupertinoActionSheetAction(
               onPressed: () {
                 Navigator.pop(context);
-                _showReorderMenu();
+
+                if (widget.isSortedByReminders) {
+                  widget.onExitSortMode();
+                  // Wait for parent rebuild to complete, then show menu
+                  Future.delayed(const Duration(milliseconds: 500), () {
+                    if (mounted) {
+                      _showReorderMenu();
+                    }
+                  });
+                } else {
+                  _showReorderMenu();
+                }
               },
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
