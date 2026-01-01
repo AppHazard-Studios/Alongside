@@ -167,8 +167,13 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               }
 
               if (contact.phones.length == 1) {
+                // Use normalizedNumber if available, otherwise fall back to number
+                final phoneNumber = contact.phones.first.normalizedNumber.isNotEmpty
+                    ? contact.phones.first.normalizedNumber
+                    : contact.phones.first.number;
+
                 setState(() {
-                  _phoneController.text = contact.phones.first.number;
+                  _phoneController.text = phoneNumber;
                 });
               } else {
                 _showPhoneNumberSelector(contact);
@@ -237,17 +242,23 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               break;
           }
 
+          // Use normalizedNumber if available, otherwise fall back to number
+          final displayNumber = phone.number;
+          final actualNumber = phone.normalizedNumber.isNotEmpty
+              ? phone.normalizedNumber
+              : phone.number;
+
           return CupertinoActionSheetAction(
             onPressed: () {
               Navigator.pop(context);
               setState(() {
-                _phoneController.text = phone.number;
+                _phoneController.text = actualNumber;
               });
             },
             child: Column(
               children: [
                 Text(
-                  phone.number,
+                  displayNumber,
                   style: AppTextStyles.scaledCallout(context).copyWith(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w500,
@@ -568,6 +579,54 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       return;
     }
 
+    // Validate phone number format
+    final phoneNumber = _phoneController.text.trim();
+    if (!phoneNumber.startsWith('+')) {
+      // Show warning about missing country code
+      final shouldContinue = await showCupertinoDialog<bool>(
+        context: context,
+        builder: (context) => CupertinoAlertDialog(
+          title: Text(
+            'Phone Number Format',
+            style: AppTextStyles.scaledDialogTitle(context).copyWith(
+              color: AppColors.warning,
+            ),
+          ),
+          content: Padding(
+            padding: EdgeInsets.only(top: ResponsiveUtils.scaledSpacing(context, 8)),
+            child: Text(
+              'The phone number should include a country code (e.g., +61 for Australia, +1 for USA).\n\nWithout it, messages may create duplicate chat threads.\n\nContinue anyway?',
+              style: AppTextStyles.scaledBody(context),
+            ),
+          ),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(
+                'Fix Number',
+                style: AppTextStyles.scaledButton(context).copyWith(
+                  color: AppColors.secondary,
+                ),
+              ),
+            ),
+            CupertinoDialogAction(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(
+                'Continue',
+                style: AppTextStyles.scaledButton(context).copyWith(
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+
+      if (shouldContinue != true) {
+        return;
+      }
+    }
+
     final provider = Provider.of<FriendsProvider>(context, listen: false);
     final isNewFriend = widget.friend == null;
 
@@ -575,7 +634,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       final newFriend = Friend(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         name: _nameController.text.trim(),
-        phoneNumber: _phoneController.text.trim(),
+        phoneNumber: phoneNumber,
         profileImage: _profileImage,
         isEmoji: _isEmoji,
         reminderDays: _reminderDays,
@@ -594,7 +653,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     } else {
       final updatedFriend = widget.friend!.copyWith(
         name: _nameController.text.trim(),
-        phoneNumber: _phoneController.text.trim(),
+        phoneNumber: phoneNumber,
         profileImage: _profileImage,
         isEmoji: _isEmoji,
         reminderDays: _reminderDays,
