@@ -1,10 +1,10 @@
-// lib/models/friend.dart - UPDATED FILE
-import '../models/day_selection_data.dart';
+import 'day_selection_data.dart';
 
 class Friend {
   final String id;
   final String name;
   final String phoneNumber;
+  final String? countryCode; // NEW: Separate country code storage
   final String profileImage; // Path to image or emoji string
   final bool isEmoji;
   final int reminderDays; // DEPRECATED: Keep for backward compatibility
@@ -19,6 +19,7 @@ class Friend {
     required this.id,
     required this.name,
     required this.phoneNumber,
+    this.countryCode,
     required this.profileImage,
     required this.isEmoji,
     this.reminderDays = 0,
@@ -36,6 +37,7 @@ class Friend {
       'id': id,
       'name': name,
       'phoneNumber': phoneNumber,
+      'countryCode': countryCode,
       'profileImage': profileImage,
       'isEmoji': isEmoji,
       'reminderDays': reminderDays,
@@ -49,10 +51,33 @@ class Friend {
   }
 
   factory Friend.fromJson(Map<String, dynamic> json) {
+    String phoneNumber = json['phoneNumber'];
+    String? countryCode = json['countryCode'];
+
+    // Migration: extract country code but keep local format
+    if (countryCode == null && phoneNumber.startsWith('+')) {
+      final match = RegExp(r'^\+(\d{1,4})').firstMatch(phoneNumber);
+      if (match != null) {
+        countryCode = '+${match.group(1)}';
+        phoneNumber = phoneNumber.substring(countryCode.length).trim();
+
+        // Add leading 0 back for local format (countries that need it)
+        final countriesWithLeadingZero = [
+          '+61', '+44', '+64', '+27', '+91', '+92', '+234', '+254', '+63',
+          '+60', '+62', '+66', '+84', '+20', '+972', '+90', '+880'
+        ];
+
+        if (countriesWithLeadingZero.contains(countryCode) && !phoneNumber.startsWith('0')) {
+          phoneNumber = '0$phoneNumber';
+        }
+      }
+    }
+
     return Friend(
       id: json['id'],
       name: json['name'],
-      phoneNumber: json['phoneNumber'],
+      phoneNumber: phoneNumber,
+      countryCode: countryCode,
       profileImage: json['profileImage'],
       isEmoji: json['isEmoji'],
       reminderDays: json['reminderDays'] ?? 0,
@@ -68,6 +93,7 @@ class Friend {
   Friend copyWith({
     String? name,
     String? phoneNumber,
+    String? countryCode,
     String? profileImage,
     bool? isEmoji,
     int? reminderDays,
@@ -82,6 +108,7 @@ class Friend {
       id: id,
       name: name ?? this.name,
       phoneNumber: phoneNumber ?? this.phoneNumber,
+      countryCode: countryCode ?? this.countryCode,
       profileImage: profileImage ?? this.profileImage,
       isEmoji: isEmoji ?? this.isEmoji,
       reminderDays: reminderDays ?? this.reminderDays,
@@ -122,5 +149,13 @@ class Friend {
     } else {
       return 'No reminder';
     }
+  }
+
+  // NEW: Get full phone number with country code for display
+  String get fullPhoneNumber {
+    if (countryCode != null && countryCode!.isNotEmpty) {
+      return '$countryCode $phoneNumber';
+    }
+    return phoneNumber;
   }
 }

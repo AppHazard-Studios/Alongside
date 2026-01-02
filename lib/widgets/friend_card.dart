@@ -803,7 +803,9 @@ class _FriendCardNewState extends State<FriendCardNew>
   }
 
   Future<void> _callFriend(BuildContext context) async {
-    final phoneNumber = widget.friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+    // Use ONLY the phone number, no country code
+    final phoneNumber = widget.friend.phoneNumber.replaceAll(RegExp(r'[^\d]'), '');
+
     try {
       final telUri = Uri.parse('tel:$phoneNumber');
       await launchUrl(telUri, mode: LaunchMode.externalApplication);

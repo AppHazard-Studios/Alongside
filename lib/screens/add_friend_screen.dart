@@ -31,6 +31,7 @@ class AddFriendScreen extends StatefulWidget {
 class _AddFriendScreenState extends State<AddFriendScreen> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _countryCodeController = TextEditingController();
   final _helpingThemWithController = TextEditingController();
   final _helpingYouWithController = TextEditingController();
   final _phoneFocusNode = FocusNode();
@@ -83,7 +84,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   int _reminderDays = 0;
   bool _hasPersistentNotification = false;
   DaySelectionData? _daySelectionData;
-
+  String? _selectedCountryCode; // NEW: Store selected country code separately
   String _reminderTimeStr = "09:00";
 
 
@@ -94,6 +95,8 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     if (widget.friend != null) {
       _nameController.text = widget.friend!.name;
       _phoneController.text = widget.friend!.phoneNumber;
+      // Remove the + when loading for display
+      _countryCodeController.text = widget.friend!.countryCode?.substring(1) ?? '';
       _profileImage = widget.friend!.profileImage;
       _isEmoji = widget.friend!.isEmoji;
       _reminderDays = widget.friend!.reminderDays;
@@ -167,9 +170,10 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
+    _countryCodeController.dispose(); // NEW
     _helpingThemWithController.dispose();
     _helpingYouWithController.dispose();
-    _phoneFocusNode.dispose(); // ADD THIS LINE
+    _phoneFocusNode.dispose();
     super.dispose();
   }
 
@@ -220,9 +224,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                 }
 
                 if (contact.phones.length == 1) {
-                  setState(() {
-                    _phoneController.text = contact.phones.first.number;
-                  });
+                  _processContactNumber(contact);  // ← Make sure this line exists
                 } else {
                   _showPhoneNumberSelector(contact);
                 }
@@ -236,6 +238,58 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     } else {
       _showErrorSnackBar('Permission to access contacts was denied');
     }
+  }
+
+  void _processContactNumber(Contact contact) async {
+    if (contact.phones.isEmpty) return;
+
+    String phoneNumber = contact.phones.first.normalizedNumber.isNotEmpty
+        ? contact.phones.first.normalizedNumber
+        : contact.phones.first.number;
+
+    phoneNumber = phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+
+    // Try to extract country code using our known list
+    String? detectedCountryCode;
+    if (phoneNumber.startsWith('+')) {
+      // Check our 40 known country codes (longest first to avoid partial matches)
+      final knownCodes = [
+        '+1758', '+1784', '+1869', // 4-digit codes first
+        '+353', '+351', '+234', '+254', '+880', '+971', '+966', '+972', // 3-digit codes
+        '+61', '+44', '+64', '+27', '+91', '+92', '+63', '+60', '+62', '+66',
+        '+84', '+20', '+90', '+1', '+81', '+82', '+86', '+33', '+49', '+39',
+        '+34', '+31', '+32', '+41', '+46', '+48', '+30', '+55', '+52', '+852',
+      ];
+
+      for (final code in knownCodes) {
+        if (phoneNumber.startsWith(code)) {
+          detectedCountryCode = code;
+          phoneNumber = phoneNumber.substring(code.length);
+
+          // Add leading 0 for countries that need it
+          final countriesWithLeadingZero = [
+            '+61', '+44', '+64', '+27', '+91', '+92', '+234', '+254', '+63',
+            '+60', '+62', '+66', '+84', '+20', '+972', '+90', '+880'
+          ];
+
+          if (countriesWithLeadingZero.contains(code) && !phoneNumber.startsWith('0')) {
+            phoneNumber = '0$phoneNumber';
+          }
+          break;
+        }
+      }
+
+      // If we didn't find a known code, just use the number as-is
+      if (detectedCountryCode == null) {
+        // Unknown country code - just use the whole thing
+        phoneNumber = phoneNumber;
+      }
+    }
+
+    setState(() {
+      _phoneController.text = phoneNumber;
+      _countryCodeController.text = detectedCountryCode?.substring(1) ?? ''; // Remove the + for display
+    });
   }
 
   void _showPhoneNumberSelector(Contact contact) {
@@ -291,23 +345,55 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               break;
           }
 
-          // Use normalizedNumber if available, otherwise fall back to number
-          final displayNumber = phone.number;
-          final actualNumber = phone.normalizedNumber.isNotEmpty
-              ? phone.normalizedNumber
-              : phone.number;
-
           return CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(context);
-              setState(() {
-                _phoneController.text = actualNumber;
-              });
-            },
+              onPressed: () {
+                Navigator.pop(context);
+
+                // Get the selected phone
+                String selectedNumber = phone.normalizedNumber.isNotEmpty
+                    ? phone.normalizedNumber
+                    : phone.number;
+
+                selectedNumber = selectedNumber.replaceAll(RegExp(r'[^\d+]'), '');
+
+                // Try to detect country code
+                String? detectedCountryCode;
+                if (selectedNumber.startsWith('+')) {
+                  final knownCodes = [
+                    '+1758', '+1784', '+1869',
+                    '+353', '+351', '+234', '+254', '+880', '+971', '+966', '+972',
+                    '+61', '+44', '+64', '+27', '+91', '+92', '+63', '+60', '+62', '+66',
+                    '+84', '+20', '+90', '+1', '+81', '+82', '+86', '+33', '+49', '+39',
+                    '+34', '+31', '+32', '+41', '+46', '+48', '+30', '+55', '+52', '+852',
+                  ];
+
+                  for (final code in knownCodes) {
+                    if (selectedNumber.startsWith(code)) {
+                      detectedCountryCode = code;
+                      selectedNumber = selectedNumber.substring(code.length);
+
+                      final countriesWithLeadingZero = [
+                        '+61', '+44', '+64', '+27', '+91', '+92', '+234', '+254', '+63',
+                        '+60', '+62', '+66', '+84', '+20', '+972', '+90', '+880'
+                      ];
+
+                      if (countriesWithLeadingZero.contains(code) && !selectedNumber.startsWith('0')) {
+                        selectedNumber = '0$selectedNumber';
+                      }
+                      break;
+                    }
+                  }
+                }
+
+                setState(() {
+                  _phoneController.text = selectedNumber;
+                  _countryCodeController.text = detectedCountryCode?.substring(1) ?? '';
+                });
+              },
             child: Column(
               children: [
                 Text(
-                  displayNumber,
+                  phone.number,
                   style: AppTextStyles.scaledCallout(context).copyWith(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w500,
@@ -773,7 +859,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                           ),
                           child: Center(
                             child: Text(
-                              'Enter Manually',
+                              'Type Code in Phone Field',
                               style: AppTextStyles.scaledButton(context).copyWith(
                                 color: AppColors.secondary,
                                 fontWeight: FontWeight.w600,
@@ -849,63 +935,27 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       return;
     }
 
-    String phoneNumber = _phoneController.text.trim();
+    // Clean phone number
+    String phoneNumber = _phoneController.text.trim().replaceAll(RegExp(r'[^\d]'), '');
 
-    // Only show picker for NEW friends without country code
-    final isNewFriend = widget.friend == null;
-
-    if (isNewFriend && !phoneNumber.startsWith('+')) {
-      final result = await _showCountryCodePicker(phoneNumber);
-
-      if (result == 'manual') {
-        // Focus phone field for manual entry
-        _phoneFocusNode.requestFocus();
-        _phoneController.selection = TextSelection.fromPosition(
-          const TextPosition(offset: 0),
-        );
-        ToastService.showSuccess(context, 'Add country code (e.g., +61)');
-        return; // DON'T SAVE
-
-      } else if (result == 'none') {
-        // User selected "No Country Code" - continue to save as-is
-        // phoneNumber stays unchanged
-
-      } else if (result != null) {
-        // User selected a country code
-        String numberWithoutLeadingZero = phoneNumber;
-
-        final countriesWithLeadingZero = [
-          '+61', '+44', '+64', '+27', '+91', '+92', '+234', '+254', '+63',
-          '+60', '+62', '+66', '+84', '+20', '+972', '+90', '+880'
-        ];
-
-        if (countriesWithLeadingZero.contains(result) && phoneNumber.startsWith('0')) {
-          numberWithoutLeadingZero = phoneNumber.substring(1);
-        }
-
-        phoneNumber = result + numberWithoutLeadingZero;
-
-        setState(() {
-          _phoneController.text = phoneNumber;
-        });
-
-        ToastService.showSuccess(context, 'Country code added! 📞');
-        await Future.delayed(const Duration(milliseconds: 500));
-
-      } else {
-        // result is null (dismissed/swiped) - DON'T SAVE, stay on page
-        return; // THIS WAS MISSING!
+    // Get country code (optional)
+    String? countryCode;
+    if (_countryCodeController.text.trim().isNotEmpty) {
+      String code = _countryCodeController.text.trim().replaceAll(RegExp(r'[^\d]'), '');
+      if (code.isNotEmpty) {
+        countryCode = '+$code'; // Add the + back for storage
       }
     }
 
-    // Proceed with save
+    // Save
     final provider = Provider.of<FriendsProvider>(context, listen: false);
 
-    if (isNewFriend) {
+    if (widget.friend == null) {
       final newFriend = Friend(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         name: _nameController.text.trim(),
         phoneNumber: phoneNumber,
+        countryCode: countryCode,
         profileImage: _profileImage,
         isEmoji: _isEmoji,
         reminderDays: _reminderDays,
@@ -925,6 +975,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       final updatedFriend = widget.friend!.copyWith(
         name: _nameController.text.trim(),
         phoneNumber: phoneNumber,
+        countryCode: countryCode,
         profileImage: _profileImage,
         isEmoji: _isEmoji,
         reminderDays: _reminderDays,
@@ -1344,14 +1395,88 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                         _buildFormRow(
                           icon: CupertinoIcons.phone_fill,
                           iconColor: AppColors.primary,
-                          child: Focus(
-                            focusNode: _phoneFocusNode,
-                            child: NoUnderlineField(
-                              controller: _phoneController,
-                              label: 'Phone Number',
-                              placeholder: 'Enter number (or random if none)',
-                              keyboardType: TextInputType.phone,
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Phone Number',
+                                style: AppTextStyles.scaledFootnote(context).copyWith(
+                                  color: AppColors.textSecondary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              SizedBox(height: ResponsiveUtils.scaledSpacing(context, 6)),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  // Hardcoded + with narrow input
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        '+',
+                                        style: AppTextStyles.scaledCallout(context).copyWith(
+                                          color: AppColors.textPrimary,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: ResponsiveUtils.scaledContainerSize(context, 35),
+                                        child: CupertinoTextField(
+                                          controller: _countryCodeController,
+                                          placeholder: '61',
+                                          keyboardType: TextInputType.number,
+                                          maxLength: 4,
+                                          style: AppTextStyles.scaledCallout(context).copyWith(
+                                            color: AppColors.textPrimary,
+                                          ),
+                                          decoration: null,
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: ResponsiveUtils.scaledSpacing(context, 4),
+                                            vertical: ResponsiveUtils.scaledSpacing(context, 8),
+                                          ),
+                                          placeholderStyle: AppTextStyles.scaledCallout(context).copyWith(
+                                            color: AppColors.textSecondary,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+
+                                  // Vertical separator aligned with text
+                                  Container(
+                                    width: 1,
+                                    height: ResponsiveUtils.scaledContainerSize(context, 16),
+                                    margin: EdgeInsets.symmetric(
+                                      horizontal: ResponsiveUtils.scaledSpacing(context, 8),
+                                    ),
+                                    color: AppColors.primary.withOpacity(0.2),
+                                  ),
+
+                                  // Phone number input
+                                  Expanded(
+                                    child: Focus(
+                                      focusNode: _phoneFocusNode,
+                                      child: CupertinoTextField(
+                                        controller: _phoneController,
+                                        placeholder: 'Enter number',
+                                        keyboardType: TextInputType.phone,
+                                        style: AppTextStyles.scaledCallout(context).copyWith(
+                                          color: AppColors.textPrimary,
+                                        ),
+                                        decoration: null,
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: ResponsiveUtils.scaledSpacing(context, 8),
+                                        ),
+                                        placeholderStyle: AppTextStyles.scaledCallout(context).copyWith(
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
                       ],

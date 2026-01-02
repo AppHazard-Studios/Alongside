@@ -803,4 +803,42 @@ class NotificationService {
       print("❌ Remove persistent error: $e");
     }
   }
+
+  /// Check if persistent notifications exist and recreate any missing ones
+  Future<void> checkAndRestorePersistentNotifications(List<Friend> allFriends) async {
+    try {
+      print("🔍 Checking persistent notifications status...");
+
+      // Get currently active notifications
+      final activeNotifications = await flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          ?.getActiveNotifications();
+
+      if (activeNotifications == null) {
+        print("⚠️ Could not check active notifications");
+        return;
+      }
+
+      // Get list of active persistent notification IDs
+      final activeIds = activeNotifications
+          .map((n) => n.id)
+          .toSet();
+
+      // Check each friend who should have persistent notification
+      for (final friend in allFriends) {
+        if (!friend.hasPersistentNotification) continue;
+
+        final expectedId = _persistentOffset + _getNotificationId(friend.id);
+
+        if (!activeIds.contains(expectedId)) {
+          print("🔄 Recreating persistent notification for ${friend.name}");
+          await showPersistentNotification(friend);
+        }
+      }
+
+      print("✅ Persistent notifications check complete");
+    } catch (e) {
+      print("❌ Error checking persistent notifications: $e");
+    }
+  }
 }

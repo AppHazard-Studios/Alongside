@@ -50,6 +50,7 @@ class _HomeScreenNewState extends State<HomeScreenNew>
   Timer? _nextNotificationTimer;
   bool _isAppInForeground = true;
   String? _pendingNotificationFriendId; // Track which friend's notification is showing
+  bool _hasInitializedNotifications = false;
 
   @override
   void initState() {
@@ -83,6 +84,7 @@ class _HomeScreenNewState extends State<HomeScreenNew>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
+    _scheduleNextNotificationTimer();
 
     if (state == AppLifecycleState.resumed) {
       print("📱 App resumed - checking overdue and scheduling");
@@ -132,6 +134,20 @@ class _HomeScreenNewState extends State<HomeScreenNew>
       setState(() {
         _isSortedByReminders = true;
       });
+    }
+  }
+
+  Future<void> _initializeNotificationsOnFirstLoad() async {
+    if (_hasInitializedNotifications) return;
+
+    _hasInitializedNotifications = true;
+
+    // Small delay to ensure friends are fully loaded
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    if (mounted && _isAppInForeground) {
+      print("🚀 Initializing notifications on app start");
+      await _checkOverdueAndSchedule();
     }
   }
 
@@ -561,6 +577,8 @@ class _HomeScreenNewState extends State<HomeScreenNew>
                   setState(() {
                     _expandedFriendId = allFriends.first.id;
                   });
+                  // Start notification timer on first load
+                  _initializeNotificationsOnFirstLoad();
                 }
               });
             }

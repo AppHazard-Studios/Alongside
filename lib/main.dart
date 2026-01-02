@@ -174,6 +174,7 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
         print("📱 App resumed");
         _checkIfShouldLock();
         _checkNotificationSchedules();
+        _checkPersistentNotifications(); // NEW: Check persistent notifications
         break;
 
       case AppLifecycleState.inactive:
@@ -270,6 +271,18 @@ class _AlongsideAppState extends State<AlongsideApp> with WidgetsBindingObserver
       await notificationService.checkAndExtendSchedule();
     } catch (e) {
       print("❌ Error checking schedules: $e");
+    }
+  }
+
+  Future<void> _checkPersistentNotifications() async {
+    try {
+      print("🔍 Checking persistent notifications...");
+      final notificationService = NotificationService();
+      final provider = Provider.of<FriendsProvider>(context, listen: false);
+
+      await notificationService.checkAndRestorePersistentNotifications(provider.friends);
+    } catch (e) {
+      print("❌ Error checking persistent notifications: $e");
     }
   }
 
@@ -547,7 +560,8 @@ class _NotificationRouterScreenState extends State<NotificationRouterScreen> {
   // ADDED: Direct phone launch method
   Future<void> _launchPhoneCall(Friend friend) async {
     try {
-      final phoneNumber = friend.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+      // Use ONLY the local phone number - NO country code
+      final phoneNumber = friend.phoneNumber.replaceAll(RegExp(r'[^\d]'), '');
       final telUri = Uri.parse('tel:$phoneNumber');
 
       await launchUrl(
@@ -555,15 +569,12 @@ class _NotificationRouterScreenState extends State<NotificationRouterScreen> {
         mode: LaunchMode.externalApplication,
       );
 
-      // Track the call made
       final storageService = Provider.of<FriendsProvider>(context, listen: false).storageService;
       await storageService.incrementCallsMade();
 
-      // Record action for reminder rescheduling
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('last_action_${friend.id}', DateTime.now().millisecondsSinceEpoch);
 
-      // Reschedule reminder
       final notificationService = NotificationService();
       await notificationService.scheduleReminder(friend);
 
