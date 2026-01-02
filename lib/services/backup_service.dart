@@ -1,4 +1,4 @@
-// lib/services/backup_service.dart - Fixed with proper file handling
+// lib/services/backup_service.dart - COMPLETE WITH PHOTOS & FAVORITES
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
@@ -54,24 +54,35 @@ class BackupService {
 
       // Get current data
       final storageService = StorageService();
-      final notificationService = NotificationService();
       final friends = await storageService.getFriends();
       final customMessages = await storageService.getCustomMessages();
       final prefs = await SharedPreferences.getInstance();
 
-      // Build reminder data
-      final reminderData = <String, dynamic>{};
-      for (final friend in friends) {
-        if (friend.reminderDays > 0) {
-          final nextReminderTime =
-          await notificationService.getNextReminderTime(friend.id);
-          final lastActionTime = prefs.getInt('last_action_${friend.id}');
+      // Get favorite messages
+      final favoriteMessages = prefs.getStringList('favorite_messages') ?? [];
 
-          reminderData[friend.id] = {
-            'nextReminder': nextReminderTime?.toIso8601String(),
-            'lastAction': lastActionTime,
-          };
+      // Process friends and extract photos
+      final friendsData = <Map<String, dynamic>>[];
+      final photosData = <String, String>{}; // friendId -> base64
+
+      for (final friend in friends) {
+        final friendJson = friend.toJson();
+
+        // If profile image is a photo (not emoji), convert to base64
+        if (!friend.isEmoji && friend.profileImage.isNotEmpty) {
+          try {
+            final file = File(friend.profileImage);
+            if (await file.exists()) {
+              final bytes = await file.readAsBytes();
+              final base64Photo = base64Encode(bytes);
+              photosData[friend.id] = base64Photo;
+            }
+          } catch (e) {
+            print('Error encoding photo for ${friend.name}: $e');
+          }
         }
+
+        friendsData.add(friendJson);
       }
 
       // Get lock settings
@@ -84,9 +95,10 @@ class BackupService {
       final backupData = {
         'version': _backupVersion,
         'exportDate': DateTime.now().toIso8601String(),
-        'friends': friends.map((f) => f.toJson()).toList(),
+        'friends': friendsData,
+        'photos': photosData,
         'customMessages': customMessages,
-        'reminderData': reminderData,
+        'favoriteMessages': favoriteMessages,
         'stats': {
           'messagesSent': await storageService.getMessagesSentCount(),
           'callsMade': await storageService.getCallsMadeCount(),
@@ -107,7 +119,7 @@ class BackupService {
         Navigator.pop(context);
       }
 
-      // Show security info dialog before export
+      // Show security info dialog if lock is enabled
       if (lockEnabled && context.mounted) {
         final proceed = await showCupertinoDialog<bool>(
           context: context,
@@ -184,7 +196,6 @@ class BackupService {
     }
   }
 
-  // Android-specific export options
   static Future<String?> _showAndroidExportOptions(
       BuildContext context,
       String jsonString,
@@ -270,35 +281,32 @@ class BackupService {
     );
   }
 
-  // Save file directly to device storage - FIXED VERSION
   static Future<String?> _saveToDevice(
       BuildContext context, String jsonString) async {
     try {
-      // Create a temporary file first
       final tempDir = await getTemporaryDirectory();
-      final tempFile = File(
-          '${tempDir.path}/alongside_backup_${DateTime.now().millisecondsSinceEpoch}.json');
 
-      // Write as bytes to avoid encoding issues
+      // Create human-readable filename
+      final now = DateTime.now();
+      final dateStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+      final timeStr = '${now.hour > 12 ? now.hour - 12 : now.hour}-${now.minute.toString().padLeft(2, '0')}${now.hour >= 12 ? 'pm' : 'am'}';
+      final filename = 'alongside_backup_${dateStr}_$timeStr.json';
+
+      final tempFile = File('${tempDir.path}/$filename');
       await tempFile.writeAsBytes(utf8.encode(jsonString));
 
-      // Let user choose location using the temporary file
       String? outputFile = await FilePicker.platform.saveFile(
         dialogTitle: 'Save Alongside Backup',
-        fileName:
-        'alongside_backup_${DateTime.now().millisecondsSinceEpoch}.json',
+        fileName: filename,
         type: FileType.custom,
         allowedExtensions: ['json'],
-        bytes: await tempFile.readAsBytes(), // Pass bytes directly
+        bytes: await tempFile.readAsBytes(),
       );
 
-      // Clean up temp file
       await tempFile.delete();
 
       if (outputFile != null) {
-        // Update last backup date
         final prefs = await SharedPreferences.getInstance();
-        final now = DateTime.now();
         final dateStr = '${now.month}/${now.day}/${now.year}';
         await prefs.setString('last_backup_date', dateStr);
 
@@ -312,34 +320,34 @@ class BackupService {
     return null;
   }
 
-  // Share file using share sheet
   static Future<String?> _shareFile(
       BuildContext context, String jsonString) async {
     try {
-      // Create temporary file
       final tempDir = await getTemporaryDirectory();
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final tempFile = File('${tempDir.path}/alongside_backup_$timestamp.json');
+
+      // Create human-readable filename
+      final now = DateTime.now();
+      final fileDateStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+      final timeStr = '${now.hour > 12 ? now.hour - 12 : now.hour}-${now.minute.toString().padLeft(2, '0')}${now.hour >= 12 ? 'pm' : 'am'}';
+      final filename = 'alongside_backup_${fileDateStr}_$timeStr.json';
+
+      final tempFile = File('${tempDir.path}/$filename');
       await tempFile.writeAsString(jsonString);
 
-      // Share the file
       if (context.mounted) {
         final box = context.findRenderObject() as RenderBox?;
         await Share.shareXFiles(
           [XFile(tempFile.path, mimeType: 'application/json')],
-          text: 'Alongside Backup - ${DateTime.now().toString().split(' ')[0]}',
+          text: 'Alongside Backup - $fileDateStr',
           subject: 'Alongside App Backup',
           sharePositionOrigin:
           box != null ? box.localToGlobal(Offset.zero) & box.size : null,
         );
 
-        // Update last backup date
         final prefs = await SharedPreferences.getInstance();
-        final now = DateTime.now();
-        final dateStr = '${now.month}/${now.day}/${now.year}';
-        await prefs.setString('last_backup_date', dateStr);
+        final prefDateStr = '${now.month}/${now.day}/${now.year}';
+        await prefs.setString('last_backup_date', prefDateStr);
 
-        // Show success dialog
         if (context.mounted) {
           _showExportSuccessDialog(context);
         }
@@ -356,7 +364,6 @@ class BackupService {
     }
   }
 
-  // Show export success dialog
   static void _showExportSuccessDialog(BuildContext context,
       {bool savedToDevice = false, String? path}) {
     showCupertinoDialog(
@@ -425,10 +432,8 @@ class BackupService {
     );
   }
 
-  // Import data - Updated to handle file picker properly
   static Future<void> importData(BuildContext context) async {
     try {
-      // Pick a file
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['json'],
@@ -436,7 +441,6 @@ class BackupService {
       );
 
       if (result != null && result.files.single.path != null) {
-        // Show loading
         if (context.mounted) {
           showCupertinoDialog(
             context: context,
@@ -472,25 +476,19 @@ class BackupService {
           );
         }
 
-        // Read the file
         final file = File(result.files.single.path!);
         final jsonString = await file.readAsString();
-
-        // Parse the backup data
         final Map<String, dynamic> backupData = jsonDecode(jsonString);
 
-        // Close loading
         if (context.mounted && Navigator.canPop(context)) {
           Navigator.pop(context);
         }
 
-        // Validate version
         final version = backupData['version'] as String?;
         if (version != '1.0') {
           throw Exception('Incompatible backup version');
         }
 
-        // Get current and backup security settings
         final prefs = await SharedPreferences.getInstance();
         final currentLockEnabled = prefs.getBool('app_lock_enabled') ?? false;
         final currentLockType = prefs.getString('app_lock_type');
@@ -499,19 +497,16 @@ class BackupService {
         final backupLockEnabled = backupSecurity?['lockEnabled'] ?? false;
         final backupLockType = backupSecurity?['lockType'];
 
-        // Build current status text
         String currentStatus = 'No lock';
         if (currentLockEnabled && currentLockType != null) {
           currentStatus = currentLockType == 'biometric' ? 'Biometric lock' : 'PIN lock';
         }
 
-        // Build backup status text
         String backupStatus = 'No lock';
         if (backupLockEnabled && backupLockType != null) {
           backupStatus = backupLockType == 'biometric' ? 'Biometric lock' : 'PIN lock';
         }
 
-        // Show detailed import confirmation dialog
         if (context.mounted) {
           final importChoice = await showCupertinoDialog<String>(
             context: context,
@@ -669,7 +664,6 @@ class BackupService {
 
           final includeSecurity = importChoice == 'import_all';
 
-          // Show importing dialog
           if (context.mounted) {
             showCupertinoDialog(
               context: context,
@@ -705,15 +699,46 @@ class BackupService {
             );
           }
 
-          // Import the data
           final provider = Provider.of<FriendsProvider>(context, listen: false);
           final storageService = provider.storageService;
+          final notificationService = NotificationService();
 
-          // Import friends
-          final friendsList = (backupData['friends'] as List?)
-              ?.map((f) => Friend.fromJson(f))
-              .toList() ??
-              [];
+          // Cancel ALL existing notifications first
+          for (final friend in provider.friends) {
+            await notificationService.cancelReminder(friend.id);
+            await notificationService.removePersistentNotification(friend.id);
+          }
+
+          // Import photos and update friend data
+          final photosData = backupData['photos'] as Map<String, dynamic>?;
+          final friendsList = <Friend>[];
+
+          for (final friendJson in (backupData['friends'] as List)) {
+            var friend = Friend.fromJson(friendJson);
+
+            // Restore photo if available
+            if (photosData != null && photosData.containsKey(friend.id)) {
+              try {
+                final base64Photo = photosData[friend.id] as String;
+                final bytes = base64Decode(base64Photo);
+
+                final docDir = await getApplicationDocumentsDirectory();
+                final imagePath = '${docDir.path}/${friend.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+                final imageFile = File(imagePath);
+                await imageFile.writeAsBytes(bytes);
+
+                friend = friend.copyWith(
+                  profileImage: imagePath,
+                  isEmoji: false,
+                );
+              } catch (e) {
+                print('Error restoring photo for ${friend.name}: $e');
+              }
+            }
+
+            friendsList.add(friend);
+          }
+
           await storageService.saveFriends(friendsList);
 
           // Import custom messages
@@ -721,7 +746,12 @@ class BackupService {
               (backupData['customMessages'] as List?)?.cast<String>() ?? [];
           await storageService.saveCustomMessages(customMessages);
 
-          // Import stats if available
+          // Import favorite messages
+          final favoriteMessages =
+              (backupData['favoriteMessages'] as List?)?.cast<String>() ?? [];
+          await prefs.setStringList('favorite_messages', favoriteMessages);
+
+          // Import stats
           if (backupData['stats'] != null) {
             await prefs.setInt('messages_sent_count',
                 backupData['stats']['messagesSent'] ?? 0);
@@ -753,12 +783,22 @@ class BackupService {
           // Force reload the provider
           await provider.reloadFriends();
 
-          // Close importing dialog
+          // Schedule FRESH notifications for friends with reminders
+          for (final friend in friendsList) {
+            if (friend.hasReminder) {
+              await notificationService.scheduleReminder(friend);
+              print('✅ Scheduled fresh reminder for ${friend.name}');
+            }
+
+            if (friend.hasPersistentNotification) {
+              await notificationService.showPersistentNotification(friend);
+            }
+          }
+
           if (context.mounted) {
             Navigator.pop(context);
           }
 
-          // Show success with security info
           if (context.mounted) {
             showCupertinoDialog(
               context: context,
@@ -811,7 +851,6 @@ class BackupService {
         }
       }
     } catch (e) {
-      // Close loading if still open
       if (context.mounted && Navigator.canPop(context)) {
         Navigator.pop(context);
       }
@@ -822,7 +861,6 @@ class BackupService {
     }
   }
 
-  // Show error dialog
   static void _showErrorDialog(BuildContext context, String message) {
     showCupertinoDialog(
       context: context,

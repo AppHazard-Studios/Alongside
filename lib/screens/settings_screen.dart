@@ -384,13 +384,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               color: AppColors.primary,
             ),
           ),
-          SizedBox(height: ResponsiveUtils.scaledSpacing(context, 3)),
-          Text(
-            'Version 1.0.0',
-            style: AppTextStyles.scaledSubhead(context).copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
         ],
       ),
     );
