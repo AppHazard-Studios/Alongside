@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/toast_service.dart';
 import '../utils/colors.dart';
 import '../utils/responsive_utils.dart';
 import '../utils/text_styles.dart';
@@ -694,198 +695,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _showPinSetup() {
-    final pinController = TextEditingController();
-    final confirmController = TextEditingController();
-    final pinFocusNode = FocusNode();
-    final confirmFocusNode = FocusNode();
-
-    showCupertinoDialog(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: Text(
-          'Set 4-Digit PIN',
-          style: AppTextStyles.scaledDialogTitle(context).copyWith(
-            color: AppColors.primary,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        content: Padding(
-          padding: EdgeInsets.only(top: ResponsiveUtils.scaledSpacing(context, 16)),
-          child: Column(
-            children: [
-              CupertinoTextField(
-                controller: pinController,
-                focusNode: pinFocusNode,
-                placeholder: 'Enter 4-digit PIN',
-                keyboardType: TextInputType.number,
-                obscureText: true,
-                maxLength: 4,
-                autofocus: true,
-                textAlign: TextAlign.center,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(4),
-                ],
-                style: AppTextStyles.scaledHeadline(context).copyWith(
-                  letterSpacing: 4,
-                  fontWeight: FontWeight.w600,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryLight,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: AppColors.primary.withOpacity(0.3),
-                    width: 1,
-                  ),
-                ),
-                padding: EdgeInsets.symmetric(
-                    vertical: ResponsiveUtils.scaledSpacing(context, 12),
-                    horizontal: ResponsiveUtils.scaledSpacing(context, 16)
-                ),
-                onChanged: (value) {
-                  if (value.length == 4) {
-                    confirmFocusNode.requestFocus();
-                  }
-                },
-              ),
-              SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)),
-              CupertinoTextField(
-                controller: confirmController,
-                focusNode: confirmFocusNode,
-                placeholder: 'Confirm PIN',
-                keyboardType: TextInputType.number,
-                obscureText: true,
-                maxLength: 4,
-                textAlign: TextAlign.center,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(4),
-                ],
-                style: AppTextStyles.scaledHeadline(context).copyWith(
-                  letterSpacing: 4,
-                  fontWeight: FontWeight.w600,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryLight,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: AppColors.primary.withOpacity(0.3),
-                    width: 1,
-                  ),
-                ),
-                padding: EdgeInsets.symmetric(
-                    vertical: ResponsiveUtils.scaledSpacing(context, 12),
-                    horizontal: ResponsiveUtils.scaledSpacing(context, 16)
-                ),
-                onSubmitted: (_) {
-                  _processPinSetup(pinController.text, confirmController.text);
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: AppTextStyles.scaledButton(context).copyWith(
-                color: AppColors.secondary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          CupertinoDialogAction(
-            onPressed: () {
-              _processPinSetup(pinController.text, confirmController.text);
-              Navigator.pop(context);
-            },
-            child: Text(
-              'Set PIN',
-              style: AppTextStyles.scaledButton(context).copyWith(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    Future.delayed(const Duration(milliseconds: 300), () {
-      pinFocusNode.requestFocus();
-    });
-  }
-
-  void _processPinSetup(String pin, String confirmPin) async {
-    if (pin.length != 4) {
-      _showErrorSnackBar('PIN must be exactly 4 digits');
-      return;
-    }
-
-    if (!RegExp(r'^\d{4}$').hasMatch(pin)) {
-      _showErrorSnackBar('PIN must contain only numbers');
-      return;
-    }
-
-    if (pin != confirmPin) {
-      _showErrorSnackBar('PINs do not match');
-      return;
-    }
-
-    showCupertinoDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => Center(
-        child: Container(
-          width: ResponsiveUtils.scaledContainerSize(context, 100),
-          height: ResponsiveUtils.scaledContainerSize(context, 100),
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.8),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const CupertinoActivityIndicator(
-                color: Colors.white,
-                radius: 12,
-              ),
-              SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)),
-              Text(
-                'Setting PIN...',
-                style: AppTextStyles.scaledSubhead(context).copyWith(
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
+  void _showPinSetup() async {
+    final result = await Navigator.push<String>(
+      context,
+      CupertinoPageRoute(
+        fullscreenDialog: true,
+        builder: (context) => _ModernPinSetupScreen(
+          lockService: _lockService,
+          onPinSet: (pin) async {
+            await _loadSettings();
+          },
         ),
       ),
     );
 
-    try {
-      final success = await _lockService.enablePinLock(pin);
-
-      if (mounted) {
-        Navigator.pop(context);
-
-        if (success) {
-          await _loadSettings();
-          _showSuccessSnackBar('4-digit PIN enabled successfully');
-        } else {
-          _showErrorSnackBar('Failed to set PIN');
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        Navigator.pop(context);
-        _showErrorSnackBar('Error setting PIN: ${e.toString()}');
-      }
+    if (result == 'success' && mounted) {
+      _showSuccessSnackBar('4-digit PIN enabled successfully! ✅');
     }
   }
+
 
   void _setupBiometric() async {
     showCupertinoDialog(
@@ -908,7 +736,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)),
               Text(
-                'Setting up\nBiometric Lock',
+                'Enabling\nBiometric Lock',
                 style: AppTextStyles.scaledSubhead(context).copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
@@ -942,54 +770,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
         if (result.success) {
           await _loadSettings();
-
-          showCupertinoDialog(
-            context: context,
-            builder: (context) => CupertinoAlertDialog(
-              title: Text(
-                'Biometric Lock Enabled',
-                style: AppTextStyles.scaledDialogTitle(context).copyWith(
-                  color: AppColors.success,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              content: Padding(
-                padding: EdgeInsets.only(top: ResponsiveUtils.scaledSpacing(context, 16)),
-                child: Text(
-                  'Biometric authentication has been enabled successfully. Would you like to test it now?',
-                  style: AppTextStyles.scaledCallout(context).copyWith(
-                    height: 1.4,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
-              actions: [
-                CupertinoDialogAction(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(
-                    'Later',
-                    style: AppTextStyles.scaledButton(context).copyWith(
-                      color: AppColors.secondary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                CupertinoDialogAction(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _testBiometricAuthentication();
-                  },
-                  child: Text(
-                    'Test Now',
-                    style: AppTextStyles.scaledButton(context).copyWith(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
+          _showSuccessSnackBar('Biometric lock enabled successfully! ✅');
         } else {
           _showDetailedErrorDialog(
             'Biometric Setup Failed',
@@ -1003,95 +784,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _showDetailedErrorDialog(
           'Biometric Setup Error',
           'Failed to set up biometric lock: ${e.toString()}',
-        );
-      }
-    }
-  }
-
-  void _testBiometricAuthentication() async {
-    try {
-      showCupertinoDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (ctx) => Center(
-          child: Container(
-            width: ResponsiveUtils.scaledContainerSize(context, 120),
-            height: ResponsiveUtils.scaledContainerSize(context, 100),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.8),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const CupertinoActivityIndicator(
-                  color: Colors.white,
-                  radius: 12,
-                ),
-                SizedBox(height: ResponsiveUtils.scaledSpacing(context, 12)),
-                Text(
-                  'Testing biometric\nauthentication...',
-                  style: AppTextStyles.scaledSubhead(context).copyWith(
-                    color: Colors.white,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-
-      final authenticated = await _lockService.authenticateBiometric();
-
-      if (mounted) {
-        Navigator.pop(context);
-
-        if (authenticated) {
-          _showSuccessSnackBar('Biometric authentication test successful! ✅');
-        } else {
-          showCupertinoDialog(
-            context: context,
-            builder: (context) => CupertinoAlertDialog(
-              title: Text(
-                'Authentication Failed',
-                style: AppTextStyles.scaledDialogTitle(context).copyWith(
-                  color: AppColors.warning,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              content: Padding(
-                padding: EdgeInsets.only(top: ResponsiveUtils.scaledSpacing(context, 16)),
-                child: Text(
-                  'Biometric authentication failed, but the lock is still enabled. You may need to authenticate using your device passcode when the app locks.',
-                  style: AppTextStyles.scaledCallout(context).copyWith(
-                    height: 1.4,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
-              actions: [
-                CupertinoDialogAction(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(
-                    'OK',
-                    style: AppTextStyles.scaledButton(context).copyWith(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        Navigator.pop(context);
-        _showDetailedErrorDialog(
-          'Test Failed',
-          'Could not test biometric authentication: ${e.toString()}',
         );
       }
     }
@@ -1150,83 +842,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showSuccessSnackBar(String message) {
-    showCupertinoDialog(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: Text(
-          'Success',
-          style: AppTextStyles.scaledDialogTitle(context).copyWith(
-            color: AppColors.success,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        content: Padding(
-          padding: EdgeInsets.only(top: ResponsiveUtils.scaledSpacing(context, 16)),
-          child: Text(
-            message,
-            style: AppTextStyles.scaledCallout(context).copyWith(
-              height: 1.4,
-              color: AppColors.textPrimary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'OK',
-              style: AppTextStyles.scaledButton(context).copyWith(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+    ToastService.showSuccess(context, message);
   }
 
   void _changeLockMethod() {
     _showLockMethodPicker();
-  }
-
-  void _showErrorSnackBar(String message) {
-    showCupertinoDialog(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: Text(
-          'Error',
-          style: AppTextStyles.scaledDialogTitle(context).copyWith(
-            color: AppColors.error,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        content: Padding(
-          padding: EdgeInsets.only(top: ResponsiveUtils.scaledSpacing(context, 16)),
-          child: Text(
-            message,
-            style: AppTextStyles.scaledCallout(context).copyWith(
-              height: 1.4,
-              color: AppColors.textPrimary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'OK',
-              style: AppTextStyles.scaledButton(context).copyWith(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   void _showCooldownPicker() {
@@ -1885,6 +1505,409 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         );
       },
+    );
+  }
+}
+// Add this at the end of the file, before the final closing brace
+
+class _ModernPinSetupScreen extends StatefulWidget {
+  final LockService lockService;
+  final Function(String) onPinSet;
+
+  const _ModernPinSetupScreen({
+    required this.lockService,
+    required this.onPinSet,
+  });
+
+  @override
+  State<_ModernPinSetupScreen> createState() => _ModernPinSetupScreenState();
+}
+
+class _ModernPinSetupScreenState extends State<_ModernPinSetupScreen> {
+  String _pin = '';
+  String _confirmPin = '';
+  bool _isConfirmMode = false;
+  bool _showError = false;
+  String _errorMessage = '';
+
+  void _handleDigit(String digit) {
+    setState(() {
+      _showError = false;
+      _errorMessage = '';
+
+      if (_isConfirmMode) {
+        if (_confirmPin.length < 4) {
+          _confirmPin += digit;
+
+          if (_confirmPin.length == 4) {
+            _verifyPins();
+          }
+        }
+      } else {
+        if (_pin.length < 4) {
+          _pin += digit;
+
+          if (_pin.length == 4) {
+            Future.delayed(const Duration(milliseconds: 300), () {
+              if (mounted) {
+                setState(() {
+                  _isConfirmMode = true;
+                });
+              }
+            });
+          }
+        }
+      }
+    });
+    HapticFeedback.lightImpact();
+  }
+
+  void _handleDelete() {
+    setState(() {
+      _showError = false;
+      _errorMessage = '';
+
+      if (_isConfirmMode) {
+        if (_confirmPin.isNotEmpty) {
+          _confirmPin = _confirmPin.substring(0, _confirmPin.length - 1);
+        }
+      } else {
+        if (_pin.isNotEmpty) {
+          _pin = _pin.substring(0, _pin.length - 1);
+        }
+      }
+    });
+    HapticFeedback.lightImpact();
+  }
+
+  void _verifyPins() async {
+    if (_pin != _confirmPin) {
+      setState(() {
+        _showError = true;
+        _errorMessage = 'PINs do not match';
+        _confirmPin = '';
+      });
+      HapticFeedback.heavyImpact();
+      return;
+    }
+
+    // PINs match, save it
+    showCupertinoDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Center(
+        child: Container(
+          width: 100,
+          height: 100,
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.8),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const CupertinoActivityIndicator(
+                color: Colors.white,
+                radius: 12,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Setting PIN...',
+                style: AppTextStyles.scaledSubhead(context).copyWith(
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    try {
+      final success = await widget.lockService.enablePinLock(_pin);
+
+      if (mounted) {
+        Navigator.pop(context); // Close loading
+
+        if (success) {
+          await widget.onPinSet(_pin);
+          Navigator.pop(context, 'success');
+        } else {
+          Navigator.pop(context);
+          _showErrorDialog('Failed to set PIN');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Close loading
+        Navigator.pop(context);
+        _showErrorDialog('Error setting PIN: ${e.toString()}');
+      }
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text(
+          'Error',
+          style: AppTextStyles.scaledDialogTitle(context).copyWith(
+            color: AppColors.error,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        content: Padding(
+          padding: EdgeInsets.only(top: ResponsiveUtils.scaledSpacing(context, 16)),
+          child: Text(
+            message,
+            style: AppTextStyles.scaledCallout(context).copyWith(
+              height: 1.4,
+              color: AppColors.textPrimary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'OK',
+              style: AppTextStyles.scaledButton(context).copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CupertinoPageScaffold(
+      backgroundColor: AppColors.primary,
+      child: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            Container(
+              padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 16)),
+              child: Row(
+                children: [
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: () => Navigator.pop(context),
+                    child: Container(
+                      width: ResponsiveUtils.scaledContainerSize(context, 32),
+                      height: ResponsiveUtils.scaledContainerSize(context, 32),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        CupertinoIcons.xmark,
+                        color: Colors.white,
+                        size: ResponsiveUtils.scaledIconSize(context, 16),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const Spacer(),
+
+            // Icon
+            Container(
+              width: ResponsiveUtils.scaledContainerSize(context, 80),
+              height: ResponsiveUtils.scaledContainerSize(context, 80),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                CupertinoIcons.lock_shield_fill,
+                size: ResponsiveUtils.scaledIconSize(context, 40),
+                color: Colors.white,
+              ),
+            ),
+
+            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 24)),
+
+            // Title
+            Text(
+              _isConfirmMode ? 'Confirm Your PIN' : 'Set Your PIN',
+              style: AppTextStyles.scaledTitle1(context).copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+
+            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 8)),
+
+            // Subtitle
+            Text(
+              _isConfirmMode
+                  ? 'Enter your PIN again'
+                  : 'Create a 4-digit PIN',
+              style: AppTextStyles.scaledCallout(context).copyWith(
+                color: Colors.white.withOpacity(0.8),
+              ),
+            ),
+
+            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 40)),
+
+            // PIN Display Boxes
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(4, (index) {
+                final currentPin = _isConfirmMode ? _confirmPin : _pin;
+                final isFilled = index < currentPin.length;
+
+                return Container(
+                  margin: EdgeInsets.symmetric(
+                    horizontal: ResponsiveUtils.scaledSpacing(context, 8),
+                  ),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    width: ResponsiveUtils.scaledContainerSize(context, 60),
+                    height: ResponsiveUtils.scaledContainerSize(context, 70),
+                    decoration: BoxDecoration(
+                      color: _showError
+                          ? AppColors.error.withOpacity(0.2)
+                          : Colors.white.withOpacity(isFilled ? 0.3 : 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _showError
+                            ? AppColors.error
+                            : isFilled
+                            ? Colors.white
+                            : Colors.white.withOpacity(0.3),
+                        width: 2,
+                      ),
+                    ),
+                    child: Center(
+                      child: isFilled
+                          ? Container(
+                        width: ResponsiveUtils.scaledContainerSize(context, 16),
+                        height: ResponsiveUtils.scaledContainerSize(context, 16),
+                        decoration: BoxDecoration(
+                          color: _showError ? AppColors.error : Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                      )
+                          : null,
+                    ),
+                  ),
+                );
+              }),
+            ),
+
+            if (_showError) ...[
+              SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
+              Text(
+                _errorMessage,
+                style: AppTextStyles.scaledCallout(context).copyWith(
+                  color: AppColors.error,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+
+            const Spacer(),
+
+            // Keypad
+            Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: ResponsiveUtils.scaledSpacing(context, 32),
+              ),
+              child: Column(
+                children: [
+                  _buildKeypadRow(['1', '2', '3']),
+                  SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
+                  _buildKeypadRow(['4', '5', '6']),
+                  SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
+                  _buildKeypadRow(['7', '8', '9']),
+                  SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      SizedBox(width: ResponsiveUtils.scaledContainerSize(context, 70)),
+                      _buildKeypadButton('0'),
+                      _buildDeleteButton(),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 40)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildKeypadRow(List<String> digits) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: digits.map((digit) => _buildKeypadButton(digit)).toList(),
+    );
+  }
+
+  Widget _buildKeypadButton(String digit) {
+    return CupertinoButton(
+      padding: EdgeInsets.zero,
+      onPressed: () => _handleDigit(digit),
+      child: Container(
+        width: ResponsiveUtils.scaledContainerSize(context, 70),
+        height: ResponsiveUtils.scaledContainerSize(context, 70),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white.withOpacity(0.2),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        child: Center(
+          child: Text(
+            digit,
+            style: AppTextStyles.scaledTitle1(context).copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w300,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDeleteButton() {
+    return CupertinoButton(
+      padding: EdgeInsets.zero,
+      onPressed: _handleDelete,
+      child: Container(
+        width: ResponsiveUtils.scaledContainerSize(context, 70),
+        height: ResponsiveUtils.scaledContainerSize(context, 70),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white.withOpacity(0.2),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        child: Center(
+          child: Icon(
+            CupertinoIcons.delete_left,
+            size: ResponsiveUtils.scaledIconSize(context, 28),
+            color: Colors.white,
+          ),
+        ),
+      ),
     );
   }
 }

@@ -1,6 +1,7 @@
 // lib/services/backup_service.dart - COMPLETE WITH PHOTOS & FAVORITES
 import 'dart:convert';
 import 'dart:io';
+import 'package:alongside/services/toast_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -366,70 +367,12 @@ class BackupService {
 
   static void _showExportSuccessDialog(BuildContext context,
       {bool savedToDevice = false, String? path}) {
-    showCupertinoDialog(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text(
-          'Export Successful',
-          style: TextStyle(
-            color: AppColors.success,
-            fontWeight: FontWeight.w700,
-            fontSize: 18,
-            fontFamily: '.SF Pro Text',
-          ),
-        ),
-        content: Padding(
-          padding: const EdgeInsets.only(top: 16),
-          child: Column(
-            children: [
-              Text(
-                savedToDevice
-                    ? 'Your backup has been saved to your device.'
-                    : 'Your data has been exported. You can now save it or share it.',
-                style: const TextStyle(
-                  fontSize: 16,
-                  height: 1.4,
-                  color: CupertinoColors.label,
-                  fontFamily: '.SF Pro Text',
-                ),
-                textAlign: TextAlign.center,
-              ),
-              if (path != null) ...[
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: CupertinoColors.systemGrey6,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    path.split('/').last,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: CupertinoColors.secondaryLabel,
-                      fontFamily: '.SF Pro Text',
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'OK',
-              style: TextStyle(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w600,
-                fontFamily: '.SF Pro Text',
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+    // Simple toast instead of dialog
+    final message = savedToDevice
+        ? 'Backup saved successfully! ✅'
+        : 'Backup exported successfully! ✅';
+
+    ToastService.showSuccess(context, message);
   }
 
   static Future<void> importData(BuildContext context) async {
@@ -442,40 +385,9 @@ class BackupService {
 
       if (result != null && result.files.single.path != null) {
         if (context.mounted) {
-          showCupertinoDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (ctx) => Center(
-              child: Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: CupertinoColors.black.withOpacity(0.8),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CupertinoActivityIndicator(
-                      color: CupertinoColors.white,
-                      radius: 14,
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      'Reading...',
-                      style: TextStyle(
-                        color: CupertinoColors.white,
-                        fontSize: 16,
-                        fontFamily: '.SF Pro Text',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
+          ToastService.showSuccess(context, 'Data imported successfully! ✅');
+          Navigator.pop(context); // Just close settings
         }
-
         final file = File(result.files.single.path!);
         final jsonString = await file.readAsString();
         final Map<String, dynamic> backupData = jsonDecode(jsonString);
