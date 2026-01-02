@@ -1393,93 +1393,93 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                           ),
                         ),
                         _buildDivider(),
-    _buildFormRow(
-    icon: CupertinoIcons.phone_fill,
-    iconColor: AppColors.primary,
-    child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-    // Label
-    Text(
-    'Phone Number',
-    style: AppTextStyles.scaledCallout(context).copyWith(
-    color: AppColors.textPrimary,
-    fontWeight: FontWeight.w500,
-    ),
-    ),
-    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 8)),
+                        _buildFormRow(
+                          icon: CupertinoIcons.phone_fill,
+                          iconColor: AppColors.primary,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Label
+                              Text(
+                                'Phone Number',
+                                style: AppTextStyles.scaledCallout(context).copyWith(
+                                  color: AppColors.textPrimary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              SizedBox(height: ResponsiveUtils.scaledSpacing(context, 8)),
 
-    // Input row
-    Row(
-    crossAxisAlignment: CrossAxisAlignment.center,
-    children: [
-    // Country code section
-    Text(
-    '+',
-    style: AppTextStyles.scaledBody(context).copyWith(
-    color: AppColors.textPrimary,
-    ),
-    ),
-    SizedBox(width: ResponsiveUtils.scaledSpacing(context, 2)),
-    SizedBox(
-    width: ResponsiveUtils.scaledContainerSize(context, 32),
-    child: CupertinoTextField(
-    controller: _countryCodeController,
-    placeholder: '61',
-    keyboardType: TextInputType.number,
-    maxLength: 4,
-    style: AppTextStyles.scaledBody(context).copyWith(
-    color: AppColors.textPrimary,
-    ),
-    placeholderStyle: TextStyle(
-    fontSize: ResponsiveUtils.scaledFontSize(context, 17),
-    fontWeight: FontWeight.w400,
-    fontFamily: '.SF Pro Text',
-    color: const Color(0xFFBEBEC0),
-    ),
-    decoration: null,
-    padding: EdgeInsets.zero,
-    ),
-    ),
+                              // Input row
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  // Country code section
+                                  Text(
+                                    '+',
+                                    style: AppTextStyles.scaledBody(context).copyWith(
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  SizedBox(width: ResponsiveUtils.scaledSpacing(context, 2)),
+                                  SizedBox(
+                                    width: ResponsiveUtils.scaledContainerSize(context, 32),
+                                    child: CupertinoTextField(
+                                      controller: _countryCodeController,
+                                      placeholder: '61',
+                                      keyboardType: TextInputType.number,
+                                      maxLength: 4,
+                                      style: AppTextStyles.scaledBody(context).copyWith(
+                                        color: AppColors.textPrimary,
+                                      ),
+                                      placeholderStyle: TextStyle(
+                                        fontSize: ResponsiveUtils.scaledFontSize(context, 17),
+                                        fontWeight: FontWeight.w400,
+                                        fontFamily: '.SF Pro Text',
+                                        color: const Color(0xFFBEBEC0),
+                                      ),
+                                      decoration: null,
+                                      padding: EdgeInsets.zero,
+                                    ),
+                                  ),
 
-    // Separator
-    Container(
-    width: 1,
-    height: ResponsiveUtils.scaledContainerSize(context, 20),
-    margin: EdgeInsets.only(
-    left: ResponsiveUtils.scaledSpacing(context, 4),
-    right: ResponsiveUtils.scaledSpacing(context, 12),
-    ),
-    color: AppColors.primary.withOpacity(0.2),
-    ),
+                                  // Separator
+                                  Container(
+                                    width: 1,
+                                    height: ResponsiveUtils.scaledContainerSize(context, 20),
+                                    margin: EdgeInsets.only(
+                                      left: ResponsiveUtils.scaledSpacing(context, 4),
+                                      right: ResponsiveUtils.scaledSpacing(context, 12),
+                                    ),
+                                    color: AppColors.primary.withOpacity(0.2),
+                                  ),
 
-    // Phone number field
-    Expanded(
-    child: Focus(
-    focusNode: _phoneFocusNode,
-    child: CupertinoTextField(
-    controller: _phoneController,
-    placeholder: 'Enter number',
-    keyboardType: TextInputType.phone,
-    style: AppTextStyles.scaledBody(context).copyWith(
-    color: AppColors.textPrimary,
-    ),
-    placeholderStyle: TextStyle(
-    fontSize: ResponsiveUtils.scaledFontSize(context, 17),
-    fontWeight: FontWeight.w400,
-    fontFamily: '.SF Pro Text',
-    color: const Color(0xFFBEBEC0),
-    ),
-    decoration: null,
-    padding: EdgeInsets.zero,
-    ),
-    ),
-    ),
-    ],
-    ),
-    ],
-    ),
-    ),
+                                  // Phone number field
+                                  Expanded(
+                                    child: Focus(
+                                      focusNode: _phoneFocusNode,
+                                      child: CupertinoTextField(
+                                        controller: _phoneController,
+                                        placeholder: 'Enter number',
+                                        keyboardType: TextInputType.phone,
+                                        style: AppTextStyles.scaledBody(context).copyWith(
+                                          color: AppColors.textPrimary,
+                                        ),
+                                        placeholderStyle: TextStyle(
+                                          fontSize: ResponsiveUtils.scaledFontSize(context, 17),
+                                          fontWeight: FontWeight.w400,
+                                          fontFamily: '.SF Pro Text',
+                                          color: const Color(0xFFBEBEC0),
+                                        ),
+                                        decoration: null,
+                                        padding: EdgeInsets.zero,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
 
