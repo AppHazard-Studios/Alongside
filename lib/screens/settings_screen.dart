@@ -1688,163 +1688,184 @@ class _ModernPinSetupScreenState extends State<_ModernPinSetupScreen> {
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
       backgroundColor: AppColors.primary,
-      child: SafeArea(
-        child: Column(
-          children: [
-            // Header
-            Container(
-              padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 16)),
-              child: Row(
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.primary,
+              AppColors.primary.withBlue(255),
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Stack(
+            children: [
+              // Main content
+              Column(
                 children: [
-                  CupertinoButton(
-                    padding: EdgeInsets.zero,
-                    onPressed: () => Navigator.pop(context),
-                    child: Container(
-                      width: ResponsiveUtils.scaledContainerSize(context, 32),
-                      height: ResponsiveUtils.scaledContainerSize(context, 32),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        CupertinoIcons.xmark,
-                        color: Colors.white,
-                        size: ResponsiveUtils.scaledIconSize(context, 16),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                  // Top spacing - SAME as lock screen (no header pushing down)
+                  SizedBox(height: ResponsiveUtils.scaledSpacing(context, 56)),
 
-            const Spacer(),
-
-            // Icon
-            Container(
-              width: ResponsiveUtils.scaledContainerSize(context, 80),
-              height: ResponsiveUtils.scaledContainerSize(context, 80),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                CupertinoIcons.lock_shield_fill,
-                size: ResponsiveUtils.scaledIconSize(context, 40),
-                color: Colors.white,
-              ),
-            ),
-
-            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 24)),
-
-            // Title
-            Text(
-              _isConfirmMode ? 'Confirm Your PIN' : 'Set Your PIN',
-              style: AppTextStyles.scaledTitle1(context).copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-
-            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 8)),
-
-            // Subtitle
-            Text(
-              _isConfirmMode
-                  ? 'Enter your PIN again'
-                  : 'Create a 4-digit PIN',
-              style: AppTextStyles.scaledCallout(context).copyWith(
-                color: Colors.white.withOpacity(0.8),
-              ),
-            ),
-
-            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 40)),
-
-            // PIN Display Boxes
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(4, (index) {
-                final currentPin = _isConfirmMode ? _confirmPin : _pin;
-                final isFilled = index < currentPin.length;
-
-                return Container(
-                  margin: EdgeInsets.symmetric(
-                    horizontal: ResponsiveUtils.scaledSpacing(context, 8),
-                  ),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    width: ResponsiveUtils.scaledContainerSize(context, 60),
-                    height: ResponsiveUtils.scaledContainerSize(context, 70),
+                  // Icon - Match lock screen visual weight
+                  Container(
+                    width: ResponsiveUtils.scaledContainerSize(context, 120),
+                    height: ResponsiveUtils.scaledContainerSize(context, 120),
                     decoration: BoxDecoration(
-                      color: _showError
-                          ? AppColors.error.withOpacity(0.2)
-                          : Colors.white.withOpacity(isFilled ? 0.3 : 0.15),
-                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.white.withOpacity(0.2),
+                      shape: BoxShape.circle,
                       border: Border.all(
-                        color: _showError
-                            ? AppColors.error
-                            : isFilled
-                            ? Colors.white
-                            : Colors.white.withOpacity(0.3),
+                        color: Colors.white.withOpacity(0.3),
                         width: 2,
                       ),
                     ),
-                    child: Center(
-                      child: isFilled
-                          ? Container(
-                        width: ResponsiveUtils.scaledContainerSize(context, 16),
-                        height: ResponsiveUtils.scaledContainerSize(context, 16),
-                        decoration: BoxDecoration(
-                          color: _showError ? AppColors.error : Colors.white,
-                          shape: BoxShape.circle,
-                        ),
-                      )
-                          : null,
+                    child: Icon(
+                      CupertinoIcons.lock_shield_fill,
+                      size: ResponsiveUtils.scaledIconSize(context, 60),
+                      color: Colors.white,
                     ),
                   ),
-                );
-              }),
-            ),
 
-            if (_showError) ...[
-              SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
-              Text(
-                _errorMessage,
-                style: AppTextStyles.scaledCallout(context).copyWith(
-                  color: AppColors.error,
-                  fontWeight: FontWeight.w600,
+                  SizedBox(height: ResponsiveUtils.scaledSpacing(context, 24)),
+
+                  // Title
+                  Text(
+                    _isConfirmMode ? 'Confirm Your PIN' : 'Set Your PIN',
+                    style: AppTextStyles.scaledTitle1(context).copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+
+                  SizedBox(height: ResponsiveUtils.scaledSpacing(context, 8)),
+
+                  // Subtitle
+                  Text(
+                    _isConfirmMode
+                        ? 'Enter your PIN again'
+                        : 'Create a 4-digit PIN',
+                    style: AppTextStyles.scaledCallout(context).copyWith(
+                      color: Colors.white.withOpacity(0.8),
+                    ),
+                  ),
+
+                  SizedBox(height: ResponsiveUtils.scaledSpacing(context, 40)),
+
+                  // PIN Display Boxes - IDENTICAL to lock screen
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(4, (index) {
+                      final currentPin = _isConfirmMode ? _confirmPin : _pin;
+                      final isFilled = index < currentPin.length;
+
+                      return Container(
+                        margin: EdgeInsets.symmetric(
+                          horizontal: ResponsiveUtils.scaledSpacing(context, 8),
+                        ),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          width: ResponsiveUtils.scaledContainerSize(context, 60),
+                          height: ResponsiveUtils.scaledContainerSize(context, 70),
+                          decoration: BoxDecoration(
+                            color: _showError
+                                ? AppColors.error.withOpacity(0.2)
+                                : Colors.white.withOpacity(isFilled ? 0.3 : 0.15),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: _showError
+                                  ? AppColors.error
+                                  : isFilled
+                                  ? Colors.white
+                                  : Colors.white.withOpacity(0.3),
+                              width: 2,
+                            ),
+                          ),
+                          child: Center(
+                            child: isFilled
+                                ? Container(
+                              width: ResponsiveUtils.scaledContainerSize(context, 16),
+                              height: ResponsiveUtils.scaledContainerSize(context, 16),
+                              decoration: BoxDecoration(
+                                color: _showError ? AppColors.error : Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                            )
+                                : null,
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+
+                  if (_showError) ...[
+                    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
+                    Text(
+                      _errorMessage,
+                      style: AppTextStyles.scaledCallout(context).copyWith(
+                        color: AppColors.error,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+
+                  // FIXED SPACING - EXACTLY 40px like lock screen
+                  SizedBox(height: ResponsiveUtils.scaledSpacing(context, 40)),
+
+                  // Keypad - IDENTICAL to lock screen
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: ResponsiveUtils.scaledSpacing(context, 32),
+                    ),
+                    child: Column(
+                      children: [
+                        _buildKeypadRow(['1', '2', '3']),
+                        SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
+                        _buildKeypadRow(['4', '5', '6']),
+                        SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
+                        _buildKeypadRow(['7', '8', '9']),
+                        SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            SizedBox(width: ResponsiveUtils.scaledContainerSize(context, 70)),
+                            _buildKeypadButton('0'),
+                            _buildDeleteButton(),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Bottom spacing
+                  SizedBox(height: ResponsiveUtils.scaledSpacing(context, 40)),
+                ],
+              ),
+
+              // Close button - Positioned absolutely (doesn't affect layout)
+              Positioned(
+                top: ResponsiveUtils.scaledSpacing(context, 16),
+                right: ResponsiveUtils.scaledSpacing(context, 16),
+                child: CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  onPressed: () => Navigator.pop(context),
+                  child: Container(
+                    width: ResponsiveUtils.scaledContainerSize(context, 32),
+                    height: ResponsiveUtils.scaledContainerSize(context, 32),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      CupertinoIcons.xmark,
+                      color: Colors.white,
+                      size: ResponsiveUtils.scaledIconSize(context, 16),
+                    ),
+                  ),
                 ),
               ),
             ],
-
-            const Spacer(),
-
-            // Keypad
-            Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: ResponsiveUtils.scaledSpacing(context, 32),
-              ),
-              child: Column(
-                children: [
-                  _buildKeypadRow(['1', '2', '3']),
-                  SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
-                  _buildKeypadRow(['4', '5', '6']),
-                  SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
-                  _buildKeypadRow(['7', '8', '9']),
-                  SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      SizedBox(width: ResponsiveUtils.scaledContainerSize(context, 70)),
-                      _buildKeypadButton('0'),
-                      _buildDeleteButton(),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            SizedBox(height: ResponsiveUtils.scaledSpacing(context, 40)),
-          ],
+          ),
         ),
       ),
     );

@@ -1,11 +1,14 @@
 // lib/screens/lock_screen.dart - COMPLETE MODERN iOS REDESIGN
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/lock_service.dart';
 import '../utils/colors.dart';
 import '../utils/responsive_utils.dart';
 import 'dart:async';
 import 'dart:ui';
+
+import '../utils/text_styles.dart';
 
 class LockScreen extends StatefulWidget {
   final VoidCallback onUnlocked;
@@ -41,7 +44,6 @@ class _LockScreenState extends State<LockScreen> with TickerProviderStateMixin {
   late Animation<double> _fadeAnimation;
   late Animation<double> _shakeAnimation;
   late Animation<double> _pulseAnimation;
-  late Animation<double> _pinDotAnimation;
 
   @override
   void initState() {
@@ -89,10 +91,6 @@ class _LockScreenState extends State<LockScreen> with TickerProviderStateMixin {
       curve: Curves.easeInOut,
     );
 
-    _pinDotAnimation = CurvedAnimation(
-      parent: _pinDotController,
-      curve: Curves.elasticOut,
-    );
 
     _fadeController.forward();
     _pulseController.repeat(reverse: true);
@@ -383,8 +381,8 @@ class _LockScreenState extends State<LockScreen> with TickerProviderStateMixin {
         // Subtitle
         Text(
           _lockType == 'biometric'
-              ? 'Use Face ID or Touch ID to unlock'
-              : 'Enter your PIN to continue',
+              ? 'Use biometric authentication to unlock'
+              : 'Enter your PIN to unlock',
           style: TextStyle(
             fontSize: ResponsiveUtils.scaledFontSize(context, 16, maxScale: 1.3),
             color: CupertinoColors.white.withOpacity(0.8),
@@ -407,47 +405,23 @@ class _LockScreenState extends State<LockScreen> with TickerProviderStateMixin {
   Widget _buildBiometricAuth() {
     return Column(
       children: [
-        // Biometric icon with pulse animation
-        AnimatedBuilder(
-          animation: _pulseAnimation,
-          builder: (context, child) {
-            return Container(
-              width: ResponsiveUtils.scaledContainerSize(context, 100),
-              height: ResponsiveUtils.scaledContainerSize(context, 100),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: CupertinoColors.white.withOpacity(0.15),
-                border: Border.all(
-                  color: CupertinoColors.white.withOpacity(0.3 + (_pulseAnimation.value * 0.3)),
-                  width: 2,
-                ),
-              ),
-              child: Center(
-                child: _isAuthenticating
-                    ? CupertinoActivityIndicator(
-                  radius: ResponsiveUtils.scaledIconSize(context, 20),
-                  color: CupertinoColors.white,
-                )
-                    : Icon(
-                  CupertinoIcons.lock_shield,
-                  size: ResponsiveUtils.scaledIconSize(context, 50),
-                  color: CupertinoColors.white,
-                ),
-              ),
-            );
-          },
+        // Simple icon - no confusing lock circle
+        Icon(
+          CupertinoIcons.lock_shield_fill,
+          size: ResponsiveUtils.scaledIconSize(context, 60),
+          color: Colors.white.withOpacity(0.9),
         ),
 
         SizedBox(height: ResponsiveUtils.scaledSpacing(context, 24)),
 
+        // Simple text
         Text(
           _isAuthenticating
               ? 'Authenticating...'
-              : 'Touch the sensor or look at your device',
-          style: TextStyle(
-            fontSize: ResponsiveUtils.scaledFontSize(context, 16, maxScale: 1.3),
-            color: CupertinoColors.white.withOpacity(0.9),
-            fontFamily: '.SF Pro Text',
+              : 'Authenticate to unlock',
+          style: AppTextStyles.scaledCallout(context).copyWith(
+            color: Colors.white.withOpacity(0.9),
+            fontWeight: FontWeight.w500,
           ),
           textAlign: TextAlign.center,
         ),
@@ -458,89 +432,82 @@ class _LockScreenState extends State<LockScreen> with TickerProviderStateMixin {
   Widget _buildPinAuth() {
     return Column(
       children: [
-        // PIN dots display
-        _buildPinDots(),
+        // PIN Display Boxes - EXACTLY like setup screen
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(4, (index) {
+            final isFilled = index < _enteredPin.length;
+
+            return Container(
+              margin: EdgeInsets.symmetric(
+                horizontal: ResponsiveUtils.scaledSpacing(context, 8),
+              ),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                width: ResponsiveUtils.scaledContainerSize(context, 60),
+                height: ResponsiveUtils.scaledContainerSize(context, 70),
+                decoration: BoxDecoration(
+                  color: _showPinError
+                      ? AppColors.error.withOpacity(0.2)
+                      : Colors.white.withOpacity(isFilled ? 0.3 : 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _showPinError
+                        ? AppColors.error
+                        : isFilled
+                        ? Colors.white
+                        : Colors.white.withOpacity(0.3),
+                    width: 2,
+                  ),
+                ),
+                child: Center(
+                  child: isFilled
+                      ? Container(
+                    width: ResponsiveUtils.scaledContainerSize(context, 16),
+                    height: ResponsiveUtils.scaledContainerSize(context, 16),
+                    decoration: BoxDecoration(
+                      color: _showPinError ? AppColors.error : Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                  )
+                      : null,
+                ),
+              ),
+            );
+          }),
+        ),
 
         SizedBox(height: ResponsiveUtils.scaledSpacing(context, 40)),
 
-        // PIN keypad
-        _buildPinKeypad(),
+        // Keypad - EXACTLY like setup screen
+        Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: ResponsiveUtils.scaledSpacing(context, 32),
+          ),
+          child: Column(
+            children: [
+              _buildKeypadRow(['1', '2', '3']),
+              SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
+              _buildKeypadRow(['4', '5', '6']),
+              SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
+              _buildKeypadRow(['7', '8', '9']),
+              SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  SizedBox(width: ResponsiveUtils.scaledContainerSize(context, 70)),
+                  _buildKeypadButton('0'),
+                  _buildBackspaceButton(),
+                ],
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildPinDots() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(4, (index) {
-        final isActive = index < _enteredPin.length;
-        final hasError = _showPinError;
 
-        return AnimatedBuilder(
-          animation: _pinDotAnimation,
-          builder: (context, child) {
-            return Container(
-              margin: EdgeInsets.symmetric(
-                horizontal: ResponsiveUtils.scaledSpacing(context, 12),
-              ),
-              child: Transform.scale(
-                scale: (isActive && index == _enteredPin.length - 1)
-                    ? 1.0 + (_pinDotAnimation.value * 0.3)
-                    : 1.0,
-                child: Container(
-                  width: ResponsiveUtils.scaledContainerSize(context, 20),
-                  height: ResponsiveUtils.scaledContainerSize(context, 20),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isActive
-                        ? (hasError ? AppColors.error : CupertinoColors.white)
-                        : CupertinoColors.white.withOpacity(0.3),
-                    border: Border.all(
-                      color: hasError
-                          ? AppColors.error
-                          : CupertinoColors.white.withOpacity(0.5),
-                      width: 2,
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      }),
-    );
-  }
-
-  Widget _buildPinKeypad() {
-    return Container(
-      width: ResponsiveUtils.scaledContainerSize(context, 260),
-      child: Column(
-        children: [
-          // Row 1: 1, 2, 3
-          _buildKeypadRow(['1', '2', '3']),
-          SizedBox(height: ResponsiveUtils.scaledSpacing(context, 20)),
-
-          // Row 2: 4, 5, 6
-          _buildKeypadRow(['4', '5', '6']),
-          SizedBox(height: ResponsiveUtils.scaledSpacing(context, 20)),
-
-          // Row 3: 7, 8, 9
-          _buildKeypadRow(['7', '8', '9']),
-          SizedBox(height: ResponsiveUtils.scaledSpacing(context, 20)),
-
-          // Row 4: empty, 0, backspace
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              SizedBox(width: ResponsiveUtils.scaledContainerSize(context, 70)),
-              _buildKeypadButton('0'),
-              _buildBackspaceButton(),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildKeypadRow(List<String> numbers) {
     return Row(
@@ -558,20 +525,18 @@ class _LockScreenState extends State<LockScreen> with TickerProviderStateMixin {
         height: ResponsiveUtils.scaledContainerSize(context, 70),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: CupertinoColors.white.withOpacity(0.1),
+          color: Colors.white.withOpacity(0.2),
           border: Border.all(
-            color: CupertinoColors.white.withOpacity(0.3),
+            color: Colors.white.withOpacity(0.3),
             width: 1,
           ),
         ),
         child: Center(
           child: Text(
             digit,
-            style: TextStyle(
-              fontSize: ResponsiveUtils.scaledFontSize(context, 28, maxScale: 1.3),
+            style: AppTextStyles.scaledTitle1(context).copyWith(
+              color: Colors.white,
               fontWeight: FontWeight.w300,
-              color: CupertinoColors.white,
-              fontFamily: '.SF Pro Text',
             ),
           ),
         ),
@@ -588,17 +553,17 @@ class _LockScreenState extends State<LockScreen> with TickerProviderStateMixin {
         height: ResponsiveUtils.scaledContainerSize(context, 70),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: CupertinoColors.white.withOpacity(0.1),
+          color: Colors.white.withOpacity(0.2),
           border: Border.all(
-            color: CupertinoColors.white.withOpacity(0.3),
+            color: Colors.white.withOpacity(0.3),
             width: 1,
           ),
         ),
         child: Center(
           child: Icon(
             CupertinoIcons.delete_left,
-            size: ResponsiveUtils.scaledIconSize(context, 24),
-            color: CupertinoColors.white,
+            size: ResponsiveUtils.scaledIconSize(context, 28),
+            color: Colors.white,
           ),
         ),
       ),
@@ -649,46 +614,38 @@ class _LockScreenState extends State<LockScreen> with TickerProviderStateMixin {
       padding: EdgeInsets.symmetric(
         horizontal: ResponsiveUtils.scaledSpacing(context, 32),
       ),
-      child: Column(
-        children: [
-          // Try again button for biometric
-          CupertinoButton(
-            padding: EdgeInsets.zero,
-            onPressed: _authenticateBiometric,
-            child: Container(
-              width: double.infinity,
-              height: ResponsiveUtils.scaledButtonHeight(context, baseHeight: 50),
-              decoration: BoxDecoration(
-                color: CupertinoColors.white.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: CupertinoColors.white.withOpacity(0.3),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    CupertinoIcons.arrow_clockwise,
-                    size: ResponsiveUtils.scaledIconSize(context, 18),
-                    color: CupertinoColors.white,
-                  ),
-                  SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
-                  Text(
-                    'Try Again',
-                    style: TextStyle(
-                      color: CupertinoColors.white,
-                      fontSize: ResponsiveUtils.scaledFontSize(context, 16, maxScale: 1.3),
-                      fontWeight: FontWeight.w600,
-                      fontFamily: '.SF Pro Text',
-                    ),
-                  ),
-                ],
-              ),
+      child: CupertinoButton(
+        padding: EdgeInsets.zero,
+        onPressed: _isAuthenticating ? null : _authenticateBiometric,
+        child: Container(
+          width: double.infinity,
+          height: ResponsiveUtils.scaledButtonHeight(context, baseHeight: 50),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.3),
+              width: 1,
             ),
           ),
-        ],
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                CupertinoIcons.arrow_clockwise,
+                size: ResponsiveUtils.scaledIconSize(context, 18),
+                color: Colors.white,
+              ),
+              SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+              Text(
+                'Try Again',
+                style: AppTextStyles.scaledButton(context).copyWith(
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
