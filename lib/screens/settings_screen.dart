@@ -1686,35 +1686,43 @@ class _ModernPinSetupScreenState extends State<_ModernPinSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Calculate scale factor based on screen size
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    double scaleFactor = 1.07;
+
+    if (screenWidth < 380 || screenHeight < 700) {
+      scaleFactor = 0.90;
+    }
+    if (screenWidth < 350 || screenHeight < 650) {
+      scaleFactor = 0.85;
+    }
+
     return CupertinoPageScaffold(
       backgroundColor: AppColors.background,
       child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                AppColors.primary.withOpacity(0.8),
-                AppColors.primary,
-                AppColors.primary.withOpacity(0.9),
-              ],
-              stops: const [0.0, 0.6, 1.0],
-            ),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppColors.primary.withOpacity(0.8),
+              AppColors.primary,
+              AppColors.primary.withOpacity(0.9),
+            ],
+            stops: const [0.0, 0.6, 1.0],
           ),
+        ),
         child: SafeArea(
           child: Stack(
             children: [
-              // Main content
-// Main content
               Column(
                 children: [
-                  // Top spacer - EXACTLY like lock screen
                   const Spacer(flex: 2),
 
-                  // Icon - Match lock screen visual weight
                   Container(
-                    width: ResponsiveUtils.scaledContainerSize(context, 120),
-                    height: ResponsiveUtils.scaledContainerSize(context, 120),
+                    width: 120 * scaleFactor,
+                    height: 120 * scaleFactor,
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.2),
                       shape: BoxShape.circle,
@@ -1725,38 +1733,40 @@ class _ModernPinSetupScreenState extends State<_ModernPinSetupScreen> {
                     ),
                     child: Icon(
                       CupertinoIcons.lock_shield_fill,
-                      size: ResponsiveUtils.scaledIconSize(context, 60),
+                      size: 60 * scaleFactor,
                       color: Colors.white,
                     ),
                   ),
 
-                  SizedBox(height: ResponsiveUtils.scaledSpacing(context, 24)),
+                  SizedBox(height: 24 * scaleFactor),
 
-                  // Title
                   Text(
                     _isConfirmMode ? 'Confirm Your PIN' : 'Set Your PIN',
-                    style: AppTextStyles.scaledTitle1(context).copyWith(
+                    style: TextStyle(
+                      fontSize: 32 * scaleFactor,
+                      fontWeight: FontWeight.w800,
                       color: Colors.white,
-                      fontWeight: FontWeight.w700,
+                      fontFamily: '.SF Pro Text',
                     ),
+                    textScaler: TextScaler.noScaling,
                   ),
 
-                  SizedBox(height: ResponsiveUtils.scaledSpacing(context, 8)),
+                  SizedBox(height: 8 * scaleFactor),
 
-                  // Subtitle
                   Text(
                     _isConfirmMode
                         ? 'Enter your PIN again'
                         : 'Create a 4-digit PIN',
-                    style: AppTextStyles.scaledCallout(context).copyWith(
+                    style: TextStyle(
+                      fontSize: 16 * scaleFactor,
                       color: Colors.white.withOpacity(0.8),
+                      fontFamily: '.SF Pro Text',
                     ),
+                    textScaler: TextScaler.noScaling,
                   ),
 
-                  // Middle spacer - EXACTLY like lock screen
                   const Spacer(flex: 1),
 
-                  // PIN Display Boxes - IDENTICAL to lock screen
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(4, (index) {
@@ -1764,13 +1774,11 @@ class _ModernPinSetupScreenState extends State<_ModernPinSetupScreen> {
                       final isFilled = index < currentPin.length;
 
                       return Container(
-                        margin: EdgeInsets.symmetric(
-                          horizontal: ResponsiveUtils.scaledSpacing(context, 8),
-                        ),
+                        margin: EdgeInsets.symmetric(horizontal: 8 * scaleFactor),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 150),
-                          width: ResponsiveUtils.scaledContainerSize(context, 60),
-                          height: ResponsiveUtils.scaledContainerSize(context, 70),
+                          width: 60 * scaleFactor,
+                          height: 70 * scaleFactor,
                           decoration: BoxDecoration(
                             color: _showError
                                 ? AppColors.error.withOpacity(0.2)
@@ -1788,8 +1796,8 @@ class _ModernPinSetupScreenState extends State<_ModernPinSetupScreen> {
                           child: Center(
                             child: isFilled
                                 ? Container(
-                              width: ResponsiveUtils.scaledContainerSize(context, 16),
-                              height: ResponsiveUtils.scaledContainerSize(context, 16),
+                              width: 16 * scaleFactor,
+                              height: 16 * scaleFactor,
                               decoration: BoxDecoration(
                                 color: _showError ? AppColors.error : Colors.white,
                                 shape: BoxShape.circle,
@@ -1803,58 +1811,56 @@ class _ModernPinSetupScreenState extends State<_ModernPinSetupScreen> {
                   ),
 
                   if (_showError) ...[
-                    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
+                    SizedBox(height: 16 * scaleFactor),
                     Text(
                       _errorMessage,
-                      style: AppTextStyles.scaledCallout(context).copyWith(
+                      style: TextStyle(
+                        fontSize: 14 * scaleFactor,
                         color: AppColors.error,
                         fontWeight: FontWeight.w600,
+                        fontFamily: '.SF Pro Text',
                       ),
+                      textScaler: TextScaler.noScaling,
                     ),
                   ],
 
-                  SizedBox(height: ResponsiveUtils.scaledSpacing(context, 40)),
+                  SizedBox(height: 40 * scaleFactor),
 
-                  // Keypad - IDENTICAL to lock screen
                   Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: ResponsiveUtils.scaledSpacing(context, 32),
-                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 32 * scaleFactor),
                     child: Column(
                       children: [
-                        _buildKeypadRow(['1', '2', '3']),
-                        SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
-                        _buildKeypadRow(['4', '5', '6']),
-                        SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
-                        _buildKeypadRow(['7', '8', '9']),
-                        SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
+                        _buildKeypadRow(['1', '2', '3'], scaleFactor),
+                        SizedBox(height: 16 * scaleFactor),
+                        _buildKeypadRow(['4', '5', '6'], scaleFactor),
+                        SizedBox(height: 16 * scaleFactor),
+                        _buildKeypadRow(['7', '8', '9'], scaleFactor),
+                        SizedBox(height: 16 * scaleFactor),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            SizedBox(width: ResponsiveUtils.scaledContainerSize(context, 70)),
-                            _buildKeypadButton('0'),
-                            _buildDeleteButton(),
+                            SizedBox(width: 70 * scaleFactor),
+                            _buildKeypadButton('0', scaleFactor),
+                            _buildDeleteButton(scaleFactor),
                           ],
                         ),
                       ],
                     ),
                   ),
 
-                  // Bottom spacer - EXACTLY like lock screen
                   const Spacer(flex: 2),
                 ],
               ),
 
-              // Close button - Positioned absolutely (doesn't affect layout)
               Positioned(
-                top: ResponsiveUtils.scaledSpacing(context, 16),
-                right: ResponsiveUtils.scaledSpacing(context, 16),
+                top: 20 * scaleFactor,
+                right: 16 * scaleFactor,
                 child: CupertinoButton(
                   padding: EdgeInsets.zero,
                   onPressed: () => Navigator.pop(context),
                   child: Container(
-                    width: ResponsiveUtils.scaledContainerSize(context, 32),
-                    height: ResponsiveUtils.scaledContainerSize(context, 32),
+                    width: 32 * scaleFactor,
+                    height: 32 * scaleFactor,
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(8),
@@ -1862,7 +1868,7 @@ class _ModernPinSetupScreenState extends State<_ModernPinSetupScreen> {
                     child: Icon(
                       CupertinoIcons.xmark,
                       color: Colors.white,
-                      size: ResponsiveUtils.scaledIconSize(context, 16),
+                      size: 16 * scaleFactor,
                     ),
                   ),
                 ),
@@ -1874,20 +1880,20 @@ class _ModernPinSetupScreenState extends State<_ModernPinSetupScreen> {
     );
   }
 
-  Widget _buildKeypadRow(List<String> digits) {
+  Widget _buildKeypadRow(List<String> numbers, double scale) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: digits.map((digit) => _buildKeypadButton(digit)).toList(),
+      children: numbers.map((number) => _buildKeypadButton(number, scale)).toList(),
     );
   }
 
-  Widget _buildKeypadButton(String digit) {
+  Widget _buildKeypadButton(String digit, double scale) {
     return CupertinoButton(
       padding: EdgeInsets.zero,
       onPressed: () => _handleDigit(digit),
       child: Container(
-        width: ResponsiveUtils.scaledContainerSize(context, 70),
-        height: ResponsiveUtils.scaledContainerSize(context, 70),
+        width: 70 * scale,
+        height: 70 * scale,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: Colors.white.withOpacity(0.2),
@@ -1899,23 +1905,26 @@ class _ModernPinSetupScreenState extends State<_ModernPinSetupScreen> {
         child: Center(
           child: Text(
             digit,
-            style: AppTextStyles.scaledTitle1(context).copyWith(
-              color: Colors.white,
+            style: TextStyle(
+              fontSize: 28 * scale,
               fontWeight: FontWeight.w300,
+              color: Colors.white,
+              fontFamily: '.SF Pro Text',
             ),
+            textScaler: TextScaler.noScaling,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildDeleteButton() {
+  Widget _buildDeleteButton(double scale) {
     return CupertinoButton(
       padding: EdgeInsets.zero,
       onPressed: _handleDelete,
       child: Container(
-        width: ResponsiveUtils.scaledContainerSize(context, 70),
-        height: ResponsiveUtils.scaledContainerSize(context, 70),
+        width: 70 * scale,
+        height: 70 * scale,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: Colors.white.withOpacity(0.2),
@@ -1927,11 +1936,11 @@ class _ModernPinSetupScreenState extends State<_ModernPinSetupScreen> {
         child: Center(
           child: Icon(
             CupertinoIcons.delete_left,
-            size: ResponsiveUtils.scaledIconSize(context, 28),
+            size: 24 * scale,
             color: Colors.white,
           ),
         ),
       ),
     );
   }
-}
+  }

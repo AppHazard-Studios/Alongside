@@ -4,11 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/lock_service.dart';
 import '../utils/colors.dart';
-import '../utils/responsive_utils.dart';
 import 'dart:async';
 import 'dart:ui';
 
-import '../utils/text_styles.dart';
 
 class LockScreen extends StatefulWidget {
   final VoidCallback onUnlocked;
@@ -34,6 +32,7 @@ class _LockScreenState extends State<LockScreen> with TickerProviderStateMixin {
   // PIN input tracking
   String _enteredPin = '';
   bool _showPinError = false;
+  bool _hasAttemptedBiometric = false; // ← ADD THIS
 
   // Animation controllers
   late AnimationController _fadeController;
@@ -41,7 +40,6 @@ class _LockScreenState extends State<LockScreen> with TickerProviderStateMixin {
   late AnimationController _pulseController;
   late AnimationController _pinDotController;
 
-  late Animation<double> _pulseAnimation;
 
   @override
   void initState() {
@@ -73,11 +71,6 @@ class _LockScreenState extends State<LockScreen> with TickerProviderStateMixin {
 
 
 
-    _pulseAnimation = CurvedAnimation(
-      parent: _pulseController,
-      curve: Curves.easeInOut,
-    );
-
 
     _fadeController.forward();
     _pulseController.repeat(reverse: true);
@@ -105,6 +98,7 @@ class _LockScreenState extends State<LockScreen> with TickerProviderStateMixin {
 
     setState(() {
       _isAuthenticating = true;
+      _hasAttemptedBiometric = true; // ← MARK THAT WE'VE TRIED
       _errorMessage = '';
     });
 
@@ -113,14 +107,13 @@ class _LockScreenState extends State<LockScreen> with TickerProviderStateMixin {
 
       if (authenticated && mounted) {
         HapticFeedback.lightImpact();
-        await _successAnimation();
         widget.onUnlocked();
       } else {
-        _showError('Authentication failed. Try again or use your device passcode.');
+        _showError('Authentication failed');
         _triggerErrorAnimation();
       }
     } catch (e) {
-      _showError('Authentication error. Please try again.');
+      _showError('Authentication error');
       _triggerErrorAnimation();
     } finally {
       if (mounted) {
@@ -249,6 +242,24 @@ class _LockScreenState extends State<LockScreen> with TickerProviderStateMixin {
       );
     }
 
+    // Calculate scale factor based on screen size
+    final screenWidth = MediaQuery
+        .of(context)
+        .size
+        .width;
+    final screenHeight = MediaQuery
+        .of(context)
+        .size
+        .height;
+    double scaleFactor = 1.07;
+
+    if (screenWidth < 380 || screenHeight < 700) {
+      scaleFactor = 0.90;
+    }
+    if (screenWidth < 350 || screenHeight < 650) {
+      scaleFactor = 0.85;
+    }
+
     return WillPopScope(
       onWillPop: () async => false,
       child: CupertinoPageScaffold(
@@ -258,30 +269,30 @@ class _LockScreenState extends State<LockScreen> with TickerProviderStateMixin {
           height: double.infinity,
           decoration: _buildBackgroundDecoration(),
           child: SafeArea(
-            child: Stack(
+            child: Column(
               children: [
-                // Main content - SAME STRUCTURE AS PIN SETUP
-                Column(
-                  children: [
-                    const Spacer(flex: 2),
+                const Spacer(flex: 2),
 
-                    _buildAppBranding(),
+                _buildAppBranding(scaleFactor),
 
-                    const Spacer(flex: 1),
+                const Spacer(flex: 1),
 
-                    _buildAuthenticationSection(),
+                _buildAuthenticationSection(scaleFactor),
 
-                    const Spacer(flex: 2),
+                const Spacer(flex: 2),
 
-                    if (_errorMessage.isNotEmpty)
-                      _buildErrorMessage(),
+                if (_errorMessage.isNotEmpty)
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 16 * scaleFactor),
+                    child: _buildErrorMessage(scaleFactor),
+                  ),
 
-                    if (_lockType == 'biometric' && !_isAuthenticating) ...[
-                      const Spacer(),
-                      _buildBottomActions(),
-                    ],
-                  ],
-                ),
+                if (_lockType == 'biometric' && _hasAttemptedBiometric &&
+                    !_isAuthenticating)
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 20 * scaleFactor),
+                    child: _buildBottomActions(scaleFactor),
+                  ),
               ],
             ),
           ),
@@ -306,119 +317,109 @@ class _LockScreenState extends State<LockScreen> with TickerProviderStateMixin {
   }
 
 
-  Widget _buildAppBranding() {
+  Widget _buildAppBranding(double scale) {
     return Column(
       children: [
-        // App icon with animated pulse
-        AnimatedBuilder(
-          animation: _pulseAnimation,
-          builder: (context, child) {
-            return Transform.scale(
-              scale: 1.0 + (_pulseAnimation.value * 0.05),
-              child: Container(
-                width: ResponsiveUtils.scaledContainerSize(context, 120),
-                height: ResponsiveUtils.scaledContainerSize(context, 120),
-                decoration: BoxDecoration(
-                  color: CupertinoColors.white.withOpacity(0.2),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: CupertinoColors.white.withOpacity(0.3),
-                    width: 2,
-                  ),
-                ),
-                child: Icon(
-                  CupertinoIcons.heart_fill,
-                  size: ResponsiveUtils.scaledIconSize(context, 60),
-                  color: CupertinoColors.white,
-                ),
-              ),
-            );
-          },
+        Container(
+          width: 120 * scale,
+          height: 120 * scale,
+          decoration: BoxDecoration(
+            color: CupertinoColors.white.withOpacity(0.2),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: CupertinoColors.white.withOpacity(0.3),
+              width: 2,
+            ),
+          ),
+          child: Icon(
+            CupertinoIcons.heart_fill,
+            size: 60 * scale,
+            color: CupertinoColors.white,
+          ),
         ),
 
-        SizedBox(height: ResponsiveUtils.scaledSpacing(context, 24)),
+        SizedBox(height: 24 * scale),
 
-        // App name
         Text(
           'Alongside',
           style: TextStyle(
-            fontSize: ResponsiveUtils.scaledFontSize(context, 32, maxScale: 1.4),
+            fontSize: 32 * scale,
             fontWeight: FontWeight.w800,
             color: CupertinoColors.white,
             fontFamily: '.SF Pro Text',
           ),
+          textScaler: TextScaler.noScaling,
         ),
 
-        SizedBox(height: ResponsiveUtils.scaledSpacing(context, 8)),
+        SizedBox(height: 8 * scale),
 
-        // Subtitle
         Text(
           _lockType == 'biometric'
               ? 'Use biometric authentication to unlock'
               : 'Enter your PIN to unlock',
           style: TextStyle(
-            fontSize: ResponsiveUtils.scaledFontSize(context, 16, maxScale: 1.3),
+            fontSize: 16 * scale,
             color: CupertinoColors.white.withOpacity(0.8),
             fontFamily: '.SF Pro Text',
           ),
           textAlign: TextAlign.center,
+          textScaler: TextScaler.noScaling,
         ),
       ],
     );
   }
 
-  Widget _buildAuthenticationSection() {
+  Widget _buildAuthenticationSection(double scale) {
     if (_lockType == 'biometric') {
-      return _buildBiometricAuth();
+      return _buildBiometricAuth(scale);
     } else {
-      return _buildPinAuth();
+      return _buildPinAuth(scale);
     }
   }
 
-  Widget _buildBiometricAuth() {
+  Widget _buildBiometricAuth(double scale) {
     return Column(
       children: [
-        // Simple icon - no confusing lock circle
         Icon(
           CupertinoIcons.lock_shield_fill,
-          size: ResponsiveUtils.scaledIconSize(context, 60),
+          size: 60 * scale,
           color: Colors.white.withOpacity(0.9),
         ),
 
-        SizedBox(height: ResponsiveUtils.scaledSpacing(context, 24)),
+        SizedBox(height: 24 * scale),
 
-        // Simple text
         Text(
           _isAuthenticating
               ? 'Authenticating...'
               : 'Authenticate to unlock',
-          style: AppTextStyles.scaledCallout(context).copyWith(
+          style: TextStyle(
+            fontSize: 16 * scale,
             color: Colors.white.withOpacity(0.9),
             fontWeight: FontWeight.w500,
+            fontFamily: '.SF Pro Text',
           ),
           textAlign: TextAlign.center,
+          textScaler: TextScaler.noScaling,
         ),
       ],
     );
   }
 
-  Widget _buildPinAuth() {
+  Widget _buildPinAuth(double scale) {
     return Column(
       children: [
-        // PIN Display Boxes - EXACTLY like setup screen
+        // PIN Display Boxes
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(4, (index) {
             final isFilled = index < _enteredPin.length;
 
             return Container(
-              margin: EdgeInsets.symmetric(
-                horizontal: ResponsiveUtils.scaledSpacing(context, 8),
-              ),
+              margin: EdgeInsets.symmetric(horizontal: 8 * scale),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 150),
-                width: ResponsiveUtils.scaledContainerSize(context, 60),
-                height: ResponsiveUtils.scaledContainerSize(context, 70),
+                width: 60 * scale,
+                height: 70 * scale,
                 decoration: BoxDecoration(
                   color: _showPinError
                       ? AppColors.error.withOpacity(0.2)
@@ -436,8 +437,8 @@ class _LockScreenState extends State<LockScreen> with TickerProviderStateMixin {
                 child: Center(
                   child: isFilled
                       ? Container(
-                    width: ResponsiveUtils.scaledContainerSize(context, 16),
-                    height: ResponsiveUtils.scaledContainerSize(context, 16),
+                    width: 16 * scale,
+                    height: 16 * scale,
                     decoration: BoxDecoration(
                       color: _showPinError ? AppColors.error : Colors.white,
                       shape: BoxShape.circle,
@@ -450,27 +451,25 @@ class _LockScreenState extends State<LockScreen> with TickerProviderStateMixin {
           }),
         ),
 
-        SizedBox(height: ResponsiveUtils.scaledSpacing(context, 40)),
+        SizedBox(height: 40 * scale),
 
-        // Keypad - EXACTLY like setup screen
+        // Keypad
         Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: ResponsiveUtils.scaledSpacing(context, 32),
-          ),
+          padding: EdgeInsets.symmetric(horizontal: 32 * scale),
           child: Column(
             children: [
-              _buildKeypadRow(['1', '2', '3']),
-              SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
-              _buildKeypadRow(['4', '5', '6']),
-              SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
-              _buildKeypadRow(['7', '8', '9']),
-              SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
+              _buildKeypadRow(['1', '2', '3'], scale),
+              SizedBox(height: 16 * scale),
+              _buildKeypadRow(['4', '5', '6'], scale),
+              SizedBox(height: 16 * scale),
+              _buildKeypadRow(['7', '8', '9'], scale),
+              SizedBox(height: 16 * scale),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  SizedBox(width: ResponsiveUtils.scaledContainerSize(context, 70)),
-                  _buildKeypadButton('0'),
-                  _buildBackspaceButton(),
+                  SizedBox(width: 70 * scale),
+                  _buildKeypadButton('0', scale),
+                  _buildBackspaceButton(scale),
                 ],
               ),
             ],
@@ -480,22 +479,22 @@ class _LockScreenState extends State<LockScreen> with TickerProviderStateMixin {
     );
   }
 
-
-
-  Widget _buildKeypadRow(List<String> numbers) {
+  Widget _buildKeypadRow(List<String> numbers, double scale) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: numbers.map((number) => _buildKeypadButton(number)).toList(),
+      children: numbers
+          .map((number) => _buildKeypadButton(number, scale))
+          .toList(),
     );
   }
 
-  Widget _buildKeypadButton(String digit) {
+  Widget _buildKeypadButton(String digit, double scale) {
     return CupertinoButton(
       padding: EdgeInsets.zero,
       onPressed: _isAuthenticating ? null : () => _handlePinInput(digit),
       child: Container(
-        width: ResponsiveUtils.scaledContainerSize(context, 70),
-        height: ResponsiveUtils.scaledContainerSize(context, 70),
+        width: 70 * scale,
+        height: 70 * scale,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: Colors.white.withOpacity(0.2),
@@ -507,23 +506,26 @@ class _LockScreenState extends State<LockScreen> with TickerProviderStateMixin {
         child: Center(
           child: Text(
             digit,
-            style: AppTextStyles.scaledTitle1(context).copyWith(
-              color: Colors.white,
+            style: TextStyle(
+              fontSize: 28 * scale,
               fontWeight: FontWeight.w300,
+              color: Colors.white,
+              fontFamily: '.SF Pro Text',
             ),
+            textScaler: TextScaler.noScaling,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildBackspaceButton() {
+  Widget _buildBackspaceButton(double scale) {
     return CupertinoButton(
       padding: EdgeInsets.zero,
       onPressed: _isAuthenticating ? null : _clearPin,
       child: Container(
-        width: ResponsiveUtils.scaledContainerSize(context, 70),
-        height: ResponsiveUtils.scaledContainerSize(context, 70),
+        width: 70 * scale,
+        height: 70 * scale,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: Colors.white.withOpacity(0.2),
@@ -535,7 +537,7 @@ class _LockScreenState extends State<LockScreen> with TickerProviderStateMixin {
         child: Center(
           child: Icon(
             CupertinoIcons.delete_left,
-            size: ResponsiveUtils.scaledIconSize(context, 28),
+            size: 24 * scale,
             color: Colors.white,
           ),
         ),
@@ -543,15 +545,11 @@ class _LockScreenState extends State<LockScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildErrorMessage() {
+  Widget _buildErrorMessage(double scale) {
     return Container(
-      margin: EdgeInsets.symmetric(
-        horizontal: ResponsiveUtils.scaledSpacing(context, 32),
-      ),
-      padding: ResponsiveUtils.scaledPadding(
-        context,
-        const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      ),
+      margin: EdgeInsets.symmetric(horizontal: 32 * scale),
+      padding: EdgeInsets.symmetric(
+          horizontal: 20 * scale, vertical: 12 * scale),
       decoration: BoxDecoration(
         color: AppColors.error.withOpacity(0.9),
         borderRadius: BorderRadius.circular(12),
@@ -561,20 +559,21 @@ class _LockScreenState extends State<LockScreen> with TickerProviderStateMixin {
         children: [
           Icon(
             CupertinoIcons.exclamationmark_triangle_fill,
-            size: ResponsiveUtils.scaledIconSize(context, 16),
+            size: 16 * scale,
             color: CupertinoColors.white,
           ),
-          SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
+          SizedBox(width: 8 * scale),
           Flexible(
             child: Text(
               _errorMessage,
               style: TextStyle(
-                fontSize: ResponsiveUtils.scaledFontSize(context, 14, maxScale: 1.3),
+                fontSize: 14 * scale,
                 color: CupertinoColors.white,
                 fontFamily: '.SF Pro Text',
                 fontWeight: FontWeight.w500,
               ),
               textAlign: TextAlign.center,
+              textScaler: TextScaler.noScaling,
             ),
           ),
         ],
@@ -582,42 +581,25 @@ class _LockScreenState extends State<LockScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildBottomActions() {
-    return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: ResponsiveUtils.scaledSpacing(context, 32),
-      ),
-      child: CupertinoButton(
-        padding: EdgeInsets.zero,
-        onPressed: _isAuthenticating ? null : _authenticateBiometric,
-        child: Container(
-          width: double.infinity,
-          height: ResponsiveUtils.scaledButtonHeight(context, baseHeight: 50),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.3),
-              width: 1,
-            ),
+  Widget _buildBottomActions(double scale) {
+    return CupertinoButton(
+      padding: EdgeInsets.zero,
+      onPressed: _authenticateBiometric,
+      child: Container(
+        width: 60 * scale,
+        height: 60 * scale,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: CupertinoColors.white.withOpacity(0.15),
+          border: Border.all(
+            color: CupertinoColors.white.withOpacity(0.3),
+            width: 1,
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                CupertinoIcons.arrow_clockwise,
-                size: ResponsiveUtils.scaledIconSize(context, 18),
-                color: Colors.white,
-              ),
-              SizedBox(width: ResponsiveUtils.scaledSpacing(context, 8)),
-              Text(
-                'Try Again',
-                style: AppTextStyles.scaledButton(context).copyWith(
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
+        ),
+        child: Icon(
+          CupertinoIcons.arrow_clockwise,
+          size: 24 * scale,
+          color: CupertinoColors.white,
         ),
       ),
     );
