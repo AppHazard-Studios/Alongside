@@ -1474,6 +1474,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _clearAppData(BuildContext context) {
+    // Get provider reference BEFORE any dialogs
+    final provider = Provider.of<FriendsProvider>(context, listen: false);
+    final storageService = provider.storageService;
+
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
@@ -1511,10 +1515,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onPressed: () async {
               Navigator.pop(context);
 
+              // Show loading dialog
               showCupertinoDialog(
                 context: context,
                 barrierDismissible: false,
-                builder: (ctx) => Center(
+                builder: (loadingContext) => Center(
                   child: Container(
                     width: ResponsiveUtils.scaledContainerSize(context, 100),
                     height: ResponsiveUtils.scaledContainerSize(context, 100),
@@ -1542,9 +1547,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               );
 
-              final provider = Provider.of<FriendsProvider>(context, listen: false);
-              final storageService = provider.storageService;
-
+              // Clear all data
               await storageService.saveFriends([]);
               await storageService.saveCustomMessages([]);
 
@@ -1559,9 +1562,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               await provider.reloadFriends();
 
+              // Close loading dialog
               if (mounted) {
                 Navigator.pop(context);
 
+                // Show success dialog
                 showCupertinoDialog(
                   context: context,
                   builder: (context) => CupertinoAlertDialog(

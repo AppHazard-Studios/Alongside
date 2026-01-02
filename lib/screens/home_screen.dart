@@ -16,6 +16,7 @@ import 'add_friend_screen.dart';
 import 'settings_screen.dart';
 import 'message_screen.dart';
 import '../models/friend.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'onboarding_screen.dart';
 import '../services/storage_service.dart';
 
@@ -66,13 +67,7 @@ class _HomeScreenNewState extends State<HomeScreenNew>
     _animationController.forward();
     _checkFirstLaunch();
     _loadStats();
-
-    // Schedule the first precise notification timer
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (mounted) {
-        _scheduleNextNotificationTimer();
-      }
-    });
+    _loadSortPreference();
   }
 
   @override
@@ -82,10 +77,6 @@ class _HomeScreenNewState extends State<HomeScreenNew>
     _searchAnimationController.dispose();
     _scrollController.dispose();
     _searchController.dispose();
-
-    // Clean up precise timer
-    _nextNotificationTimer?.cancel();
-
     super.dispose();
   }
 
@@ -129,6 +120,17 @@ class _HomeScreenNewState extends State<HomeScreenNew>
       setState(() {
         _messagesSent = messages;
         _callsMade = calls;
+      });
+    }
+  }
+
+  Future<void> _loadSortPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isSorted = prefs.getBool('is_sorted_by_reminders') ?? false;
+
+    if (mounted && isSorted) {
+      setState(() {
+        _isSortedByReminders = true;
       });
     }
   }
@@ -583,8 +585,6 @@ class _HomeScreenNewState extends State<HomeScreenNew>
   }
 
   Widget _buildIntegratedLayout(BuildContext context, List<Friend> filteredFriends, List<Friend> allFriends) {
-    final favoriteFriends = allFriends.where((friend) => friend.isFavorite).toList();
-
     return Stack(
       children: [
         CustomScrollView(
@@ -593,19 +593,6 @@ class _HomeScreenNewState extends State<HomeScreenNew>
             SliverToBoxAdapter(
               child: _buildIntegratedHeader(allFriends),
             ),
-
-            if (favoriteFriends.isNotEmpty && !_isSearching)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    ResponsiveUtils.scaledSpacing(context, 16),
-                    ResponsiveUtils.scaledSpacing(context, 8),
-                    ResponsiveUtils.scaledSpacing(context, 16),
-                    ResponsiveUtils.scaledSpacing(context, 12),
-                  ),
-                  child: _buildSubtleFavorites(favoriteFriends),
-                ),
-              ),
 
             if (_searchQuery.isNotEmpty && filteredFriends.isEmpty)
               SliverToBoxAdapter(
@@ -647,20 +634,11 @@ class _HomeScreenNewState extends State<HomeScreenNew>
                             index: index,
                             isExpanded: friend.id == _expandedFriendId,
                             onExpand: _handleCardExpanded,
-                            isSortedByReminders: _isSortedByReminders,
                             onExitSortMode: () {
-                              // Restore original custom order before allowing reorder
-                              if (_originalFriendsOrder != null) {
-                                final provider = Provider.of<FriendsProvider>(context, listen: false);
-                                provider.reorderFriends(_originalFriendsOrder!);
+                              // Handle exit sort mode if needed
+                              if (_isSortedByReminders) {
+                                _toggleSort();
                               }
-
-                              setState(() {
-                                _isSortedByReminders = false;
-                                _originalFriendsOrder = null;
-                              });
-
-                              ToastService.showSuccess(context, 'Switched to custom order');
                             },
                           ),
                         ),
@@ -1007,138 +985,6 @@ class _HomeScreenNewState extends State<HomeScreenNew>
     );
   }
 
-  Widget _buildSubtleFavorites(List<Friend> favoriteFriends) {
-    return Container(
-      padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 12)),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.6),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.warning.withOpacity(0.2),
-          width: 0.5,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                CupertinoIcons.star_fill,
-                size: ResponsiveUtils.scaledIconSize(context, 14),
-                color: AppColors.warning,
-              ),
-              SizedBox(width: ResponsiveUtils.scaledSpacing(context, 6)),
-              Text(
-                'Favorites',
-                style: AppTextStyles.scaledSubhead(context).copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: ResponsiveUtils.scaledSpacing(context, 8)),
-          SizedBox(
-            height: ResponsiveUtils.scaledContainerSize(context, 44),
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              itemCount: favoriteFriends.length + 1,
-              itemBuilder: (context, index) {
-                if (index < favoriteFriends.length) {
-                  final friend = favoriteFriends[index];
-                  return Padding(
-                    padding: EdgeInsets.only(
-                      right: ResponsiveUtils.scaledSpacing(context, 10),
-                    ),
-                    child: _buildSubtleFavoriteItem(friend),
-                  );
-                } else {
-                  return _buildSubtleAddFavorite();
-                }
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSubtleFavoriteItem(Friend friend) {
-    final containerSize = ResponsiveUtils.scaledContainerSize(context, 40);
-    final iconSize = ResponsiveUtils.scaledIconSize(context, 20);
-
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        _showFavoriteOptions(context, friend);
-      },
-      child: Container(
-        width: containerSize,
-        height: containerSize,
-        decoration: BoxDecoration(
-          color: AppColors.warning.withOpacity(0.1),
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: AppColors.warning.withOpacity(0.3),
-            width: 1.5,
-          ),
-        ),
-        child: Container(
-          margin: const EdgeInsets.all(2),
-          decoration: BoxDecoration(
-            color: friend.isEmoji ? Colors.white.withOpacity(0.9) : Colors.white,
-            shape: BoxShape.circle,
-          ),
-          child: ClipOval(
-            child: friend.isEmoji
-                ? Center(
-              child: Text(
-                friend.profileImage,
-                style: TextStyle(fontSize: iconSize),
-              ),
-            )
-                : Image.file(
-              File(friend.profileImage),
-              fit: BoxFit.cover,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSubtleAddFavorite() {
-    final containerSize = ResponsiveUtils.scaledContainerSize(context, 40);
-
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        final provider = Provider.of<FriendsProvider>(context, listen: false);
-        _showAddFavoriteDialog(context, provider.friends);
-      },
-      child: Container(
-        width: containerSize,
-        height: containerSize,
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.8),
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: AppColors.warning.withOpacity(0.3),
-            width: 1.5,
-            style: BorderStyle.solid,
-          ),
-        ),
-        child: Icon(
-          CupertinoIcons.add,
-          color: AppColors.warning,
-          size: ResponsiveUtils.scaledIconSize(context, 18),
-        ),
-      ),
-    );
-  }
-
   Widget _buildSearchEmpty() {
     return Container(
       margin: EdgeInsets.symmetric(
@@ -1376,6 +1222,7 @@ class _HomeScreenNewState extends State<HomeScreenNew>
 
     final provider = Provider.of<FriendsProvider>(context, listen: false);
     final currentFriends = provider.friends;
+    final prefs = await SharedPreferences.getInstance();
 
     if (_isSortedByReminders) {
       // Restore original order
@@ -1383,10 +1230,14 @@ class _HomeScreenNewState extends State<HomeScreenNew>
         provider.reorderFriends(_originalFriendsOrder!);
         ToastService.showSuccess(context, 'Sorted by custom order');
       }
+
       setState(() {
         _isSortedByReminders = false;
         _originalFriendsOrder = null;
       });
+
+      await prefs.setBool('is_sorted_by_reminders', false);
+      await prefs.remove('original_friends_order');
     } else {
       // Save current order
       _originalFriendsOrder = List<Friend>.from(currentFriends);
@@ -1401,6 +1252,8 @@ class _HomeScreenNewState extends State<HomeScreenNew>
       setState(() {
         _isSortedByReminders = true;
       });
+
+      await prefs.setBool('is_sorted_by_reminders', true);
     }
 
     setState(() => _isSorting = false);
@@ -1435,91 +1288,5 @@ class _HomeScreenNewState extends State<HomeScreenNew>
         ),
       ),
     );
-  }
-
-  void _showFavoriteOptions(BuildContext context, Friend friend) {
-    showCupertinoModalPopup(
-      context: context,
-      builder: (context) => CupertinoActionSheet(
-        title: Text(friend.name),
-        actions: [
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.push(context, CupertinoPageRoute(
-                  builder: (context) => MessageScreenNew(friend: friend)));
-            },
-            child: const Text('Send Message'),
-          ),
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(context);
-              _removeFavorite(context, friend);
-            },
-            isDestructiveAction: true,
-            child: const Text('Remove from Favorites'),
-          ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-      ),
-    );
-  }
-
-  void _showAddFavoriteDialog(BuildContext context, List<Friend> allFriends) {
-    final nonFavoriteFriends = allFriends.where((friend) => !friend.isFavorite).toList();
-
-    if (nonFavoriteFriends.isEmpty) {
-      showCupertinoDialog(
-        context: context,
-        builder: (context) => CupertinoAlertDialog(
-          title: const Text('All Set!'),
-          content: const Text('All your friends are already favorites!'),
-          actions: [
-            CupertinoDialogAction(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
-      return;
-    }
-
-    showCupertinoModalPopup(
-      context: context,
-      builder: (context) => CupertinoActionSheet(
-        title: const Text('Add to Favorites'),
-        actions: nonFavoriteFriends.map((friend) {
-          return CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(context);
-              _addFavorite(context, friend);
-            },
-            child: Text(friend.name),
-          );
-        }).toList(),
-        cancelButton: CupertinoActionSheetAction(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-      ),
-    );
-  }
-
-  void _addFavorite(BuildContext context, Friend friend) {
-    final provider = Provider.of<FriendsProvider>(context, listen: false);
-    final updatedFriend = friend.copyWith(isFavorite: true);
-    provider.updateFriend(updatedFriend);
-    ToastService.showSuccess(context, '${friend.name} added to favorites');
-  }
-
-  void _removeFavorite(BuildContext context, Friend friend) {
-    final provider = Provider.of<FriendsProvider>(context, listen: false);
-    final updatedFriend = friend.copyWith(isFavorite: false);
-    provider.updateFriend(updatedFriend);
-    ToastService.showSuccess(context, '${friend.name} removed from favorites');
   }
 }

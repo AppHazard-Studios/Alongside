@@ -654,9 +654,8 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
         int? customIndex,
       }) {
     return GestureDetector(
-      behavior: HitTestBehavior.opaque,
       onTap: () => _sendMessage(context, message),
-      onLongPress: () {
+      onLongPressStart: (details) {
         HapticFeedback.mediumImpact();
         _showMessageOptions(context, message,
             isCustom: isCustom, customIndex: customIndex);
@@ -699,30 +698,11 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
               ),
             ),
             SizedBox(width: ResponsiveUtils.scaledSpacing(context, 10)),
-            if (isCustom) ...[
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  _showMessageOptions(context, message,
-                      isCustom: isCustom, customIndex: customIndex!);
-                },
-                child: Container(
-                  padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 12)),
-                  child: Icon(
-                    CupertinoIcons.ellipsis_vertical,
-                    color: AppColors.textSecondary.withOpacity(0.6),
-                    size: ResponsiveUtils.scaledIconSize(context, 18),
-                  ),
-                ),
-              ),
-            ] else ...[
-              Icon(
-                CupertinoIcons.arrow_right_circle_fill,
-                color: AppColors.primary,
-                size: ResponsiveUtils.scaledIconSize(context, 20),
-              ),
-            ],
+            Icon(
+              CupertinoIcons.arrow_right_circle_fill,
+              color: AppColors.primary,
+              size: ResponsiveUtils.scaledIconSize(context, 20),
+            ),
           ],
         ),
       ),
@@ -731,7 +711,6 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
 
   Widget _buildProfileImage() {
     final containerSize = ResponsiveUtils.scaledContainerSize(context, 40);
-
     return Container(
       width: containerSize,
       height: containerSize,
@@ -1152,6 +1131,9 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
 
   void _deleteCustomMessage(
       BuildContext context, String message, int index) async {
+    // GET THE PROVIDER REFERENCE FIRST - before any dialogs
+    final storageService = Provider.of<FriendsProvider>(context, listen: false).storageService;
+
     final shouldDelete = await showCupertinoDialog<bool>(
       context: context,
       builder: (context) => CupertinoAlertDialog(
@@ -1197,18 +1179,23 @@ class _MessageScreenNewState extends State<MessageScreenNew> {
       ),
     );
 
-    if (shouldDelete == true) {
-      setState(() {
-        _customMessages.removeAt(index);
-        _favoriteMessages.remove(message);
-      });
+    if (shouldDelete == true && mounted) {
+      // Delete using the storage service reference we got earlier
+      await storageService.deleteCustomMessage(message);
 
-      final storageService =
-          Provider.of<FriendsProvider>(context, listen: false).storageService;
-      await storageService.saveCustomMessages(_customMessages);
-      await _updateFavorites(_favoriteMessages);
+      // Remove from favorites if present
+      if (_favoriteMessages.contains(message)) {
+        final updatedFavorites = List<String>.from(_favoriteMessages);
+        updatedFavorites.remove(message);
+        await _updateFavorites(updatedFavorites);
+      }
 
-      ToastService.showSuccess(context, 'Message deleted');
+      // Reload messages from storage
+      await _loadMessages();
+
+      if (mounted) {
+        ToastService.showSuccess(context, 'Message deleted');
+      }
     }
   }
 

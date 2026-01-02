@@ -185,47 +185,49 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
 
         showCupertinoModalPopup(
           context: context,
-          builder: (context) => _ContactPickerWithSearch(
-            contacts: contacts,
-            onContactSelected: (contact) async {
-              if (contact.phones.isEmpty) {
-                _showErrorSnackBar('Selected contact has no phone number');
-                return;
-              }
-
-              setState(() {
-                _nameController.text = contact.displayName;
-              });
-
-              if (contact.photo != null && contact.photo!.isNotEmpty) {
-                try {
-                  final Directory docDir = await getApplicationDocumentsDirectory();
-                  final String imagePath = '${docDir.path}/contact_${DateTime.now().millisecondsSinceEpoch}.jpg';
-                  final File imageFile = File(imagePath);
-                  await imageFile.writeAsBytes(contact.photo!);
-
-                  setState(() {
-                    _profileImage = imagePath;
-                    _isEmoji = false;
-                  });
-                } catch (e) {
-                  print('Error saving contact photo: $e');
+          builder: (context) => DraggableScrollableSheet(
+            initialChildSize: 0.8,
+            minChildSize: 0.5,
+            maxChildSize: 0.95,
+            expand: false,
+            builder: (context, scrollController) => _ContactPickerWithSearch(
+              contacts: contacts,
+              scrollController: scrollController,
+              onContactSelected: (contact) async {
+                if (contact.phones.isEmpty) {
+                  _showErrorSnackBar('Selected contact has no phone number');
+                  return;
                 }
-              }
-
-              if (contact.phones.length == 1) {
-                // Use normalizedNumber if available, otherwise fall back to number
-                final phoneNumber = contact.phones.first.normalizedNumber.isNotEmpty
-                    ? contact.phones.first.normalizedNumber
-                    : contact.phones.first.number;
 
                 setState(() {
-                  _phoneController.text = phoneNumber;
+                  _nameController.text = contact.displayName;
                 });
-              } else {
-                _showPhoneNumberSelector(contact);
-              }
-            },
+
+                if (contact.photo != null && contact.photo!.isNotEmpty) {
+                  try {
+                    final Directory docDir = await getApplicationDocumentsDirectory();
+                    final String imagePath = '${docDir.path}/contact_${DateTime.now().millisecondsSinceEpoch}.jpg';
+                    final File imageFile = File(imagePath);
+                    await imageFile.writeAsBytes(contact.photo!);
+
+                    setState(() {
+                      _profileImage = imagePath;
+                      _isEmoji = false;
+                    });
+                  } catch (e) {
+                    print('Error saving contact photo: $e');
+                  }
+                }
+
+                if (contact.phones.length == 1) {
+                  setState(() {
+                    _phoneController.text = contact.phones.first.number;
+                  });
+                } else {
+                  _showPhoneNumberSelector(contact);
+                }
+              },
+            ),
           ),
         );
       } catch (e) {
@@ -1655,13 +1657,14 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   }
 }
 
-// Contact picker component with consistent scaling
 class _ContactPickerWithSearch extends StatefulWidget {
   final List<Contact> contacts;
+  final ScrollController scrollController;
   final Function(Contact) onContactSelected;
 
   const _ContactPickerWithSearch({
     required this.contacts,
+    required this.scrollController,
     required this.onContactSelected,
   });
 
@@ -1727,7 +1730,6 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.8,
       decoration: const BoxDecoration(
         color: Color(0xFFF8FAFC),
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -1856,7 +1858,9 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
               ),
             )
                 : CupertinoScrollbar(
+              controller: widget.scrollController,
               child: ListView.builder(
+                controller: widget.scrollController,
                 itemCount: _filteredContacts.length,
                 itemBuilder: (context, index) {
                   final contact = _filteredContacts[index];

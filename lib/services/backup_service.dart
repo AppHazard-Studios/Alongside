@@ -74,6 +74,12 @@ class BackupService {
         }
       }
 
+      // Get lock settings
+      final lockEnabled = prefs.getBool('app_lock_enabled') ?? false;
+      final lockType = prefs.getString('app_lock_type');
+      final lockPin = prefs.getString('app_lock_pin');
+      final lockCooldown = prefs.getInt('lock_cooldown_minutes') ?? 5;
+
       // Create backup data structure
       final backupData = {
         'version': _backupVersion,
@@ -84,6 +90,12 @@ class BackupService {
         'stats': {
           'messagesSent': await storageService.getMessagesSentCount(),
           'callsMade': await storageService.getCallsMadeCount(),
+        },
+        'security': {
+          'lockEnabled': lockEnabled,
+          'lockType': lockType,
+          'lockPin': lockPin,
+          'lockCooldown': lockCooldown,
         }
       };
 
@@ -93,6 +105,63 @@ class BackupService {
       // Close loading dialog
       if (context.mounted) {
         Navigator.pop(context);
+      }
+
+      // Show security info dialog before export
+      if (lockEnabled && context.mounted) {
+        final proceed = await showCupertinoDialog<bool>(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: const Text(
+              'Security Settings Included',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
+                fontFamily: '.SF Pro Text',
+              ),
+            ),
+            content: Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Text(
+                'This backup includes your lock settings (${lockType == 'biometric' ? 'Biometric' : 'PIN'}). When you import this backup, it will restore your security configuration.',
+                style: const TextStyle(
+                  fontSize: 16,
+                  height: 1.4,
+                  color: CupertinoColors.label,
+                  fontFamily: '.SF Pro Text',
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            actions: [
+              CupertinoDialogAction(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(
+                    color: AppColors.secondary,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: '.SF Pro Text',
+                  ),
+                ),
+              ),
+              CupertinoDialogAction(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text(
+                  'Continue',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: '.SF Pro Text',
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+
+        if (proceed != true) return null;
       }
 
       // For Android: Show options to save or share
@@ -389,7 +458,7 @@ class BackupService {
                     ),
                     SizedBox(height: 16),
                     Text(
-                      'Importing...',
+                      'Reading...',
                       style: TextStyle(
                         color: CupertinoColors.white,
                         fontSize: 16,
@@ -421,9 +490,30 @@ class BackupService {
           throw Exception('Incompatible backup version');
         }
 
-        // Show confirmation dialog
+        // Get current and backup security settings
+        final prefs = await SharedPreferences.getInstance();
+        final currentLockEnabled = prefs.getBool('app_lock_enabled') ?? false;
+        final currentLockType = prefs.getString('app_lock_type');
+
+        final backupSecurity = backupData['security'] as Map<String, dynamic>?;
+        final backupLockEnabled = backupSecurity?['lockEnabled'] ?? false;
+        final backupLockType = backupSecurity?['lockType'];
+
+        // Build current status text
+        String currentStatus = 'No lock';
+        if (currentLockEnabled && currentLockType != null) {
+          currentStatus = currentLockType == 'biometric' ? 'Biometric lock' : 'PIN lock';
+        }
+
+        // Build backup status text
+        String backupStatus = 'No lock';
+        if (backupLockEnabled && backupLockType != null) {
+          backupStatus = backupLockType == 'biometric' ? 'Biometric lock' : 'PIN lock';
+        }
+
+        // Show detailed import confirmation dialog
         if (context.mounted) {
-          final shouldImport = await showCupertinoDialog<bool>(
+          final importChoice = await showCupertinoDialog<String>(
             context: context,
             builder: (context) => CupertinoAlertDialog(
               title: const Text(
@@ -435,23 +525,110 @@ class BackupService {
                   fontFamily: '.SF Pro Text',
                 ),
               ),
-              content: const Padding(
-                padding: EdgeInsets.only(top: 16),
-                child: Text(
-                  'This will replace all your current friends and messages. Are you sure you want to continue?',
-                  style: TextStyle(
-                    fontSize: 16,
-                    height: 1.4,
-                    color: CupertinoColors.label,
-                    fontFamily: '.SF Pro Text',
-                  ),
-                  textAlign: TextAlign.center,
+              content: Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'This will replace all your current data.',
+                      style: TextStyle(
+                        fontSize: 16,
+                        height: 1.4,
+                        color: CupertinoColors.label,
+                        fontFamily: '.SF Pro Text',
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    if (backupLockEnabled) ...[
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.warning.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: AppColors.warning.withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            const Row(
+                              children: [
+                                Icon(
+                                  CupertinoIcons.lock_shield,
+                                  size: 16,
+                                  color: AppColors.warning,
+                                ),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Security Settings',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.warning,
+                                    fontFamily: '.SF Pro Text',
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Current:',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: CupertinoColors.secondaryLabel,
+                                    fontFamily: '.SF Pro Text',
+                                  ),
+                                ),
+                                Text(
+                                  currentStatus,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: CupertinoColors.label,
+                                    fontFamily: '.SF Pro Text',
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Backup:',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: CupertinoColors.secondaryLabel,
+                                    fontFamily: '.SF Pro Text',
+                                  ),
+                                ),
+                                Text(
+                                  backupStatus,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: CupertinoColors.label,
+                                    fontFamily: '.SF Pro Text',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
               actions: [
                 CupertinoDialogAction(
-                  onPressed: () => Navigator.pop(context, false),
-                  isDefaultAction: true,
+                  onPressed: () => Navigator.pop(context, 'cancel'),
                   child: const Text(
                     'Cancel',
                     style: TextStyle(
@@ -461,12 +638,23 @@ class BackupService {
                     ),
                   ),
                 ),
+                if (backupLockEnabled)
+                  CupertinoDialogAction(
+                    onPressed: () => Navigator.pop(context, 'skip_security'),
+                    child: const Text(
+                      'Import Without Lock',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: '.SF Pro Text',
+                      ),
+                    ),
+                  ),
                 CupertinoDialogAction(
-                  onPressed: () => Navigator.pop(context, true),
-                  isDestructiveAction: true,
-                  child: const Text(
-                    'Import',
-                    style: TextStyle(
+                  onPressed: () => Navigator.pop(context, 'import_all'),
+                  child: Text(
+                    backupLockEnabled ? 'Import Everything' : 'Import',
+                    style: const TextStyle(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w600,
                       fontFamily: '.SF Pro Text',
@@ -477,9 +665,12 @@ class BackupService {
             ),
           );
 
-// Replace the import success section in importData method (around line 360-395)
-          if (shouldImport == true && context.mounted) {
-            // Show importing dialog
+          if (importChoice == null || importChoice == 'cancel') return;
+
+          final includeSecurity = importChoice == 'import_all';
+
+          // Show importing dialog
+          if (context.mounted) {
             showCupertinoDialog(
               context: context,
               barrierDismissible: false,
@@ -512,88 +703,110 @@ class BackupService {
                 ),
               ),
             );
+          }
 
-            // Import the data
-            final provider =
-            Provider.of<FriendsProvider>(context, listen: false);
-            final storageService = provider.storageService;
+          // Import the data
+          final provider = Provider.of<FriendsProvider>(context, listen: false);
+          final storageService = provider.storageService;
 
-            // Import friends
-            final friendsList = (backupData['friends'] as List?)
-                ?.map((f) => Friend.fromJson(f))
-                .toList() ??
-                [];
-            await storageService.saveFriends(friendsList);
+          // Import friends
+          final friendsList = (backupData['friends'] as List?)
+              ?.map((f) => Friend.fromJson(f))
+              .toList() ??
+              [];
+          await storageService.saveFriends(friendsList);
 
-            // Import custom messages
-            final customMessages =
-                (backupData['customMessages'] as List?)?.cast<String>() ?? [];
-            await storageService.saveCustomMessages(customMessages);
+          // Import custom messages
+          final customMessages =
+              (backupData['customMessages'] as List?)?.cast<String>() ?? [];
+          await storageService.saveCustomMessages(customMessages);
 
-            // Import stats if available
-            if (backupData['stats'] != null) {
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.setInt('messages_sent_count',
-                  backupData['stats']['messagesSent'] ?? 0);
-              await prefs.setInt(
-                  'calls_made_count', backupData['stats']['callsMade'] ?? 0);
+          // Import stats if available
+          if (backupData['stats'] != null) {
+            await prefs.setInt('messages_sent_count',
+                backupData['stats']['messagesSent'] ?? 0);
+            await prefs.setInt(
+                'calls_made_count', backupData['stats']['callsMade'] ?? 0);
+          }
+
+          // Import security settings if user chose to
+          if (includeSecurity && backupSecurity != null) {
+            await prefs.setBool('app_lock_enabled', backupSecurity['lockEnabled'] ?? false);
+
+            if (backupSecurity['lockType'] != null) {
+              await prefs.setString('app_lock_type', backupSecurity['lockType']);
+            } else {
+              await prefs.remove('app_lock_type');
             }
 
-            // Force reload the provider - THIS IS THE KEY CHANGE
-            await provider.reloadFriends();
-
-            // Close importing dialog
-            if (context.mounted) {
-              Navigator.pop(context);
+            if (backupSecurity['lockPin'] != null) {
+              await prefs.setString('app_lock_pin', backupSecurity['lockPin']);
+            } else {
+              await prefs.remove('app_lock_pin');
             }
 
-            // Show success
-            if (context.mounted) {
-              showCupertinoDialog(
-                context: context,
-                builder: (context) => CupertinoAlertDialog(
-                  title: const Text(
-                    'Import Successful',
-                    style: TextStyle(
-                      color: AppColors.success,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 18,
+            if (backupSecurity['lockCooldown'] != null) {
+              await prefs.setInt('lock_cooldown_minutes', backupSecurity['lockCooldown']);
+            }
+          }
+
+          // Force reload the provider
+          await provider.reloadFriends();
+
+          // Close importing dialog
+          if (context.mounted) {
+            Navigator.pop(context);
+          }
+
+          // Show success with security info
+          if (context.mounted) {
+            showCupertinoDialog(
+              context: context,
+              builder: (context) => CupertinoAlertDialog(
+                title: const Text(
+                  'Import Successful',
+                  style: TextStyle(
+                    color: AppColors.success,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 18,
+                    fontFamily: '.SF Pro Text',
+                  ),
+                ),
+                content: Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: Text(
+                    includeSecurity && backupLockEnabled
+                        ? 'Your data and security settings have been imported successfully!'
+                        : includeSecurity
+                        ? 'Your data has been imported successfully!'
+                        : 'Your data has been imported successfully! Your current lock settings were kept.',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      height: 1.4,
+                      color: CupertinoColors.label,
                       fontFamily: '.SF Pro Text',
                     ),
+                    textAlign: TextAlign.center,
                   ),
-                  content: const Padding(
-                    padding: EdgeInsets.only(top: 16),
-                    child: Text(
-                      'Your data has been imported successfully!',
+                ),
+                actions: [
+                  CupertinoDialogAction(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.pop(context);
+                    },
+                    child: const Text(
+                      'OK',
                       style: TextStyle(
-                        fontSize: 16,
-                        height: 1.4,
-                        color: CupertinoColors.label,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
                         fontFamily: '.SF Pro Text',
                       ),
-                      textAlign: TextAlign.center,
                     ),
                   ),
-                  actions: [
-                    CupertinoDialogAction(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        // Just pop to go back, no need to reload entire app
-                        Navigator.pop(context);
-                      },
-                      child: const Text(
-                        'OK',
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: '.SF Pro Text',
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }
+                ],
+              ),
+            );
           }
         }
       }
