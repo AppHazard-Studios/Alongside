@@ -346,50 +346,50 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
           }
 
           return CupertinoActionSheetAction(
-              onPressed: () {
-                Navigator.pop(context);
+            onPressed: () {
+              Navigator.pop(context);
 
-                // Get the selected phone
-                String selectedNumber = phone.normalizedNumber.isNotEmpty
-                    ? phone.normalizedNumber
-                    : phone.number;
+              // Get the selected phone
+              String selectedNumber = phone.normalizedNumber.isNotEmpty
+                  ? phone.normalizedNumber
+                  : phone.number;
 
-                selectedNumber = selectedNumber.replaceAll(RegExp(r'[^\d+]'), '');
+              selectedNumber = selectedNumber.replaceAll(RegExp(r'[^\d+]'), '');
 
-                // Try to detect country code
-                String? detectedCountryCode;
-                if (selectedNumber.startsWith('+')) {
-                  final knownCodes = [
-                    '+1758', '+1784', '+1869',
-                    '+353', '+351', '+234', '+254', '+880', '+971', '+966', '+972',
-                    '+61', '+44', '+64', '+27', '+91', '+92', '+63', '+60', '+62', '+66',
-                    '+84', '+20', '+90', '+1', '+81', '+82', '+86', '+33', '+49', '+39',
-                    '+34', '+31', '+32', '+41', '+46', '+48', '+30', '+55', '+52', '+852',
-                  ];
+              // Try to detect country code
+              String? detectedCountryCode;
+              if (selectedNumber.startsWith('+')) {
+                final knownCodes = [
+                  '+1758', '+1784', '+1869',
+                  '+353', '+351', '+234', '+254', '+880', '+971', '+966', '+972',
+                  '+61', '+44', '+64', '+27', '+91', '+92', '+63', '+60', '+62', '+66',
+                  '+84', '+20', '+90', '+1', '+81', '+82', '+86', '+33', '+49', '+39',
+                  '+34', '+31', '+32', '+41', '+46', '+48', '+30', '+55', '+52', '+852',
+                ];
 
-                  for (final code in knownCodes) {
-                    if (selectedNumber.startsWith(code)) {
-                      detectedCountryCode = code;
-                      selectedNumber = selectedNumber.substring(code.length);
+                for (final code in knownCodes) {
+                  if (selectedNumber.startsWith(code)) {
+                    detectedCountryCode = code;
+                    selectedNumber = selectedNumber.substring(code.length);
 
-                      final countriesWithLeadingZero = [
-                        '+61', '+44', '+64', '+27', '+91', '+92', '+234', '+254', '+63',
-                        '+60', '+62', '+66', '+84', '+20', '+972', '+90', '+880'
-                      ];
+                    final countriesWithLeadingZero = [
+                      '+61', '+44', '+64', '+27', '+91', '+92', '+234', '+254', '+63',
+                      '+60', '+62', '+66', '+84', '+20', '+972', '+90', '+880'
+                    ];
 
-                      if (countriesWithLeadingZero.contains(code) && !selectedNumber.startsWith('0')) {
-                        selectedNumber = '0$selectedNumber';
-                      }
-                      break;
+                    if (countriesWithLeadingZero.contains(code) && !selectedNumber.startsWith('0')) {
+                      selectedNumber = '0$selectedNumber';
                     }
+                    break;
                   }
                 }
+              }
 
-                setState(() {
-                  _phoneController.text = selectedNumber;
-                  _countryCodeController.text = detectedCountryCode?.substring(1) ?? '';
-                });
-              },
+              setState(() {
+                _phoneController.text = selectedNumber;
+                _countryCodeController.text = detectedCountryCode?.substring(1) ?? '';
+              });
+            },
             child: Column(
               children: [
                 Text(
@@ -935,17 +935,18 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       return;
     }
 
+    // Validate country code is provided
+    if (_countryCodeController.text.trim().isEmpty) {
+      ToastService.showWarning(context, 'Please add a country code');
+      return;
+    }
+
     // Clean phone number
     String phoneNumber = _phoneController.text.trim().replaceAll(RegExp(r'[^\d]'), '');
 
-    // Get country code (optional)
-    String? countryCode;
-    if (_countryCodeController.text.trim().isNotEmpty) {
-      String code = _countryCodeController.text.trim().replaceAll(RegExp(r'[^\d]'), '');
-      if (code.isNotEmpty) {
-        countryCode = '+$code'; // Add the + back for storage
-      }
-    }
+    // Get country code
+    String code = _countryCodeController.text.trim().replaceAll(RegExp(r'[^\d]'), '');
+    String? countryCode = '+$code'; // Add the + back for storage
 
     // Save
     final provider = Provider.of<FriendsProvider>(context, listen: false);
@@ -1392,93 +1393,93 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                           ),
                         ),
                         _buildDivider(),
-                        _buildFormRow(
-                          icon: CupertinoIcons.phone_fill,
-                          iconColor: AppColors.primary,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Phone Number',
-                                style: AppTextStyles.scaledFootnote(context).copyWith(
-                                  color: AppColors.textSecondary,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              SizedBox(height: ResponsiveUtils.scaledSpacing(context, 6)),
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  // Hardcoded + with narrow input
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        '+',
-                                        style: AppTextStyles.scaledCallout(context).copyWith(
-                                          color: AppColors.textPrimary,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      SizedBox(
-                                        width: ResponsiveUtils.scaledContainerSize(context, 35),
-                                        child: CupertinoTextField(
-                                          controller: _countryCodeController,
-                                          placeholder: '61',
-                                          keyboardType: TextInputType.number,
-                                          maxLength: 4,
-                                          style: AppTextStyles.scaledCallout(context).copyWith(
-                                            color: AppColors.textPrimary,
-                                          ),
-                                          decoration: null,
-                                          padding: EdgeInsets.symmetric(
-                                            horizontal: ResponsiveUtils.scaledSpacing(context, 4),
-                                            vertical: ResponsiveUtils.scaledSpacing(context, 8),
-                                          ),
-                                          placeholderStyle: AppTextStyles.scaledCallout(context).copyWith(
-                                            color: AppColors.textSecondary,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+    _buildFormRow(
+    icon: CupertinoIcons.phone_fill,
+    iconColor: AppColors.primary,
+    child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+    // Label
+    Text(
+    'Phone Number',
+    style: AppTextStyles.scaledCallout(context).copyWith(
+    color: AppColors.textPrimary,
+    fontWeight: FontWeight.w500,
+    ),
+    ),
+    SizedBox(height: ResponsiveUtils.scaledSpacing(context, 8)),
 
-                                  // Vertical separator aligned with text
-                                  Container(
-                                    width: 1,
-                                    height: ResponsiveUtils.scaledContainerSize(context, 16),
-                                    margin: EdgeInsets.symmetric(
-                                      horizontal: ResponsiveUtils.scaledSpacing(context, 8),
-                                    ),
-                                    color: AppColors.primary.withOpacity(0.2),
-                                  ),
+    // Input row
+    Row(
+    crossAxisAlignment: CrossAxisAlignment.center,
+    children: [
+    // Country code section
+    Text(
+    '+',
+    style: AppTextStyles.scaledBody(context).copyWith(
+    color: AppColors.textPrimary,
+    ),
+    ),
+    SizedBox(width: ResponsiveUtils.scaledSpacing(context, 2)),
+    SizedBox(
+    width: ResponsiveUtils.scaledContainerSize(context, 32),
+    child: CupertinoTextField(
+    controller: _countryCodeController,
+    placeholder: '61',
+    keyboardType: TextInputType.number,
+    maxLength: 4,
+    style: AppTextStyles.scaledBody(context).copyWith(
+    color: AppColors.textPrimary,
+    ),
+    placeholderStyle: TextStyle(
+    fontSize: ResponsiveUtils.scaledFontSize(context, 17),
+    fontWeight: FontWeight.w400,
+    fontFamily: '.SF Pro Text',
+    color: const Color(0xFFBEBEC0),
+    ),
+    decoration: null,
+    padding: EdgeInsets.zero,
+    ),
+    ),
 
-                                  // Phone number input
-                                  Expanded(
-                                    child: Focus(
-                                      focusNode: _phoneFocusNode,
-                                      child: CupertinoTextField(
-                                        controller: _phoneController,
-                                        placeholder: 'Enter number',
-                                        keyboardType: TextInputType.phone,
-                                        style: AppTextStyles.scaledCallout(context).copyWith(
-                                          color: AppColors.textPrimary,
-                                        ),
-                                        decoration: null,
-                                        padding: EdgeInsets.symmetric(
-                                          vertical: ResponsiveUtils.scaledSpacing(context, 8),
-                                        ),
-                                        placeholderStyle: AppTextStyles.scaledCallout(context).copyWith(
-                                          color: AppColors.textSecondary,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
+    // Separator
+    Container(
+    width: 1,
+    height: ResponsiveUtils.scaledContainerSize(context, 20),
+    margin: EdgeInsets.only(
+    left: ResponsiveUtils.scaledSpacing(context, 4),
+    right: ResponsiveUtils.scaledSpacing(context, 12),
+    ),
+    color: AppColors.primary.withOpacity(0.2),
+    ),
+
+    // Phone number field
+    Expanded(
+    child: Focus(
+    focusNode: _phoneFocusNode,
+    child: CupertinoTextField(
+    controller: _phoneController,
+    placeholder: 'Enter number',
+    keyboardType: TextInputType.phone,
+    style: AppTextStyles.scaledBody(context).copyWith(
+    color: AppColors.textPrimary,
+    ),
+    placeholderStyle: TextStyle(
+    fontSize: ResponsiveUtils.scaledFontSize(context, 17),
+    fontWeight: FontWeight.w400,
+    fontFamily: '.SF Pro Text',
+    color: const Color(0xFFBEBEC0),
+    ),
+    decoration: null,
+    padding: EdgeInsets.zero,
+    ),
+    ),
+    ),
+    ],
+    ),
+    ],
+    ),
+    ),
                       ],
                     ),
 
