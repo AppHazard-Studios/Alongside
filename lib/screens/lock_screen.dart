@@ -41,8 +41,6 @@ class _LockScreenState extends State<LockScreen> with TickerProviderStateMixin {
   late AnimationController _pulseController;
   late AnimationController _pinDotController;
 
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _shakeAnimation;
   late Animation<double> _pulseAnimation;
 
   @override
@@ -73,18 +71,7 @@ class _LockScreenState extends State<LockScreen> with TickerProviderStateMixin {
       vsync: this,
     );
 
-    _fadeAnimation = CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeInOut,
-    );
 
-    _shakeAnimation = Tween(
-      begin: 0.0,
-      end: 8.0,
-    ).animate(CurvedAnimation(
-      parent: _shakeController,
-      curve: Curves.elasticIn,
-    ));
 
     _pulseAnimation = CurvedAnimation(
       parent: _pulseController,
@@ -270,18 +257,32 @@ class _LockScreenState extends State<LockScreen> with TickerProviderStateMixin {
           width: double.infinity,
           height: double.infinity,
           decoration: _buildBackgroundDecoration(),
-          child: FadeTransition(
-            opacity: _fadeAnimation,
-            child: SafeArea(
-              child: AnimatedBuilder(
-                animation: _shakeAnimation,
-                builder: (context, child) {
-                  return Transform.translate(
-                    offset: Offset(_shakeAnimation.value, 0),
-                    child: _buildLockContent(),
-                  );
-                },
-              ),
+          child: SafeArea(
+            child: Stack(
+              children: [
+                // Main content - SAME STRUCTURE AS PIN SETUP
+                Column(
+                  children: [
+                    const Spacer(flex: 2),
+
+                    _buildAppBranding(),
+
+                    const Spacer(flex: 1),
+
+                    _buildAuthenticationSection(),
+
+                    const Spacer(flex: 2),
+
+                    if (_errorMessage.isNotEmpty)
+                      _buildErrorMessage(),
+
+                    if (_lockType == 'biometric' && !_isAuthenticating) ...[
+                      const Spacer(),
+                      _buildBottomActions(),
+                    ],
+                  ],
+                ),
+              ],
             ),
           ),
         ),
@@ -304,34 +305,6 @@ class _LockScreenState extends State<LockScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildLockContent() {
-    return Column(
-      children: [
-        // Top spacer
-        const Spacer(flex: 2),
-
-        // App branding section
-        _buildAppBranding(),
-
-        const Spacer(flex: 1),
-
-        // Authentication section
-        _buildAuthenticationSection(),
-
-        const Spacer(flex: 2),
-
-        // Error message
-        if (_errorMessage.isNotEmpty)
-          _buildErrorMessage(),
-
-        const Spacer(),
-
-        // Bottom actions
-        if (_lockType == 'biometric' && !_isAuthenticating)
-          _buildBottomActions(),
-      ],
-    );
-  }
 
   Widget _buildAppBranding() {
     return Column(

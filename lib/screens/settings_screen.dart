@@ -1687,26 +1687,29 @@ class _ModernPinSetupScreenState extends State<_ModernPinSetupScreen> {
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
-      backgroundColor: AppColors.primary,
+      backgroundColor: AppColors.background,
       child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.primary,
-              AppColors.primary.withBlue(255),
-            ],
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AppColors.primary.withOpacity(0.8),
+                AppColors.primary,
+                AppColors.primary.withOpacity(0.9),
+              ],
+              stops: const [0.0, 0.6, 1.0],
+            ),
           ),
-        ),
         child: SafeArea(
           child: Stack(
             children: [
               // Main content
+// Main content
               Column(
                 children: [
-                  // Top spacing - SAME as lock screen (no header pushing down)
-                  SizedBox(height: ResponsiveUtils.scaledSpacing(context, 56)),
+                  // Top spacer - EXACTLY like lock screen
+                  const Spacer(flex: 2),
 
                   // Icon - Match lock screen visual weight
                   Container(
@@ -1750,7 +1753,8 @@ class _ModernPinSetupScreenState extends State<_ModernPinSetupScreen> {
                     ),
                   ),
 
-                  SizedBox(height: ResponsiveUtils.scaledSpacing(context, 40)),
+                  // Middle spacer - EXACTLY like lock screen
+                  const Spacer(flex: 1),
 
                   // PIN Display Boxes - IDENTICAL to lock screen
                   Row(
@@ -1809,7 +1813,6 @@ class _ModernPinSetupScreenState extends State<_ModernPinSetupScreen> {
                     ),
                   ],
 
-                  // FIXED SPACING - EXACTLY 40px like lock screen
                   SizedBox(height: ResponsiveUtils.scaledSpacing(context, 40)),
 
                   // Keypad - IDENTICAL to lock screen
@@ -1837,8 +1840,8 @@ class _ModernPinSetupScreenState extends State<_ModernPinSetupScreen> {
                     ),
                   ),
 
-                  // Bottom spacing
-                  SizedBox(height: ResponsiveUtils.scaledSpacing(context, 40)),
+                  // Bottom spacer - EXACTLY like lock screen
+                  const Spacer(flex: 2),
                 ],
               ),
 
