@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'package:alongside/screens/lock_screen.dart';
 import 'package:alongside/services/lock_service.dart';
+import 'package:alongside/services/photo_migration_service.dart';
 import 'package:alongside/utils/colors.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
@@ -28,6 +29,9 @@ void main() async {
 
   // Setup notification callback
   notificationService.setActionCallback(_handleNotificationAction);
+
+  // Run one-time photo migration
+  await PhotoMigrationService.runPhotoMigration();
 
   runApp(
     MultiProvider(
