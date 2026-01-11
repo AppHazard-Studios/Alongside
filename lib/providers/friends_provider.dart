@@ -35,8 +35,32 @@ class FriendsProvider with ChangeNotifier {
 
     _friends = await storageService.getFriends();
 
+    // FIXED: Ensure all friends with reminders have their next_reminder times calculated
+    await _ensureNotificationTimesExist();
+
     _isLoading = false;
     notifyListeners();
+  }
+
+  Future<void> _ensureNotificationTimesExist() async {
+    // Check if any friends with reminders are missing their next_reminder time
+    final prefs = await SharedPreferences.getInstance();
+    bool anyMissing = false;
+
+    for (final friend in _friends) {
+      if (!friend.hasReminder) continue;
+
+      final existingTime = prefs.getInt('next_reminder_${friend.id}');
+      if (existingTime == null) {
+        anyMissing = true;
+        print("📅 Missing reminder time for ${friend.name}, scheduling...");
+        await notificationService.scheduleReminder(friend);
+      }
+    }
+
+    if (anyMissing) {
+      print("✅ All missing reminder times have been populated");
+    }
   }
 
   Future<void> reorderFriends(List<Friend> reorderedFriends) async {
@@ -47,8 +71,8 @@ class FriendsProvider with ChangeNotifier {
 
   Future<void> addFriend(Friend friend) async {
     friends.add(friend);
-    notifyListeners();
 
+    // Save to storage first
     await storageService.saveFriends(friends);
 
     // FIXED: Use the friend's hasReminder property instead of reminderDays
@@ -76,6 +100,9 @@ class FriendsProvider with ChangeNotifier {
     if (friend.hasPersistentNotification) {
       await notificationService.showPersistentNotification(friend);
     }
+
+    // FIXED: Notify listeners AFTER everything is ready
+    notifyListeners();
   }
 
   Future<void> reloadFriends() async {

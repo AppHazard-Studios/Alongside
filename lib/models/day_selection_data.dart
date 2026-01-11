@@ -70,22 +70,33 @@ class DaySelectionData {
   }
 
   // Calculate next reminder date based on selected days and interval
+// Calculate next reminder date based on selected days and interval
   DateTime? calculateNextReminder(DateTime from, int hour, int minute) {
     if (selectedDays.isEmpty) return null;
 
-    DateTime candidate = DateTime(from.year, from.month, from.day, hour, minute);
+    // STEP 1: Apply the interval to get the target date range
+    DateTime targetDate = _applyIntervalFromDate(from);
 
-    // If the time has already passed today, start from tomorrow
-    if (candidate.isBefore(from)) {
+    // STEP 2: Find the next selected day at or after the target date
+    DateTime candidate = DateTime(
+      targetDate.year,
+      targetDate.month,
+      targetDate.day,
+      hour,
+      minute,
+    );
+
+    // If the calculated time has already passed, start from tomorrow
+    if (candidate.isBefore(DateTime.now())) {
       candidate = candidate.add(const Duration(days: 1));
     }
 
-    // Find the next selected day
+    // STEP 3: Find the next occurrence of a selected day
     int daysToAdd = 0;
     int currentWeekday = candidate.weekday;
     bool found = false;
 
-    // First, check if we can use a day in the current week
+    // Check the next 7 days to find a selected day
     for (int i = 0; i < 7; i++) {
       int checkDay = ((currentWeekday - 1 + i) % 7) + 1;
       if (selectedDays.contains(checkDay)) {
@@ -102,47 +113,57 @@ class DaySelectionData {
 
     candidate = candidate.add(Duration(days: daysToAdd));
 
-    // Apply interval if we're past the first occurrence
-    if (daysToAdd == 0 && candidate.isBefore(from)) {
-      // We need to go to the next interval
-      switch (interval) {
-        case RepeatInterval.weekly:
-          candidate = candidate.add(const Duration(days: 7));
-          break;
-        case RepeatInterval.biweekly:
-          candidate = candidate.add(const Duration(days: 14));
-          break;
-        case RepeatInterval.monthly:
-          candidate = DateTime(
-            candidate.month == 12 ? candidate.year + 1 : candidate.year,
-            candidate.month == 12 ? 1 : candidate.month + 1,
-            candidate.day,
-            candidate.hour,
-            candidate.minute,
-          );
-          break;
-        case RepeatInterval.quarterly:
-          candidate = DateTime(
-            candidate.month >= 10 ? candidate.year + 1 : candidate.year,
-            candidate.month >= 10 ? candidate.month - 9 : candidate.month + 3,
-            candidate.day,
-            candidate.hour,
-            candidate.minute,
-          );
-          break;
-        case RepeatInterval.semiannually:
-          candidate = DateTime(
-            candidate.month >= 7 ? candidate.year + 1 : candidate.year,
-            candidate.month >= 7 ? candidate.month - 6 : candidate.month + 6,
-            candidate.day,
-            candidate.hour,
-            candidate.minute,
-          );
-          break;
-      }
-    }
-
     return candidate;
+  }
+
+// Helper method to apply the interval to a date
+  DateTime _applyIntervalFromDate(DateTime from) {
+    switch (interval) {
+      case RepeatInterval.weekly:
+        return from.add(const Duration(days: 7));
+
+      case RepeatInterval.biweekly:
+        return from.add(const Duration(days: 14));
+
+      case RepeatInterval.monthly:
+        return DateTime(
+          from.month == 12 ? from.year + 1 : from.year,
+          from.month == 12 ? 1 : from.month + 1,
+          from.day,
+          from.hour,
+          from.minute,
+        );
+
+      case RepeatInterval.quarterly:
+        int newMonth = from.month + 3;
+        int newYear = from.year;
+        if (newMonth > 12) {
+          newMonth -= 12;
+          newYear += 1;
+        }
+        return DateTime(
+          newYear,
+          newMonth,
+          from.day,
+          from.hour,
+          from.minute,
+        );
+
+      case RepeatInterval.semiannually:
+        int newMonth = from.month + 6;
+        int newYear = from.year;
+        if (newMonth > 12) {
+          newMonth -= 12;
+          newYear += 1;
+        }
+        return DateTime(
+          newYear,
+          newMonth,
+          from.day,
+          from.hour,
+          from.minute,
+        );
+    }
   }
 
   DaySelectionData copyWith({

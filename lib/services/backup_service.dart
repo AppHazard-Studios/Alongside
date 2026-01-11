@@ -384,17 +384,12 @@ class BackupService {
       );
 
       if (result != null && result.files.single.path != null) {
-        if (context.mounted) {
-          ToastService.showSuccess(context, 'Data imported successfully! ✅');
-          Navigator.pop(context); // Just close settings
-        }
         final file = File(result.files.single.path!);
         final jsonString = await file.readAsString();
         final Map<String, dynamic> backupData = jsonDecode(jsonString);
 
-        if (context.mounted && Navigator.canPop(context)) {
-          Navigator.pop(context);
-        }
+        // FIXED: Removed the Navigator.pop that was destroying context
+        // Settings screen stays open until after successful import
 
         final version = backupData['version'] as String?;
         if (version != '1.0') {
@@ -708,7 +703,7 @@ class BackupService {
           }
 
           if (context.mounted) {
-            Navigator.pop(context);
+            Navigator.pop(context); // Close loading dialog
           }
 
           if (context.mounted) {
@@ -744,8 +739,8 @@ class BackupService {
                 actions: [
                   CupertinoDialogAction(
                     onPressed: () {
-                      Navigator.pop(context);
-                      Navigator.pop(context);
+                      Navigator.pop(context); // Close success dialog
+                      Navigator.pop(context); // Close settings screen
                     },
                     child: const Text(
                       'OK',
@@ -764,7 +759,7 @@ class BackupService {
       }
     } catch (e) {
       if (context.mounted && Navigator.canPop(context)) {
-        Navigator.pop(context);
+        Navigator.pop(context); // Close loading dialog if it's showing
       }
 
       if (context.mounted) {
