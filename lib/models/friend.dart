@@ -14,6 +14,7 @@ class Friend {
   final bool isFavorite;
   final String? helpingWith; // What you're helping them with
   final String? theyHelpingWith; // What they're helping you with
+  final bool countryCodeSkipped; // NEW: Track if user intentionally skipped country code
 
   Friend({
     required this.id,
@@ -29,6 +30,7 @@ class Friend {
     this.isFavorite = false,
     this.helpingWith = '',
     this.theyHelpingWith = '',
+    this.countryCodeSkipped = false,
   });
 
   // Convert to/from JSON for storage
@@ -47,6 +49,7 @@ class Friend {
       'isFavorite': isFavorite,
       'helpingWith': helpingWith,
       'theyHelpingWith': theyHelpingWith,
+      'countryCodeSkipped': countryCodeSkipped,
     };
   }
 
@@ -87,6 +90,7 @@ class Friend {
       isFavorite: json['isFavorite'] ?? false,
       helpingWith: json['helpingWith'] ?? '',
       theyHelpingWith: json['theyHelpingWith'] ?? '',
+      countryCodeSkipped: json['countryCodeSkipped'] ?? false,
     );
   }
 
@@ -103,6 +107,7 @@ class Friend {
     bool? isFavorite,
     String? helpingWith,
     String? theyHelpingWith,
+    bool? countryCodeSkipped,
   }) {
     return Friend(
       id: id,
@@ -119,6 +124,7 @@ class Friend {
       isFavorite: isFavorite ?? this.isFavorite,
       helpingWith: helpingWith ?? this.helpingWith,
       theyHelpingWith: theyHelpingWith ?? this.theyHelpingWith,
+      countryCodeSkipped: countryCodeSkipped ?? this.countryCodeSkipped,
     );
   }
 
