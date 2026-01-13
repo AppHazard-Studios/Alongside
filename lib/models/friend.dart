@@ -56,10 +56,16 @@ class Friend {
   factory Friend.fromJson(Map<String, dynamic> json) {
     String phoneNumber = json['phoneNumber'];
     String? countryCode = json['countryCode'];
+    bool countryCodeSkipped = json['countryCodeSkipped'] ?? false;
 
-    // Migration: extract country code but keep local format
-    if (countryCode == null && phoneNumber.startsWith('+')) {
-      final match = RegExp(r'^\+(\d{1,4})').firstMatch(phoneNumber);
+    // Migration: ONLY for genuinely old data (before country code feature existed)
+    // Skip migration if:
+    // 1. Country code already exists (properly structured data)
+    // 2. User intentionally skipped country code
+    // 3. Phone number doesn't start with '+' (already in local format)
+    if (countryCode == null && !countryCodeSkipped && phoneNumber.startsWith('+')) {
+      // This is old data with format "+61412345678" that needs migration
+      final match = RegExp(r'^\+(\d{1,3})').firstMatch(phoneNumber);
       if (match != null) {
         countryCode = '+${match.group(1)}';
         phoneNumber = phoneNumber.substring(countryCode.length).trim();
@@ -90,7 +96,7 @@ class Friend {
       isFavorite: json['isFavorite'] ?? false,
       helpingWith: json['helpingWith'] ?? '',
       theyHelpingWith: json['theyHelpingWith'] ?? '',
-      countryCodeSkipped: json['countryCodeSkipped'] ?? false,
+      countryCodeSkipped: countryCodeSkipped,
     );
   }
 

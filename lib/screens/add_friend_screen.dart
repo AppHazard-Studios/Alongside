@@ -188,6 +188,83 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     }
   }
 
+  Future<void> _processSelectedContact(_ContactDisplayItem displayItem) async {
+    // Handle photo if exists
+    if (displayItem.photo != null && displayItem.photo!.isNotEmpty) {
+      try {
+        final Directory docDir = await getApplicationDocumentsDirectory();
+        final String imagePath = '${docDir.path}/contact_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final File imageFile = File(imagePath);
+        await imageFile.writeAsBytes(displayItem.photo!);
+
+        setState(() {
+          _profileImage = imagePath;
+          _isEmoji = false;
+        });
+      } catch (e) {
+        print('Error saving contact photo: $e');
+        // Fall back to emoji on error
+        setState(() {
+          _profileImage = displayItem.assignedEmoji;
+          _isEmoji = true;
+        });
+      }
+    } else {
+      // Use the consistent emoji from contact picker
+      setState(() {
+        _profileImage = displayItem.assignedEmoji;
+        _isEmoji = true;
+      });
+    }
+
+    // Set contact name
+    setState(() {
+      _nameController.text = displayItem.contact.displayName;
+    });
+
+    // Handle phone number selection
+    if (displayItem.contact.phones.isEmpty) {
+      _showErrorSnackBar('Selected contact has no phone number');
+      return;
+    }
+
+    if (displayItem.contact.phones.length == 1) {
+      _processContactNumber(displayItem.contact);
+    } else {
+      _showPhoneNumberSelector(displayItem.contact);
+    }
+  }
+
+  Future<void> _loadPhotosInBackgroundForList(List<_ContactDisplayItem> displayItems) async {
+    try {
+      // Load all contacts again with photos (non-blocking, happens after modal shown)
+      final contactsWithPhotos = await FlutterContacts.getContacts(
+        withProperties: true,
+        withPhoto: true,
+      );
+
+      // Create a map for faster lookup
+      final photoMap = <String, Uint8List?>{};
+      for (final contact in contactsWithPhotos) {
+        if (contact.photo != null && contact.photo!.isNotEmpty) {
+          photoMap[contact.id] = contact.photo;
+        }
+      }
+
+      // Update display items with photos
+      for (final displayItem in displayItems) {
+        final photo = photoMap[displayItem.contact.id];
+        if (photo != null) {
+          displayItem.photo = photo;
+        }
+      }
+
+      print('📸 Background photo loading complete');
+    } catch (e) {
+      print('⚠️ Error loading contact photos in background: $e');
+    }
+  }
+
   void _showContactPickerPrompt() {
     showCupertinoDialog(
       context: context,
@@ -248,81 +325,46 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   Future<void> _pickContact() async {
     if (await FlutterContacts.requestPermission()) {
       try {
-        // Stage 1: Show UI immediately with loading state
-        final displayItemsNotifier = ValueNotifier<List<_ContactDisplayItem>>([]);
-        final isLoadingNotifier = ValueNotifier<bool>(true);
-
-        if (!mounted) return;
-
-        // Show modal immediately
-        showCupertinoModalPopup(
+        // Show loading dialog on current screen
+        showCupertinoDialog(
           context: context,
-          builder: (context) => DraggableScrollableSheet(
-            initialChildSize: 0.8,
-            minChildSize: 0.5,
-            maxChildSize: 0.95,
-            expand: false,
-            builder: (context, scrollController) => _ContactPickerWithSearch(
-              displayItemsNotifier: displayItemsNotifier,
-              isLoadingNotifier: isLoadingNotifier,
-              scrollController: scrollController,
-              onContactSelected: (displayItem) async {
-                // Handle photo if exists
-                if (displayItem.photo != null && displayItem.photo!.isNotEmpty) {
-                  try {
-                    final Directory docDir = await getApplicationDocumentsDirectory();
-                    final String imagePath = '${docDir.path}/contact_${DateTime.now().millisecondsSinceEpoch}.jpg';
-                    final File imageFile = File(imagePath);
-                    await imageFile.writeAsBytes(displayItem.photo!);
-
-                    setState(() {
-                      _profileImage = imagePath;
-                      _isEmoji = false;
-                    });
-                  } catch (e) {
-                    print('Error saving contact photo: $e');
-                    // Fall back to emoji on error
-                    setState(() {
-                      _profileImage = displayItem.assignedEmoji;
-                      _isEmoji = true;
-                    });
-                  }
-                } else {
-                  // Use the consistent emoji from contact picker
-                  setState(() {
-                    _profileImage = displayItem.assignedEmoji;
-                    _isEmoji = true;
-                  });
-                }
-
-                // Set contact name
-                setState(() {
-                  _nameController.text = displayItem.contact.displayName;
-                });
-
-                // Handle phone number selection
-                if (displayItem.contact.phones.isEmpty) {
-                  _showErrorSnackBar('Selected contact has no phone number');
-                  return;
-                }
-
-                if (displayItem.contact.phones.length == 1) {
-                  _processContactNumber(displayItem.contact);
-                } else {
-                  _showPhoneNumberSelector(displayItem.contact);
-                }
-              },
+          barrierDismissible: false,
+          builder: (context) => Center(
+            child: Container(
+              padding: EdgeInsets.all(ResponsiveUtils.scaledSpacing(context, 24)),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CupertinoActivityIndicator(radius: 14),
+                  SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
+                  Text(
+                    'Loading contacts...',
+                    style: AppTextStyles.scaledCallout(context).copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );
 
-        // Stage 2: Load contacts WITHOUT photos (fast)
+        // Load contacts WITHOUT photos (fast)
         final contactsWithoutPhotos = await FlutterContacts.getContacts(
           withProperties: true,
-          withPhoto: false, // Fast load
+          withPhoto: false,
         );
-
-        if (!mounted) return;
 
         // Create display items with emojis
         final displayItems = contactsWithoutPhotos.map((contact) {
@@ -333,21 +375,50 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
           );
         }).toList();
 
-        // Update UI with emoji-based list
-        displayItemsNotifier.value = displayItems;
-        isLoadingNotifier.value = false;
+        // Dismiss loading dialog
+        if (mounted) Navigator.pop(context);
 
-        // Stage 3: Load photos in background (non-blocking)
-        _loadPhotosInBackground(displayItems, displayItemsNotifier);
+        // Small delay for smooth transition
+        await Future.delayed(const Duration(milliseconds: 100));
+
+        if (!mounted) return;
+
+        // Show modal with data ready - smooth animation
+        final selectedItem = await showCupertinoModalPopup<_ContactDisplayItem>(
+          context: context,
+          builder: (context) => DraggableScrollableSheet(
+            initialChildSize: 0.8,
+            minChildSize: 0.5,
+            maxChildSize: 0.95,
+            expand: false,
+            builder: (context, scrollController) => _ContactPickerWithSearch(
+              displayItems: displayItems,
+              scrollController: scrollController,
+              onContactSelected: (displayItem) {
+                Navigator.pop(context, displayItem);
+              },
+            ),
+          ),
+        );
+
+        // Process selected contact
+        if (selectedItem != null) {
+          await _processSelectedContact(selectedItem);
+        }
+
+        // Load photos in background after modal is shown
+        if (mounted) {
+          _loadPhotosInBackgroundForList(displayItems);
+        }
 
       } catch (e) {
+        if (mounted) Navigator.pop(context); // Dismiss loading
         _showErrorSnackBar('Error accessing contacts: $e');
       }
     } else {
       _showErrorSnackBar('Permission to access contacts was denied');
     }
   }
-
   void _processContactNumber(Contact contact) async {
     if (contact.phones.isEmpty) return;
 
@@ -1911,14 +1982,12 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
 }
 
 class _ContactPickerWithSearch extends StatefulWidget {
-  final ValueNotifier<List<_ContactDisplayItem>> displayItemsNotifier;
-  final ValueNotifier<bool> isLoadingNotifier;
+  final List<_ContactDisplayItem> displayItems;
   final ScrollController scrollController;
   final Function(_ContactDisplayItem) onContactSelected;
 
   const _ContactPickerWithSearch({
-    required this.displayItemsNotifier,
-    required this.isLoadingNotifier,
+    required this.displayItems,
     required this.scrollController,
     required this.onContactSelected,
   });
@@ -1934,30 +2003,23 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
   @override
   void initState() {
     super.initState();
+    _filteredItems = widget.displayItems;
     _searchController.addListener(_filterContacts);
-
-    // Listen to display items changes
-    widget.displayItemsNotifier.addListener(_updateFilteredList);
   }
 
   @override
   void dispose() {
     _searchController.dispose();
-    widget.displayItemsNotifier.removeListener(_updateFilteredList);
     super.dispose();
-  }
-
-  void _updateFilteredList() {
-    _filterContacts();
   }
 
   void _filterContacts() {
     final query = _searchController.text.toLowerCase();
     setState(() {
       if (query.isEmpty) {
-        _filteredItems = widget.displayItemsNotifier.value;
+        _filteredItems = widget.displayItems;
       } else {
-        _filteredItems = widget.displayItemsNotifier.value.where((item) {
+        _filteredItems = widget.displayItems.where((item) {
           return item.contact.displayName.toLowerCase().contains(query);
         }).toList();
       }
@@ -2099,152 +2161,124 @@ class _ContactPickerWithSearchState extends State<_ContactPickerWithSearch> {
           SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
 
           Expanded(
-            child: ValueListenableBuilder<bool>(
-              valueListenable: widget.isLoadingNotifier,
-              builder: (context, isLoading, _) {
-                if (isLoading) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const CupertinoActivityIndicator(radius: 14),
-                        SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
-                        Text(
-                          'Loading contacts...',
-                          style: AppTextStyles.scaledCallout(context).copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
+            child: _filteredItems.isEmpty
+                ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    CupertinoIcons.person_3,
+                    size: ResponsiveUtils.scaledIconSize(context, 40),
+                    color: AppColors.textSecondary,
+                  ),
+                  SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
+                  Text(
+                    'No contacts found',
+                    style: AppTextStyles.scaledCallout(context).copyWith(
+                      color: AppColors.textSecondary,
                     ),
-                  );
-                }
+                  ),
+                ],
+              ),
+            )
+                : CupertinoScrollbar(
+              controller: widget.scrollController,
+              child: ListView.builder(
+                controller: widget.scrollController,
+                itemCount: _filteredItems.length,
+                itemBuilder: (context, index) {
+                  final displayItem = _filteredItems[index];
+                  final contact = displayItem.contact;
 
-                if (_filteredItems.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          CupertinoIcons.person_3,
-                          size: ResponsiveUtils.scaledIconSize(context, 40),
+                  return Container(
+                    margin: EdgeInsets.symmetric(
+                        horizontal: ResponsiveUtils.scaledSpacing(context, 16),
+                        vertical: ResponsiveUtils.scaledSpacing(context, 2)
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.8),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.primary.withOpacity(0.1),
+                        width: 0.5,
+                      ),
+                    ),
+                    child: CupertinoListTile(
+                      title: Text(
+                        contact.displayName,
+                        style: AppTextStyles.scaledBody(context).copyWith(
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      subtitle: contact.phones.isNotEmpty
+                          ? Text(
+                        contact.phones.length == 1
+                            ? '${contact.phones.first.number}${_getPhoneLabel(contact.phones.first).isNotEmpty ? ' (${_getPhoneLabel(contact.phones.first)})' : ''}'
+                            : '${contact.phones.length} phone numbers',
+                        style: AppTextStyles.scaledCaption(context).copyWith(
                           color: AppColors.textSecondary,
                         ),
-                        SizedBox(height: ResponsiveUtils.scaledSpacing(context, 16)),
-                        Text(
-                          'No contacts found',
-                          style: AppTextStyles.scaledCallout(context).copyWith(
-                            color: AppColors.textSecondary,
+                      )
+                          : Text(
+                        'No phone number',
+                        style: AppTextStyles.scaledCaption(context).copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      leading: Container(
+                        width: ResponsiveUtils.scaledContainerSize(context, 36),
+                        height: ResponsiveUtils.scaledContainerSize(context, 36),
+                        decoration: BoxDecoration(
+                          color: displayItem.photo != null
+                              ? null
+                              : AppColors.primary.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: AppColors.primary.withOpacity(0.2),
+                            width: 1,
                           ),
                         ),
-                      ],
+                        child: displayItem.photo != null
+                            ? ClipOval(
+                          child: Image.memory(
+                            displayItem.photo!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              // Fallback to emoji on image error
+                              return Center(
+                                child: Text(
+                                  displayItem.assignedEmoji,
+                                  style: TextStyle(
+                                    fontSize: ResponsiveUtils.scaledContainerSize(context, 36) * 0.5,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        )
+                            : Center(
+                          child: Text(
+                            displayItem.assignedEmoji,
+                            style: TextStyle(
+                              fontSize: ResponsiveUtils.scaledContainerSize(context, 36) * 0.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                      trailing: contact.phones.isNotEmpty
+                          ? Icon(
+                        CupertinoIcons.chevron_right,
+                        color: AppColors.textSecondary,
+                        size: ResponsiveUtils.scaledIconSize(context, 14),
+                      )
+                          : null,
+                      onTap: contact.phones.isNotEmpty
+                          ? () => widget.onContactSelected(displayItem)
+                          : null,
                     ),
                   );
-                }
-
-                return CupertinoScrollbar(
-                  controller: widget.scrollController,
-                  child: ListView.builder(
-                    controller: widget.scrollController,
-                    itemCount: _filteredItems.length,
-                    itemBuilder: (context, index) {
-                      final displayItem = _filteredItems[index];
-                      final contact = displayItem.contact;
-
-                      return Container(
-                        margin: EdgeInsets.symmetric(
-                            horizontal: ResponsiveUtils.scaledSpacing(context, 16),
-                            vertical: ResponsiveUtils.scaledSpacing(context, 2)
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.8),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: AppColors.primary.withOpacity(0.1),
-                            width: 0.5,
-                          ),
-                        ),
-                        child: CupertinoListTile(
-                          title: Text(
-                            contact.displayName,
-                            style: AppTextStyles.scaledBody(context).copyWith(
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          subtitle: contact.phones.isNotEmpty
-                              ? Text(
-                            contact.phones.length == 1
-                                ? '${contact.phones.first.number}${_getPhoneLabel(contact.phones.first).isNotEmpty ? ' (${_getPhoneLabel(contact.phones.first)})' : ''}'
-                                : '${contact.phones.length} phone numbers',
-                            style: AppTextStyles.scaledCaption(context).copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                          )
-                              : Text(
-                            'No phone number',
-                            style: AppTextStyles.scaledCaption(context).copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                          leading: Container(
-                            width: ResponsiveUtils.scaledContainerSize(context, 36),
-                            height: ResponsiveUtils.scaledContainerSize(context, 36),
-                            decoration: BoxDecoration(
-                              color: displayItem.photo != null
-                                  ? null
-                                  : AppColors.primary.withOpacity(0.1),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: AppColors.primary.withOpacity(0.2),
-                                width: 1,
-                              ),
-                            ),
-                            child: displayItem.photo != null
-                                ? ClipOval(
-                              child: Image.memory(
-                                displayItem.photo!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  // Fallback to emoji on image error
-                                  return Center(
-                                    child: Text(
-                                      displayItem.assignedEmoji,
-                                      style: TextStyle(
-                                        fontSize: ResponsiveUtils.scaledContainerSize(context, 36) * 0.5,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            )
-                                : Center(
-                              child: Text(
-                                displayItem.assignedEmoji,
-                                style: TextStyle(
-                                  fontSize: ResponsiveUtils.scaledContainerSize(context, 36) * 0.5,
-                                ),
-                              ),
-                            ),
-                          ),
-                          trailing: contact.phones.isNotEmpty
-                              ? Icon(
-                            CupertinoIcons.chevron_right,
-                            color: AppColors.textSecondary,
-                            size: ResponsiveUtils.scaledIconSize(context, 14),
-                          )
-                              : null,
-                          onTap: contact.phones.isNotEmpty
-                              ? () {
-                            Navigator.pop(context);
-                            widget.onContactSelected(displayItem);
-                          }
-                              : null,
-                        ),
-                      );
-                    },
-                  ),
-                );
-              },
+                },
+              ),
             ),
           ),
         ],
